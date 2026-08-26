@@ -25,3 +25,60 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: edge-sfc
+      description: 查找边缘计算、网络韧性、服务功能链部署相关的文章
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: edge computing
+          keyword_cn: 边缘计算
+          query: distributed computing paradigm that brings computation near data sources at the network edge
+        - keyword: network resilience
+          keyword_cn: 网络韧性
+          query: capability of a network to remain operational and recover from failures or disruptions
+        - keyword: service function chain
+          keyword_cn: 服务功能链
+          query: ordered set of virtual network functions that process traffic in sequence
+        - keyword: virtual network function
+          keyword_cn: 虚拟网络功能
+          query: software implementation of a network function running on virtualized infrastructure
+        - keyword: fault tolerance
+          keyword_cn: 容错能力
+          query: ability of a system to continue operating correctly in the presence of component failures
+        - keyword: edge resource allocation
+          keyword_cn: 边缘资源分配
+          query: assignment of limited computational and network resources at edge nodes to services and functions
+      intent_queries:
+        - query: How does edge computing enhance network resilience against failures?
+          query_cn: 边缘计算如何增强网络故障韧性？
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are effective strategies for deploying service function chains on edge nodes?
+          query_cn: 在边缘节点上部署服务功能链的有效策略有哪些？
+          enabled: true
+          source: manual
+          note: ''
+        - query: Methods to guarantee resilient service function chaining in edge computing environments
+          query_cn: 在边缘计算环境中保证服务功能链韧性的方法
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-08-26T05:20:38.476Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
