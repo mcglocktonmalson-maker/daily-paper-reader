@@ -1,0 +1,667 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-26T05:29:46.790524+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 12,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 14,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2608.16860v1",
+      "source": "arxiv",
+      "title": "Classical Adversarial Fault-Tolerance and PCPs",
+      "abstract": "We show how to compile an arbitrary classical circuit into a fault-tolerant circuit, which performs the desired computation even when an almost-linear number of bits are adversarially chosen and corrupted in each timestep. Using a variant of this fault-tolerance scheme that only detects (rather than corrects) corruptions, we give a new construction of probabilistically checkable proofs (PCPs) for NP with polylogarithmic query complexity. This PCP construction from fault-tolerance presents a promising candidate for quantization by the work of Anshu, Breuckmann, and Nguyen (STOC'24), who provided a roadmap for constructing quantum PCPs via fault-tolerance.",
+      "authors": [
+        "Anurag Anshu",
+        "Nikolas P. Breuckmann",
+        "Louis Golowich",
+        "Quynh T. Nguyen",
+        "Umesh Vazirani"
+      ],
+      "primary_category": "cs.CC",
+      "categories": [
+        "cs.CC",
+        "cs.IT",
+        "quant-ph"
+      ],
+      "published": "2026-08-17T17:43:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.16860v1",
+      "tags": [
+        "keyword:edge-sfc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Classical adversarial fault-tolerance compiles circuits to tolerate adversarially corrupted bits, matching system-level fault tolerance.",
+      "llm_evidence_cn": "通过容错电路编译使计算在对抗性比特损坏下仍正确运行，直接对应系统容错需求。",
+      "llm_evidence": "通过容错电路编译使计算在对抗性比特损坏下仍正确运行，直接对应系统容错需求。",
+      "canonical_evidence": "通过容错电路编译使计算在对抗性比特损坏下仍正确运行，直接对应系统容错需求。",
+      "llm_tldr_en": "Shows how to compile arbitrary classical circuits into fault-tolerant circuits that work despite almost-linear adversarial bit corruption per step, and leverages the scheme to build PCPs with polylogarithmic query complexity.",
+      "llm_tldr_cn": "该研究针对计算过程中大量比特被对抗性选择并破坏的问题，给出将任意经典电路编译为容错电路的通用方法，使电路在每个时间步几乎线性数量的比特被篡改时仍能完成期望计算。文中还利用仅检测错误的变体构造了查询复杂度为多项对数的新型PCP。该工作为量子PCP构造提供了容错路线图上的关键候选，也与系统级容错能力需求直接对应。",
+      "llm_tldr": "该研究针对计算过程中大量比特被对抗性选择并破坏的问题，给出将任意经典电路编译为容错电路的通用方法，使电路在每个时间步几乎线性数量的比特被篡改时仍能完成期望计算。文中还利用仅检测错误的变体构造了查询复杂度为多项对数的新型PCP。该工作为量子PCP构造提供了容错路线图上的关键候选，也与系统级容错能力需求直接对应。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ability of a system to continue operating correctly in the presence of component failures",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.19557v1",
+      "source": "arxiv",
+      "title": "When Do LLM Agents Help? Deadline-Aware Mixed-Criticality Task Scheduling at the Autonomous-Vehicle Edge",
+      "abstract": "Autonomous vehicles offload latency-sensitive perception tasks to nearby mobile edge computing (MEC) servers, where a missed safety-critical task is unsafe rather than merely degraded. Large language models (LLMs) are increasingly proposed as adaptive, explainable schedulers, yet evidence of when they help is scarce. We study deadline-aware, mixed-criticality scheduling on heterogeneous MEC servers, where time-critical (TC) tasks must be protected at a controlled cost to best-effort traffic, and ask whether a multi-agent LLM control layer improves on a strong heuristic. We answer in two steps. First we build the heuristic: a windowed contract-net auction that orders each admission window time-critical-first by earliest deadline and places tasks by earliest-finish-time. Across 60 instances on three topologies and 15 baselines under an identical online constraint, it attains a TC completion rate of 0.902, above every baseline (Holm-corrected p < 0.001; best baseline 0.838) and at 0.87 of a CP-SAT upper bound. Second, we add the LLM control plane. A controlled decomposition traces the scheduler's advantage to two ordinary factors, the batching horizon and time-critical-first ordering; the auction, the per-window LLM policy, and online adaptation add nothing while the load is stationary, where the heuristic is already near-optimal. Under a mid-run surge of safety-critical tasks the picture changes, and the LLM control plane gains significantly over both the static heuristic and the bandit. LLM orchestration therefore earns its cost only when non-stationarity opens headroom a fixed policy cannot use. We report control-plane latency and rationale, and release all code and seeded instances.",
+      "authors": [
+        "Reza Zakerian"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.MA"
+      ],
+      "published": "2026-08-20T01:55:40+00:00",
+      "link": "https://arxiv.org/pdf/2608.19557v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "deadline-aware mixed-criticality task scheduling on MEC servers",
+      "llm_evidence_cn": "移动边缘服务器上的截止时间感知混合关键性任务调度",
+      "llm_evidence": "移动边缘服务器上的截止时间感知混合关键性任务调度",
+      "canonical_evidence": "移动边缘服务器上的截止时间感知混合关键性任务调度",
+      "llm_tldr_en": "Studies deadline-aware mixed-criticality task scheduling on heterogeneous MEC servers for autonomous vehicles, building a windowed contract-net auction heuristic and evaluating whether a multi-agent LLM control layer improves on it.",
+      "llm_tldr_cn": "自动驾驶车辆将延迟敏感感知任务卸载到移动边缘计算服务器，安全关键任务一旦超时即不安全。本文研究异构MEC服务器上的截止时间感知混合关键性调度，先构建基于窗口的合同网拍卖启发式，按最早截止时间优先保护关键任务，再评估多智能体大语言模型控制层能否超越该强启发式。研究为LLM在边缘调度中的适用性提供了实证，也为保护关键任务提供了有效调度策略。",
+      "llm_tldr": "自动驾驶车辆将延迟敏感感知任务卸载到移动边缘计算服务器，安全关键任务一旦超时即不安全。本文研究异构MEC服务器上的截止时间感知混合关键性调度，先构建基于窗口的合同网拍卖启发式，按最早截止时间优先保护关键任务，再评估多智能体大语言模型控制层能否超越该强启发式。研究为LLM在边缘调度中的适用性提供了实证，也为保护关键任务提供了有效调度策略。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.20819v1",
+      "source": "arxiv",
+      "title": "PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge",
+      "abstract": "Edge nodes are capacity-constrained by design, yet many edge workloads can trade result quality for resource efficiency at runtime. Existing edge pricing mechanisms largely treat requests as fixed-configuration submissions and rarely exploit per-request quality flexibility under overload. We present PRICE, an incentive mechanism that couples a utilization-dependent price signal to per-request quality selection. As utilization increases, rising acceptance prices make resource-intensive variants less likely to be selected, shifting accepted requests toward lighter execution and allowing the node to serve significantly more requests while operating near capacity. Evaluation on real hardware under sustained overload shows that PRICE outperforms both fixed-allocation and dynamic-pricing baselines in accepted throughput and CPU utilization. The results are robust across pricing function families, task-duration distributions, and client populations. Result-quality flexibility is a powerful but underused control dimension for overload management at the edge, and pricing is an effective mechanism to exploit it.",
+      "authors": [
+        "Uwe Gropengießer",
+        "Sebastian Frenz",
+        "Max Mühlhäuser"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-21T07:40:31+00:00",
+      "link": "https://arxiv.org/pdf/2608.20819v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Designs pricing-based incentive mechanism for capacity-constrained edge nodes to adapt resource allocation and quality selection under overload",
+      "llm_evidence_cn": "提出基于定价的激励机制，用于边缘节点在过载条件下进行资源分配与质量调节",
+      "llm_evidence": "提出基于定价的激励机制，用于边缘节点在过载条件下进行资源分配与质量调节",
+      "canonical_evidence": "提出基于定价的激励机制，用于边缘节点在过载条件下进行资源分配与质量调节",
+      "llm_tldr_en": "Presents PRICE, an incentive mechanism coupling utilization-dependent price signals with per-request quality selection, enabling edge nodes to serve more requests under overload by shifting toward lighter execution while maintaining near-capacity operation.",
+      "llm_tldr_cn": "针对边缘节点容量受限且过载时请求质量难以灵活权衡的问题，提出PRICE激励机制，将利用率相关价格信号与每请求质量选择耦合，在负载升高时引导请求选择更轻量执行，从而在近满容量下服务更多请求。在真实硬件持续过载实验中验证了其有效性，为边缘资源调度提供了实用经济激励方法。该工作虽未涉及服务功能链，但直接支持边缘节点资源分配需求。",
+      "llm_tldr": "针对边缘节点容量受限且过载时请求质量难以灵活权衡的问题，提出PRICE激励机制，将利用率相关价格信号与每请求质量选择耦合，在负载升高时引导请求选择更轻量执行，从而在近满容量下服务更多请求。在真实硬件持续过载实验中验证了其有效性，为边缘资源调度提供了实用经济激励方法。该工作虽未涉及服务功能链，但直接支持边缘节点资源分配需求。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16157v1",
+      "source": "arxiv",
+      "title": "FreeToken: Efficient Edge-Native MoE Serving with Bandwidth-Adaptive Execution",
+      "abstract": "Frontier open-weight models are increasingly available, but serving them still largely assumes datacenter infrastructure. We present FreeToken, an edge-native MoE serving system that treats a personal machine not as a small GPU, but as a unified, elastic inference platform. FreeToken co-designs the full serving stack, including model layout and loading, expert residency, CPU--GPU execution, agentic state reuse, and runtime memory management, around two realities of local AI: agent workloads continuously change their execution pattern, and edge hardware exposes heterogeneous resources whose balance differs from machine to machine. Rather than committing to a fixed offloading strategy, FreeToken continuously maps computation and model state onto the resources actually available. FreeToken supports more than 20 MoE models and real coding and tool-using agents across hardware ranging from an 8GB laptop GPU to a single workstation GPU. More importantly, it changes what these machines can practically serve, from a 35B model on a laptop to a 284B model on a gaming desktop and the 753B GLM-5.2 on a single workstation GPU. FreeToken turns open weights into deployable local software, making the machines users already own a practical platform for frontier-scale intelligence. We release the system at flashml.ai.",
+      "authors": [
+        "Shuo Yang",
+        "Xiaoze Fan",
+        "Melissa Pan",
+        "Haocheng Xi",
+        "Zhe Wang",
+        "Shanlin Sun",
+        "Kurt Keutzer",
+        "Song Han",
+        "Matei Zaharia",
+        "Chenfeng Xu",
+        "Ion Stoica"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-17T06:22:53+00:00",
+      "link": "https://arxiv.org/pdf/2608.16157v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Efficient edge-native resource mapping and bandwidth-adaptive execution for MoE serving",
+      "llm_evidence_cn": "针对MoE服务的边缘原生资源映射与带宽自适应执行",
+      "llm_evidence": "针对MoE服务的边缘原生资源映射与带宽自适应执行",
+      "canonical_evidence": "针对MoE服务的边缘原生资源映射与带宽自适应执行",
+      "llm_tldr_en": "FreeToken is an edge-native MoE serving system that co-designs model layout, expert residency, CPU-GPU execution, and memory management, continuously mapping computation and model state onto heterogeneous edge hardware to improve local inference performance.",
+      "llm_tldr_cn": "FreeToken提出了一种边缘原生的MoE模型服务系统，将个人机器视为统一的弹性推理平台。它协同设计模型布局、专家驻留、CPU-GPU执行以及运行时内存管理，并基于带宽和资源平衡动态映射计算与模型状态。该系统解决了边缘硬件异构且资源平衡差异大的问题，避免了固定卸载策略的低效，从而在多样化边缘设备上提升大模型推理的灵活性和效率。",
+      "llm_tldr": "FreeToken提出了一种边缘原生的MoE模型服务系统，将个人机器视为统一的弹性推理平台。它协同设计模型布局、专家驻留、CPU-GPU执行以及运行时内存管理，并基于带宽和资源平衡动态映射计算与模型状态。该系统解决了边缘硬件异构且资源平衡差异大的问题，避免了固定卸载策略的低效，从而在多样化边缘设备上提升大模型推理的灵活性和效率。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.17794v1",
+      "source": "arxiv",
+      "title": "Threat Aware Task Offloading and Caching for Secure UAV Assisted Vehicular Consumer Electronics",
+      "abstract": "Vehicular consumer electronics increasingly support computation-intensive and latency-sensitive services, imposing stringent efficiency, reliability, and security requirements on vehicular edge computing (VEC) systems. In dynamic vehicular environments, inference-based information leakage and anomalous communication behaviors further threaten system performance and data privacy. To address these challenges, this paper proposes a UAV-assisted cooperative VEC architecture that integrates threat-aware task offloading with intelligent spatiotemporal caching across roadside units (RSUs) and UAV edge nodes. A security-aware uplink transmission model is developed to capture potential information leakage risks and abnormal communication patterns, enabling adaptive offloading decisions. We formulate a joint optimization problem to minimize end-to-end task execution delay while improving cache utilization under limited computing and storage resources. To efficiently solve this problem, a Threat-Aware Joint Optimization (TAGO) framework is designed by combining proximal policy optimization for adaptive task offloading and a gradient-based caching update derived from the Frank-Wolfe algorithm to capture spatiotemporal service popularity. Simulation results demonstrate that the proposed approach significantly reduces task delay and improves cache efficiency compared with several baseline strategies, showing its effectiveness for secure and efficient UAV-assisted vehicular consumer electronics systems.",
+      "authors": [
+        "Xiaoteng Yang",
+        "Sunil Prajapat",
+        "Zheng Lin"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-18T13:56:15+00:00",
+      "link": "https://arxiv.org/pdf/2608.17794v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Threat-aware offloading and caching in UAV-assisted VEC",
+      "llm_evidence_cn": "无人机辅助车联网中威胁感知卸载与缓存",
+      "llm_evidence": "无人机辅助车联网中威胁感知卸载与缓存",
+      "canonical_evidence": "无人机辅助车联网中威胁感知卸载与缓存",
+      "llm_tldr_en": "Proposes UAV-assisted cooperative vehicular edge computing architecture combining threat-aware task offloading with intelligent spatiotemporal caching; security-aware uplink model reduces information leakage while preserving efficiency and reliability.",
+      "llm_tldr_cn": "车载边缘计算面临效率、可靠性与安全的多重要求，而动态环境中的信息泄露和异常通信带来额外威胁。本文提出无人机辅助的协作VEC架构，将威胁感知任务卸载与智能时空缓存相结合，并建立安全感知上行传输模型。该方案在保障时延和可靠性的同时降低信息泄露风险。为车联网边缘计算的安全韧性提供了一种集成方案。",
+      "llm_tldr": "车载边缘计算面临效率、可靠性与安全的多重要求，而动态环境中的信息泄露和异常通信带来额外威胁。本文提出无人机辅助的协作VEC架构，将威胁感知任务卸载与智能时空缓存相结合，并建立安全感知上行传输模型。该方案在保障时延和可靠性的同时降低信息泄露风险。为车联网边缘计算的安全韧性提供了一种集成方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.17849v1",
+      "source": "arxiv",
+      "title": "Efficient Resource Optimization for Split Federated Learning",
+      "abstract": "Split federated learning (SFL) has emerged as a powerful paradigm for model training at the edge. However, SFL inherently involves discrete decision variables for model splitting and resource allocation, resulting in a challenging mixed-integer problem. Consequently, prior optimization schemes for SFL are either \\textit{heuristic} or \\textit{computationally inefficient}, which cannot handle large-scale user populations. To address this limitation, this work establishes an efficient optimization framework for SFL under resource-constrained networks. Our framework jointly optimizes model splitting and resource allocation to minimize training cost, which is defined as the weighted sum of latency and energy costs. We first study the model splitting problem and develop a polynomial-time algorithm that achieves the global optimum. Then, we extend the approach to the joint model splitting and resource allocation problem. In this case, we formulate it as a two-dimensional master problem and develop an efficient approximation method with a $(1+ε)$-approximation guarantee. Extensive experiments show that the proposed approach provides efficient solutions to strike the optimal energy--latency tradeoff.",
+      "authors": [
+        "Wei Wei",
+        "Xianhao Chen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-18T14:44:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.17849v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "jointly optimizes model splitting and resource allocation at the edge under resource-constrained networks",
+      "llm_evidence_cn": "在资源受限的边缘网络中联合优化模型切分与资源分配",
+      "llm_evidence": "在资源受限的边缘网络中联合优化模型切分与资源分配",
+      "canonical_evidence": "在资源受限的边缘网络中联合优化模型切分与资源分配",
+      "llm_tldr_en": "Establishes an efficient optimization framework for split federated learning that jointly optimizes model splitting and resource allocation to minimize latency and energy costs at the edge.",
+      "llm_tldr_cn": "论文针对分割联邦学习(SFL)中模型切分与资源分配离散变量导致的混合整数优化难题,提出一个高效的联合优化框架,在资源受限的边缘网络中最小化训练时延与能耗的加权和。相比以往启发式或低效算法,该框架可扩展至大规模用户群体。研究直接涉及边缘计算中的资源分配与计算任务切分,与用户需求'边缘节点资源分配'高度相关,但不涉及网络韧性与服务功能链。",
+      "llm_tldr": "论文针对分割联邦学习(SFL)中模型切分与资源分配离散变量导致的混合整数优化难题,提出一个高效的联合优化框架,在资源受限的边缘网络中最小化训练时延与能耗的加权和。相比以往启发式或低效算法,该框架可扩展至大规模用户群体。研究直接涉及边缘计算中的资源分配与计算任务切分,与用户需求'边缘节点资源分配'高度相关,但不涉及网络韧性与服务功能链。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.19850v1",
+      "source": "arxiv",
+      "title": "Resilience in Trustworthy Wireless Systems",
+      "abstract": "Resilience has emerged as a fundamental capability for future wireless systems operating in dynamic and uncertain environments. Although resilience has attracted growing attention across academia, industry, and standardization, its conceptual scope, enabling mechanisms, and realization techniques remain fragmented. This paper presents a systematic framework of resilience in wireless systems from a trustworthiness perspective. We first formalize the concept of resilience and distinguish it from related uncertainty-aware terminologies, including reliability, robustness, adaptability, survivability, and recoverability. We then establish a hierarchical framework that organizes resilience into capability dimensions and enabling mechanisms, and that quantifies resilience through different technical aspects. We further use physical links and unmanned aerial vehicle networks as representative wireless scenarios to demonstrate how resilience can be systematically realized through the joint design of architectures, operations, and algorithms. Finally, we examine the fundamental trade-offs in resilience engineering: Improving resilience generally incurs costs in resource efficiency, nominal performance, information acquisition, implementation complexity, and latency.",
+      "authors": [
+        "Shixiong Wang",
+        "Yumeng Zhang",
+        "Hongyu Li"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT",
+        "eess.SP"
+      ],
+      "published": "2026-08-20T09:56:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.19850v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Formalizes resilience and recovery in wireless systems; directly addresses network resilience capability.",
+      "llm_evidence_cn": "形式化定义无线系统韧性及恢复能力，直接对应网络韧性需求。",
+      "llm_evidence": "形式化定义无线系统韧性及恢复能力，直接对应网络韧性需求。",
+      "canonical_evidence": "形式化定义无线系统韧性及恢复能力，直接对应网络韧性需求。",
+      "llm_tldr_en": "This paper formalizes the concept of resilience in wireless systems, distinguishing it from reliability and robustness, and proposes a hierarchical framework that organizes resilience into capability dimensions and enabling mechanisms with quantitative measures.",
+      "llm_tldr_cn": "针对无线系统韧性概念范围模糊、实现技术碎片化的问题，本文从可信性视角形式化定义了韧性，并区分了其与可靠性、鲁棒性、适应性、可生存性和可恢复性等术语；进而建立层次化框架，将韧性组织为能力维度与使能机制，并通过不同指标进行量化。该框架为动态不确定环境中的韧性无线系统评估与设计提供了统一基础，可推广至边缘计算等场景。",
+      "llm_tldr": "针对无线系统韧性概念范围模糊、实现技术碎片化的问题，本文从可信性视角形式化定义了韧性，并区分了其与可靠性、鲁棒性、适应性、可生存性和可恢复性等术语；进而建立层次化框架，将韧性组织为能力维度与使能机制，并通过不同指标进行量化。该框架为动态不确定环境中的韧性无线系统评估与设计提供了统一基础，可推广至边缘计算等场景。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.20513v1",
+      "source": "arxiv",
+      "title": "Making Deployments Safe at Meta: Health Checks for Continuous Change-Safety",
+      "abstract": "Continuous deployment to large scale production systems creates a tension between release velocity and reliability. Every change is a potential reliability incident, yet every delay is a missed opportunity. This paper describes the deployment time health check infrastructure that Meta uses to mediate this tension across thousands of heterogeneous services. We summarize the architecture of this prevention based distributed system's service called Service Health Checker, explain how check authors compose templated metric queries, thresholds, and workflow predicates; and discuss how the system is integrated with tiered and phased rollouts so that regressions trigger automatic rollback. We then describe the operational problems that emerged at scale, such as noise, alert fatigue, drift, and uncovered regressions, and the program of measurement, tooling, and improved defaults we deployed to address them. We close with lessons learned from years of operating deployment health checks at Meta, and the directions we are exploring next, including AI assisted health check tuning. Index Terms: deployment safety, continuous deployment, monitoring, software reliability, release engineering, software reliability engineering, AIOps, anomaly detection",
+      "authors": [
+        "Prakash KL",
+        "Anton Korenkov",
+        "Uttam Thakore",
+        "Christopher Hegre"
+      ],
+      "primary_category": "cs.SE",
+      "categories": [
+        "cs.SE",
+        "cs.AI"
+      ],
+      "published": "2026-08-20T19:19:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.20513v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "health checks and rollback for deployment safety and reliability",
+      "llm_evidence_cn": "通过健康检查和回滚保障部署安全与可靠性",
+      "llm_evidence": "通过健康检查和回滚保障部署安全与可靠性",
+      "canonical_evidence": "通过健康检查和回滚保障部署安全与可靠性",
+      "llm_tldr_en": "Describes Meta's Service Health Checker, a deployment-time health check infrastructure that composes metric queries, thresholds, and workflow predicates to enable automatic rollback during phased rollouts, improving reliability.",
+      "llm_tldr_cn": "持续部署在发布速度与可靠性之间存在张力，每个变更都可能是可靠性事故。本文介绍Meta的部署时间健康检查基础设施Service Health Checker，该分布式服务支持作者组合模板化指标查询、阈值和工作流谓词，并与分层分阶段发布集成，使回归触发自动回滚。文章还总结了大规模运行中出现的运维问题，为大型系统在持续变更中保持正确运行提供了工程方法和经验。",
+      "llm_tldr": "持续部署在发布速度与可靠性之间存在张力，每个变更都可能是可靠性事故。本文介绍Meta的部署时间健康检查基础设施Service Health Checker，该分布式服务支持作者组合模板化指标查询、阈值和工作流谓词，并与分层分阶段发布集成，使回归触发自动回滚。文章还总结了大规模运行中出现的运维问题，为大型系统在持续变更中保持正确运行提供了工程方法和经验。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ability of a system to continue operating correctly in the presence of component failures",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.17352v1",
+      "source": "arxiv",
+      "title": "Cognitive Graph Intelligence for Adaptive and Robust DDoS Attack Detection in Next Generation Networks",
+      "abstract": "Distributed Denial-of-Service (DDoS) attacks threaten network availability, requiring a cognitive detection process that senses traffic, infers intent, and supports an adaptive response under severe class imbalance and non-stationary conditions. This paper proposes a Graph-based Generative Adversarial Network (GraphGAN) that serves as the cognitive detection engine for this task. GraphGAN captures the relational structure among traffic flows while addressing imbalance through adversarial generation of synthetic samples. Sequential flows are converted into $k$-nearest neighbor graphs using sliding windows to preserve feature-similarity and temporal dependencies among flows. The generator learns the distribution of DDoS attacks to synthesize realistic minority samples, while a Graph Convolutional Network (GCN)-based discriminator distinguishes real from synthetic graph data. A separate GCN classifier, trained on the balanced dataset, performs the final detection decision. Evaluations on four benchmark datasets show that GraphGAN achieves superior accuracy, precision, and recall compared to state-of-the-art approaches, particularly in data-scarce scenarios. By integrating temporal graph construction, adversarial augmentation, and GCN classification, GraphGAN effectively models coordinated attack behaviors and mitigates class imbalance, providing a robust and topology-aware solution for intrusion detection in data-constrained environments.",
+      "authors": [
+        "Mohammad Arif Hossain",
+        "Yeahia Sarker",
+        "Md Jafrin Hossain",
+        "Most. Humayra Khanom Rime",
+        "Nirwan Ansari"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-18T04:18:31+00:00",
+      "link": "https://arxiv.org/pdf/2608.17352v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "robust DDoS detection to preserve network availability",
+      "llm_evidence_cn": "鲁棒DDoS检测以维持网络可用性",
+      "llm_evidence": "鲁棒DDoS检测以维持网络可用性",
+      "canonical_evidence": "鲁棒DDoS检测以维持网络可用性",
+      "llm_tldr_en": "Proposes a Graph-based Generative Adversarial Network (GraphGAN) for cognitive DDoS detection in next-generation networks, using k-NN graphs and adversarial generation to adapt to class imbalance and non-stationary traffic conditions.",
+      "llm_tldr_cn": "DDoS攻击威胁网络可用性，而现有检测方法在严重类别不平衡和非平稳条件下适应不足。本文提出基于图的生成对抗网络（GraphGAN）作为认知检测引擎，通过滑动窗口将顺序流量转换为k近邻图以保留特征相似性和时序依赖，并利用对抗生成合成样本来平衡类别。该方法增强了系统对流量变化的感知和自适应响应能力，为下一代网络的鲁棒DDoS检测提供了新途径。",
+      "llm_tldr": "DDoS攻击威胁网络可用性，而现有检测方法在严重类别不平衡和非平稳条件下适应不足。本文提出基于图的生成对抗网络（GraphGAN）作为认知检测引擎，通过滑动窗口将顺序流量转换为k近邻图以保留特征相似性和时序依赖，并利用对抗生成合成样本来平衡类别。该方法增强了系统对流量变化的感知和自适应响应能力，为下一代网络的鲁棒DDoS检测提供了新途径。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.21910v1",
+      "source": "arxiv",
+      "title": "PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices",
+      "abstract": "Latency-sensitive edge AI services must balance strict deadlines, output quality, and limited compute and energy budgets. However, static CPU provisioning wastes resources because inference cost varies substantially across inputs, model variants, and runtime conditions. We present PRISM, a prediction-guided runtime framework that jointly selects model variants and CPU allocations for containerized edge microservices. Using container-level energy monitoring and lightweight regression models, PRISM adapts each pipeline stage in place and minimizes predicted CPU-package energy under deadline, resource, and offline model-level Quality of Result (QoR) constraints. We evaluate PRISM on more than 52,000 requests in an Automatic License Plate Recognition (ALPR) pipeline with detection and recognition stages. For detection, PRISM reduces energy consumption by 36 % compared to the strongest static configuration while preserving a comparable success rate and using less than half of the average CPU allocation. For recognition, it reaches near-static-best performance with lower average CPU allocation. These results show that predictive in-place adaptation is a practical mechanism for making time-sensitive AI microservice pipelines more energy-efficient at the edge.",
+      "authors": [
+        "Uwe Gropengießer",
+        "Thomas Reuter",
+        "Dominik Schön",
+        "Osama Abboud",
+        "Xun Xiao",
+        "Max Mühlhäuser"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-22T10:45:59+00:00",
+      "link": "https://arxiv.org/pdf/2608.21910v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Runtime resource allocation and model selection for edge microservices",
+      "llm_evidence_cn": "边缘微服务运行时资源分配与模型选择",
+      "llm_evidence": "边缘微服务运行时资源分配与模型选择",
+      "canonical_evidence": "边缘微服务运行时资源分配与模型选择",
+      "llm_tldr_en": "PRISM is a prediction-guided runtime framework that jointly selects model variants and CPU allocations for containerized edge microservices, using energy monitoring and regression models to minimize predicted energy under deadline and resource constraints, validated on 52k requests.",
+      "llm_tldr_cn": "边缘AI服务需要兼顾延迟、质量和有限资源，但静态CPU配置会浪费资源。本文提出PRISM框架，通过容器级能量监控和轻量回归模型，在线联合选择模型变体与CPU分配，在满足截止时间、资源和质量约束下最小化预测能耗。在超过52000个请求的车牌识别应用上验证了效果。该方法为边缘微服务的自适应资源管理提供了实用方案。",
+      "llm_tldr": "边缘AI服务需要兼顾延迟、质量和有限资源，但静态CPU配置会浪费资源。本文提出PRISM框架，通过容器级能量监控和轻量回归模型，在线联合选择模型变体与CPU分配，在满足截止时间、资源和质量约束下最小化预测能耗。在超过52000个请求的车牌识别应用上验证了效果。该方法为边缘微服务的自适应资源管理提供了实用方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.20893v1",
+      "source": "arxiv",
+      "title": "Orchra: Stateful-aware Cross-slice Workload Migrations in the 6G Control Plane",
+      "abstract": "Network slicing is a foundational capability of Fifth Generation (5G)-Advanced and emerging Sixth Generation (6G) networks, yet practical support for seamless runtime slice transitions remains limited. Standard cloud-native 5G architectures lack native support for stateful inter/intra-slice session migration, relying instead on high-overhead Non-Access Stratum (NAS) re-registrations, container redeployment etc., which disrupt userplane traffic for up to 245.50 ms. To address this limitation, we present Orchra, an intelligent orchestrator for stateful, low-latency context transfer. By externalizing critical user equipment state-including NAS context, security keys, and Protocol Data Unit (PDU) session information-into a transient staging layer, Orchra preserves session continuity across slice boundaries without requiring full re-registration.   Experimental evaluation shows that Orchra reduces this userplane interruption by more than twice in comparison to conventional Third Generation Partnership Project (3GPP)-based approaches while incurring negligible security overhead. These results demonstrate a practical and reproducible approach for enabling seamless, state-preserving slice transitions in cloud-native 5G-Advanced networks.",
+      "authors": [
+        "Anthony Kiggundu",
+        "Bin Han",
+        "Hans D. Schotten"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-21T09:13:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.20893v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "stateful session migration to minimize runtime disruption",
+      "llm_evidence_cn": "通过状态感知迁移减少运行中断",
+      "llm_evidence": "通过状态感知迁移减少运行中断",
+      "canonical_evidence": "通过状态感知迁移减少运行中断",
+      "llm_tldr_en": "Presents Orchra, an intelligent orchestrator for stateful, low-latency context transfer in the 6G control plane, externalizing critical UE state to a staging layer to reduce disruption during slice transitions.",
+      "llm_tldr_cn": "网络切片是5G和6G的核心能力，但标准云原生架构缺乏跨切片状态迁移支持，现有方法依赖NAS重注册和容器重部署，造成用户面流量中断。为此提出Orchra智能编排器，将关键UE状态外部化到暂存层，实现有状态、低延迟的跨切片上下文迁移，从而显著降低切换中断时间。该方法为6G控制平面的无缝切片运维提供了有效支撑。",
+      "llm_tldr": "网络切片是5G和6G的核心能力，但标准云原生架构缺乏跨切片状态迁移支持，现有方法依赖NAS重注册和容器重部署，造成用户面流量中断。为此提出Orchra智能编排器，将关键UE状态外部化到暂存层，实现有状态、低延迟的跨切片上下文迁移，从而显著降低切换中断时间。该方法为6G控制平面的无缝切片运维提供了有效支撑。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.17874v1",
+      "source": "arxiv",
+      "title": "Jetson-ORB-SLAM3: Accuracy-Preserving GPU Implementation for Edge Computing Devices",
+      "abstract": "Visual-inertial SLAM on low-power edge platforms is constrained by the cost of dense feature extraction and loop closure. Prior GPU ports of ORB-SLAM trade accuracy for speed by approximating the ORB detector, altering the feature set and therefore the estimated trajectory. We present an accuracy-preserving GPU implementation of ORB-SLAM3 for the NVIDIA Jetson Orin Nano, whose GPU ORB front end reproduces the reference CPU detector algorithmically to 94.7% exact keypoint agreement and 99.9% descriptor bit agreement. This work also makes CNN-based loop closure edge-viable through native TensorRT. The visual front end (feature extraction) is offloaded to the GPU while the mapping and optimization back end is kept on the CPU, matching each computation to the hardware it suits. The accuracy is verified by comparing four configurations: the GPU pipeline and the unmodified CPU reference, each run on both the Jetson Orin Nano and a desktop. On EuRoC dataset, all four agree to within 0.10cm in mean absolute trajectory error (SE(3)), so neither the GPU port nor the change of hardware shifts the estimated trajectory. The GPU-versus-CPU comparison is reproducible on TUM-VI and KITTI datasets, so the acceleration is accuracy-preserving rather than approximate. The proposed implementation is competitive with published ORB-SLAM3 on EuRoC, attains sub-centimeter accuracy on five of the six TUM-VI room sequences, and reaches sub-1% relative translation error on nine of eleven KITTI sequences. For loop closure, the generic ONNX-Runtime CUDA/TensorRT execution providers are unusable with our CosPlace ResNet-50 on the embedded platform, whereas a native libnvinfer FP16 engine reduces per-query inference to 2.2ms, a 180x speedup. Learned place recognition therefore runs concurrently with tracking on a 7W device. In monocular-inertial mode the system sustains 32FPS mean over the eleven EuRoC sequences.",
+      "authors": [
+        "Rajat Roy",
+        "Aditya Arun Kumar Yadav",
+        "Hardik Jain"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-18T15:07:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.17874v1",
+      "tags": [
+        "keyword:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Implements SLAM on edge computing devices, bringing computation near data sources; aligns with edge computing paradigm.",
+      "llm_evidence_cn": "在边缘计算设备上实现SLAM，使计算靠近数据源，符合边缘计算范式。",
+      "llm_evidence": "在边缘计算设备上实现SLAM，使计算靠近数据源，符合边缘计算范式。",
+      "canonical_evidence": "在边缘计算设备上实现SLAM，使计算靠近数据源，符合边缘计算范式。",
+      "llm_tldr_en": "This paper presents an accuracy-preserving GPU implementation of ORB-SLAM3 for NVIDIA Jetson Orin Nano, offloading feature extraction to GPU and keeping optimization on CPU, achieving 94.7% keypoint agreement. It also makes CNN loop closure edge-viable via TensorRT.",
+      "llm_tldr_cn": "针对低功耗边缘平台上视觉惯性SLAM计算昂贵的问题，本文提出保持精度的GPU实现Jetson-ORB-SLAM3，在Jetson Orin Nano上将特征提取卸载到GPU，后端优化保留在CPU，关键点一致率达94.7%。同时通过TensorRT使基于CNN的回环检测在边缘端可行，在保持轨迹精度的同时提升实时性，为资源受限设备上的复杂视觉任务提供了高效方案。",
+      "llm_tldr": "针对低功耗边缘平台上视觉惯性SLAM计算昂贵的问题，本文提出保持精度的GPU实现Jetson-ORB-SLAM3，在Jetson Orin Nano上将特征提取卸载到GPU，后端优化保留在CPU，关键点一致率达94.7%。同时通过TensorRT使基于CNN的回环检测在边缘端可行，在保持轨迹精度的同时提升实时性，为资源受限设备上的复杂视觉任务提供了高效方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.22075v1",
+      "source": "arxiv",
+      "title": "Autonomous Cyber Defense: Real-Time Attack Detection and Mitigation in Software-Defined Networks Using Machine Learning",
+      "abstract": "Adversaries now move faster than manual response processes can absorb. The average eCrime breakout time, that is, the interval between initial access and the first lateral movement to another host, fell to 29 minutes in 2025, a 65\\% increase in speed over the previous year; the fastest observed breakout took 27 seconds, and in one intrusion data exfiltration began within four minutes of initial access. This work presents a machine learning based system that monitors network traffic in real time, diagnoses attacks, and automatically applies countermeasures in software-defined networks, so that detection and response no longer depend on human intervention. The system comprises two modules: \\textit{Network Dataset Creation} (NDC), which collects IP flows, preprocesses and aggregates them to build the training dataset, and \\textit{Intrusion Prevention System} (IPS), which automates the modeling, training, and evaluation of different algorithms and triggers blocking actions on the SDN controller. A case study with a \\textit{SYN flooding} denial of service attack, shows the attack being detected and blocked in 21 seconds without human intervention, a response time compatible with the window imposed by current breakout times.",
+      "authors": [
+        "Alexandre Amaral",
+        "Fernando Moro",
+        "Ana Malheiro"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "published": "2026-08-22T18:38:39+00:00",
+      "link": "https://arxiv.org/pdf/2608.22075v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "ML-based real-time attack detection and automated countermeasures in SDN, directly addressing network operational resilience under cyber disruptions",
+      "llm_evidence_cn": "基于机器学习的SDN实时攻击检测与自动缓解，直接应对网络中断性威胁以保持可用性",
+      "llm_evidence": "基于机器学习的SDN实时攻击检测与自动缓解，直接应对网络中断性威胁以保持可用性",
+      "canonical_evidence": "基于机器学习的SDN实时攻击检测与自动缓解，直接应对网络中断性威胁以保持可用性",
+      "llm_tldr_en": "Presents an ML system that monitors SDN traffic in real time, diagnoses attacks, and automatically applies countermeasures without human intervention, reducing breakout-time impact from minutes to automated response.",
+      "llm_tldr_cn": "针对攻击者移动速度快于人工响应的问题，提出基于机器学习的自治防御系统，实时监控SDN网络流量、诊断攻击并自动下发对抗措施，使检测与响应不再依赖人工。系统包含网络监控与自动缓解两个模块，能够在大幅缩短的攻破时间内快速抑制横向移动，有效保障网络运行韧性。该方法以软件定义网络为场景，对整个网络韧性研究具有启示意义。",
+      "llm_tldr": "针对攻击者移动速度快于人工响应的问题，提出基于机器学习的自治防御系统，实时监控SDN网络流量、诊断攻击并自动下发对抗措施，使检测与响应不再依赖人工。系统包含网络监控与自动缓解两个模块，能够在大幅缩短的攻破时间内快速抑制横向移动，有效保障网络运行韧性。该方法以软件定义网络为场景，对整个网络韧性研究具有启示意义。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.18390v1",
+      "source": "arxiv",
+      "title": "SLO-Scaler: Uncertainty-Aware SLO-Driven Autoscaling for Microservices",
+      "abstract": "Autoscaling microservice-based applications to satisfy Service Level Objectives (SLOs) remains challenging due to bursty workloads, cascading latency across service dependencies, and cold-start overhead. Existing approaches such as the Kubernetes Horizontal Pod Autoscaler (HPA) rely on threshold-based CPU or memory metrics, which react too slowly to traffic spikes. Recent predictive methods improve responsiveness but generate point forecasts that ignore prediction uncertainty, leading to over-provisioning or oscillatory scaling. We propose SLO-Scaler, an uncertainty-aware autoscaling framework that predicts short-horizon request rates, tail latency, and SLO violation probability using a Bayesian LSTM model. SLO-Scaler integrates confidence-interval-based scaling decisions with a dependency graph analysis module that localizes bottleneck services, avoiding unnecessary whole-chain scaling. We evaluate SLO-Scaler on the DeathStarBench Social Network benchmark deployed on Kubernetes under periodic, bursty, and long-tail traffic patterns. Under bursty traffic, SLO-Scaler reduces the SLO violation rate by 29-56%, lowers the average replica count by 18-33%, and decreases scaling event frequency by 38-59% compared with the baselines, while achieving lower tail latency.",
+      "authors": [
+        "Shuo Wang",
+        "Xiaoxuan Sun",
+        "Shao-yu Huang",
+        "Bencheng Su",
+        "Shuo Xu",
+        "Netra Awate"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-18T23:46:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.18390v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uncertainty-aware autoscaling using Bayesian LSTM for SLO-driven resource allocation",
+      "llm_evidence_cn": "基于贝叶斯LSTM的不确定性感知自动伸缩，用于SLO驱动的资源分配",
+      "llm_evidence": "基于贝叶斯LSTM的不确定性感知自动伸缩，用于SLO驱动的资源分配",
+      "canonical_evidence": "基于贝叶斯LSTM的不确定性感知自动伸缩，用于SLO驱动的资源分配",
+      "llm_tldr_en": "SLO-Scaler is an uncertainty-aware autoscaling framework for microservices, predicting request rates, tail latency, and SLO violation probability with a Bayesian LSTM, and using confidence intervals to trigger scaling decisions, improving SLO satisfaction and reducing over-provisioning.",
+      "llm_tldr_cn": "针对微服务应用面临的突发流量、服务依赖级联时延及冷启动开销，SLO-Scaler提出一种不确定性感知的自动伸缩框架。该框架利用贝叶斯LSTM预测短期请求率、尾部延迟和SLO违反概率，并集成置信区间基础策略来触发伸缩决策。实验表明，相比传统阈值与点预测方法，SLO-Scaler能更及时地响应流量峰值，降低过度供给或振荡伸缩，同时更好地满足SLO目标。",
+      "llm_tldr": "针对微服务应用面临的突发流量、服务依赖级联时延及冷启动开销，SLO-Scaler提出一种不确定性感知的自动伸缩框架。该框架利用贝叶斯LSTM预测短期请求率、尾部延迟和SLO违反概率，并集成置信区间基础策略来触发伸缩决策。实验表明，相比传统阈值与点预测方法，SLO-Scaler能更及时地响应流量峰值，降低过度供给或振荡伸缩，同时更好地满足SLO目标。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.22932v1",
+      "source": "arxiv",
+      "title": "AirMoE: Realizing Over-the-Air Distributed Mixture-of-Experts Inference at the Wireless Edge",
+      "abstract": "Mixture-of-experts (MoE) architectures enable efficient large language model (LLM) inference at the wireless edge by reducing per-token computation through sparse expert activation. The wireless distributed MoE (WIDE) architecture addresses edge-device resource constraints by distributing computation-intensive experts across devices coordinated by an edge server. However, repeated uploads of high-dimensional expert outputs over orthogonal multiple access create a severe uplink bottleneck. To overcome this limitation, we propose AirMoE, a novel framework leveraging over-the-air computing (AirComp) to realize simultaneous expert-output aggregation via wireless waveform superposition. Integrating AirComp into MoE inference, however, introduces three unique challenges: fast-varying aggregation weights, layer-dependent error sensitivity, and channel-aware expert placement. To address these challenges, we first construct an inference-aware AirMoE error metric to quantify the effect of physical-layer aggregation distortion on end-to-end (E2E) inference accuracy via perturbation-based layer-sensitivity calibration. We then formulate a joint optimization problem to minimize this E2E error and decompose it, without loss of optimality, into a two-timescale framework. At the fast timescale, we derive a globally optimal threshold-based power-control policy that partitions devices into two groups: those achieving exact aggregation-weight alignment, and the remainder transmitting at maximum power. At the slow timescale, we develop an activation- and channel-aware expert placement strategy that assigns more important experts to devices with lower channel-power cost. Extensive experiments using the OLMoE-1B-7B-0924 model on the ARC-Easy benchmark demonstrate that AirMoE significantly outperforms representative baselines in E2E inference accuracy, particularly under strong device heterogeneity.",
+      "authors": [
+        "Huiling Yang",
+        "Zhanwei Wang",
+        "Kaibin Huang"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-08-24T08:06:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.22932v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Distributed mixture-of-experts inference at the wireless edge, addressing edge-device resource constraints via AirComp",
+      "llm_evidence_cn": "无线边缘的分布式混合专家推理，利用空中计算克服边缘设备资源限制与上行瓶颈",
+      "llm_evidence": "无线边缘的分布式混合专家推理，利用空中计算克服边缘设备资源限制与上行瓶颈",
+      "canonical_evidence": "无线边缘的分布式混合专家推理，利用空中计算克服边缘设备资源限制与上行瓶颈",
+      "llm_tldr_en": "Proposes AirMoE, a framework integrating over-the-air computing into distributed MoE inference at the wireless edge, enabling simultaneous expert-output aggregation via waveform superposition to mitigate the uplink bottleneck.",
+      "llm_tldr_cn": "针对无线边缘分布式MoE推理中专家输出上行传输瓶颈问题，提出AirMoE框架，将空中计算（AirComp）与MoE推理集成，利用无线波形叠加实现专家输出的同时聚合，从而大幅降低上行通信开销。该方法在边缘设备资源受限条件下显著提升分布式LLM推理效率，是边缘计算与通信协同的新探索。虽未涉及服务功能链，但契合边缘计算范式。",
+      "llm_tldr": "针对无线边缘分布式MoE推理中专家输出上行传输瓶颈问题，提出AirMoE框架，将空中计算（AirComp）与MoE推理集成，利用无线波形叠加实现专家输出的同时聚合，从而大幅降低上行通信开销。该方法在边缘设备资源受限条件下显著提升分布式LLM推理效率，是边缘计算与通信协同的新探索。虽未涉及服务功能链，但契合边缘计算范式。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.23123v1",
+      "source": "arxiv",
+      "title": "Distributed Trajectory Planning and Resource Allocation for Dynamic Multi-UAV Collaborative Computing",
+      "abstract": "This paper investigates a multiple uncrewed aerial vehicles (UAVs)-enabled distributed mobile edge computing (MEC) framework, where the set of collaborative UAVs dynamically varies over time due to their energy states and service loads. The joint optimization of trajectory planning and resource allocation is formulated as a Stackelberg game, where UAVs and mobile terminals (MTs) are modeled as leaders and followers, respectively. UAVs aim to maximize their benefits by balancing executed workload, energy cost, and resource allocation revenue, while MTs seek to minimize their total overhead, composed of computing delay and resource costs, through offloading and resource-request decisions. A hierarchical joint optimization algorithm is developed within a multi-agent deep reinforcement learning (MADRL) framework to coordinate UAVs and MTs in a distributed manner. At the leader level, UAVs jointly determine their trajectories, task migration ratios, MT-UAV association, and unit computing resource pricing. Each UAV is modeled as an agent in a partially observable Markov decision process, and the agents are jointly trained via multi-agent proximal policy optimization (MAPPO) under the centralized-training-and-decentralized-execution paradigm. At the follower level, MTs determine their optimal task offloading ratios and requested computing resources using a two-stage iterative algorithm. Simulation results demonstrate stable convergence under dynamic UAV participation. Compared to the no-collaboration benchmark, the proposed algorithm improves UAV efficiency by 18.58% through inter-UAV task migration and reduces average MT overhead by 33.77% over the fully offloading scheme. It also outperforms other benchmarks under varying network scales and capabilities by jointly optimizing UAV operations and resource utilization.",
+      "authors": [
+        "Tiankui Zhang",
+        "Wenlong Xu",
+        "Tianyi Shi",
+        "Xiaoxia Xu",
+        "Arumugam Nallanathan"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-24T11:32:17+00:00",
+      "link": "https://arxiv.org/pdf/2608.23123v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Joint resource allocation and trajectory planning in distributed MEC",
+      "llm_evidence_cn": "分布式边缘计算中资源分配与轨迹规划联合优化",
+      "llm_evidence": "分布式边缘计算中资源分配与轨迹规划联合优化",
+      "canonical_evidence": "分布式边缘计算中资源分配与轨迹规划联合优化",
+      "llm_tldr_en": "Distributed mobile edge computing with dynamically varying UAV collaborators; joint trajectory planning and resource allocation modeled as a Stackelberg game, balancing UAV utility and mobile terminal overhead via hierarchical optimization.",
+      "llm_tldr_cn": "针对多无人机边缘计算中协作集合动态变化的问题，本文建立分布式MEC框架，将轨迹规划与资源分配联合建模为Stackelberg博弈。无人机作为领导者平衡工作量、能耗与资源分配收益，移动终端作为跟随者优化卸载与资源请求以最小化总开销。提出分层联合优化算法求解博弈。该方法为动态边缘网络中的资源协作提供了高效决策机制。",
+      "llm_tldr": "针对多无人机边缘计算中协作集合动态变化的问题，本文建立分布式MEC框架，将轨迹规划与资源分配联合建模为Stackelberg博弈。无人机作为领导者平衡工作量、能耗与资源分配收益，移动终端作为跟随者优化卸载与资源请求以最小化总开销。提出分层联合优化算法求解博弈。该方法为动态边缘网络中的资源协作提供了高效决策机制。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.24841v1",
+      "source": "arxiv",
+      "title": "Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions",
+      "abstract": "The transition toward Open Radio Access Networks (O-RANs) is reshaping how cellular infrastructure is deployed, managed, and optimized. This paper investigates the energy-aware joint placement and migration of cloud-native functions (CNFs) in an O-RAN edge cloud. We consider both a Single-CU-UP association model and a slice-aware Multi-CU-UP relaxation, in which distinct slice-flow groups of the same distributed unit (DU) may be assigned to different Centralized Unit User Plane (CU-UP) processing targets under one Centralized Unit Control Plane (CU-CP). For brevity, these scenarios are referred to as Single-CU and Multi-CU, respectively; Multi-CU never denotes multiple CU-CP associations. We formulate the problem as a Mixed-Integer Linear Program (MILP) that minimizes server, transmission, wake-up, and migration energy while satisfying server-resource capacities and one-way delay requirements over the F1 user-plane interface (F1-U) between each DU and its selected CU-UP in a fat-tree edge data center. To improve computational scalability, we also develop a deterministic k-means-based heuristic that approximates the MILP decisions without requiring repeated exact optimization.   Over the evaluated 24-hour workload, the theoretical Multi-CU relaxation reduces modeled energy consumption by 5.7% relative to the Single-CU baseline. For the Multi-CU case, the proposed heuristic remains within approximately 9.7% of the proposed MILP, demonstrating a favorable trade-off between energy efficiency and computational tractability.",
+      "authors": [
+        "Nguyen Phuc Tran",
+        "Brigitte Jaumard",
+        "Oscar Delgado"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT",
+        "cs.DC",
+        "cs.ET",
+        "cs.PF",
+        "eess.SY"
+      ],
+      "published": "2026-08-25T17:30:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.24841v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Energy-aware placement and migration of CNFs in O-RAN edge",
+      "llm_evidence_cn": "O-RAN边缘中云原生函数的能量感知放置与迁移",
+      "llm_evidence": "O-RAN边缘中云原生函数的能量感知放置与迁移",
+      "canonical_evidence": "O-RAN边缘中云原生函数的能量感知放置与迁移",
+      "llm_tldr_en": "Energy-aware joint placement and migration of cloud-native functions in O-RAN edge cloud, formulated as Mixed-Integer optimization under Single-CU and slice-aware Multi-CU models to reduce energy while meeting processing needs.",
+      "llm_tldr_cn": "面向O-RAN边缘云的云原生函数部署，本文研究能量感知的联合放置与迁移问题，考虑Single-CU和切片感知的Multi-CU两种关联模型。问题被建模为混合整数优化，以在满足时延与服务需求的同时降低能耗。该方法为边缘网络功能部署提供了有效的资源管理策略，有助于提升边缘计算的能效与灵活性。",
+      "llm_tldr": "面向O-RAN边缘云的云原生函数部署，本文研究能量感知的联合放置与迁移问题，考虑Single-CU和切片感知的Multi-CU两种关联模型。问题被建模为混合整数优化，以在满足时延与服务需求的同时降低能耗。该方法为边缘网络功能部署提供了有效的资源管理策略，有助于提升边缘计算的能效与灵活性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    }
+  ]
+}

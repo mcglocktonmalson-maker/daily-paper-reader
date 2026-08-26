@@ -1,0 +1,589 @@
+Title: PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge
+
+URL Source: https://arxiv.org/pdf/2608.20819v1
+
+Published Time: Mon, 24 Aug 2026 00:37:27 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works. 
+
+# PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge 
+
+Uwe Gropengießer ∗ , Sebastian Frenz † , Max M¨ uhlh¨ auser ‡ , 
+
+> ∗ † ‡
+
+Technical University of Darmstadt; Darmstadt, Germany Email: ∗uwe.gropengiesser@tu-darmstadt.de, †sebastian.daniel.frenz@gmail.com, ‡max@informatik.tu-darmstadt.de 
+
+Abstract —Edge nodes are capacity-constrained by design, yet many edge workloads can trade result quality for resource efficiency at runtime. Existing edge pricing mechanisms largely treat requests as fixed-configuration submissions and rarely exploit per-request quality flexibility under overload. We present PRICE, an incentive mechanism that couples a utilization-dependent price signal to per-request quality selection. As utilization increases, rising acceptance prices make resource-intensive variants less likely to be selected, shifting accepted requests toward lighter execution and allowing the node to serve significantly more requests while operating near capacity. Evaluation on real hardware under sustained overload shows that PRICE outperforms both fixed-allocation and dynamic-pricing baselines in accepted throughput and CPU utilization. The results are robust across pricing function families, task-duration distributions, and client populations. Result-quality flexibility is a powerful but underused control dimension for overload management at the edge, and pricing is an effective mechanism to exploit it. 
+
+Index Terms —Edge Computing, Quality of Result, Dynamic Pricing, Resource Management, Approximate Computing 
+
+I. I NTRODUCTION 
+
+Edge computing places computation close to data sources and end users, enabling latency-sensitive applications that cloud deployments cannot serve within tight time budgets [1], [2], [3]. Unlike cloud data centers, edge nodes operate under tight computational and memory constraints [2], [4], [5], [6], and when multiple tenants concurrently offload tasks to the same node, demand can exceed available capacity. The ap-plications driving edge adoption, including autonomous driv-ing [7], industrial monitoring [8], and augmented reality [4], share infrastructure in multi-tenant deployments and submit requests on demand. Independent tenants generate bursty and heterogeneous workloads without coordinating with each other or with the provider, making provider-side resource allocation under dynamic load a central systems challenge. Early approaches relied on baseline scheduling assumptions such as FCFS in M/M/c queueing models [9] or static of-floading schemes with fixed decisions [10]. These are straight-forward to implement but offer no control dimension beyond queueing and rejection once demand approaches capacity. Un-der fluctuating load, queue buildup leads to unstable response times and wasted resources, while static allocation is unable to adapt to the bursty and heterogeneous workloads typical of multi-tenant edge deployments. To cope with these limitations, recent work has introduced economic and game-theoretic mechanisms, including multichoice games with Shapley-value-based cost sharing [11], cyclic games studying mixed co-operation and competition [12], non-cooperative multidimen-sional allocation [13], cooperative formulations for fairness in virtualized infrastructures [14], and market-based pricing mechanisms [15]. Pricing is particularly attractive because it enables decentralized self-selection among competing tenants without requiring explicit coordination [15], [16]. However, these mechanisms treat each request as a fixed-configuration submission, leaving acceptance or rejection as the only control levers regardless of their pricing sophistication. What these approaches overlook is that many edge work-loads can produce results at multiple quality levels with substantially different resource demands. Applications such as object detection [6], [17], video analytics [18], [19], and sensor fusion [8], [20] expose this flexibility at runtime, as do data analytics pipelines more broadly [21], [22], [23]. These workloads expose multiple execution variants that differ in computational demand and achievable result quality. Critically, many of these applications are latency-sensitive and cannot tolerate indefinite queueing or multi-round bidding. Clients must be able to fall back to local execution when offloading fails. PRICE supports this by rejecting non-feasible requests immediately rather than queueing them, preserving predictable response behavior under overload. Ignoring result-quality flex-ibility therefore foregoes a powerful demand-shaping mech-anism that would allow the system to serve more requests immediately rather than deferring or rejecting them outright. We present PRICE (Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge), apricing-based incentive mechanism that couples a utilization-dependent price signal to per-request quality selection. As utilization increases, rising acceptance prices make resource-intensive variants less likely to be selected, while falling utilization makes higher-quality variants reachable again. This self-regulating behavior drives the system toward sustained high utilization near capacity, improves effective throughput, and exposes result quality as an adaptive control dimension under contention, without requiring tenant coordination, work-load models, or prior knowledge of tenant preferences. Following a motivating example (Section II), Section III formalizes the model and incentive perspective. Section IV and Section V present the system architecture and pricing mech-anism. Section VI evaluates PRICE, followed by discussion, related work, and conclusion. 1arXiv:2608.20819v1 [cs.DC] 21 Aug 2026 Edge Node   
+
+> Request YOLOv11n
+> 90% 10% Sensor Data Fusion Animal Detection Weather Service other  Free
+> Resource Utilization Request YOLOv11x
+> 100% Sensor Data Fusion Animal Detection Weather Service other  YOLOv11x
+> Request YOLOv5n
+> 85% 15% Sensor Data Fusion Animal Detection Weather Service other  Free YOLOv11n YOLO v5n 10%
+
+Fig. 1: Motivating example for QoR-aware variant selection at the edge. A traffic congestion detection service switches among three execution variants based on the inter-vehicle time gap ∆t. Sparse traffic ( ∆t > 4 s) allows a lightweight model with low resource demand, while dense traffic ( ∆t ≤ 1.5 s) requires a more accurate, compute-intensive variant. Under high load at the edge node, resource-intensive variants may exceed capacity, illustrating the trade-off between result quality, resource consumption, and available capacity that PRICE addresses through utilization-dependent pricing. II. B ACKGROUND AND MOTIVATING EXAMPLE 
+
+Our work builds on the observation that many edge work-loads can trade result quality for resource efficiency at runtime. We capture this trade-off through Quality of Result (QoR), a normalized quality metric that abstracts domain-specific measures into a common scale. A QoR of 100 % denotes the highest attainable result quality, while 0 % corresponds to complete failure [6]. Domain-specific quality metrics can be mapped to this scale. For example, in computer vision, QoR is often expressed through metrics such as Mean Average Pre-cision (mAP) for object detection [24] or word-level accuracy for text recognition [25]. In contrast, relative error is a common measure in data analytics [18], [21], [23]. In some domains, quality can also be estimated at runtime without ground truth, for example, through approximate analytics techniques in data processing pipelines [18], [21], [22]. This abstraction enables a unified allocation model in which heterogeneous tenants express quality requirements in a comparable form. To place QoR in a broader systems context, we build on approximate computing, which treats result quality as a controllable variable for resource efficiency. Approximate computing provides the fundamental paradigm for deliberately varying QoR to achieve substantial savings in resource usage, execution time, and energy consumption. It describes the con-trolled reduction of computational accuracy when the resulting quality loss is compensated by efficiency gains [26], [27], [28]. In this paper, QoR serves as a normalized percentage-based in-dicator that enables domain-independent comparability across heterogeneous workloads [6], [19]. The key insight is that many edge applications already expose this flexibility through discrete execution variants [29], and that a provider can exploit it as a control dimension for resource management. We use the following video analytics service as a running example, where the application can switch among discrete ex-ecution variants that differ in resource demand and achievable QoR (Fig. 1). This example serves as a conceptual illustration throughout the paper and is not tied to a specific model or dataset. The service detects traffic congestion based on continuous video analysis and estimates the temporal gap between vehicles, denoted by ∆t. As ∆t decreases, traffic density increases, making timely detection more important, which motivates higher sampling rates and more accurate detection methods. When ∆t is larger, the service can re-duce sampling and switch to a less complex variant to save resources. Under dense traffic, visual occlusion increases, and robust detection often requires more compute-intensive models. When a resource-intensive variant is requested and the node is already under load, accepting it may exhaust available capacity, leaving no headroom for other tenants or subsequent requests. For congestion detection, however, fine-grained vehicle classification is not required. The key objective is to identify congestion early enough to trigger warnings or rerouting. It is therefore often sufficient to run a cheaper variant that yields a lower QoR but remains acceptable under resource scarcity. Such runtime switching among variants has been demonstrated in prior systems [6], [19]. We assume that tasks request resources on demand rather than continuously occupying them. The same pattern appears in a wide range of edge applica-tions, and the flexibility it offers is substantial. Object recog-nition and media processing applications expose control knobs that allow trading recognition accuracy for reduced processing time and energy consumption [6], [17], [19]. Industrial moni-toring pipelines balance detection accuracy against processing latency under resource constraints [8], [18], while perception pipelines in connected vehicles trade inference accuracy for computational efficiency to meet real-time constraints [7]. 2Across these settings, applications expose multiple execution variants that differ in achievable QoR, runtime, and resource demand, and the gap between the most and least resource-intensive variants can be substantial. The challenge becomes pronounced on shared edge nodes hosting multiple independent tenants. In a non-cooperative setting, each tenant naturally selects the variant that maximizes its own utility, which can induce correlated demand for high-QoR variants and push aggregate utilization beyond node capacity. The resulting overload leads to longer waiting times, un-stable response behavior, and inefficient use of scarce re-sources, particularly under stochastic arrivals. Systems such as MARQ [6], MobiDiC [19], and MobiQoR [17] select among execution variants within individual applications but provide no admission mechanism for competing tenants on a shared node. A direct empirical comparison would therefore require adding such a policy, while PRICE complements this line of work by coordinating variant selection across tenants through a utilization-dependent price signal. Tenants signal their preferences through bids, and the provider selects the feasible variant with the highest margin score among all bid-acceptable variants, steering the system toward sustained, near-capacity utilization without explicit coordination. Throughout this paper, tenants denote the paying parties that issue requests, 
+
+clients denote the software instances submitting them, and the provider denotes the party that sets acceptance prices and receives the resulting revenue. In our evaluation, each tenant is represented by a single client process. III. P ROBLEM FORMULATION 
+
+We consider an edge environment with limited computa-tional resources, jointly used by multiple independent tenants. Tenants are indexed by t ∈ { 1, . . . , T }. Let I denote the set of resource types (e.g., CPU and RAM). Each edge node provides a capacity ci for every resource i ∈ I.We assume that each tenant t provides a finite set of discrete execution variants Kt. A variant k ∈ K t represents a concrete workload configuration and determines an achievable QoR 
+
+qt,k ∈ [0 , 1] together with a required resource demand vector 
+
+Rt,k for executing the request at that quality. We denote the demand of resource i by Rt,k [i]. Variants may correspond to different model sizes within the same objective (e.g., YOLO11n vs. YOLO11x) or to application configurations such as buffer sizes or image scaling. In the running example from Fig. 1, variants correspond to different detection models and sampling rates used by the congestion-detection pipeline. Since each variant requires multiple resource types, we assume that the provider exposes a single price signal p that applies to the aggregate resource footprint of a request. Multi-resource demands Rt,k are mapped to scalar resource units through an aggregation function ρ(·), where ρ(Rt,k ) denotes the total resource footprint of variant k. In our realization, 
+
+ρ(·) is not computed as an explicit preprocessing step but is realized implicitly through the per-resource marginal cost integrals described in Section V. We further assume that tenants are willing to trade result quality for lower cost or improved execution performance, such as reduced latency or meeting application-specific dead-lines. We model this trade-off through an individual utility function 
+
+Ut(qt,k , p ) = Vt(qt,k ) − p · ρ(Rt,k ),
+
+where Vt(qt,k ) denotes the value derived from achieving the quality level qt,k of variant k, ρ(Rt,k ) denotes the aggregated resource units required for that variant, and p is the unit price per aggregated resource unit. We assume that Vt(·) is strictly increasing with diminishing returns, while Rt,k grows nonlinearly with qt,k .An allocation is feasible if for every resource i ∈ I the aggregate demand of all assigned variants does not exceed the available capacity: 
+
+> T
+
+X
+
+> t=1
+
+Rt,k t [i] ≤ ci ∀i ∈ I. 
+
+This condition describes feasibility in terms of aggregate resource demand, without reference to the runtime utilization state u[i], which is introduced in Section V. We consider a purely non-cooperative setting in which each tenant independently aims to maximize its own utility by trading off achievable QoR against the resource prices it must pay. Tenants encode their preferences through bid values bt,k 
+
+that reflect their willingness to pay for each variant in Kt, as described in Section V. This non-cooperative decision-making can lead to an over-demand situation in which aggregate resource requests exceed capacity, resulting in overload and degraded performance for all tenants. The provider faces the challenge of adapting a utilization-dependent pricing signal to regulate demand and drive the system toward sustained high utilization near ca-pacity. The objective is to convert available capacity into completed work as efficiently as possible while maintaining acceptable quality levels, operating close to capacity, and preserving enough headroom to absorb stochastic arrivals and bursts. Overall, the problem is to design a dynamic, quality-aware pricing mechanism that aligns individual tenant deci-sions with system-level efficiency under stochastic workloads and limited resources. IV. S YSTEM DESIGN AND RUNTIME FLOW 
+
+PRICE is realized as a distributed edge runtime in which tenant-side clients submit tasks with multiple execution vari-ants, while the provider coordinates placement and execution under hard resource constraints. This section introduces the system architecture, the request format, and the runtime inter-action between system components. The detailed pricing and variant selection logic is described in Section V. Figure 2 illustrates the PRICE architecture in a multi-tenant edge environment. Tenant applications, including the traffic congestion detection service from Section II, license plate recognition, anomaly detection, and sensor fusion, expose 3Edge-Side         
+
+> Edge Node Manager
+> Edge Node - A
+> License Plate Recognition Anomaly Detection Sensor Data Fusion Quality of Result knobs:
+> FPS, Res., Model
+> Pricing Controller Request Handler Resource Handler / Monitoring 80% 18% 2% App 1 App 2 App 3 other Free
+> Resource Utilization
+> Edge Node - B
+> Resource Utilization
+> 50% 49% 1% App 4 App 5 other Free
+> AB 1234 AB 1234 Decision Manager Allocation and Heartbeat Messages
+> Legend: Data Flow Control Flow
+> Monitoring / Service Placement Monitoring / Service Placement Payload
+> Traffic Congestion Detection
+
+Fig. 2: PRICE system architecture. Tenant-side clients submit requests containing bids over execution variants. The edge node accepts feasible and price-acceptable variants based on current utilization and capacity, while monitoring feedback drives runtime price adaptation. configurable QoR knobs such as frame rate, resolution, or model choice. These configurations are represented as discrete execution variants with different resource demands and achiev-able QoR. Instead of submitting a single fixed configuration, each request provides multiple variants from which the system selects one at runtime. The figure distinguishes between data flow and control flow. The data flow carries payloads and results between clients and edge nodes, while the control flow comprises system coordination, including state reports, pricing updates, and scheduling decisions. PRICE separates coordination from execution. An Edge Node Manager maintains a global state of available edge nodes, processes incoming requests, and manages the utilization-dependent pricing signal that regulates demand. Within the Edge Node Manager, a Decision Manager com-ponent evaluates incoming bids against the current accep-tance price and selects the variant to execute, as detailed in Section V. Based on telemetry and current resource avail-ability, the manager evaluates feasible execution variants and assigns the selected variant to a suitable node. The edge nodes execute tasks and enforce hard capacity limits by reserving and releasing resources. In our setup, applications are deployed on the nodes as containerized services (e.g., Docker containers or Kubernetes pods) ahead of time, avoiding compilation and distribution overhead at request time. PRICE does not require this deployment model and can operate with any execution environment that supports resource reservation and monitoring. Nodes continuously monitor their resource utilization and report it to the manager via periodic heartbeat messages, which the manager uses to maintain an up-to-date view of available resources across all managed nodes. The manager performs lightweight coordination only. Requests are forwarded immediately, and execution remains decentralized on the edge nodes. The design does not assume a single man-ager instance or a fixed number of managed nodes. Instead, multiple managers can operate concurrently, each responsible for a disjoint subset of edge nodes, allowing the system to scale with deployment size. Client Edge Node Manager ... 
+
+> Request Message
+
+Fig. 3: Request message structure between client and edge node manager. Each bid specifies a variant with its resource requirements and QoR level. Clients submit tasks through a structured request message (Figure 3). Each message contains a Type identifying the task or service to be executed and a Payload carrying the task-specific input data. In addition, the client provides a set of 
+
+Bids . Each bid refers to a concrete execution variant and contains an associated Offer describing the variant’s param-eters, including resource requirements (e.g., CPU and RAM) and QoR-relevant settings. These bids encode the tenant’s willingness to pay (WTP) for the respective variant. This infor-mation enables the provider to evaluate the request under the current system state and either select an appropriate variant or decline the request. Runtime operation is request-driven. Upon receiving a request, the manager evaluates feasible variants under the current capacity situation and forwards the selected variant to an edge node for execution. The node reserves the required resources, executes the task, and releases them upon completion, while continuously reporting utilization. 4V. A PPROACH 
+
+Building on the system architecture described in Section IV, PRICE implements a QoR-aware mechanism for selecting execution variants under hard capacity constraints at the edge. For each request, tenants submit a finite set of execution variants together with bids. On the provider side, the system computes a utilization-dependent price signal and evaluates submitted bids to determine which variant, if any, to execute. If a variant is selected, the corresponding charge is returned in the response. 
+
+A. Bid Submission and Request Construction 
+
+PRICE uses sealed (non-observable) bids at the variant level. Sealed bids prevent tenants from strategically adjusting their offers in response to observed competitor bids and avoid the multiple communication rounds that iterative bid-ding would require. Both properties are essential for latency-sensitive edge applications, where request handling must com-plete within tight time budgets. For each request, the client submits a list of variants, each described by its resource demand profile Rt,k and a bid value bt,k . The server then selects one of the submitted variants based on the current system state, the submitted bids, and the computed acceptance price. Tenants act non-cooperatively, each submitting bids independently without observing server-side prices or other tenants’ bids, and without coordinating with other tenants. Preferences over variants are encoded as bid values derived from a tenant-specific WTP. Bids are derived deterministically from a tenant-specific WTP. We model this WTP via a function Wt(·) that maps a resource demand vector to a monetary bid value. The bid 
+
+bt,k operationalizes the tenant’s preference from Section III through a resource-based WTP function that approximates the value Vt(qt,k ) without requiring knowledge of the server-side price signal. This approximation is valid under the assumption that resource demand Rt,k and achievable QoR qt,k are monotonically related for a given tenant, meaning a variant requiring more resources yields a higher result quality, so WTP for resources serves as a proxy for Vt(qt,k ). For each variant 
+
+k, we obtain 
+
+bt,k = Wt(Rt,k ).
+
+To capture different preference profiles, we use weighted, concave willingness-to-pay functions with weights wi > 0
+
+per resource type i ∈ I:
+
+W low  
+
+> t
+
+(Rt,k ) = X
+
+> i∈I
+
+wi Rt,k [i]3/4,W medium  
+
+> t
+
+(Rt,k ) = X
+
+> i∈I
+
+wi Rt,k [i]1/2,W high  
+
+> t
+
+(Rt,k ) = X
+
+> i∈I
+
+wi Rt,k [i]1/4.
+
+The exponents control the curvature of the WTP functions and, therefore, how bid values change across variants with different resource demands. Since the functions are concave, they model diminishing marginal willingness to pay for additional 
+
+Algorithm 1: Client-side task submission                                          
+
+> Input :Tenant identifier t; set of permissible execution variants Ktwith demands Rt,k ;willingness-to-pay function Wt(·); task type
+> Type ; task payload Payload .
+> 1Bt←[ ]
+> 2foreach k∈ K tdo
+> 3bt,k ←Wt(Rt,k )// deterministic bid value
+> 4Bt←Bt∪ { (k, R t,k , b t,k )}
+> 5end
+> 6resp ←
+> SubmitToManager( RequestMessage {Tenant= t,Type= Type , Payload= Payload , Variants= Bt})
+> 7if resp. status =SUCCESS then
+> 8process result (e.g., task output)
+> 9else
+> 10 handle rejection according to client policy (e.g., execute locally)
+> 11 end
+
+resources. Different WTP levels are represented through the calibrated bid level and resource weights wi, which determine the relative importance of resource types and can be derived from market prices for comparable compute services. This allows tenants to express economically meaningful preferences without knowledge of the server-side pricing function. Algorithm 1 shows the client-side construction of the 
+
+RequestMessage . In addition to Type and Payload , the message contains a list of Bids ; each bid refers to a specific variant and conveys its resource requirements together with the corresponding bid value. Optionally, QoR-related variant parameters can be included if required for execution by the service. 
+
+B. Utilization-Dependent Acceptance Price 
+
+The provider evaluates execution variants relative to the current resource state of the edge node. Let u[i] ∈ [0 , c i]
+
+denote the current utilization of resource i ∈ I, derived from telemetry and ongoing reservations. If a variant k of the submitted request is accepted, utilization increases by an incremental allocation ∆ut,k . In our model, this incremental allocation equals the requested demand: 
+
+∆ut,k [i] = Rt,k [i] ∀i ∈ I. 
+
+The provider computes a utilization-dependent acceptance price P (u, ∆u) as the sum of a base term and a progressive, utilization-dependent component: 
+
+P (u, ∆u) = Cbase ,t,k + Putil (u, ∆u),
+
+where 
+
+Putil (u, ∆u) = X
+
+> i∈I
+
+Z u[i]+∆ u[i]
+
+> u[i]
+
+CM ′ 
+
+> i
+
+(ci, x ) dx. 
+
+The term Cbase ,t,k captures non-congestion-dependent per-request costs, such as orchestration overheads or empirically measured execution costs that depend on the selected vari-ant. The function CM ′ 
+
+> i
+
+(ci, x ) models the marginal cost of 5increasing utilization of resource i at utilization level x. The integral accumulates marginal costs from the current utilization to the post-allocation utilization, yielding a progressive price signal that penalizes allocations close to capacity. The margin score mt,k = Pt,k −Cbase ,t,k isolates the utilization-dependent component by subtracting the variant-specific base cost. Maxi-mizing mt,k among bid-acceptable candidates therefore selects the variant that maximizes the utilization-dependent revenue contribution. We instantiate CM ′ 
+
+> i
+
+(·) using parametric, monotonically increasing function families to capture different curvature characteristics: Linear: CM ′ 
+
+> i
+
+(ci, x ) = ai
+
+ xci
+
+
+
+,
+
+Exponential: CM ′ 
+
+> i
+
+(ci, x ) = ai
+
+
+
+βx/c i − 1
+
+
+
+, β > 1,
+
+Cubic: CM ′ 
+
+> i
+
+(ci, x ) = ai
+
+ xci
+
+3
+
+.
+
+Here, ai > 0 and β > 1 control steepness and curvature. To control the overall price level while preserving the cur-vature of the chosen function family, we introduce a provider-side unit-cost cap vector pcap [i] for i ∈ I. Intuitively, pcap [i]
+
+specifies a target unit price level for resource i, and we use it to calibrate the steepness coefficients ai without changing the functional form of CM ′ 
+
+> i
+
+. We apply pcap as a normalization target by scaling ai such that the utilization-dependent com-ponent of allocating the entire normalized capacity of resource 
+
+i in a single request equals pcap [i] under ci = 1 :
+
+Putil (u, ∆u) = pcap [i],u[i] = 0 , ∆u[i] = 1 ,u[ℓ] = ∆ u[ℓ] = 0 ∀ℓ ∈ I \ { i}.
+
+(Cap) For a given request from tenant t and variant k, the provider computes an acceptance price at the current utilization state 
+
+u. This price represents the provider-side cost signal for allocating the variant’s required resources on top of the current load. Because the incremental allocation equals the requested demand, ∆ut,k = Rt,k , we obtain 
+
+Pt,k = P (u, ∆ut,k ) = Cbase ,t,k + Putil (u, R t,k ).
+
+C. Server-Side Variant Selection 
+
+The provider processes requests sequentially upon arrival and first checks feasibility under hard capacity constraints. For each resource type i ∈ I, it considers the currently available headroom implied by capacity ci and current utilization u[i].A variant k ∈ K t is feasible if 
+
+u[i] + Rt,k [i] ≤ ci ∀i ∈ I. 
+
+If no feasible variant exists, the request is rejected. PRICE does not maintain a server-side request queue. If none of the submitted variants can be executed due to insuffi-cient resources or missing hardware capabilities, the request is rejected immediately. Clients must therefore provide a fallback execution strategy, such as local execution, forwarding to 
+
+Algorithm 2: PRICE processing of an incoming sub-mission 
+
+Input : capacity vector c; current utilization vector u;price function P (u, ∆u); utilization-dependent component Putil (u, ∆u). 
+
+> 1
+
+on receive RequestMessage {Tenant= t, Type, Payload, Variants= Bt} 
+
+> 2
+
+Feasibility:  
+
+> 3
+
+F ← { k | (k, R t,k , b t,k ) ∈ Bt ∧ u[i] + Rt,k [i] ≤ ci ∀i ∈ I } 
+
+> 4
+
+if F = ∅ then  
+
+> 5
+
+Respond( status= FAILURE ,reason= insufficient_capacity ) 
+
+> 6
+
+return  
+
+> 7
+
+end  
+
+> 8
+
+Bid-acceptability and selection:  
+
+> 9
+
+k⋆ ← ⊥ , P ⋆ ← 0, m ⋆ ← −∞  
+
+> 10
+
+foreach k ∈ F do  
+
+> 11
+
+Pt,k ← P (u, R t,k ) 
+
+> 12
+
+if bt,k ≥ Pt,k then  
+
+> 13
+
+mt,k ← Putil (u, R t,k ) 
+
+> 14
+
+if mt,k > m ⋆ then  
+
+> 15
+
+m⋆ ← mt,k , k ⋆ ← k, P ⋆ ← Pt,k  
+
+> 16
+
+end  
+
+> 17
+
+end  
+
+> 18
+
+end  
+
+> 19
+
+if k⋆ = ⊥ then  
+
+> 20
+
+Respond( status= FAILURE ,reason= bid_below_price ) 
+
+> 21
+
+return  
+
+> 22
+
+end  
+
+> 23
+
+Execution:  
+
+> 24
+
+ReserveResources( Rt,k ⋆ ) 
+
+> 25
+
+result ← ExecuteTask( Type, Payload, variant= k⋆) 
+
+> 26
+
+ReleaseResources( Rt,k ⋆ ) 
+
+> 27
+
+Respond( status= SUCCESS , variant= k⋆, price= P ⋆,result=result )
+
+another edge node, or cloud offloading, instead of waiting in an unbounded queue. This reflects the heterogeneous nature of edge environments, where nodes may lack specialized hardware (e.g., GPU accelerators) required by some variants. By avoiding server-side queuing, PRICE allows applications to opportunistically utilize additional edge resources when available while preserving predictable response times under resource scarcity. For each feasible variant, the provider then computes the acceptance price Pt,k . A feasible variant is bid-acceptable if the bid covers the acceptance price: 
+
+bt,k ≥ Pt,k .
+
+Among all feasible and bid-acceptable variants, the provider accepts at most one variant. PRICE ranks candidates by the utilization-dependent margin 
+
+mt,k = Putil (u, R t,k ),
+
+which is equivalent to mt,k = Pt,k − Cbase ,t,k , and selects the candidate with maximal mt,k . If no bid-acceptable variant exists, the request is rejected. This selection maximizes the utilization-dependent revenue contribution among acceptable candidates. 6Algorithm 2 implements this pipeline. We use ⊥ as a sentinel value for k⋆ to indicate that no feasible and bid-acceptable variant was selected; in this case, the request is rejected. Upon acceptance, the selected edge node reserves the resources required by the chosen variant, executes the task, releases the resources upon completion, and returns a 
+
+BidResponse reporting the selected variant, the charged value Pt,k ⋆ , and the task result. 
+
+D. Telemetry Feedback and Self-Regulating Behavior 
+
+The acceptance price is state-dependent and is continuously updated based on the latest telemetry data. Edge nodes pe-riodically report resource utilization, allowing the provider to keep the utilization vector u up to date. As utilization increases, marginal costs CM ′ 
+
+> i
+
+and thus the acceptance price 
+
+P (·) increase, making resource-intensive variants less likely to be bid-acceptable. As utilization decreases, the acceptance price drops, and higher-quality variants become executable again. This self-regulating behavior drives the system toward sustained high utilization near capacity without requiring ex-plicit coordination or prior knowledge of the workload. In this way, PRICE aligns non-cooperative tenant bidding with the provider’s objective of avoiding persistent overload while maintaining high resource utilization. The empirical stability of this behavior is demonstrated in Section VI. VI. E VALUATION 
+
+We evaluate PRICE under sustained overload, where ag-gregate demand continuously exceeds node capacity. This setting reflects the operational scenario that PRICE targets, namely an edge node that must operate close to its resource limits while serving multiple independent tenants with hetero-geneous workloads. Under these conditions, no mechanism can accept all incoming requests, and the relevant question is how efficiently available capacity is converted into completed work and how predictably the system behaves under load. The evaluation analyzes whether pricing-based QoR incentives improve resource utilization, system stability, and adaptive QoR selection compared to static and QoR-unaware baselines. The evaluation is structured around the following research questions. 
+
+RQ1: Throughput and Rejection under Overload. Under sustained overload, how do the accepted throughput and rejec-tion behavior of PRICE compare to the baselines, and how are these outcomes affected by the provider’s unit-cost cap and by the composition of the client population in terms of WTP? 
+
+RQ2: Stability and Resource Utilization. Does PRICE ensure stable operation under overload, reflected in persistently high but controlled CPU utilization without unstable oscilla-tions or collapse? 
+
+RQ3: QoR Adaptation and Monetization. How does PRICE adapt delivered QoR under contention, and how does this adaptation affect provider revenue across client popula-tions with different WTP compositions? Taken together, these research questions examine whether PRICE under overload efficiently converts scarce CPU re-sources into completed work, maintains stable utilization, and uses QoR adaptation as a control dimension under heteroge-neous client WTP profiles. 
+
+A. Test Setup 
+
+Our experimental setup consists of three servers acting as edge nodes, each with 24 CPU cores and 64 GB RAM. Services run as Docker containers for process isolation. Con-tention is, by construction, CPU-driven because variants pri-marily differ in CPU demand; RAM and hardware capabilities still constrain admission, and requests are rejected if no variant fits all resource and capability constraints. We vary the provider-side unit-cost cap pcap [cpu] ∈{1.0, 1.5, 2.0}, which scales the utilization-dependent pricing function as described in Section V-B, while preserving the curvature across the three pricing families. For brevity, we refer to this value as CAP in the following. Clients generate tasks from four application types, each with five discrete execution variants k ∈ { 1, . . . , 5}, where larger k
+
+corresponds to higher QoR and resource consumption. These discrete levels abstract over the normalized QoR scale intro-duced in Section II, with k = 1 corresponding to the lowest acceptable quality and k = 5 to the highest available variant. Resource profiles and default WTP values are summarized in Table I. The default WTP values are calibrated from real mar-ket prices for comparable cloud inference services, following the methodology described in Section V. WTP values for all application types are scaled proportionally according to their default resource demand and task duration, as listed in Table I. Task arrivals follow a Poisson process with exponentially distributed inter-arrival times. Runtime behavior is modeled separately using task durations that are constant ( const ), ex-ponentially distributed ( exp ), or Pareto-distributed ( Pareto ). These durations parameterize submitted application tasks, not the arrival process, and are not used by the server for pricing or feasibility decisions. The server reserves resources according to the selected variant and releases them after execution, while the observed container runtime is logged separately. We evaluate mean durations d ∈ { 15 , 30 , 60 } s with corre-TABLE I: Task types and resource profiles per discrete QoR/variant level k ∈ { 1, . . . , 5} as configured in the client. The default willingness-to-pay is defined for the default variant k = 5 .                                 
+
+> Application Default WTP [$/h] Default RAM [GB] CPU cores per k= 1 .. 5
+> Object detection 6.12 2.02 {0.554 ,0.894 ,1.600 ,2.890 ,3.958 }
+> Sensor fusion 4.59 1.52 {0.500 ,1.000 ,1.800 ,2.500 ,3.200 }
+> NLP preprocessing 3.06 1.02 {0.300 ,0.600 ,1.000 ,1.500 ,2.000 }
+> Anomaly detection 3.82 0.82 {0.800 ,1.500 ,2.500 ,3.500 ,4.500 }
+
+7Offered load Static PRICE (linear) PRICE (exp) PRICE (cubic) Park et al. Capacity bound CAP=1.0 CAP=1.5 CAP=2.0                                                             
+
+> const 0500 1000 1500
+> Runtime [s]
+> 020 40 60 80 100
+> Acceptance ratio  [%] 0500 1000 1500
+> Runtime [s]
+> 020 40 60 80 100
+> Acceptance ratio  [%] 0500 1000 1500
+> Runtime [s]
+> 020 40 60 80 100
+> Acceptance ratio  [%] 0250 500 750 1000 1250 1500 1750
+> Runtime [s]
+> 0.0 0.2 0.4 0.6
+> Throughput [req/s] 0250 500 750 1000 1250 1500 1750
+> Runtime [s]
+> 0.0 0.2 0.4 0.6
+> Throughput [req/s] 0250 500 750 1000 1250 1500 1750
+> Runtime [s]
+> 0.0 0.2 0.4 0.6
+> Throughput [req/s] Pareto 0500 1000 1500
+> Runtime [s]
+> 020 40 60 80 100
+> Acceptance ratio  [%] 0500 1000 1500
+> Runtime [s]
+> 020 40 60 80 100
+> Acceptance ratio  [%] 0500 1000 1500
+> Runtime [s]
+> 020 40 60 80 100
+> Acceptance ratio  [%] 0250 500 750 1000 1250 1500 1750
+> Runtime [s]
+> 0.0 0.2 0.4 0.6
+> Throughput [req/s] 0250 500 750 1000 1250 1500 1750
+> Runtime [s]
+> 0.0 0.2 0.4 0.6
+> Throughput [req/s] 0250 500 750 1000 1250 1500 1750
+> Runtime [s]
+> 0.0 0.2 0.4 0.6
+> Throughput [req/s]
+
+Fig. 4: Acceptance ratio α (top row per distribution) and accepted throughput λacc (bottom row) under sustained overload, mean task duration d = 60 s . Columns vary the server price cap (CAP). Sliding window: w = 600 s .sponding arrival rates and four WTP mixtures (nh, n m, n l) ∈{(4 , 4, 4) , (6 , 3, 3) , (3 , 6, 3) , (3 , 3, 6) }.We compare Static, Park et al. [15], and three PRICE variants with linear, cubic, and exponential pricing functions. Static always executes the highest-quality variant regardless of load. Park et al. [15] introduces utilization-dependent pricing, but treats each request as a fixed-configuration submission, leaving binary accept-or-reject as the only control lever under high load. PRICE introduces result-quality flexibility as an orthogonal control dimension, allowing the pricing signal to shape not only whether a request is served but at which quality level. Per-task outcomes and CPU utilization are logged; all data are publicly available at [30]. 
+
+B. RQ1: Throughput and Rejection under Overload 
+
+RQ1 examines system behavior under sustained overload by measuring the incoming request rate λin , the accepted throughput λacc , and the acceptance ratio α = λacc /λ in .Rates are computed over a sliding window of w = 600 s .The experiments intentionally operate above the edge node’s capacity limits to make overload handling observable. As a result, a large gap between λin and λacc is expected, because any stable mechanism must reject requests once CPU and memory approach capacity rather than accumulating an unbounded backlog. Figure 4 shows the time evolution of α and λacc for mean task duration d = 60 s , covering both constant and Pareto-distributed runtimes across three CAP values. The initial ramp-up phase visible in all curves reflects the sliding window filling up before steady state is reached. The offered load re-mains stable across methods, confirming comparable demand. Differences, therefore, stem from the mechanisms’ rejection behavior and the resulting conversion of offered load into accepted executions. Across all settings, PRICE consistently outperforms both baselines. Under constant durations and CAP = 1 .5, all three PRICE variants reach a steady-state acceptance ratio of ap-proximately 38 –40 % , compared to 5–10 % for Static and 11 –
+
+13 % for Park et al. The throughput gap is similar. Under the same CAP setting, PRICE achieves λacc ≈ 0.26 –0.28 req /s,8Method Duration: const Duration: exp Duration: pareto CAP=1.0 CAP=1.5 CAP=2.0 CAP=1.0 CAP=1.5 CAP=2.0 CAP=1.0 CAP=1.5 CAP=2.0 
+
+α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] α [%] λacc [req/s] 
+
+low-WTP heavy (3,3,6) 
+
+Static 8.8 0.061 6.4 0.045 4.2 0.030 8.2 0.057 4.9 0.034 4.8 0.033 10.2 0.071 6.0 0.042 4.6 0.032 PRICE (linear) 40.1 0.280 38.3 0.267 32.4 0.227 42.6 0.298 37.8 0.264 32.5 0.227 44.4 0.310 39.8 0.278 34.1 0.238 
+
+PRICE (exp) 40.9 0.286 37.3 0.260 32.4 0.226 40.4 0.282 38.1 0.266 32.3 0.226 44.3 0.310 40.8 0.285 33.9 0.237 PRICE (cubic) 40.7 0.284 37.1 0.259 32.4 0.226 38.8 0.271 37.2 0.260 32.0 0.224 43.3 0.303 40.5 0.283 33.7 0.235 Park et al. 13.4 0.094 11.7 0.082 13.3 0.093 12.9 0.090 11.3 0.079 12.0 0.084 10.9 0.076 9.4 0.066 12.2 0.086 
+
+mid-WTP heavy (3,6,3) 
+
+Static 8.9 0.062 5.5 0.038 4.4 0.031 9.4 0.066 6.5 0.045 4.0 0.028 10.5 0.073 7.0 0.049 4.6 0.032 PRICE (linear) 39.3 0.274 40.2 0.281 36.9 0.258 37.9 0.265 40.2 0.281 36.9 0.258 39.3 0.274 41.4 0.289 37.7 0.263 PRICE (exp) 38.3 0.267 39.2 0.274 37.2 0.260 38.5 0.269 40.0 0.279 37.2 0.260 41.1 0.287 40.8 0.285 37.9 0.265 
+
+PRICE (cubic) 38.5 0.269 40.3 0.281 37.4 0.261 39.9 0.279 39.2 0.274 37.2 0.260 39.9 0.279 41.0 0.287 37.8 0.264 Park et al. 13.8 0.096 11.0 0.077 12.1 0.085 11.3 0.079 14.9 0.104 11.4 0.080 13.2 0.092 10.1 0.070 10.5 0.073 
+
+balanced (4,4,4) 
+
+Static 10.0 0.070 5.7 0.040 4.9 0.034 8.7 0.061 5.7 0.040 3.6 0.025 9.7 0.068 7.1 0.050 4.6 0.032 PRICE (linear) 39.5 0.276 37.8 0.264 34.9 0.244 40.5 0.283 38.7 0.270 35.2 0.246 43.3 0.303 37.9 0.265 36.0 0.251 
+
+PRICE (exp) 40.6 0.284 38.2 0.267 35.1 0.245 40.6 0.284 37.9 0.264 34.9 0.244 41.9 0.292 38.6 0.270 35.8 0.250 PRICE (cubic) 37.9 0.265 37.8 0.264 35.5 0.248 39.5 0.276 38.4 0.268 35.2 0.246 40.9 0.286 40.1 0.280 35.9 0.251 
+
+Park et al. 14.0 0.097 12.8 0.090 12.6 0.088 11.6 0.081 12.1 0.084 12.7 0.089 12.3 0.086 13.7 0.096 12.4 0.087 
+
+high-WTP heavy (6,3,3) 
+
+Static 9.2 0.065 4.8 0.034 4.3 0.030 10.2 0.071 5.3 0.037 4.6 0.032 9.9 0.069 7.3 0.051 4.5 0.031 PRICE (linear) 40.7 0.284 39.9 0.279 37.1 0.259 39.1 0.273 39.5 0.276 37.3 0.260 40.7 0.285 40.7 0.285 38.5 0.269 PRICE (exp) 42.0 0.293 39.5 0.276 37.2 0.259 40.9 0.285 38.8 0.271 37.3 0.260 41.3 0.288 40.2 0.281 38.7 0.271 
+
+PRICE (cubic) 41.6 0.290 40.3 0.281 37.4 0.261 42.3 0.296 39.8 0.278 37.1 0.259 43.7 0.305 39.6 0.277 38.8 0.271 
+
+Park et al. 11.2 0.078 12.9 0.090 10.2 0.071 12.7 0.089 12.1 0.084 11.9 0.083 13.0 0.091 11.8 0.082 12.1 0.085 
+
+TABLE II: Steady-state acceptance ratio α [%] and accepted throughput λacc [req/s] under sustained overload. Duration distributions: const, exp, and pareto; mean task duration d = 60 s , CAP ∈ { 1.0/1.5/2.0}, sliding window w = 600 s . Best α
+
+and λacc per CAP in bold. compared to 0.03 –0.05 req /s for Static. This advantage arises because PRICE admits lower-QoR variants when utilization is high, whereas Static insists on a fixed resource footprint and is therefore forced to reject most requests when the node approaches capacity. Park et al. also compute a utilization-dependent price, but treat each request as a fixed-configuration submission. When the acceptance price rises under high load, a request is either accepted at its fixed resource footprint or rejected outright, with no possibility of switching to a lighter variant. This leaves Park et al. with the same binary control lever as Static, explaining why its acceptance rate remains well below that of PRICE. The three PRICE pricing functions—linear, exponential, and cubic—perform comparably in terms of α and λacc . Although individual configurations show small differences of a few percentage points, the ranking against both baselines remains unchanged. This indicates that the dominant factor is the presence of QoR-aware variant selection itself rather than the specific curvature of the pricing curve. The provider-side unit-cost cap CAP has a clear and system-atic effect. Raising CAP from 1.0 to 2.0 increases the dynamic range of the pricing signal, which makes the mechanism more selective with respect to submitted bids. Under constant durations, PRICE’s acceptance ratio shifts from roughly 40 % 
+
+at CAP = 1.0 to 32 –37 % at CAP = 2.0, indicating that a higher cap makes the acceptance price more selective and rejects a larger share of low-bid requests. This behavior is consistent across all WTP mixture configurations shown in Table II, where the ranking of mechanisms is preserved regardless of whether the population is dominated by high-, medium-, or low-WTP tenants. Comparing constant and Pareto-distributed task durations Static PRICE (linear) PRICE (exp) PRICE (cubic) Park et al. 
+
+Duration: const Duration: exp Duration: Pareto 0 200 400 600 800 1000 1200 1400 1600 1800                   
+
+> Runtime [s]
+> 020 40 60 80 100
+> CPU utilization [%] 0200 400 600 800 1000 1200 1400 1600 1800
+> Runtime [s]
+> 020 40 60 80 100
+> CPU utilization [%] 0200 400 600 800 1000 1200 1400 1600 1800
+> Runtime [s]
+> 020 40 60 80 100
+> CPU utilization [%]
+
+Fig. 5: CPU utilization over time under sustained overload, mean task duration d = 30 s , CAP = 1 .5. PRICE stabilizes utilization at a high controlled level across all three duration distributions, while Static remains well below capacity due to its high rejection rate. Park et al. achieves comparable utilization but at a significantly lower acceptance ratio, as shown in Table II. 9Static PRICE (linear) PRICE (exp) PRICE (cubic) Park et al. High WTP Medium WTP Low WTP 12345Selected variant level high-WTP heavy (6,3,3) High WTP Medium WTP Low WTP balanced (4,4,4) High WTP Medium WTP Low WTP mid-WTP heavy (3,6,3) High WTP Medium WTP Low WTP low-WTP heavy (3,3,6) Fig. 6: Mean selected variant level per WTP group and population mixture under sustained overload ( d = 30 s , all CAP values and duration distributions aggregated). Bars show the mean, error bars indicate one standard deviation, markers ( ▽/△) denote observed minimum and maximum. shows that heavy-tailed runtime variability changes contention dynamics through long-running tasks. Nevertheless, PRICE maintains a substantial throughput advantage over both base-lines across all CAP values and WTP compositions, confirm-ing that the mechanism is robust to heavy-tailed service-time distributions and heterogeneous client populations. 
+
+C. RQ2: Stability and Resource Utilization 
+
+RQ2 examines whether PRICE maintains stable CPU uti-lization near capacity under sustained overload, and how this utilization relates to the acceptance behavior observed in RQ1. Figure 5 shows CPU utilization over time for mean task duration d = 30 s , which exposes the feedback dynamics more clearly than longer durations because resources are released more frequently, allowing the pricing signal to react within a shorter observation window. Across all three distributions, all three PRICE variants stabilize CPU utilization in the range of 70 –85 % after an initial ramp-up phase of roughly 
+
+200 s , and maintain this level without oscillations or sudden drops throughout the remaining observation window. Static, by contrast, settles near 35 –45 % , which at first glance may appear as controlled behavior but must be interpreted in conjunction with the acceptance ratios from RQ1. Static achieves this utilization level not through efficient scheduling but through the inverse. It accepts a small fraction of incoming requests at full resource demand, leaving the majority of capacity idle. Park et al. reaches utilization levels comparable to PRICE under some configurations, yet Table II shows that this comes with an acceptance ratio of only 11 –15 % , whereas PRICE simultaneously achieves 38 –42 % . The utilization figures of Park et al. are therefore driven by the same effect as Static: few accepted tasks with large, fixed resource footprints occupy the node, while the majority of demand is rejected. PRICE, in contrast, fills available capacity by accepting many tasks whose resource footprints are continuously shaped by the pricing signal, allowing lower-QoR variants under high load to sustain throughput without exceeding capacity. The feedback loop between utilization and acceptance price is visible in the ramp-up behavior. As the node fills during the first 200 s , the acceptance price rises, and variant selection shifts toward lighter variants, allowing the system to continue accepting requests rather than rejecting them. Once steady state is reached, the pricing signal holds the operating point near capacity without manual tuning or explicit coordination. This behavior is consistent across all three duration distribu-tions, confirming that the feedback mechanism is robust to variance introduced by Pareto-distributed task durations. 
+
+D. RQ3: QoR Adaptation and Monetization 
+
+RQ3 examines whether PRICE adapts result quality under contention and whether this adaptation translates into measur-able provider revenue. Figure 6 shows the mean selected variant level per WTP group, aggregated over all CAP values and duration distribu-tions with d = 30 s. Note that the figure covers only accepted requests. Rejected requests, which occur more frequently for low-WTP clients under high load, are not reflected in the variant-level distributions. Across all population compositions, the mean selected variant level is similar across WTP groups for all PRICE variants, indicating that the pricing mechanism does not impose a strict quality cutoff based on WTP alone. Static and Park et al. fix execution at the highest variant regardless of WTP, because neither mechanism ties resource selection to client-side WTP signals. The QoR adaptation visible in Figure 6 indicates WTP-based service differentiation rather than fairness-guaranteed allocation; it is reported at WTP-group level and is not engineered through explicit quotas or fairness constraints. While this paper uses discrete execution variants, the same principle applies to continuous quality ranges as demonstrated in systems such as MARQ [6], where QoR is expressed as a normalized percentage. The WTP values used in the evaluation, summarized in Table I, are expressed in dollars per hour and calibrated from real market prices for comparable inference services. Bid values per request are derived from these hourly rates via Wt(·), as described in Section V. Revenue totals and rates should be interpreted relative to mechanisms rather than as absolute monetary values. Table III reports the corresponding provider revenue. Across all WTP compositions and duration distributions, all three 10 Method Duration: const Duration: exp Duration: pareto CAP=1.0 CAP=1.5 CAP=2.0 CAP=1.0 CAP=1.5 CAP=2.0 CAP=1.0 CAP=1.5 CAP=2.0                                                                                                                                                                                                                                                                                                                                                                                          
+
+> rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$] rate [$/s] total [$]
+> low-WTP heavy (3,3,6)
+> Static 0.0033 9.19 0.0019 5.04 0.0012 3.38 0.0033 9.03 0.0019 5.13 0.0011 3.13 0.0033 9.14 0.0020 5.42 0.0011 3.02 PRICE (linear) 0.0063 16.83 0.0062 17.87 0.0054 15.56 0.0061 16.99 0.0062 18.08 0.0051 15.37 0.0058 15.70 0.0068 17.65 0.0056 15.39 PRICE (exp) 0.0060 16.47 0.0064 17.84 0.0053 15.67 0.0061 17.13 0.0063 17.85 0.0054 15.71 0.0056 15.98 0.0068 17.80 0.0055 15.17 PRICE (cubic) 0.0057 15.41 0.0064 17.92 0.0055 15.57 0.0059 16.06 0.0062 17.86 0.0053 15.23 0.0059 15.95 0.0069 18.27 0.0059 15.83 Park et al. 0.0058 16.34 0.0058 16.30 0.0058 16.33 0.0058 16.73 0.0061 15.92 0.0058 15.83 0.0053 16.04 0.0057 15.57 0.0056 16.14
+> mid-WTP heavy (3,6,3)
+> Static 0.0032 8.93 0.0017 5.04 0.0012 3.24 0.0033 8.90 0.0022 5.48 0.0012 3.38 0.0032 8.78 0.0020 5.01 0.0011 3.14 PRICE (linear) 0.0055 15.68 0.0073 20.44 0.0064 18.53 0.0059 16.99 0.0072 20.40 0.0064 18.40 0.0058 16.20 0.0078 21.26 0.0065 18.66 PRICE (exp) 0.0054 14.92 0.0077 21.25 0.0066 19.23 0.0062 17.19 0.0073 20.29 0.0064 18.91 0.0055 15.10 0.0077 20.45 0.0065 18.75 PRICE (cubic) 0.0059 15.89 0.0075 20.75 0.0064 18.24 0.0064 16.60 0.0071 20.42 0.0067 19.20 0.0057 15.92 0.0072 20.49 0.0065 18.83
+> Park et al. 0.0059 16.21 0.0057 15.94 0.0063 16.57 0.0063 15.91 0.0058 15.96 0.0058 15.63 0.0061 16.50 0.0062 16.41 0.0061 16.49
+> balanced (4,4,4)
+> Static 0.0037 9.55 0.0019 5.27 0.0014 3.48 0.0033 9.14 0.0020 5.08 0.0011 3.23 0.0033 9.30 0.0020 5.02 0.0014 3.45 PRICE (linear) 0.0060 16.56 0.0072 20.58 0.0064 18.18 0.0066 17.72 0.0073 20.74 0.0063 18.43 0.0059 16.54 0.0079 20.42 0.0065 18.15
+> PRICE (exp) 0.0061 16.43 0.0073 20.45 0.0063 18.63 0.0061 16.91 0.0071 20.35 0.0064 18.28 0.0065 17.70 0.0075 19.95 0.0066 17.97 PRICE (cubic) 0.0060 16.82 0.0072 20.34 0.0064 18.73 0.0063 16.98 0.0071 20.41 0.0063 18.51 0.0063 16.56 0.0073 20.20 0.0064 17.98 Park et al. 0.0057 16.01 0.0057 16.01 0.0057 16.55 0.0059 15.98 0.0059 16.36 0.0058 16.16 0.0055 15.78 0.0059 15.64 0.0059 15.49
+> high-WTP heavy (6,3,3)
+> Static 0.0034 9.36 0.0019 5.26 0.0012 3.37 0.0033 9.35 0.0020 5.09 0.0012 3.41 0.0033 8.68 0.0019 5.26 0.0011 3.14 PRICE (linear) 0.0058 15.83 0.0081 22.42 0.0073 20.82 0.0059 16.50 0.0080 23.04 0.0075 21.11 0.0060 16.35 0.0081 22.04 0.0077 20.75
+> PRICE (exp) 0.0061 16.75 0.0079 22.60 0.0075 20.84 0.0061 16.50 0.0078 22.11 0.0072 20.81 0.0056 15.03 0.0080 22.29 0.0075 20.30 PRICE (cubic) 0.0060 16.62 0.0081 22.74 0.0072 20.56 0.0061 16.97 0.0079 22.48 0.0076 21.24 0.0058 16.58 0.0081 21.99 0.0076 20.37 Park et al. 0.0060 16.26 0.0058 15.94 0.0058 16.13 0.0065 16.20 0.0062 15.95 0.0058 16.30 0.0053 14.86 0.0058 16.01 0.0065 17.27
+
+TABLE III: Steady-state revenue rate [$/s] and total revenue [$] per method, WTP mixture, and task-duration distribution. 
+
+d = 30 s , CAP ∈ { 1.0, 1.5, 2.0}, window w = 600 s .PRICE pricing functions generate substantially higher rev-enue rates and totals than Static. The revenue advantage is most pronounced in the high-WTP-heavy configuration with CAP = 1.5, where PRICE (linear) achieves a total revenue of up to $23.04 compared to about $5 for Static in the corresponding settings. The CAP value controls the revenue-throughput trade-off: lower caps admit more requests at lower prices, whereas higher caps increase selectivity. In the evaluated settings, the intermediate cap CAP = 1.5
+
+often yields the highest total revenue. Under the mid-WTP-heavy composition and CAP = 1 .5, PRICE generates revenue consistently in the range of $20.3–$21.3, roughly four times the Static baseline. Park et al. achieves comparable revenue rates to PRICE in some configurations, but this is driven by accepting fewer requests at a fixed high-QoR footprint rather than by adaptive QoR differentiation, as the acceptance ratios in Table II confirm. Taken together, these results demonstrate that PRICE substantially improves provider revenue compared to Static and non-QoR-aware mechanisms. The revenue gains are driven by higher acceptance rates rather than by per-WTP quality differentiation, which remains moderate in the aggregated view. VII. D ISCUSSION 
+
+PRICE demonstrates that utilization-dependent pricing is a sufficient control signal for self-organizing resource manage-ment in shared edge environments, without requiring cooper-ative tenants, multi-round negotiation, or prior knowledge of the workload. 
+
+A. Robustness Under Execution Variability 
+
+PRICE maintains stability even when actual resource con-sumption deviates from declared demand. In our evaluation, task durations follow a stochastic distribution around the con-figured mean, causing transient deviations between reserved and actually consumed resources. The feedback mechanism corrects the operating point based on current reservations and observed runtime behavior rather than relying solely on nom-inal task parameters, ensuring convergence toward capacity despite such variability. This robustness extends to imperfect resource declarations in general. In practice, actual CPU and memory consumption may also deviate from declared demand due to input variability or runtime scheduling effects, and the feedback mechanism absorbs these deviations without requiring declaration accuracy. Future work may further strengthen this robustness through lightweight demand forecasting. Recent studies [5], [31] demonstrate that learning-based and time-series models can accurately estimate utilization trends, which would comple-ment the market mechanism by improving bid realism and reducing transient overload during demand spikes. 
+
+B. Design Scope and Limitations 
+
+The three pricing functions evaluated produce comparable throughput and acceptance behavior across all tested configu-rations. This indicates that QoR-aware variant selection is the dominant factor, while pcap mainly controls selectivity under load by decoupling the price level from the functional form. Future work includes finer-grained sensitivity analysis of β,online cap calibration, and coordinating currently local price signals across managers for cross-node load balancing. 11 PRICE deliberately rejects non-feasible and non-bid-acceptable requests immediately instead of providing accep-tance guarantees through server-side queuing. This preserves predictable response times and allows latency- or safety-relevant clients to react without queueing delay, but strict guarantees for high-priority requests require additional mech-anisms such as reservation-based control or policy-driven resource pools for mission-critical tasks as envisioned by democratic computing [32]. Device mobility and network variability affect end-to-end edge behavior but are outside the allocation mechanism studied here. Similarly, PRICE does not yet model tenant-level fairness constraints or strategic repeated bidding, both of which remain future work. VIII. R ELATED WORK 
+
+QoR-aware execution. Approximate computing estab-lishes result quality as a controllable variable for re-source efficiency [26], [28]. Loop perforation [33] and mo-bile approximate-computing systems [34] expose accuracy-resource variants related to PRICE’s variant model. Mo-biDiC [19] identifies approximable task segments offline and selects among them at runtime to trade accuracy for reduced energy and latency. MARQ [6] extends this to distributed AI microservice chains under multi-criteria constraints. Mo-biQoR [17] incorporates discrete QoR levels into mobile edge offloading to jointly minimize energy and response time. Zeta [35] schedules partial execution within one service, while Ubora [36] uses answer quality for online admission control. These systems treat variant selection or quality-aware admis-sion as a service-internal optimization problem and do not address how competing tenants sharing a capacity-constrained node should be admitted and differentiated. PRICE couples the variant model to per-variant bids and a utilization-dependent acceptance price, making variant selection a market outcome rather than a centralized decision. 
+
+Pricing in MEC and edge systems. Dynamic pricing for edge resources has been studied extensively, yet none of the existing work couples pricing to per-request execution quality. Park et al. [15] derive a utilization-dependent price from marginal cost integrals over a supply curve and target a market equilibrium near capacity. This is structurally the closest prior work to PRICE: both use rising prices as negative feedback under high utilization. The critical gap is that Park et al. treat each request as a fixed-configuration submission, leaving acceptance or rejection as the only control levers. PRICE ap-plies the same feedback loop across a per-request portfolio of QoR variants, turning contention into a variant-selection signal rather than a binary gate. Baek et al. [37] compare three pricing schemes for IoT edge environments and analyze their revenue-fairness trade-offs at equilibrium, but without any coupling to execution quality. T¨ ut¨ unc¨ uo˘ glu et al. [38] and Huang et al. [39] frame price setting as a sequential decision problem in serverless and server-configuration settings, respectively. Wang et al. [40] and Zheng and Tan [41] study decentralized user responses to dynamic prices via mean-field games and reinforcement learning. Han et al. [42], and Liao et al. [43] model server-side price leadership using Stackelberg games that incorporate user energy and offloading costs. Habiba et al. [44] and Bahreini et al. [45] provide formal mechanism-design guarantees through repeated auctions and envy-free allocation rules. In all of these works, price regulates the volume of admitted work while the quality of each request remains fixed. To the best of our knowledge, PRICE is the first mechanism in this line to couple utilization-dependent pricing with per-request execution-quality selection under overload. 
+
+Prices as feedback and incentive signals. Kelly et al. [16] show that shadow prices support proportionally fair allocations and network stability under congestion, motivating utilization-dependent prices as negative feedback in resource-constrained systems. Chi et al. [46] apply this perspective to cloud in-frastructure, tying prices to resource utilization to improve both revenue and fairness. Wang et al. [47] use pricing as an incentive mechanism in federated learning to correct client availability bias. PRICE transfers the feedback-pricing idea into an edge runtime that combines it with QoR-variant bids, so that a single continuous signal simultaneously governs admission and quality selection under contention. IX. C ONCLUSION 
+
+This paper presented PRICE, a pricing-based incentive mechanism for QoR-aware resource allocation at the edge. By coupling a utilization-dependent price signal with per-request variant selection, PRICE aligns individual tenant bids with provider-level efficiency objectives without requiring tenant coordination or prior knowledge of demand. As utilization increases, rising prices make resource-intensive variants less likely to be bid-acceptable, causing the provider to select lighter submitted variants and driving the system toward sustained high utilization near capacity. Evaluation under sustained overload demonstrates that PRICE accepts significantly more requests than static and dynamic pricing baselines, stabilizes CPU utilization at a high controlled level, and uses QoR adaptation as a con-trol dimension under contention. These properties are robust across pricing function families, task-duration distributions, and heterogeneous client WTP profiles, and emerge without explicit fairness constraints, workload models, or coordination protocols. Beyond the immediate results, PRICE establishes a broader principle. Result-quality flexibility is a powerful and underex-plored control dimension for resource management in shared edge environments. Treating QoR as an explicit economic variable allows demand peaks to be absorbed through quality adaptation rather than outright rejection, opening a productive direction for future work on self-organizing, incentive-aware edge infrastructure. REMARKS 
+
+For the purpose of editing, we used OpenAI GPT-5.5, and Grammarly. 12 REFERENCES [1] W. Shi, J. Cao, Q. Zhang, Y. Li, and L. Xu, “Edge Computing: Vision and Challenges,” IEEE Internet of Things Journal , vol. 3, no. 5, pp. 637–646, 2016. DOI : 10.1109/JIOT.2016.2579198 [2] M. Satyanarayanan, “The emergence of edge computing,” Computer ,vol. 50, no. 1, pp. 30–39, 2017. DOI : 10.1109/MC.2017.9 [3] B. Charyyev, E. Arslan, and M. H. Gunes, “Latency Comparison of Cloud Datacenters and Edge Servers,” in Global Communications Conference , ser. GLOBECOM, IEEE, 2020, pp. 1–6. DOI : 10.1109/ GLOBECOM42002.2020.9322406 [4] J. Gedeon, F. Brandherm, R. Egert, T. Grube, and M. M¨ uhlh¨ auser, “What the Fog? Edge Computing Revisited: Promises, Applications and Future Challenges,” IEEE Access , vol. 7, pp. 152 847–152 878, 2019. DOI : 10.1109/ACCESS.2019.2948399 [5] S. Pradhan, S. Tripathy, and R. Matam, “Towards optimal edge resource utilization: Predictive analytics and reinforcement learning for task offloading,” Internet of Things , vol. 26, p. 101 147, 2024. 
+
+> DOI
+
+: 10.1016/j.iot.2024.101147 [6] U. Gropengießer, E. Dietz, F. Brandherm, A. Doula, O. Abboud, X. Xiao, and M. M¨ uhlh¨ auser, “MARQ: Engineering Mission-Critical AI-Based Software with Automated Result Quality Adaptation,” in Inter-national Conference on Software Engineering , ser. ICSE, IEEE/ACM, 2025, pp. 1934–1946. DOI : 10.1109/ICSE55347.2025.00182 [7] S. Grigorescu, B. Trasnea, T. Cocias, and G. Macesanu, “A survey of deep learning techniques for autonomous driving,” Journal of Field Robotics , vol. 37, no. 3, pp. 362–386, 2020. DOI : 10.1002/rob.21918 [8] M. V. Ngo, T. Luo, and T. Q. S. Quek, Adaptive Anomaly Detection for Internet of Things in Hierarchical Edge Computing: A Contextual-Bandit Approach , arXiv:2108.03872 [cs], 2021. DOI : 10.48550/arXiv. 2108.03872 [9] M. Jia, J. Cao, and W. Liang, “Optimal Cloudlet Placement and User to Cloudlet Allocation in Wireless Metropolitan Area Networks,” 
+
+IEEE Transactions on Cloud Computing , vol. 5, no. 4, pp. 725–737, 2017. DOI : 10.1109/TCC.2015.2449834 [10] Y. Zhang, D. Niyato, and P. Wang, “Offloading in Mobile Cloudlet Systems with Intermittent Connectivity,” IEEE Transactions on Mo-bile Computing , vol. 14, no. 12, pp. 2516–2529, 2015. DOI : 10.1109/ TMC.2015.2405539 [11] Y. Li and T. Lan, “Multichoice Games for Optimizing Task Assign-ment in Edge Computing,” in Global Communications Conference ,ser. GLOBECOM, IEEE, 2018, pp. 1–7. DOI : 10.1109/GLOCOM. 2018.8648006 [12] S. Ma, S. Guo, K. Wang, W. Jia, and M. Guo, “A Cyclic Game for Joint Cooperation and Competition of Edge Resource Alloca-tion,” in International Conference on Distributed Computing Systems ,ser. ICDCS, IEEE, 2019, pp. 503–513. DOI : 10.1109/ICDCS.2019. 00057 [13] D. Ye and J. Chen, “Non-cooperative games on multidimensional resource allocation,” Future Generation Computer Systems , vol. 29, no. 6, pp. 1345–1352, 2013. DOI : 10.1016/j.future.2013.02.004 [14] S. Kim, “Cooperative Game-Based Virtual Machine Resource Alloca-tion Algorithms in Cloud Data Centers,” Mobile Information Systems ,vol. 2020, pp. 1–11, 2020. DOI : 10.1155/2020/9840198 [15] S. Park, S. Bae, J. Lee, and Y. Sung, “Real-Time Dynamic Pricing for Edge Computing Services: A Market Perspective,” IEEE Access ,vol. 12, pp. 134 754–134 769, 2024. DOI : 10.1109/ACCESS.2024. 3462499 [16] F. Kelly, A. Maulloo, and D. Tan, “Rate Control for Communica-tion Networks:Shadow Prices, Proportional Fairness and Stability,” 
+
+Journal of the Operational Research Society , vol. 49, 1998. DOI :10.1057/palgrave.jors.2600523 [17] Y. Li, Y. Chen, T. Lan, and G. Venkataramani, “MobiQoR: Pushing the Envelope of Mobile Edge Computing Via Quality-of-Result Op-timization,” in International Conference on Distributed Computing Systems , ser. ICDCS, IEEE, 2017, pp. 1261–1270. DOI : 10 . 1109 / ICDCS.2017.54 [18] Z. Wen, D. L. Quoc, P. Bhatotia, R. Chen, and M. Lee, “ApproxIoT: Approximate Analytics for Edge Computing,” in International Con-ference on Distributed Computing Systems , ser. ICDCS, IEEE, 2018, pp. 411–421. DOI : 10.1109/ICDCS.2018.00048 [19] P. Pandey and D. Pompili, “MobiDiC: Exploiting the Untapped Potential of Mobile Distributed Computing via Approximation,” in 
+
+International Conference on Pervasive Computing and Communica-tions , ser. PerCom, vol. 38, IEEE, 2016, pp. 1–9. DOI : 10 . 1109 / PERCOM.2016.7456515 [20] A. Younis, B. Qiu, and D. Pompili, “QLRan: Latency-Quality Trade-offs and Task Offloading in Multi-node Next Generation RANs,” in 
+
+Annual Conference on Wireless On-demand Network Systems and Services Conference , ser. WONS, IEEE, 2021, pp. 1–8. DOI : 10 . 23919/WONS51326.2021.9415574 [21] I. Goiri, R. Bianchini, S. Nagarakatte, and T. D. Nguyen, “Approx-Hadoop: Bringing Approximations to MapReduce Frameworks,” in 
+
+International Conference on Architectural Support for Programming Languages and Operating Systems , ser. 4, vol. 50, ACM, 2015, pp. 383–397. DOI : 10.1145/2775054.2694351 [22] D. L. Quoc, R. Chen, P. Bhatotia, C. Fetzer, V. Hilt, and T. Strufe, “StreamApprox: Approximate computing for stream analytics,” in 
+
+ACM/IFIP/USENIX Middleware Conference , ACM, 2017, pp. 185– 197. DOI : 10.1145/3135974.3135989 [23] G. Hu, S. Rigo, D. Zhang, and T. Nguyen, “Approximation with Error Bounds in Spark,” in International Symposium on Modeling, Anal-ysis, and Simulation of Computer and Telecommunication Systems ,ser. MASCOTS, IEEE, 2019, pp. 61–73. DOI : 10.1109/MASCOTS. 2019.00017 [24] R. Padilla, S. L. Netto, and E. A. B. Da Silva, “A Survey on Per-formance Metrics for Object-Detection Algorithms,” in International Conference on Systems, Signals and Image Processing , ser. IWSSIP, IEEE, 2020, pp. 237–242. DOI : 10.1109/IWSSIP48289.2020.9145130 [25] J. Baek, G. Kim, J. Lee, S. Park, D. Han, S. Yun, S. J. Oh, and H. Lee, “What Is Wrong With Scene Text Recognition Model Comparisons? Dataset and Model Analysis,” IEEE/CVF International Conference on Computer Vision , ICCV, pp. 4714–4722, 2019. DOI : 10.1109/ICCV. 2019.00481 [26] S. Mittal, “A Survey of Techniques for Approximate Computing,” 
+
+ACM Computing Surveys , vol. 48, no. 4, pp. 1–33, 2016. DOI : 10. 1145/2893356 [27] V. Leon, M. A. Hanif, G. Armeniakos, X. Jiao, M. Shafique, K. Pekmestzi, and D. Soudris, “Approximate Computing Survey, Part I: Terminology and Software & Hardware Approximation Techniques,” 
+
+ACM Comput. Surv. , vol. 57, no. 7, pp. 1–36, 2025. DOI : 10.1145/ 3716845 [28] W. Liu, F. Lombardi, and M. Schulte, “Approximate Computing: From Circuits to Applications,” Proceedings of the IEEE , vol. 108, no. 12, pp. 2103–2107, 2020. DOI : 10.1109/JPROC.2020.3033361 [29] J. Gedeon, M. Wagner, K. Skaisgiris, F. Brandherm, and M. M¨ uhlh¨ auser, “Chameleons on Cloudlets: Elastic Edge Computing Through Microservice Variants,” CoRR , vol. abs/2105.10355, 2021, arXiv: 2105.10355. DOI : 10.48550/arXiv.2105.10355 [30] U. Gropengießer and S. D. Frenz, Artifacts - PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge , 2026. DOI : https://doi.org/10.5281/zenodo.21965046 [31] S. R. Behera, N. Panigrahi, S. K. Bhoi, K. S. Sahoo, N. Z. Jhanjhi, and R. M. Ghoniem, “Time Series-Based Edge Resource Prediction and Parallel Optimal Task Allocation in Mobile Edge Computing Environment,” Processes , vol. 11, no. 4, 2023. DOI : 10 . 3390 / pr11041017 [32] M. M¨ uhlh¨ auser, N. Alexopoulos, U. Gropengießer, K. Razavi, and L. Wang, “Towards Democratic Computing,” in From Multimedia Communications to the Future Internet: Essays Dedicated to Ralf Steinmetz on the Occasion of His Retirement , S. Schulte and B. Kold-ehofe, Eds., Cham: Springer Nature Switzerland, 2024, pp. 245–265, 
+
+> ISBN
+
+: 978-3-031-71874-8. DOI : 10.1007/978-3-031-71874-8 17 [33] S. Sidiroglou-Douskos, S. Misailovic, H. Hoffmann, and M. Rinard, “Managing performance vs. accuracy trade-offs with loop perfora-tion,” in Proceedings of the 19th ACM SIGSOFT symposium and the 13th European conference on Foundations of software engineering ,ser. ESEC/FSE ’11, New York, NY, USA: ACM, 2011, pp. 124–134, 
+
+> ISBN
+
+: 978-1-4503-0443-6. DOI : 10.1145/2025113.2025133 [34] T. Moreau, A. Sampson, and L. Ceze, “Approximate Computing: Making Mobile Systems More Efficient,” IEEE Pervasive Computing ,vol. 14, no. 2, pp. 9–13, 2015, ISSN : 1558-2590. DOI : 10.1109/MPRV. 2015.25 [35] Y. He, S. Elnikety, J. Larus, and C. Yan, “Zeta: Scheduling interactive services with partial execution,” en, in Proceedings of the Third ACM Symposium on Cloud Computing , ser. SOCC, San Jose California: ACM, 2012, pp. 1–14. DOI : 10.1145/2391229.2391241 
+
+13 [36] J. Kelley, C. Stewart, N. Morris, D. Tiwari, Y. He, and S. Elnikety, “Measuring and Managing Answer Quality for Online Data-Intensive Services,” in IEEE International Conference on Autonomic Comput-ing , 2015, pp. 167–176. DOI : 10.1109/ICAC.2015.33 [37] B. Baek, J. Lee, Y. Peng, and S. Park, “Three Dynamic Pricing Schemes for Resource Allocation of Edge Computing for IoT En-vironment,” IEEE Internet of Things Journal , vol. 7, no. 5, pp. 4292– 4303, 2020. DOI : 10.1109/JIOT.2020.2966627 [38] F. T¨ ut¨ unc¨ uo˘ glu, A. Ben-Ameur, G. D´ an, A. Araldo, and T. Chahed, “Dynamic Time-of-Use Pricing for Serverless Edge Computing with Generalized Hidden Parameter Markov Decision Processes,” in Inter-national Conference on Distributed Computing Systems , ser. ICDCS, IEEE, 2024, pp. 668–679. DOI : 10.1109/ICDCS60910.2024.00068 [39] X. Huang, T. Huang, W. Zhang, C. K. Yeo, S. Zhao, and G. Zhang, “Pricing Optimization in MEC Systems: Maximizing Resource Uti-lization Through Joint Server Configuration and Dynamic Operation,” 
+
+IEEE Transactions on Mobile Computing , vol. 23, no. 5, pp. 5863– 5879, 2024. DOI : 10.1109/TMC.2023.3315334 [40] X. Wang, J. Ye, and J. C. Lui, “Decentralized Scheduling and Dy-namic Pricing for Edge Computing: A Mean Field Game Approach,” 
+
+IEEE/ACM Transactions on Networking , vol. 31, no. 3, pp. 965–978, 2023. DOI : 10.1109/TNET.2022.3204698 [41] L. Zheng and L. Tan, “A decentralized scheme for multi-user edge computing task offloading based on dynamic pricing,” Peer-to-Peer Networking and Applications , vol. 18, no. 2, p. 91, 2025. DOI : 10. 1007/s12083-025-01904-1 [42] X. Han, Z. Liao, and X. Tang, “Pricing-Based Task Offloading Con-sidering User Energy Consumption in MEC System,” in International Symposium on Parallel and Distributed Processing with Applications ,ser. ISPA, IEEE, 2024, pp. 1911–1916. DOI : 10 . 1109 / ISPA63168 . 2024.00260 [43] Z. Liao, X. Han, X. Tang, and C. Feng, “An Adaptable Pricing-Based Resource Allocation Scheme Considering User Offloading Needs in Edge Computing,” IEEE Internet of Things Journal , vol. 12, no. 1, pp. 582–594, 2025. DOI : 10.1109/JIOT.2024.3464641 [44] U. Habiba, S. Maghsudi, and E. Hossain, “A Repeated Auction Model for Load-Aware Dynamic Resource Allocation in Multi-Access Edge Computing,” IEEE Transactions on Mobile Computing , vol. 23, no. 7, pp. 7801–7817, 2024. DOI : 10.1109/TMC.2023.3338602 [45] T. Bahreini, H. Badri, and D. Grosu, “Mechanisms for Resource Allocation and Pricing in Mobile Edge Computing Systems,” IEEE Transactions on Parallel and Distributed Systems , vol. 33, no. 3, pp. 667–682, 2022. DOI : 10.1109/TPDS.2021.3099731 [46] Y. Chi, X. Li, X. Wang, V. C. M. Leung, and A. Shami, “A Fairness-Aware Pricing Methodology for Revenue Enhancement in Service Cloud Infrastructure,” IEEE Systems Journal , vol. 11, no. 2, pp. 1006– 1017, 2017. DOI : 10.1109/JSYST.2015.2448719 [47] S. Wang, B. Luo, and M. Tang, “Tackling System-Induced Bias in Federated Learning: A Pricing-Based Incentive Mechanism,” in Inter-national Conference on Distributed Computing Systems , ser. ICDCS, IEEE, 2024, pp. 902–912. DOI : 10.1109/ICDCS60910.2024.00088 
+
+14

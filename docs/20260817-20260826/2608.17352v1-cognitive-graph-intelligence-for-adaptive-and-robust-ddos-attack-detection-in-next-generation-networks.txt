@@ -1,0 +1,889 @@
+Title: Cognitive Graph Intelligence for Adaptive and Robust DDoS Attack Detection in Next Generation Networks
+
+URL Source: https://arxiv.org/pdf/2608.17352v1
+
+Published Time: Wed, 19 Aug 2026 00:29:45 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 1
+
+# Cognitive Graph Intelligence for Adaptive and Robust DDoS Attack Detection in Next Generation Networks 
+
+Mohammad Arif Hossain, Member, IEEE, Yeahia Sarker, Member, IEEE , Md Jafrin Hossain, Most. Humayra Khanom Rime, and Nirwan Ansari, Life Fellow, IEEE, 
+
+Abstract —Distributed Denial-of-Service (DDoS) attacks threaten network availability, requiring a cognitive detection process that senses traffic, infers intent, and supports an adaptive response under severe class imbalance and non-stationary conditions. This paper proposes a Graph-based Generative Adversarial Network (GraphGAN) that serves as the cognitive detection engine for this task. GraphGAN captures the relational structure among traffic flows while addressing imbalance through adversarial generation of synthetic samples. Sequential flows are converted into 𝑘 -nearest neighbor graphs using sliding windows to preserve feature-similarity and temporal dependencies among flows. The generator learns the distribution of DDoS attacks to synthesize realistic minority samples, while a Graph Convolutional Network (GCN)-based discriminator distinguishes real from synthetic graph data. A separate GCN classifier, trained on the balanced dataset, performs the final detection decision. Evaluations on four benchmark datasets show that GraphGAN achieves superior accuracy, precision, and recall compared to state-of-the-art approaches, particularly in data-scarce scenarios. By integrating temporal graph construction, adversarial augmentation, and GCN classification, GraphGAN effectively models coordinated attack behaviors and mitigates class imbalance, providing arobust and topology-aware solution for intrusion detection in data-constrained environments. 
+
+Index Terms —Cognitive networking, DDoS resilience, graph neural networks, generative adversarial networks, class imbal-ance, and network intrusion detection systems. 
+
+I. I NTRODUCTION 
+
+# DISTRIBUTED Denial-of-Service (DDoS) attacks have emerged as one of the most persistent and devastating threats in modern cybersecurity, causing billions of dollars in annual damages and disrupting critical infrastructure world-wide [1]. Unlike targeted intrusions, DDoS attacks exploit the distributed nature of compromised hosts to overwhelm services, making real-time mitigation extremely challenging. The scale and sophistication of these attacks continue to escalate: botnets such as Mirai have demonstrated the ability to mobilize millions of compromised IoT devices into co-ordinated flooding campaigns [2], [3], while modern multi-vector attacks combine volumetric, protocol, and application-layer techniques to evade single-point defenses [4]. These developments highlight the inadequacy of static, rule-based 
+
+M. A. Hossain, Y. Sarker, and M. H. K. Rime are with Middle Tennessee State University, USA, M. J. Hossain is with C2C Tech, Germany, and N. Ansari is with New Jersey Institute of Technology, USA. Corresponding author: Mohammad Arif Hossain (e-mail: mohammad.hossain@mtsu.edu). 
+
+protection mechanisms and motivate the need for intelligent, adaptive detection frameworks. Traditional network intrusion detection systems (NIDS) rely primarily on signature-based rules and statistical anomaly detection, both of which struggle to adapt to rapidly evolv-ing attack vectors [5]. Signature-based systems require prior knowledge of attack patterns and are inherently reactive, lim-iting their ability to detect zero-day or polymorphic variants. Statistical anomaly detectors, while more general, often suffer from high false-positive rates and limited capability to model complex, non-linear relationships in high-dimensional traffic data [6], [7]. Meanwhile, the exponential growth in traffic volume and complexity has rendered conventional flow-based analysis insufficient, as processing flows independently fails to capture the interconnected and coordinated nature of modern network communications [8]–[10]. With the proliferation of cloud computing, IoT ecosystems, and high-speed 5G/6G networks, network defense increasingly relies on cognitive, learning-driven detection that can observe traffic, reason about threats, and support adaptive mitigation across heterogeneous environments [11]. In this setting, an intrusion detector is most useful as the learning core of a sense–infer–act process rather than a standalone classifier. Deep learning has shown promise for automated feature ex-traction [12]; however, most methods treat traffic flows as independent feature vectors, discarding the relational structure that a cognitive detector could exploit. Furthermore, severe class imbalance, where benign traffic vastly outnumbers attack instances, degrades sensitivity to minority intrusion classes and remains a persistent challenge [13]. Addressing structural modeling and distributional imbalance together is therefore a prerequisite for adaptive, robust detection and motivates the framework we develop here. 
+
+A. Motivation 
+
+The growing complexity of DDoS attacks and the lim-itations of traditional detection approaches necessitate new methods that capture the structural and distributional properties of modern network data. We highlight three key motivations for our graph-based adversarial framework. 
+
+Non-Euclidean Structure in Network Traffic: Network com-munications inherently exhibit graph-structured relationships through temporal sequences, source-destination interactions, arXiv:2608.17352v1 [cs.AI] 18 Aug 2026 IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 2
+
+and feature similarities that are often overlooked by conven-tional approaches [14]. Treating flows as independent samples discards relational information essential for recognizing coor-dinated and distributed attacks. Graph neural networks have recently demonstrated strong potential in network security by modeling such dependencies [15]; however, their integration with adversarial augmentation remains largely unexplored. Our 𝑘 -nearest neighbor ( 𝑘 -NN) graph construction captures flow interdependencies by forming temporal subgraphs that link flows by feature similarity within each time window, preserving both feature-space proximity and temporal locality. 
+
+Real-World Class Imbalance: Network datasets are highly imbalanced, with benign traffic overwhelmingly dominating attack instances, significantly reducing model sensitivity to mi-nority intrusion classes [16]. Conventional interpolation-based oversampling techniques, such as SMOTE, fail to capture the nonlinear and topological dependencies inherent in high-dimensional traffic data [17]. Although recent GAN-based augmentation methods have improved the generation of syn-thetic attacks [18], they operate on vectorized representations and produce isolated samples without graph-structural context. To address this limitation, our adversarial framework employs a generator trained against a graph-based discriminator to synthesize realistic minority samples that preserve both statis-tical distributions and relational fidelity across network nodes, thereby enhancing robustness and detection performance. 
+
+Topology-Aware Adversarial Training: Many generative models synthesize isolated samples without incorporating re-lational context, resulting in data that may be statistically plausible yet topologically inconsistent [19]. Even advanced generative architectures such as Wasserstein GANs [19] and VAE-GAN hybrids [20] generate point-wise samples that neglect inter-flow dependencies. Our framework integrates graph neural networks (GNNs) with adversarial training to ensure that synthetic DDoS samples reflect both intrinsic flow characteristics and realistic relationships with neighboring flows, producing topology-consistent augmentation that exist-ing generative approaches cannot achieve. 
+
+B. Literature Review 
+
+DDoS attacks have evolved from volumetric floods to multi-vector campaigns, exposing the limitations of traditional detection methods that treat flows independently and ignore relational structures [15]. While machine learning improves on rule-based systems, most approaches rely on vectorized traffic representations, which miss topological patterns critical to distributed attacks. Combined with severe class imbalance as benign traffic dominates, this gap reduces detection accuracy and minority-class sensitivity. 
+
+Feature Learning-based DDoS Detection. Chouhan et al. 
+
+[21] proposed a non-linear kernel-based support vector ma-chine for classifying DDoS attacks in software-defined net-working (SDN). This lightweight model can detect live at-tacks but requires manual feature extraction. An LSTM-autoencoder-based approach [22] reduces feature overhead and false alarms by addressing irrelevant features and non-representative SDN datasets, yet it still overlooks the inherent class-imbalance problem. To capture temporal information, a CNN-LSTM hybrid was introduced by Rajan and Aravindhar [23]. On the ensemble learning front, He et al. [24] proposed a feature-weighted random forest for application-layer DDoS defense, achieving high detection rates but remaining limited to hand-crafted feature spaces. Yang et al. [25] combined attention mechanisms with BiGRU and Inception-CNN for IIoT intrusion detection, using mixed sampling to address class imbalance; however, the model still processes flows independently without structural context. Federated learning has also emerged as a promising direction: Li et al. [26] proposed an iterative model averaging (IMA) based gated recurrent unit (GRU) protocol at the fog/edge layer for collab-orative and privacy-preserving DDoS mitigation in Industrial IoT networks. Despite these advances, the aforementioned methods fail to capture relational interdependencies within network traffic. 
+
+Graph-based DDoS Attack Classification. Graph networks have shown significant performance improvements in model-ing data relationships by converting datasets into node-edge structures [27]. A comprehensive survey by Zhong et al. [15] systematically categorized GNN-based IDS methods across graph construction strategies and deployment paradigms, iden-tifying scalability and adversarial robustness as open chal-lenges. Li et al. [28] proposed a vanilla graph network to ex-ploit relationships among packet attributes, time intervals, and device characteristics. A spatio-temporal GCN [29] improved SDN-based DDoS detection by incorporating temporal infor-mation, though class imbalance remained unaddressed. Bakar 
+
+et al. [14] proposed a similar approach combining multiple graph networks to extract features from non-Euclidean spaces. Lo et al. [30] introduced E-GraphSAGE, an edge-feature-aware extension of GraphSAGE that represents flows as graph edges with rich feature vectors, enabling joint learning from host and flow attributes for IoT intrusion detection. Wang et al. [31] proposed BS-GAT, a graph attention network that constructs behavioral similarity graphs with edge weights incorporated into the attention mechanism, achieving over 99% accuracy in edge computing environments. Duan et al. 
+
+[32] proposed a graph model in a semi-supervised setting to mitigate data scarcity in DDoS detection. Although this approach improves detection performance, it still struggles with class imbalance. 
+
+Adversarial Training for DDoS Detection. Recent advances in deep generative models have demonstrated the potential of adversarial training for DDoS detection [33]. Shieh et al. [34] proposed a dual-discriminator strategy for detect-ing adversarial DDoS traffic in SDN. A GAN model [33] was introduced to generate synthetic data for highly imbal-anced datasets, improving classification accuracy by reframing DDoS detection as a supervised learning task. Zhao et al. 
+
+[18] employed a conditional GAN to oversample rare attack categories, preventing category omission in heavily skewed datasets through label-consistent synthetic generation. Arafah 
+
+et al. [19] combined a denoising autoencoder with a Wasser-stein GAN, using the WGAN’s Lipschitz-constrained training to synthesize more stable and realistic minority-class traffic. IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 3
+
+Tian et al. [20] extended this line by integrating a variational autoencoder with an auxiliary-classifier WGAN-GP, thereby improving both the fidelity and the class-conditioned diversity of generated intrusion samples. Despite these advances, none of these generative approaches operate on graph-structured data, producing isolated synthetic samples that lack topological context. 
+
+Learning-Driven Cognitive Network Defense. A parallel line of work embeds learning inside the network control plane so that defense adapts online rather than through static rules. Collaborative and decentralized learning has been explored for 5G+ core and edge environments [7], and meta- and resource-aware learning has been applied to offloading and control in IoT networks [35]. Federated designs push detection to the fog/edge layer for privacy-preserving, in-network mitigation [35], while flow-level detectors have been deployed at SDN controllers to close the loop between sensing and actuation [22]. These efforts frame intrusion detection as one stage of a cognitive networking pipeline, but they largely operate on vectorized traffic and do not exploit the relational topology of coordinated attacks. GraphGAN targets exactly this gap: it supplies a topology-aware cognitive engine whose output can drive an edge/SDN mitigation decision, uniting structural mod-eling with the adaptive control that cognitive communication networks require. 
+
+C. Contributions 
+
+To address these challenges, we propose a Graph-based Generative Adversarial Network (GraphGAN), a novel frame-work that unifies structure-aware modeling with generative augmentation for intelligent DDoS detection. Unlike prior work, our approach treats traffic as inherently relational and leverages adversarial training to mitigate class imbalance while preserving topological integrity. The main contributions are summarized as follows:  
+
+> •
+
+A structure-aware graph construction strategy using 𝑘 -NN connectivity over sliding temporal windows to capture flow co-occurrence and feature-similarity patterns within temporal neighborhoods that are ignored by vector-based detection approaches.  
+
+> •
+
+An adversarial graph neural architecture integrating GCNs with generative training, where the discrimina-tor processes entire graph structures, enabling topology-conditioned synthetic sample generation over fixed real topology templates.  
+
+> •
+
+An imbalance-aware generative mechanism that produces realistic minority-class DDoS samples while preserving both statistical fidelity and relational consistency within the graph.  
+
+> •
+
+A detection framework based on GCN classification that exploits structural flow relationships to identify coordi-nated attack patterns. The remainder of this manuscript is organized as follows. Section II introduces the proposed GraphGAN framework. Section III presents the experimental results and performance evaluation. Section IV includes the concluding remarks. II. M ETHODOLOGY 
+
+The proposed GraphGAN integrates graph neural networks with adversarial training to address class imbalance while modeling topological relationships in network traffic. The framework is illustrated in Fig. 1. 
+
+A. Cognitive Detection Process 
+
+We frame GraphGAN as the cognitive detection stage of a sense–infer–act process that a network controller (e.g., an SDN controller) can use to maintain service availability under attack. In the sense stage, per-flow statistics x𝑖 ∈ R𝑑 are exported from switches or gateways (e.g., via telemetry or flow-export) and streamed to the detector. In the infer stage, the proposed GraphGAN pipeline converts a sliding window of flows into a temporal graph G𝑡 and produces a subgraph-level decision 𝑃 (𝑦 | G 𝑡 ); adversarial augmentation supplies the minority-class fidelity that keeps this decision reliable under the imbalance typical of live traffic. In the act stage, a decision of “DDoS” can trigger a mitigation policy (e.g., rate limiting or flow-rule installation), while benign decisions leave forwarding untouched. Two properties make this framing attractive. First, the detector consumes only exported flow features, so it imposes no per-packet inference cost on the forwarding path. Second, because the decision is made at the granularity of a temporal window rather than a single flow, detection reacts to coordi-nated behavior—the regime in which distributed attacks are distinguishable (Theorem 1)—rather than to isolated flows. 
+
+B. Graph Construction from Network Traffic 
+
+Our graph construction methodology transforms sequential network flow data into graph-structured representations that preserve both feature-level similarities and temporal depen-dencies. 
+
+1) Feature Space Representation and Normalization: Let 
+
+D = {( x𝑖 , 𝑦 𝑖 )} 𝑁 𝑖 =1 denote the traffic dataset, where x𝑖 ∈ R𝑑 
+
+is the 𝑑 -dimensional feature vector of the 𝑖 -th flow and 
+
+𝑦 𝑖 ∈ { 0, 1} is the binary label (benign or DDoS). Each x𝑖 
+
+consists of flow-level statistics, including packet size, inter-arrival time, flow duration, and protocol-related features. To avoid dominance of large-magnitude features and, crucially, to confine every feature to a bounded range that the generator can reproduce, we standardize each feature to the interval [− 1, 1]
+
+via min–max normalization, 
+
+˜x𝑖 = 2 x𝑖 − xmin 
+
+xmax − xmin 
+
+− 1, (1) where xmin and xmax are the element-wise minimum and maxi-mum computed over the training dataset and all operations are applied element-wise. Beyond balancing feature contributions in graph construction, bounding features to [− 1, 1] aligns their support with the codomain of the generator’s tanh output, a property we exploit to keep the adversarial distribution-matching objective (Theorem 3) well-posed. IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 4     Ψ     
+
+>  
+>     U
+>             
+>    
+
+  
+
+> 
+>           
+>  
+
+               
+
+> 
+>   
+> 
+>                  
+>     
+>  
+>  
+>  ε
+> εε
+> 
+
+                    
+
+>                             
+> φ
+>  
+>  ½ ˆ ½
+>  φ
+>             
+>    *ˆ
+> ~ N
+>                
+> ε
+> 
+> GD
+
+  
+
+> 
+>   
+
+Fig. 1. Overview of the proposed GraphGAN framework. (Left) Raw flow vectors are segmented using sliding windows and transformed into 𝑘 -NN subgraphs. (Center) The adversarial training loop optimizes a generator to synthesize realistic node features over fixed topology templates, while a GCN-based discriminator distinguishes real from synthetic graphs. (Right) A GCN classifier operates on the augmented dataset to perform binary DDoS classification. 
+
+2) Temporal Graph Construction via Sliding Windows: 
+
+Network attacks, particularly DDoS attacks, exhibit tempo-ral patterns crucial for accurate detection. To capture these patterns while maintaining computational tractability, we em-ploy a sliding-window mechanism that partitions sequential network flows into temporal subgraphs. For window size 𝑤 and step size 𝑠 , we define temporal subgraphs G𝑡 = (V 𝑡 , E𝑡 , X𝑡 ),
+
+where V𝑡 = {𝑣 𝑡 , 1, . . . , 𝑣 𝑡 ,𝑤 } is the vertex set of 𝑤 consecutive flows, E𝑡 represents the edge set encoding relational dependen-cies among flows, and X𝑡 ∈ R𝑤 ×𝑑 is the standardized feature matrix. The sliding window ensures temporal locality, and overlapping windows ( 𝑠 < 𝑤 ) capture transitional patterns for robust representation learning. Because overlapping windows share raw flows, windows are never allowed to span across data partitions: the chronological splitting protocol used in our experiments (Section III) partitions the flow stream before windowing, preventing any flow from leaking across the training, validation, and test sets. 
+
+3) k-Nearest Neighbor Graph Construction: Constructing meaningful graph topology is critical for capturing the re-lational structure inherent in network traffic. We employ 𝑘 -nearest neighbor ( 𝑘 -NN) graph construction based on feature similarity, creating edges between network flows with similar characteristics. The 𝑘 -NN graph construction begins by com-puting the pairwise Euclidean distance matrix for all flows within each temporal window: 
+
+𝐷 (𝑡 )
+
+𝑖 𝑗 = ∥ ˜x𝑡 ,𝑖 − ˜x𝑡 , 𝑗 ∥2 =
+
+vut 𝑑 ∑︁ 
+
+ℓ=1
+
+( ˜𝑥 𝑡 ,𝑖,ℓ − ˜𝑥 𝑡 , 𝑗,ℓ )2 (2) where ˜x𝑡 ,𝑖 represents the standardized feature vector for the 
+
+𝑖 -th node in temporal window 𝑡 . The Euclidean distance metric is chosen for its interpretability and computational efficiency, though other distance metrics could be employed depending on the feature characteristics. For each node 𝑣 𝑖 in the temporal window, we identify its 𝑘 nearest neighbors: 
+
+N𝑘 (𝑣 𝑖 ) = {𝑣 𝑗 : 𝑗 ∈ argmin 𝑘 𝑗 ≠𝑖 𝐷 (𝑡 )
+
+𝑖 𝑗 } (3) This operation selects the 𝑘 nodes most similar to node 
+
+𝑣 𝑖 in the feature space, excluding 𝑣 𝑖 itself. The parameter 
+
+𝑘 controls the graph’s connectivity and must be chosen to balance capturing local neighborhoods (small 𝑘 ) and ensuring connectivity (large 𝑘 ). The adjacency matrix A𝑡 ∈ { 0, 1}𝑤 ×𝑤 
+
+is then constructed to create an undirected graph: 
+
+𝐴 (𝑡 )
+
+𝑖 𝑗 =
+
+(
+
+1, if 𝑣 𝑗 ∈ N 𝑘 (𝑣 𝑖 ) or 𝑣 𝑖 ∈ N 𝑘 (𝑣 𝑗 ),
+
+0, otherwise . (4) The symmetric construction ensures that if node 𝑣 𝑖 consid-ers 𝑣 𝑗 a neighbor, then 𝑣 𝑗 also considers 𝑣 𝑖 a neighbor, yielding an undirected graph that better captures bidirectional relation-ships in network communications. Two important structural properties follow directly from this symmetric 𝑘 -NN construc-tion: the adjacency matrix is guaranteed to be symmetric, and every node has a degree bounded between 𝑘 and 𝑤 −1. We formalize these properties below. 
+
+Lemma 1 (Symmetry and Bounded Degree of 𝑘 -NN Graph) .
+
+The adjacency matrix A𝑡 constructed via symmetric 𝑘 -NN satisfies: (i) A𝑡 = A⊤
+
+𝑡 (symmetry), and (ii) for every node 𝑣 𝑖 ,the degree deg (𝑣 𝑖 ) = Í 𝑗 𝐴 (𝑡 )
+
+𝑖 𝑗 satisfies 𝑘 ≤ deg (𝑣 𝑖 ) ≤ 𝑤 − 1,where 𝑤 is the window size. Proof Property (i) follows directly from the construction rule in Eq. (4): 𝐴 (𝑡 )
+
+𝑖 𝑗 = 1 if and only if 𝑣 𝑗 ∈ N 𝑘 (𝑣 𝑖 ) or 𝑣 𝑖 ∈N𝑘 (𝑣 𝑗 ), which is symmetric by definition. For property (ii), each node 𝑣 𝑖 selects exactly 𝑘 neighbors, so deg (𝑣 𝑖 ) ≥ 𝑘 .Since the graph contains 𝑤 nodes and self-loops are excluded, the degree is bounded above by 𝑤 − 1.IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 5
+
+This bounded-degree property ensures that each node main-tains at least 𝑘 connections while remaining constrained by the finite window size 𝑤 , preventing degenerate graph structures and providing a well-conditioned topology for subsequent GCN processing. 
+
+4) Graph Label Assignment: Each temporal subgraph re-quires a label for supervised learning. Since individual network flows within a window may have different labels, we employ majority voting to assign a single label to the entire subgraph as: 
+
+𝑦 𝑡 = argmax 𝑐 ∈ { 0,1}
+
+> 𝑤
+
+∑︁ 
+
+> 𝑖 =1
+
+I(𝑦 𝑡 ,𝑖 = 𝑐 ), (5) where I(·) is the indicator function that returns 1 if the condition is true and 0 otherwise, and 𝑦 𝑡 ,𝑖 is the label of the 
+
+𝑖 -th flow in window 𝑡 . For even window sizes, an exact tie between the two classes is possible; we break such ties toward the attack (DDoS) class, a security-conservative choice that favors recall over precision. This approach assumes that the majority class within a temporal window reflects the overall behavior pattern, which is reasonable for DDoS attacks, which typically involve sustained malicious activity across multiple flows. A natural question is whether this majority-voting scheme reliably assigns labels for the window sizes used in our experiments, including the even default 𝑤 = 30 . The following lemma confirms that the assigned label is always supported by at least a simple majority, which strengthens to a strict majority for odd window sizes. 
+
+Lemma 2 (Label Consistency of Majority Voting) . Let 𝛼 𝑡 =
+
+> 1
+> 𝑤
+
+Í𝑤 𝑖 =1 I(𝑦 𝑡 ,𝑖 = 𝑦 𝑡 ) denote the fraction of flows in window 𝑡 
+
+agreeing with the label 𝑦 𝑡 assigned by Eq. (5) , with ties broken toward the attack class. Then, 𝛼 𝑡 ≥ 12 for any window size 𝑤 .Moreover, when 𝑤 is odd, tie is not allowed and the bound strengthens to a strict majority, 𝛼 𝑡 ≥ 12 + 12𝑤 . Under temporal locality, where DDoS flows form contiguous segments so that most windows lie within a single regime, 𝛼 𝑡 → 1; the worst case 𝛼 𝑡 = 12 arises only at an exact class split within a window. Proof For binary labels, one of the two classes must account for at least ⌈𝑤 /2⌉ of the 𝑤 flows, so the majority-voted winner satisfies Í𝑤 𝑖 =1 I(𝑦 𝑡 ,𝑖 = 𝑦 𝑡 ) ≥ ⌈𝑤 /2⌉; the tie-breaking rule guarantees this even at an exact 𝑤 /2 split. Dividing by 𝑤 
+
+yields 𝛼 𝑡 ≥ ⌈ 𝑤 /2⌉/ 𝑤 ≥ 12 . When 𝑤 is odd, the class counts Í𝑖 I(𝑦 𝑡 ,𝑖 = 1) and 𝑤 − Í𝑖 I(𝑦 𝑡 ,𝑖 = 1) have opposite parities and cannot be equal, so tie is not possible and the winning count is at least 𝑤 +12 . Dividing by 𝑤 gives 𝛼 𝑡 ≥ 𝑤 +12𝑤 = 12 + 12𝑤 ,which establishes the strict-majority case. 
+
+5) When Graph Structure Carries Information: We formal-ize two properties of DDoS traffic that together establish when graph structure provides a detection advantage over single-flow models. The first says individual flows are ambiguous ; the second says they are jointly informative . Both are necessary for structure to help, and we state them as explicit hypotheses. 
+
+Definition 1 (Feature Ambiguity) . Flows are 𝜂 -ambiguous 
+
+if the optimal single-flow (vector) classifier has irreducible Bayes risk 𝑅 ★ 
+
+> flow
+
+= Ex
+
+min  𝑝 (𝑦 =0 | x), 𝑝 (𝑦 =1 | x) = 𝜂 > 0.
+
+Definition 2 (Coordination) . DDoS traffic is coordinated if, for flows 𝑖, 𝑗 connected by the 𝑘 -NN rule, the labels retain depen-dence after conditioning on their features: 𝐼  𝑌 𝑖 ; 𝑌 𝑗 | X𝑖 , X 𝑗 
+
+ =
+
+𝑐 > 0.
+
+Definition 2 captures the intuition that botnet flows are not independent draws: knowing a neighbor is malicious raises the posterior that a feature-similar flow is malicious too, 
+
+beyond what the features alone reveal. We now show that a neighborhood-aware predictor strictly beats the best single-flow predictor exactly in this regime. 
+
+Theorem 1 (Graph Advantage under Feature-Ambiguous Co-ordination) . Assume flows are 𝜂 -ambiguous (Definition 1) and coordinated with strength 𝑐 > 0 (Definition 2). Let 𝑅 ★ 
+
+> graph
+
+be the Bayes risk of a predictor that observes a node together with its 𝑘 -NN neighborhood within the window. Then, 
+
+𝑅 ★ 
+
+> flow
+
+− 𝑅 ★ 
+
+> graph
+
+≥ Φ(𝑐, ¯𝑚 ) > 0,
+
+where ¯𝑚 is the expected number of same-class neighbors and 
+
+Φ is strictly increasing in both arguments, with Φ(0, ·) = 0.Proof The neighborhood supplies side information 𝑍 𝑖 =
+
+(𝑌 𝑗 ) 𝑗 ∈ N 𝑘 (𝑣 𝑖 ) about 𝑌 𝑖 . By Definition 2, 𝐼 (𝑌 𝑖 ; 𝑍 𝑖 | X𝑖 ) ≥
+
+𝑐 ¯𝑚 > 0, so the conditional entropy strictly drops: 𝐻 (𝑌 𝑖 |
+
+X𝑖 , 𝑍 𝑖 ) < 𝐻 (𝑌 𝑖 | X𝑖 ). Fano’s inequality lower-bounds any predictor’s risk by an increasing function of the conditional entropy of the target; a strict entropy reduction therefore admits a neighborhood predictor whose Bayes risk is strictly smaller, with the gap controlled by the mutual information drop. Setting Φ to the induced risk decrease gives the claim; 
+
+Φ(0, ·) = 0 because 𝑐 = 0 removes the side information. 
+
+Scope. The hypothesis 𝜂 > 0 is essential: if flows are already separable in feature space, then 𝑅 ★ 
+
+> flow
+
+= 0 and no model can improve on it, so the advantage vanishes. The theorem, therefore, characterizes when structure helps (ambiguous yet coordinated traffic) rather than asserting structure is univer-sally required. This is the regime that DDoS occupies, and that motivates the entire framework. The advantage above lies in the dependence between fea-tures and the topology they induce. Because the 𝑘 -NN adja-cency is a deterministic function of the window’s features, this dependence is real and, crucially, invisible to any feature-only model. 
+
+Proposition 1 (Feature–Topology Information Gap) . Let a vector or vectorized-GAN model act on X alone, i.e. its predic-tor and generator are measurable with respect to features only. Then, no such model can exploit the feature–topology mutual information 𝐼 data (X; A). A model that processes (X, A) jointly, as our GCN does, has access to this term. Proof A feature-only predictor factors through X, so by the data-processing inequality, its accessible information about 𝑌 
+
+is at most 𝐼 (X; 𝑌 ). The joint predictor’s accessible information is 𝐼 (X, A; 𝑌 ) = 𝐼 (X; 𝑌 ) + 𝐼 (A; 𝑌 | X), and the second term is non-zero precisely when topology is label-informative given features—the coordinated regime of Definition 2. The quantity 𝐼 data (X; A) reappears as the irreducible residual in the adversarial augmentation analysis (Theorem 4) and IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 6
+
+connects to the generalization bound of Theorem 5, forming the information-theoretic thread that links graph construction, adversarial training, and classification throughout the frame-work. 
+
+C. Adversarial Learning Framework 
+
+By learning the underlying distribution of minority class samples (DDoS attacks), our GAN-based approach generates realistic synthetic samples that preserve both statistical prop-erties and topological relationships. 
+
+1) Generator Network Architecture: The generator network 
+
+𝐺 𝜃 : R𝑧 → R𝑑 transforms random noise vectors sampled from a prior distribution into synthetic node features that mimic the characteristics of real DDoS traffic. The architecture employs multiple fully connected layers with batch normal-ization and dropout for regularization. Given a noise vector 
+
+z ∼ N ( 0, I𝑧 ) sampled from a multivariate standard normal distribution, where 𝑧 is the noise dimension, the generator produces synthetic features through the following sequence of transformations: 
+
+h1 = ReLU (BN (W𝐺  
+
+> 1
+
+z + b𝐺  
+
+> 1
+
+)) , (6) 
+
+h2 = Dropout (ReLU (BN (W𝐺  
+
+> 2
+
+h1 + b𝐺  
+
+> 2
+
+)) , 𝑝 = 0.3), (7) 
+
+h3 = Dropout (ReLU (BN (W𝐺  
+
+> 3
+
+h2 + b𝐺  
+
+> 3
+
+)) , 𝑝 = 0.3), (8) 
+
+ˆx = tanh (W𝐺  
+
+> 4
+
+h3 + b𝐺  
+
+> 4
+
+), (9) where W𝐺 𝑖 ∈ Rℎ𝑖 ×ℎ𝑖 −1 and b𝐺 𝑖 ∈ Rℎ𝑖 are the weight matrices and bias vectors for the 𝑖 -th layer, respectively, with ℎ0 = 𝑧 and 
+
+ℎ4 = 𝑑 . The batch normalization operation BN (·) normalizes the pre-activation values to have zero mean and unit vari-ance, accelerating training and improving stability. The ReLU activation function ReLU (𝑥 ) = max (0, 𝑥 ) introduces non-linearity while maintaining computational efficiency. Dropout with probability 𝑝 = 0.3 randomly sets a fraction of input units to zero during training, preventing overfitting. The final activation tanh (𝑥 ) = 𝑒 𝑥 −𝑒 −𝑥   
+
+> 𝑒 𝑥 +𝑒 −𝑥
+
+bounds each synthetic feature to 
+
+[− 1, 1], stabilizing adversarial training and, by construction, matching the support of the real node features that were min–max normalized to the same interval in Eq. (1). This shared support is essential: were the synthetic and real features confined to different ranges, the discriminator could separate them by feature range alone, and the Jensen–Shannon optimum of Theorem 3 (attained at 𝑝 𝐺 = 𝑝 data ) could never be reached. 
+
+2) Graph-based Discriminator Network: The discriminator network 𝐷 𝜙 employs Graph Convolutional Networks (GCNs) to process graph-structured data and distinguish between real and synthetic samples. Unlike traditional discriminators that operate on individual samples, our graph-based approach con-siders the entire graph topology, enabling more sophisticated pattern recognition. For a graph G = (V , E, X), each GCN layer performs localized convolution operations that aggregate information from neighboring nodes. The fundamental GCN operation is defined as: 
+
+H(𝑙 +1) = 𝜎 
+
+ ˆD− 12 ˆA ˆD− 12 H(𝑙 ) W(𝑙 ) 
+
+, (10) where ˆA = A + I is the adjacency matrix with added self-loops to include each node’s own features in the ag-gregation, ˆD𝑖𝑖 = Í 𝑗 ˆ𝐴 𝑖 𝑗 is the corresponding degree matrix, 
+
+H(𝑙 ) ∈ R| V | × ℎ(𝑙 )
+
+denotes the node representations at layer 𝑙 
+
+with H(0) = X, W(𝑙 ) ∈ Rℎ(𝑙 ) ×ℎ(𝑙 +1)
+
+is the trainable weight matrix, and 𝜎 (·) is the activation function. The normalization term ˆD− 12 ˆA ˆD− 12 ensures degree-normalized feature propaga-tion, preventing high-degree nodes from disproportionately influencing the learned representations. This propagation rule arises as a first-order Chebyshev approximation of spectral graph convolutions [36]. 
+
+3) Adversarial Training Objective: Adversarial training fol-lows a two-player minimax game in which the generator attempts to fool the discriminator, while the discriminator tries to correctly identify real and synthetic samples. The minimax objective is formulated as: 
+
+min  
+
+> 𝜃
+
+max  
+
+> 𝜙
+
+LGAN (𝐺 𝜃 , 𝐷 𝜙 ), (11) where 𝜃 and 𝜙 represent the parameters of the generator and discriminator, respectively. The objective function captures the adversarial nature of the training as LGAN (𝐺 𝜃 , 𝐷 𝜙 ) =
+
+EG∼ 𝑝 data [log 𝐷 𝜙 (G)] + EG∼ 𝑝 𝐺 [log (1 − 𝐷 𝜙 (G))] . Here, 𝑝 data 
+
+denotes the distribution of real minority-class (DDoS) sub-graphs, since the augmentation targets only the under-represented attack class and benign graphs are never synthe-sized, while 𝑝 𝐺 is the generator-induced distribution over syn-thetic DDoS graphs. The first term encourages the discrimina-tor to correctly identify real graphs by maximizing log 𝐷 𝜙 (G) ,while the second term encourages correct identification of fake graphs by maximizing log (1 − 𝐷 𝜙 (G)) . From the generator’s perspective, minimizing this objective encourages it to increase the discriminator’s misclassification probability on synthetic samples. The construction of fake graphs preserves the topo-logical structure of real graphs while replacing node features with generator outputs, Gfake = (V real , Ereal , 𝐺 𝜃 (Z)) , where 
+
+Z = [z1, z2, . . . , z| V | ]𝑇 is a matrix of independently sampled noise vectors. This approach ensures that synthetic graphs maintain realistic topological properties while introducing novel feature combinations. The individual loss functions for training are: 
+
+L𝐷 = −EG∼ 𝑝 data [log 𝐷 𝜙 (G)] − EG∼ 𝑝 𝐺 [log (1 − 𝐷 𝜙 (G))] ,
+
+(12) 
+
+L𝐺 = −EG∼ 𝑝 𝐺 [log 𝐷 𝜙 (G)] . (13) The discriminator loss L𝐷 is minimized to improve classi-fication accuracy on both real and fake samples, while the generator loss L𝐺 is minimized to increase the probability that synthetic samples are classified as real, viz., to produce more realistic synthetic samples. Having defined the adversarial objective, we now characterize the equilibrium behavior of this minimax game. We first derive the closed-form optimal discriminator for a fixed generator, and then show that the global optimum is achieved when the generator perfectly recovers the real data distribution. 
+
+Theorem 2 (Optimal Discriminator) . For a fixed generator 
+
+𝐺 𝜃 , the optimal discriminator 𝐷 ∗ 
+
+> 𝜙
+
+is given by 
+
+𝐷 ∗ 
+
+> 𝜙
+
+(G) = 𝑝 data (G) 
+
+𝑝 data (G) + 𝑝 𝐺 (G) , (14) IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 7
+
+where 𝑝 data is the distribution of real graph data and 𝑝 𝐺 is the distribution induced by the generator [37]. Proof For fixed 𝐺 𝜃 , the discriminator objective LGAN can be written as 
+
+∫ h
+
+𝑝 data (G) log 𝐷 (G) + 𝑝 𝐺 (G) log  1 − 𝐷 (G) i
+
+𝑑 G. (15) For any (𝑎, 𝑏 ) with 𝑎, 𝑏 ≥ 0 and 𝑎 + 𝑏 > 0, the function 
+
+𝑓 (𝐷 ) = 𝑎 log 𝐷 + 𝑏 log (1 − 𝐷 ) attains its maximum at 𝐷 ∗ = 
+
+> 𝑎 𝑎 +𝑏
+
+, obtained by setting 𝑑 𝑓 𝑑𝐷 = 𝑎 𝐷 − 𝑏  
+
+> 1−𝐷
+
+= 0. Substituting 
+
+𝑎 = 𝑝 data (G) and 𝑏 = 𝑝 𝐺 (G) yields the result. Building on this result, we can now analyze the global optimum of the minimax game by substituting the optimal discriminator back into the objective function. 
+
+Theorem 3 (Global Optimality of Adversarial Training) . The global minimum of the minimax objective LGAN (𝐺 𝜃 , 𝐷 𝜙 ) is achieved if and only if 𝑝 𝐺 = 𝑝 data . At this optimum, 𝐷 ∗ 
+
+> 𝜙
+
+(G) = 
+
+> 12
+
+for all G, and min 𝜃 max 𝜙 LGAN = − log 4 [37]. Proof Substituting 𝐷 ∗ from Theorem 2 into the objective yields 
+
+𝐶 (𝐺 ) = EG∼ 𝑝 data 
+
+
+
+log 𝑝 data (G) 
+
+𝑝 data (G) + 𝑝 𝐺 (G) 
+
+
+
++ EG∼ 𝑝 𝐺 
+
+
+
+log 𝑝 𝐺 (G) 
+
+𝑝 data (G) + 𝑝 𝐺 (G) 
+
+
+
+.
+
+(16) This can be rewritten as 
+
+𝐶 (𝐺 ) = − log 4 + KL 
+
+
+
+𝑝 data 𝑝 data + 𝑝 𝐺 
+
+> 2
+
+
+
++ KL 
+
+
+
+𝑝 𝐺 𝑝 data + 𝑝 𝐺 
+
+> 2
+
+
+
+= − log 4 + 2 · JSD ( 𝑝 data ∥ 𝑝 𝐺 ),
+
+(17) where JSD denotes the Jensen–Shannon divergence. Since 
+
+JSD ≥ 0 with equality if and only if 𝑝 𝐺 = 𝑝 data , the global minimum 𝐶 (𝐺 ) = − log 4 is attained uniquely when 
+
+𝑝 𝐺 = 𝑝 data .Theorems 2 and 3 provide the theoretical foundation for our adversarial framework: when the generator successfully learns the distribution of DDoS attack graphs, the discriminator can no longer distinguish synthetic from real attack traffic, ensur-ing high-fidelity augmentation for downstream classification. Because our generator produces features independently of the template topology, the equilibrium of Theorem 3 does not guarantee that the joint distribution over features and adjacency is matched. The following result identifies the irreducible gap. 
+
+Theorem 4 (Residual Divergence of Topology-Independent Generation) . Because templates are real and features are generated independently of them, the generator induces 
+
+𝑝 fake (X, A) = 𝑝 𝐺 (X) 𝑝 data (A). Here, KL (·∥·) denotes the Kullback–Leibler divergence [38]. Then, 
+
+min  
+
+> 𝜃
+
+KL ( 𝑝 data ∥ 𝑝 fake ) is attained at 𝑝 𝐺 (X) = 𝑝 data (X),
+
+and the irreducible value equals the feature–topology mutual information, KL ( 𝑝 data ∥ 𝑝 data (X) 𝑝 data (A)) = 𝐼 data (X; A).
+
+Proof By the chain rule of KL divergence and the factorized form of 𝑝 fake , KL ( 𝑝 data ∥ 𝑝 fake ) =
+
+EA
+
+KL  𝑝 data (X | A) ∥ 𝑝 𝐺 (X) . This is minimized over 
+
+𝑝 𝐺 at the A-averaged conditional 𝑝 𝐺 (X) = EA [ 𝑝 data (X |
+
+A)] = 𝑝 data (X). Substituting back leaves exactly the mutual information between X and A.Theorem 4 closes the loop with Proposition 1: the single quantity 𝐼 data (X; A) is both what vector methods miss and what a topology-independent generator cannot reproduce. 
+
+Corollary 1 (Topology-Stable Consistency) . If generated features are topology-stable—the 𝑘 -NN graph they induce matches the template up to bounded edge-edit distance— then 𝐼 data (X; A) contributed by the synthetic samples vanishes and augmentation is asymptotically consistent. This condition is the precise sense in which a future topology-conditioned generator would be strictly more expressive. D. Graph-based Classification Network 
+
+The classification network serves as the final component of our framework, leveraging both original and synthetically augmented data to perform DDoS detection. 
+
+1) Classifier Architecture and Feature Learning: The DDoS classifier 𝐶 𝜓 employs the same GCN-based architecture as the discriminator to ensure consistent graph-structured processing, but it is trained independently with a classification objective rather than an adversarial one, allowing it to focus specifically on distinguishing benign from malicious traffic patterns. The classifier processes input graphs through multiple GCN layers that progressively refine node representations: 
+
+H(1) 
+
+> 𝐶
+
+= ReLU (GCN (X, A)) , (18) 
+
+H(2) 
+
+> 𝐶
+
+= Dropout (ReLU (GCN (H(1) 
+
+> 𝐶
+
+, A)) , 𝑝 = 0.3), (19) 
+
+H(3) 
+
+> 𝐶
+
+= Dropout (ReLU (GCN (H(2) 
+
+> 𝐶
+
+, A)) , 𝑝 = 0.3), (20) 
+
+h𝐶, pool = 1
+
+|V | 
+
+> | V |
+
+∑︁ 
+
+> 𝑖 =1
+
+H(3)
+
+> 𝐶, 𝑖, :
+
+, (21) 
+
+𝑃 (𝑦 | G) = Softmax (W𝐶 h𝐶, pool + b𝐶 ). (22) The softmax activation function in the final layer converts the output logits into a probability distribution over the two classes: Softmax (o)𝑖 = exp (𝑜 𝑖 )
+
+Í2 
+
+> 𝑗 =1
+
+exp (𝑜 𝑗 ) , (23) where o = W𝐶 h𝐶, pool +b𝐶 represents the pre-activation logits. This formulation ensures that Í2 
+
+> 𝑖 =1
+
+𝑃 (𝑦 = 𝑖 |G) = 1 and enables probabilistic interpretation of the classification results. An important design consideration for the GCN classifier is its receptive field, i.e., how far information propagates across multiple graph layers. The following proposition quantifies the receptive field size in terms of the number of GCN layers and the graph’s bounded degree established in Lemma 1. 
+
+Proposition 2 (Receptive Field of 𝐿 -Layer GCN Classi-fier) . In an 𝐿 -layer GCN, the representation h(𝐿 ) 
+
+> 𝑖
+
+of node 
+
+𝑣 𝑖 aggregates information from all nodes within its 𝐿 -hop neighborhood N (𝐿 ) (𝑣 𝑖 ) = {𝑣 𝑗 : 𝑑 G (𝑣 𝑖 , 𝑣 𝑗 ) ≤ 𝐿 }, where 𝑑 G
+
+denotes the shortest-path distance on G. For our 𝑘 -NN graphs IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 8
+
+with maximum degree Δ ≤ 𝑤 −1 (Lemma 1), the receptive field size is bounded by |N (𝐿 ) (𝑣 𝑖 )| ≤ min 
+
+Í𝐿 ℓ=0 Δℓ , 𝑤 
+
+
+
+[39]. 
+
+With 𝐿 = 3 layers, 𝑘 = 5, and window size 𝑤 = 30 ,the symmetric OR-construction of Eq. (4) yields an expected node degree on the order of 2𝑘 = 10 , so the receptive field saturates the window within two hops: |N (𝐿 ) (𝑣 𝑖 )| ≤
+
+min 
+
+Í3 
+
+> ℓ=0
+
+Δℓ , 𝑤 
+
+
+
+= 𝑤 = 30 . Each node’s representation, therefore, incorporates information from the entire temporal window, allowing the classifier to capture global attack co-ordination patterns within each subgraph while avoiding the over-smoothing that occurs with deeper architectures. The bounded degree of Lemma 1 also yields a certified radius within which classifier predictions cannot flip, providing a formal robustness guarantee for the GCN architecture. 
+
+Proposition 3 (Stability under Feature and Topology Per-turbation) . For the 𝐿 -layer normalized GCN classifier on a symmetric 𝑘 -NN graph with degrees in [𝑘, 𝑤 −1]:
+
+(i) if ∥𝛿 X∥𝐹 ≤ 𝜖 , the change in output logits is at most 
+
+𝜖 Î𝐿 𝑙 =1 ∥W(𝑙 ) ∥ 𝜎 ;
+
+(ii) modifying 𝑚 edges changes the normalized adjacency operator by at most 2𝑚 /𝑘 in Frobenius norm, so the logit change is at most (2𝑚 /𝑘 ) Î𝐿 𝑙 =1 ∥W(𝑙 ) ∥ 𝜎 ∥X∥𝐹 .Proof (i) Each normalized GCN layer is ˆD−1/2 ˆA ˆD−1/2HW ;the symmetric normalized operator has spectral norm at most 
+
+1, and ReLU is 1-Lipschitz, so the per-layer Lipschitz con-stant is ∥W(𝑙 ) ∥ 𝜎 and they compose multiplicatively. (ii) By Lemma 1 every degree is at least 𝑘 , so each entry of ˆD−1/2 is at most 1/√𝑘 ; a single edge edit perturbs the operator by at most 2/𝑘 in Frobenius norm, and 𝑚 edits by at most 2𝑚 /𝑘 .Propagating through the layers gives the bound. Part (ii) shows graceful degradation: a few mis-assigned 𝑘 -NN edges arising from feature noise cannot flip predictions abruptly, with the tolerance scaling as 1/𝑘 .
+
+2) Data Augmentation Strategy for Class Imbalance: Our strategy leverages the trained generator to create synthetic DDoS samples, balancing class distribution and improving the classifier’s ability to recognize attack patterns. The augmented dataset combines original and synthetic samples as 
+
+Daug = Dreal ∪ D syn , (24) where Dreal = {(G 𝑖 , 𝑦 𝑖 )} 𝑁 real  
+
+> 𝑖 =1
+
+contains original graphs and 
+
+Dsyn = {(G (𝑖 )
+
+> syn
+
+, 1)} 𝑁 syn  
+
+> 𝑖 =1
+
+contains synthetic DDoS graphs. The number of synthetic samples is determined by: 
+
+𝑁 syn = min (max (0, 𝑁 0 − 𝑁 1), 𝑁 max ), (25) where 𝑁 0 and 𝑁 1 are benign and DDoS samples, and 𝑁 max 
+
+prevents excessive generation that may cause noise or over-fitting. Each synthetic graph G (𝑖 ) 
+
+> syn
+
+is built from a template structure of real DDoS samples, populated with generator-produced features: 
+
+G (𝑖 ) 
+
+> syn
+
+= (V template , Etemplate , 𝐺 𝜃 (Z(𝑖 ) )) . (26) Together, Eqs. (24)–(26) define a principled augmentation pipeline that respects graph topology. The following corollary shows that this strategy provably reduces class imbalance, achieving perfect balance when the generation budget is suf-ficiently large. 
+
+Corollary 2 (Class Balance Guarantee) . Let 𝑁 0 and 𝑁 1
+
+denote the number of benign and DDoS samples, respec-tively, with 𝑁 0 > 𝑁 1 (class imbalance). After augmenta-tion with 𝑁 syn = min (𝑁 0 − 𝑁 1, 𝑁 max ) synthetic DDoS sam-ples, the class imbalance ratio satisfies 𝜌 = 𝑁 1+𝑁 syn  
+
+> 𝑁 0
+
+=
+
+(1, if 𝑁 0 − 𝑁 1 ≤ 𝑁 max , 
+
+> 𝑁 1+𝑁 max
+> 𝑁 0
+
+, otherwise . In particular, when 𝑁 max ≥
+
+𝑁 0 − 𝑁 1, the augmented dataset achieves perfect class balance (𝜌 = 1). 
+
+By Theorem 3, the synthetic samples generated at convergence are drawn from 𝑝 𝐺 ≈ 𝑝 data , ensuring that the balanced dataset preserves the statistical properties of real DDoS traffic rather than introducing distributional artifacts. Corollary 2 establishes that augmentation achieves class balance; the next result quantifies what that balance is worth 
+
+for generalization by connecting GAN training quality to the downstream classifier through the domain-adaptation bound of Ben-David et al. 
+
+Theorem 5 (Generalization Gap Controlled by Discriminator Error) . Let 𝐶 𝜓 be the GCN classifier trained on Daug = Dreal ∪Dsyn , and let 𝑅 real (𝐶 ) be its risk had it trained on an equally sized balanced set of real DDoS graphs. With 𝜀 𝐷 the optimal discriminator’s real-vs-synthetic error rate at convergence and 
+
+𝜆 ★ the joint risk of the best classifier over both distributions, 
+
+𝑅 real (𝐶 ) ≤ 𝑅 aug (𝐶 ) + 2 (1 − 2𝜀 𝐷 ) + 𝜆 ★.
+
+Proof Apply the Ben-David et al. target-risk bound [40] with the augmented distribution as source and the real bal-anced distribution as target. The H ΔH divergence between the two is estimated by the A-distance 𝑑 A = 2(1 − 2𝜀 𝐷 ), where 
+
+𝜀 𝐷 is the error of the optimal real-vs-synthetic discriminator. Substituting yields the bound. As training approaches the equilibrium of Theorem 3 ( 𝐷 ★ → 12 ,
+
+𝜀 𝐷 → 12 ), the divergence term 2(1 − 2𝜀 𝐷 ) → 0 and the augmented-data classifier generalizes as well as one trained on real balanced data, up to the irreducible 𝜆 ★. This makes the empirical fake detection rate of 45.3% reported in the generator-architecture ablation (Section III) a direct, measur-able proxy for the generalization gap. 
+
+Corollary 3 (Real-Sample Efficiency) . Under the coordinated regime of Definition 2, each real DDoS window carries up to ¯𝑚 
+
+correlated same-class labels rather than a single independent one. The effective sample size per window is inflated accord-ingly, so to reach a target risk, the number of real DDoS samples required by graph augmentation is smaller than that required by vector augmentation by the corresponding factor. 3) Classification Training Objective: The classifier is trained using the cross-entropy loss function, which is well-suited for probabilistic classification tasks and provides gra-dient information that encourages confident predictions on correctly classified samples while heavily penalizing confident IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 9
+
+misclassifications. The training objective minimizes the cross-entropy loss over the augmented dataset as 
+
+L𝐶 = − 1
+
+|D aug |∑︁ ( G ,𝑦 ) ∈ D aug 
+
+> 1
+
+∑︁ 
+
+> 𝑐 =0
+
+𝑦 𝑐 log 𝑃 (𝑦 = 𝑐 |G) , (27) where 𝑦 𝑐 represents the one-hot encoding of the true label, such that 𝑦 𝑐 = 1 if 𝑐 is the correct class and 𝑦 𝑐 = 0 otherwise. This formulation ensures that confident, correct predictions yield small updates, while uncertain or incorrect predictions drive stronger corrective updates. Indeed, for the softmax output, the gradient of the cross-entropy loss with respect to the pre-activation logits o = W𝐶 h𝐶, pool + b𝐶 reduces to the well-known compact form 
+
+𝜕 L𝐶 
+
+𝜕 o = 1
+
+|D aug |∑︁ ( G ,𝑦 ) ∈ D aug 
+
+ 𝑃 (𝑦 | G) − y, (28) where y is the one-hot label vector. The update is thus propor-tional to the prediction error 𝑃 (𝑦 | G) − y: it vanishes when the predicted distribution matches the true label and grows toward its maximum for confident misclassifications, supplying strong corrective gradients precisely where the classifier errs. III. E XPERIMENTAL RESULTS 
+
+In this section, we present the experimental settings, quan-titative results, and comprehensive ablation studies of the pro-posed GraphGAN framework across four benchmark datasets. 
+
+A. Experimental Settings and Datasets 
+
+We evaluate GraphGAN on four widely used network intru-sion detection benchmarks to demonstrate its generalizability: 
+
+CIC-IDS-2017 contains approximately 2.8 million flow records collected over seven days, encompassing 14 attack types (e.g., DDoS, PortScan, Web Attack, Infiltration, Botnet) and normal flows. Each record includes 80 network flow features. 
+
+CIC-IDS-2018 extends the 2017 dataset with approximately 16–17 million records collected over 10 days, covering seven attack scenarios, including Brute Force, DoS, DDoS, Web Attack, Infiltration, Botnet, and Heartbleed, and includes 80 extracted flow-level features. 
+
+UNSW-NB15 comprises approximately 2.5 million records generated in a hybrid real and synthetic environment, con-taining nine attack categories (Fuzzers, Analysis, Backdoors, DoS, Exploits, Generic, Reconnaissance, Shellcode, Worms) with 49 flow-based and content-based features. 
+
+ToN-IoT is an IoT/IIoT-focused dataset with approximately 461,000 records collected from heterogeneous IoT services (weather, fridge, garage door, GPS, modbus, light, motion, thermostat), encompassing nine attack types including DDoS, DoS, ransomware, backdoor, injection, XSS, password crack-ing, scanning, and man-in-the-middle, with 44 features. For all datasets, the GraphGAN framework employs consis-tent hyperparameters unless otherwise stated. The generator synthesizes node features from Gaussian noise ( 𝑧 = 128 ), while the discriminator operates on graph-structured data using three GCN layers. Graph construction uses 𝑘 -NN with 𝑘 = 5,window size 𝑤 = 30 , and step size 𝑠 = 10 . The GCN-based classifier uses three graph convolutional layers, followed by global mean pooling and fully connected layers, and is trained with the Adam optimizer (learning rate 0.001 ), dropout regularization ( 𝑝 = 0.3), and cross-entropy loss. All models were implemented in PyTorch with the PyTorch Geometric backend and trained on a GPU with a batch size of 32 for up to 50 epochs. To prevent temporal leakage arising from overlapping sliding windows ( 𝑠 < 𝑤 ), we order each dataset chronologically and partition the raw flow stream into 60% training, 20% validation, and 20% testing segments before 
+
+graph construction. Sliding windows are then generated inde-pendently within each segment, so that no window crosses a split boundary and no raw flow is shared across splits; a guard band of 𝑤 flows is discarded at each boundary to eliminate residual overlap. This chronological protocol (training on ear-lier traffic and testing on later traffic) reflects realistic deploy-ment and avoids the inflated accuracy that random window-level splitting can produce. Performance is evaluated primarily using classification accuracy, while precision, recall, and F1-score are reported in subsequent analyses. We stress that all baselines are re-implemented under an identical, leakage-controlled protocol: the flow stream is ordered chronologically and partitioned before windowing, with a guard band discarded at each boundary. This is a strictly harder evaluation than the random, window-level splits under which several published graph baselines report near-saturated accuracy; accordingly, our reproduced figures for these baselines are lower than their originally reported values, and the gap reflects protocol rigor rather than implementation disadvantage. 
+
+B. Quantitative Results and Analysis 
+
+To ensure a fair and comprehensive evaluation, we com-pare GraphGAN against representative state-of-the-art meth-ods spanning different architectural paradigms in network intrusion detection. Causal Deep Learning [41] represents feature-level causal modeling approaches designed to enhance interpretability and robustness. CNN [42] captures spatial correlations in features through convolutional filters and serves as a strong deep learning baseline for tabular traffic data. GRU-BiLSTM [43] models sequential dependencies in traffic flows using recurrent architectures. The Vanilla GAN-based classi-fier integrates adversarial training without a graph structure to evaluate whether generative augmentation alone is sufficient. Ensemble GNN [14] represents advanced graph-based detec-tion approaches without adversarial augmentation. To stress-test our claims against the strongest generative and graph paradigms, we additionally include: SMOTE oversampling [17] as a classical interpolation-based augmenter; a Wasser-stein GAN [19], a VAE-GAN [20], and the diffusion-based DDP-DAR [44] as advanced vectorized generative augmenters; and E-GraphSAGE [30] and BS-GAT [31] as state-of-the-art graph neural baselines. All baselines were implemented using identical preprocessing and data-splitting protocols to ensure a fair comparison. We evaluated all baseline methods and GraphGAN across all four benchmark datasets using 60% of the training data, and IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 10 
+
+the results are shown in Table I. On CIC-IDS-2017, Graph-GAN achieves 95.31% accuracy, substantially outperforming all competitors. The pattern is consistent across datasets: GraphGAN attains 94.87% on CIC-IDS-2018, 93.42% on UNSW-NB15, and 94.56% on ToN-IoT. Traditional methods show limited effectiveness across all benchmarks: Causal Deep Learning (79.56%–82.35%), CNN (87.34%–90.56%), GRU-BiLSTM (87.12%–90.35%), and standalone GAN (83.45%– 86.43%). Among the baselines, Ensemble GNN is the strongest, achieving 89.78%–92.55% accuracy but remaining 2.76–3.64 percentage points below GraphGAN across all datasets. GraphGAN’s superiority stems from three synergistic innovations: temporal graph construction via 𝑘 -NN topology that captures coordinated attack patterns, adversarial train-ing that generates realistic minority samples while preserv-ing topological relationships, and GCN-based classification that leverages structural patterns for robust boundaries. The consistent improvements across diverse datasets confirm the generalizability of our approach. 
+
+C. Necessity of Data Augmentation Using GraphGAN 
+
+While GraphGAN demonstrates strong overall accuracy, we further investigate whether its advantage stems specifically from adversarial augmentation in the presence of class imbal-ance. To validate the necessity of adversarial augmentation, we conducted ablation studies on CIC-IDS-2017 across varying class imbalance ratios (1:2, 1:5, 1:10, and 1:20), comparing GraphGAN with full augmentation against baselines without augmentation and with random feature generation. As shown in Table II, GraphGAN consistently outperforms both variants across all metrics. At moderate imbalance (1:2), GraphGAN achieves 95.31% accuracy, a 1.55 point improvement over the non-augmented baseline (93.76%). The performance gap widens dramatically as imbalance intensifies: at 1:10 ratio, GraphGAN maintains 91.82% accuracy while the baseline degrades to 78.91% (12.91 point gap), and at extreme imbal-ance (1:20), GraphGAN achieves 89.47% compared to 67.23% without augmentation (22.24 point improvement). Random augmentation provides only marginal benefits (2.91 points at 1:20) and fails to capture distributional and topological properties. These results confirm that GraphGAN’s adversar-10% 20% 30% 40% 50% 60% 
+
+> Training Data (%)
+> 020 40 60 80 100
+> Accuracy (%)
+> GraphGAN Ensemble GNN GAN GRU-BiLSTM Casual Deep Learning
+
+(a) Accuracy 10% 20% 30% 40% 50% 60%  
+
+> Training Data (%)
+> 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+> Loss
+> GraphGAN Ensemble GNN GAN GRU-BiLSTM Casual Deep Learning
+
+(b) Loss 
+
+Fig. 2. Impact of training data ratio on (a) accuracy and (b) loss of data-driven methods, including GraphGAN. 
+
+ial training generates topology-aware synthetic samples that preserve both statistical fidelity and structural relationships. 
+
+D. Impact of Different Training Ratio 
+
+To evaluate the robustness and data efficiency of our pro-posed GraphGAN framework, we conducted experiments with training data ratios ranging from 10% to 90%, while main-taining a consistent test set composition and preserving the original class distribution. As illustrated in Fig. 2, GraphGAN consistently achieves the highest accuracy across all training ratios, with particularly pronounced advantages under low-data regimes, where traditional deep learning approaches experi-ence significant performance degradation. The superior data efficiency stems from a graph construction mechanism that captures stable flow relationships regardless of the training set size, an adversarial augmentation that generates high-quality synthetic samples while preserving topological relationships, and a GCN-based architecture that leverages parameter sharing to improve generalization under data-limited conditions. 
+
+E. Impact of Graph Construction Method 
+
+To validate our 𝑘 -NN graph construction approach, we compared it against alternative graph topologies: (1) fully connected graphs, where all nodes within a temporal window are connected; (2) threshold-based graphs, where edges are formed only if similarity exceeds a fixed threshold; and (3) 
+
+TABLE I COMPARATIVE ANALYSIS OF GRAPH GAN AGAINST STATE -OF -THE -ART METHODS ACROSS FOUR BENCHMARK DATASETS (TEST ACCURACY %). 
+
+Method CIC-IDS-2017 CIC-IDS-2018 UNSW-NB15 ToN-IoT 
+
+Causal Deep Learning [41] 82.35 81.23 79.56 80.89 CNN [42] 90.56 89.78 87.34 88.56 GRU-BiLSTM [43] 90.35 89.45 87.12 88.34 SMOTE Oversampling [17] 84.72 84.08 82.19 82.87 Vanilla GAN-based Classifier 86.43 85.67 83.45 84.56 WGAN [19] 88.46 87.92 85.76 86.48 VAE-GAN [20] 89.23 88.64 86.31 87.12 DDP-DAR (Diffusion) [44] 91.48 90.76 88.95 89.62 E-GraphSAGE [30] 92.03 91.35 89.41 90.18 BS-GAT [31] 93.18 92.47 90.86 91.73 Ensemble GNN [14] 92.55 91.89 89.78 90.67 
+
+GraphGAN (Proposed) 95.31 94.87 93.42 94.56 IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 11 
+
+TABLE II QUANTITATIVE RESULT OF CLASS IMBALANCE RATIO FOR GraphGAN ON 
+
+CIC-IDS-2017 
+
+Ratio Model Variant Accuracy Precision Recall F1 Score 1:2 
+
+GraphGAN (Full) 95.31 95.58 95.31 95.07 
+
+w/o Augmentation 93.76 94.12 93.76 93.52 + Random 93.89 94.28 93.89 93.64 
+
+1:5 
+
+GraphGAN (Full) 93.58 93.92 93.58 93.41 
+
+w/o Augmentation 87.34 88.16 87.34 86.92 + Random 88.12 88.79 88.12 87.68 
+
+1:10 
+
+GraphGAN (Full) 91.82 92.26 91.82 91.54 
+
+w/o Augmentation 78.91 80.47 78.91 78.23 + Random 80.67 81.92 80.67 79.94 
+
+1:20 
+
+GraphGAN (Full) 89.47 90.15 89.47 89.08 
+
+w/o Augmentation 67.23 71.34 67.23 65.87 + Random 70.14 73.28 70.14 68.79 
+
+random graphs with the same average degree. As shown in Table III(a), the 𝑘 -NN approach consistently achieves the highest accuracy across all four datasets, reaching 95.31% on CIC-IDS-2017, 94.87% on CIC-IDS-2018, 93.42% on UNSW-NB15, and 94.56% on ToN-IoT. Fully connected graphs suf-fer from over-connectivity, which introduces noise (90.78%– 92.87%); threshold-based methods fragment the graph into dis-connected components (89.56%–91.43%); and random graphs lack meaningful structural information (87.34%–88.76%). The 
+
+𝑘 -NN approach optimally balances the preservation of local structure and computational efficiency across diverse network environments. 
+
+F. Effect of Window Size and Step Size 
+
+We investigated the impact of temporal window size 𝑤 ∈{10 , 20 , 30 , 40 , 50 } and step size 𝑠 ∈ { 5, 10 , 15 , 20 } on detec-tion performance of our proposed method (GraphGAN) across all four datasets. As illustrated in Fig. 3, the configuration 𝑤 =
+
+30 and 𝑠 = 10 yields optimal results across all benchmarks: 95.31% on CIC-IDS-2017, 94.87% on CIC-IDS-2018, 93.42% on UNSW-NB15, and 94.56% on ToN-IoT. Smaller windows (𝑤 = 10 ) fail to capture extended attack patterns (89.56%– 91.23%), whereas larger windows ( 𝑤 = 50 ) introduce noise from unrelated flows (91.45%–92.67%). Regarding the step size, 𝑠 = 10 provides the best trade-off: excessively large steps (𝑠 = 20 ) may miss transitional attack patterns, whereas very small steps ( 𝑠 = 5) produce redundant, overlapping windows without significant performance improvement. These trends remain consistent across all datasets. 
+
+TABLE III IMPACT OF (A) G RAPH CONSTRUCTION METHOD AND (B) P OOLING 
+
+STRATEGY ON ACCURACY (%) 
+
+(a) Graph Construction Method CIC17 CIC18 NB15 ToN                 
+
+> 𝑘 -NN 95.31 94.87 93.42 94.56
+> Fully Conn. 92.87 92.34 90.78 91.93 Threshold 91.43 90.91 89.56 90.67 Random 88.76 88.12 87.34 88.45
+
+(b) Pooling Strategy Method CIC17 CIC18 NB15 ToN                        
+
+> Mean 95.31 94.87 93.42 94.56
+> Max 93.78 93.23 91.89 92.78 Sum 92.91 92.34 91.12 92.23 Attention 94.67 94.12 92.78 93.89 10 20 30 40 50
+> Window Size ( w)
+> 88 89 90 91 92 93 94 95 96 97
+> Accuracy (%)
+> (a) Effect of Window Size ( s=10)
+> CICIDS2017 CIC-IDS-2018 UNSW-NB15 ToN-IoT
+> 510 15 20
+> Step Size ( s)
+> 90 91 92 93 94 95 96 97
+> Accuracy (%)
+> (b) Effect of Step Size ( w=30)
+> CICIDS2017 CIC-IDS-2018 UNSW-NB15 ToN-IoT
+
+Fig. 3. Effect of (a) window size 𝑤 and (b) step size 𝑠 on detection accuracy of our proposed GraphGAN. 
+
+G. Importance of the Number of Nearest Neighbors ( 𝑘 )
+
+The choice of 𝑘 in 𝑘 -NN graph construction critically affects the quality of the resulting topology. We evaluated 
+
+𝑘 ∈ {3, 5, 7, 10 , 15 } across all four datasets, with results presented in Fig. 4(a). Across all benchmarks, 𝑘 = 5 consis-tently provides the optimal balance between capturing local neighborhood structure and maintaining graph connectivity, achieving 95.31% on CIC-IDS-2017, 94.87% on CIC-IDS-2018, 93.42% on UNSW-NB15, and 94.56% on ToN-IoT. Lower values ( 𝑘 = 3) produce overly sparse graphs with disconnected components (90.67%–92.45%), thereby limiting effective message passing. Higher values ( 𝑘 = 15 ) introduce noisy long-range connections that dilute meaningful local patterns (91.78%–93.78%). The consistent optimality of 𝑘 = 5
+
+across diverse datasets confirms that this connectivity level ef-fectively captures feature-based similarities without degrading graph topology. 
+
+H. Analysis of GCN Layer Depth 
+
+We examined the impact of GCN depth by varying the num-ber of graph convolutional layers in both the discriminator and the classifier from 1 to 5. As shown in Fig. 4(b), the three-layer architecture achieves the highest accuracy across all datasets: 95.31% on CIC-IDS-2017, 94.87% on CIC-IDS-2018, 93.42% on UNSW-NB15, and 94.56% on ToN-IoT. Shallow networks (1–2 layers) capture only immediate neighborhood informa-tion, thereby missing multi-hop structural patterns essential for distributed attack detection. Conversely, deeper networks (4–5 layers) suffer from over-smoothing, in which node represen-tations become increasingly indistinguishable, as well as from gradient vanishing effects that impede effective training. The three-layer configuration provides an optimal balance between receptive field expansion and representation discrimination, a finding that remains consistent across all four benchmarks. 
+
+I. Study of Generator Architecture Complexity 
+
+To assess the necessity of the proposed multi-layer generator architecture, we compared variants with different depths: 2-layer (linear output), 3-layer (a 4-layer architecture without one hidden layer), 4-layer (the proposed architecture), and 5-layer. The 4-layer generator produces the highest-quality syn-thetic samples, as measured by discriminator confusion (45.3% fake detection rate) and downstream classifier performance (95.31% accuracy). Simpler 2-layer generators produce easily IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 12 3 5 7 10 15 
+
+> Number of Nearest Neighbors ( k)
+> 89 90 91 92 93 94 95 96 97
+> Accuracy (%)
+> CICIDS2017 CIC-IDS-2018 UNSW-NB15 ToN-IoT
+
+(a) 1 2 3 4 5 
+
+> Number of GCN Layers
+> 88 90 92 94 96
+> Accuracy (%)
+> CICIDS2017 CIC-IDS-2018 UNSW-NB15 ToN-IoT
+
+(b) 
+
+Fig. 4. Effect of hyperparameters on detection accuracy of our proposed GraphGAN: (a) number of nearest neighbors 𝑘 , and (b) GCN layer depth. 
+
+distinguishable synthetic samples (78.2% fake detection rate, 89.45% classifier accuracy), while 5-layer generators exhibit training instability and only marginal improvements (47.1% fake detection rate, 94.89% accuracy), indicating diminishing returns beyond four layers. 
+
+J. Aggregation Function in Graph Pooling 
+
+We compared different graph-level pooling strategies across all four datasets: global mean pooling (proposed), global max pooling, global sum pooling, and attention-based pooling. As shown in Table III(b), mean pooling consistently achieves the highest accuracy across all benchmarks: 95.31% on CIC-IDS-2017, 94.87% on CIC-IDS-2018, 93.42% on UNSW-NB15, and 94.56% on ToN-IoT. Max pooling (91.89%–93.78%) focuses on extreme features but loses information about overall flow patterns. Sum pooling (91.12%–92.91%) is sensitive to variations in graph size and introduces scale inconsistencies. Attention-based pooling (92.78%–94.67%) shows promise but introduces additional parameters and training complexity with-out sufficient performance gains to justify the computational overhead. IV. C ONCLUDING REMARKS 
+
+We introduced GraphGAN, an adversarial graph neural network framework that models network traffic as temporal graphs and employs generative augmentation to address class imbalance and data scarcity in DDoS detection. Through temporal graph construction, adversarial augmentation, and GCN-based classification, GraphGAN achieves superior per-formance compared to existing CNN-LSTM variants across four diverse benchmarks, including CIC-IDS-2017, CIC-IDS-2018, UNSW-NB15, and ToN-IoT, with consistent improve-ments in accuracy, precision, and recall. Comprehensive ab-lation studies confirm the robustness of key design choices, including 𝑘 -NN graph construction, three-layer GCN depth, a noise dimension of 128, and mean pooling, across all evaluated datasets. Key limitations include reliance on feature-similarity assumptions in graph construction and training instabilities inherent to adversarial architectures. A detailed system-architecture instantiation and its runtime/mitigation-cost evaluation are left as future work. Future research direc-tions encompass multi-vector attack classification, hierarchical graph structures, federated learning frameworks, explainable threat attribution mechanisms, and extension to broader net-work security domains, including encrypted traffic analysis and IoT anomaly detection. DATA AVAILABILITY 
+
+The datasets analyzed in this study are publicly available benchmark datasets: CIC-IDS-2017, CIC-IDS-2018, UNSW-NB15, and ToN-IoT. Code to reproduce the experiments is available from the authors on reasonable request. REFERENCES [1] Y. Wang, X. Zhang, Y. Lai, Z. Zhao, and Y. Deng, “Hifoots: A highly efficient ddos attack detection scheme deployed in smart iot homes,” 
+
+IEEE Transactions on Cognitive Communications and Networking ,vol. 11, no. 1, pp. 519–533, 2025. [2] M. Antonakakis, T. April, M. Bailey, M. Bernhard, E. Bursztein, J. Cochran, Z. Durumeric, J. A. Halderman, L. Invernizzi, M. Kallitsis 
+
+et al. , “Understanding the mirai botnet,” in 26th USENIX security symposium (USENIX Security 17) , 2017, pp. 1093–1110. [3] W. Liu, M. Arif Hossain, and N. Ansari, “Mobile-edge computing for multi-services digital twin-enabled iot heterogeneous networks,” IEEE Transactions on Cognitive Communications and Networking , vol. 11, no. 3, pp. 1845–1853, 2025. [4] S. T. Zargar, J. Joshi, and D. Tipper, “A survey of defense mechanisms against distributed denial of service (ddos) flooding attacks,” IEEE communications surveys & tutorials , vol. 15, no. 4, pp. 2046–2069, 2013. [5] G. A. Jaafar, S. M. Abdullah, and S. Ismail, “Review of recent detection methods for http ddos attack,” Journal of Computer Networks and Communications , vol. 2019, no. 1, p. 1283472, 2019. [6] M. A. Hossain and N. Ansari, “Hybrid multiple access for network slicing aware mobile edge computing,” IEEE Transactions on Cloud Computing , vol. 11, no. 3, pp. 2910–2921, 2023. [7] M. A. Hossain, A. R. Hossain, W. Liu, N. Ansari, A. Kiani, and T. Saboorian, “A decentralized collaborative learning approach in 5G+ core networks,” IEEE Network , vol. 38, no. 1, pp. 288–295, 2023. [8] Y. Luo, M. He, and X. Wang, “Erfs: Efficient feature graph representa-tion for intrusion detection based on flow semantic association,” IEEE Transactions on Cognitive Communications and Networking , vol. 11, no. 6, pp. 3711–3728, 2025. [9] W. Liu, M. A. Hossain, N. Ansari, A. Kiani, and T. Saboorian, “Reinforcement learning-based network slicing scheme for optimized ue-qos in future networks,” IEEE Transactions on Network and Service Management , vol. 21, no. 3, pp. 3454–3464, 2024. [10] M. A. Hossain, N. Sadat, N. Ansari, and F. Amsaad, “Split learning over noma-enabled hetnets for scalable iot-based precision agriculture,” IEEE Transactions on Cognitive Communications and Networking , vol. 12, pp. 7145–7156, 2026. [11] H. Sedjelmaci and N. Ansari, “Zero trust architecture empowered attack detection framework to secure 6g edge computing,” IEEE Network ,vol. 38, no. 1, pp. 196–202, Jan. 2024. [12] M. S. E. Sayed, N.-A. Le-Khac, M. A. Azer, and A. D. Jurcut, “A flow-based anomaly detection approach with feature selection method against ddos attacks in sdns,” IEEE Transactions on Cognitive Communications and Networking , vol. 8, no. 4, pp. 1862–1880, 2022. [13] A. Shahraki, M. Abbasi, A. Taherkordi, and A. D. Jurcut, “Active learning for network traffic classification: A technical study,” IEEE Transactions on Cognitive Communications and Networking , vol. 8, no. 1, pp. 422–439, 2022. [14] R. A. Bakar, L. De Marinis, F. Cugini, and F. Paolucci, “Ftg-net-e: A hierarchical ensemble graph neural network for ddos attack detection,” 
+
+Computer Networks , vol. 250, p. 110508, 2024. [15] M. Zhong, M. Lin, C. Zhang, and Z. Xu, “A survey on graph neural net-works for intrusion detection systems: Methods, trends and challenges,” 
+
+Computers & Security , vol. 141, p. 103821, 2024. [16] Y. Qing, X. Liu, and Y. Du, “Mitigating data imbalance to improve the generalizability in iot ddos detection tasks,” The Journal of Supercom-puting , vol. 80, no. 7, pp. 9935–9960, 2024. [17] N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer, “Smote: synthetic minority over-sampling technique,” Journal of Artificial Intel-ligence Research , vol. 16, pp. 321–357, 2002. IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING 13 
+
+[18] G. Zhao, P. Liu, K. Sun, Y. Yang, T. Lan, and H. Yang, “Research on data imbalance in intrusion detection using cgan,” Plos one , vol. 18, no. 10, p. e0291750, 2023. [19] M. Arafah, I. Phillips, A. Adnane, W. Hadi, M. Alauthman, and A.-K. Al-Banna, “Anomaly-based network intrusion detection using denoising autoencoder and wasserstein gan synthetic attacks,” Applied Soft Computing , vol. 168, p. 112455, 2025. [20] W. Tian, Y. Shen, N. Guo, J. Yuan, and Y. Yang, “Vae-wacgan: an improved data augmentation method based on vaegan for intrusion detection,” Sensors , vol. 24, no. 18, p. 6035, 2024. [21] R. K. Chouhan, M. Atulkar, and N. K. Nagwani, “A framework to detect ddos attack in ryu controller based software defined networks using feature extraction and classification,” Applied Intelligence , vol. 53, no. 4, pp. 4268–4288, 2023. [22] M. S. El Sayed, N.-A. Le-Khac, M. A. Azer, and A. D. Jurcut, “A flow-based anomaly detection approach with feature selection method against ddos attacks in sdns,” IEEE Transactions on Cognitive Communications and Networking , vol. 8, no. 4, pp. 1862–1880, 2022. [23] D. M. Rajan and D. J. Aravindhar, “Detection and mitigation of DDoS attack in SDN environment using hybrid CNN-LSTM,” Migration Letters , vol. 20, pp. 407–419, 2023. [24] J. He, W. Fang, X. Lan, G. Yang, Z. Chen, Y. Chen, T. Li, and J. Chen, “Efficient based on improved random forest defense system against application-layer ddos attacks,” International Journal of Intelligent Sys-tems , vol. 2024, no. 1, p. 9044391, 2024. [25] K. Yang, J. Wang, and M. Li, “An improved intrusion detection method for IIoT using attention mechanisms, bigru, and inception-cnn,” 
+
+Scientific Reports , vol. 14, no. 1, p. 19339, 2024. [26] J. Li, L. Lyu, X. Liu, X. Zhang, and X. Lyu, “Fleam: A federated learning empowered architecture to mitigate ddos in industrial iot,” IEEE Transactions on Industrial Informatics , vol. 18, no. 6, pp. 4059–4068, 2021. [27] N. Nishanth and A. Mujeeb, “Modeling and detection of flooding-based denial of service attacks in wireless ad hoc networks using uncertain reasoning,” IEEE Transactions on Cognitive Communications and Networking , vol. 7, no. 3, pp. 893–904, 2021. [28] Y. Li, R. Li, Z. Zhou, J. Guo, W. Yang, M. Du, and Q. Liu, “Graphddos: Effective ddos attack detection using graph neural networks,” in 2022 IEEE 25th International Conference on Computer Supported Coopera-tive Work in Design (CSCWD) . IEEE, 2022, pp. 1275–1280. [29] Y. Cao, H. Jiang, Y. Deng, J. Wu, P. Zhou, and W. Luo, “Detecting and mitigating ddos attacks in sdn using spatial-temporal graph convolutional network,” IEEE Transactions on Dependable and Secure Computing ,vol. 19, no. 6, pp. 3855–3872, 2021. [30] W. W. Lo, S. Layeghy, M. Sarhan, M. Gallagher, and M. Portmann, “E-graphsage: A graph neural network based intrusion detection sys-tem for iot,” in NOMS 2022-2022 IEEE/IFIP network operations and management symposium . IEEE, 2022, pp. 1–9. [31] Y. Wang, Z. Han, Y. Du, J. Li, and X. He, “Bs-gat: a network intrusion detection system based on graph neural network for edge computing,” 
+
+Cybersecurity , vol. 8, no. 1, p. 27, 2025. [32] G. Duan, H. Lv, H. Wang, and G. Feng, “Application of a dynamic line graph neural network for intrusion detection with semisupervised learning,” IEEE Transactions on Information Forensics and Security ,vol. 18, pp. 699–714, 2022. [33] A. Mustapha, R. Khatoun, S. Zeadally, F. Chbib, A. Fadlallah, W. Fahs, and A. El Attar, “Detecting ddos attacks using adversarial neural network,” Computers & Security , vol. 127, p. 103117, 2023. [34] C.-S. Shieh, T.-T. Nguyen, W.-W. Lin, Y.-L. Huang, M.-F. Horng, T.-F. Lee, and D. Miu, “Detection of adversarial ddos attacks using generative adversarial networks with dual discriminators,” Symmetry , vol. 14, no. 1, p. 66, 2022. [35] M. A. Hossain, W. Liu, and N. Ansari, “Computation-efficient offloading and power control for mec in iot networks by meta-reinforcement learning,” IEEE Internet of Things Journal , vol. 11, no. 9, pp. 16 722– 16 730, 2024. [36] M. Defferrard, X. Bresson, and P. Vandergheynst, “Convolutional neural networks on graphs with fast localized spectral filtering,” Advances in neural information processing systems , vol. 29, 2016. [37] I. J. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio, “Generative adversarial nets,” 
+
+Advances in neural information processing systems , vol. 27, 2014. [38] S. Kullback and R. A. Leibler, “On information and sufficiency,” The Annals of Mathematical Statistics , vol. 22, no. 1, pp. 79–86, 1951. [39] K. Xu, W. Hu, J. Leskovec, and S. Jegelka, “How powerful are graph neural networks?” arXiv preprint arXiv:1810.00826 , 2018. [40] S. Ben-David, J. Blitzer, K. Crammer, A. Kulesza, F. Pereira, and J. W. Vaughan, “A theory of learning from different domains,” Machine Learning , vol. 79, no. 1–2, pp. 151–175, 2010. [41] Z. Zeng, W. Peng, and D. Zeng, “Improving the stability of intrusion detection with causal deep learning,” IEEE Transactions on Network and Service Management , vol. 19, no. 4, pp. 4750–4763, 2022. [42] A. A. Najar and S. M. Naik, “Cyber-secure sdn: A cnn-based approach for efficient detection and mitigation of ddos attacks,” Computers & Security , vol. 139, p. 103716, 2024. [43] A. M. Al-Eryani, F. A. Omara, and E. Hossny, “A deep learning gru-bilstm for ddos attack detection,” SN Computer Science , vol. 6, no. 6, p. 605, 2025. [44] S. Cai, Y. Zhao, J. Lyu, S. Wang, Y. Hu, M. Cheng, and G. Zhang, “Ddp-dar: Network intrusion detection based on denoising diffusion probabilis-tic model and dual-attention residual network,” Neural Networks , vol. 184, p. 107064, 2025.

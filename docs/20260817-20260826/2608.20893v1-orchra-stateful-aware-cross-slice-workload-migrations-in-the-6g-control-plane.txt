@@ -1,0 +1,189 @@
+Title: Orchra: Stateful-aware Cross-slice Workload Migrations in the 6G Control Plane
+
+URL Source: https://arxiv.org/pdf/2608.20893v1
+
+Published Time: Mon, 24 Aug 2026 00:36:14 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Orchra: Stateful-aware Cross-slice Workload Migrations in the 6G Control Plane 
+
+Anthony Kiggundu ∗† , Bin Han † and Hans D. Schotten ∗† ∗German Research Center for Artificial Intelligence (DFKI), Germany 
+
+> †
+
+RPTU University of Kaiserslautern-Landau, Germany 
+
+Abstract —Network slicing is a foundational capability of Fifth Generation (5G)-Advanced and emerging Sixth Generation (6G) networks, yet practical support for seamless runtime slice tran-sitions remains limited. Standard cloud-native 5G architectures lack native support for stateful inter/intra-slice session migration, relying instead on high-overhead Non-Access Stratum (NAS) re-registrations, container redeployment etc., which disrupt user-plane traffic for up to 245 .50 ms . To address this limitation, we present Orchra 1, an intelligent orchestrator for stateful, low-latency context transfer. By externalizing critical user equipment state—including NAS context, security keys, and Protocol Data Unit (PDU) session information—into a transient staging layer, Orchra preserves session continuity across slice boundaries with-out requiring full re-registration. Experimental evaluation shows that Orchra reduces this user-plane interruption by more than twice in comparison to con-ventional Third Generation Partnership Project (3GPP)-based approaches while incurring negligible security overhead. These results demonstrate a practical and reproducible approach for enabling seamless, state-preserving slice transitions in cloud-native 5G-Advanced networks. 
+
+Index Terms —6G, Inter-Slice switching, OpenAirInterface, Mosaic5G, Control Plane, Performance Evaluation 
+
+I. I NTRODUCTION 
+
+Network slicing enables multiple logical networks to coexist over a shared physical infrastructure, supporting heterogeneous services such as Enhanced Mobile Broadband (eMBB), Ultra-Reliable and Low-Latency Communications (URLLC), and Massive Machine-Type Communication (mMTC) [1], [2]. While the 3GPP architecture specifies slice selection and lifecycle management, it does not define a native mech-anism for migrating an active User Equipment (UE) ses-sion between slices while preserving control- and user-plane state [3], [4]. Consequently, open-source platforms such as OpenAirInterface (OAI) and Mosaic5G implement inter-slice switching through full UE re-registration and PDU session re-establishment rather than state transfer [5], [6]. This procedure, as similarly evaluated in [7] requires re-peated authentication, security context establishment, and ses-sion reconstruction, introduces control-plane switching laten-cies that range between 110 –250 ms in our OAI/Mosaic5G deployment (Section III-E), non-negligible user-plane inter-ruption and packet loss. While acceptable for infrequent mobility events, this overhead limits dynamic slice adaptation driven by Service Level Agreement (SLA) enforcement, edge 
+
+> 1https://github.com/anthonyKiggundu/okra
+
+computing, and closed-loop Radio Access Network (RAN) optimization [8], [9]. A further limitation is the absence of a coordinated mech-anism for transferring UE context between network func-tions. Existing open-source implementations execute migration through loosely coupled operations across the Access and Mobility Management Function (AMF), Session Management Function (SMF), and User Plane Function (UPF) without a shared state repository or transactional coordination [6], [10]. As a result, failures during migration may require com-plete session re-establishment, motivating a state-persistent migration framework capable of preserving active UE context throughout slice transitions. These limitations become more pronounced during inter-Public Land Mobile Network (PLMN) cross territorial roam-ing, where additional signalling, authentication, and policy coordination further increase migration latency [11]. Conven-tional Home-Routed Roaming has been reported to introduce service interruptions approaching two minutes, motivating op-timized 5G Standalone roaming procedures capable of reduc-ing interruption to the order of hundreds of milliseconds [12], [13]. Despite advances such as Security Edge Protection Proxy (SEPP), slice roaming agreements, and federated edge infrastructures, practical open-source platforms for evaluat-ing stateful inter-slice migration remain limited [14]–[16]. To address these limitations, we implement a stateful slice migration framework that minimizes control-plane migration latency while preserving active UE session state. 
+
+A. Novelty and Contributions 
+
+The main contributions of this work are:  
+
+> •
+
+Stateful Slice Migration: We design a Redis-backed state externalization mechanism that preserves active UE session context across slice transitions, eliminating the need for full UE re-registration.  
+
+> •
+
+Network-side Stateful Migration: We introduce an or-chestration layer within the SMF that performs slice migration entirely inside the core network through direct state externalization and restoration. By avoiding UE re-registration and network-wide rediscovery procedures, 
+
+Orchra reduces control-plane migration latency from the 112 .40 –245 .50 ms observed in our OAI/Mosaic5G baseline to approximately 40 –60 ms . 
+
+> •
+
+Open-source Evaluation Platform: We have open-sourced our framework to enable reproducibility through arXiv:2608.20893v1 [cs.NI] 21 Aug 2026 an OAI-based testbed supporting automated performance evaluation of low-latency stateful slice migration, in-cluding user-plane continuity and cryptographic overhead measurements. The remainder of this paper is structured as follows: Section II details the architecture and implementation of our orchestra-tor prototype, including how we integrate open tools. Section III presents our experimental setups, results, and analysis. We conclude with a discussion about some limitations, open challenges and future directions in Section IV. II. O RCHRA IMPLEMENTATION AND SETUP 
+
+A. Building the Control Plane Glue 
+
+To support stateful UE migration from a source slice to a tar-get slice without triggering standard 3GPP NAS re-registration loops or security renegotiations, orchra implements a mod-ular inter-slice switching framework around OAI. The design is structured around three architectural components— state externalization , control-plane interception , and atomic user-plane re-anchoring —which together define the migration path: UE context is temporarily externalized, the standard PDU Session Update is intercepted by a custom shim, and the target slice is brought to a ready state before the access-network switch is finalized. 
+
+1) Active State Externalization: The state externalization phase decouples critical UE mobility and session state vari-ables from local network function (NF) memory, turning stateless runtime elements into persistent structural objects. This context encompasses NAS uplink/downlink counters, AMF security keys, and GPRS Tunneling Protocol User-plane (GTP-U) parameters. To mitigate the security and privacy risks associated with externalizing sensitive User Equipment (UE) and Non-Access Stratum (NAS) states, the orchestra-tion framework embeds a security model at the deployment layer. Access control to the centralized state anchor is strictly enforced via Redis authentication configured through native Kubernetes secrets. Data in transit across the service-based architecture is secured using mutual Transport Layer Security (mTLS) transport-layer encryption to prevent plain-text expo-sure of session variables over the network. Finally, granular Kubernetes NetworkPolicies isolate the storage plane, restricting ingress traffic specifically to authorized Session Management Function (SMF) and orchestrator pods. This minimizes the cluster attack surface while preserving sub-millisecond context retrieval performance. When an inter-slice migration is triggered—for example, following an SLA violation detected by a monitoring frame-work such as FlexRIC—the centralized Orchra controller invokes a proprietary state-export interface on the active source SMF ( Step 1 ). The source SMF serializes the current in-memory PDU session context and stores the resulting state in a shared Redis repository (Step 2). During this state externalization phase, the source UPF continues forward-ing user-plane traffic, thereby avoiding the traditional pre-migration traffic freeze while the target forwarding path is being prepared. The exported context corresponds to a single execution point within the migration workflow and is tagged with a unique Universally Unique Identifier (UUID)-based migration identifier together with its associated timestamp. This enables deterministic tracking and correlation of each migration instance throughout the export, import, and comple-tion phases. The source slice remains responsible for the active forwarding path until the target SMF successfully restores the exported state and the corresponding control-plane procedures complete, ensuring that incomplete migration attempts do not prematurely disrupt the existing user-plane session. 
+
+2) Control Plane Interception via Custom Core Shims: 
+
+Once the state is anchored externally, the architecture utilizes target-side control-plane interception to reconstruct the execu-tion environment via a Make-Before-Break mechanism [17]. This is achieved via a dedicated, low-latency communication shim embedded inside the OAI-SMF binary. When the Orches-trator issues a target activation trigger and retrieval directive (Step 3 ) to the target SMF, the intercepting shim optimizes the initialization phase by deferring default sequential 3GPP discovery routines. Instead of awaiting the completion of standard synchronous setups, the shim concurrently intercepts the inbound PDU session update signaling and executes a low-overhead, direct memory-mapped retrieval against the external Redis state anchor. This non-blocking execution path ensures that critical session context is restored before standard signaling timeouts can be triggered, eliminating the risk of state desynchronization or data loss. By pulling the serialized context directly from the database and injecting it into the local session management handler, the system completely bypasses standard Domain Name Sys-tem (DNS) lookups, Network Repository Function (NRF) (oai-nrf ) path selection queries, and Unified Data Repos-itory (UDR)/Unified Data Management (UDM) ( oai-udm )authentication loops. Furthermore, the reconstructed context is injected directly into the target SMF without repeating the standard service discovery and subscriber retrieval procedures. As a result, the recovery path is reduced to state retrieval, validation, and Packet Forwarding Control Protocol (PFCP) reconfiguration, minimizing the additional control-plane pro-cessing required to resume service. 
+
+3) Atomic User-Plane Re-Anchoring: The final phase of the migration pipeline relies on atomic user-plane re-anchoring to secure end-to-end data path continuity without packet loss. The target SMF initiates an N4 Establish request (Step 4) with the target UPF to prime the incoming user-plane buffers and establish downward data tunnels. Concurrently, the Orches-trator executes a coordinated N2 Switch directive ( Step 5 )via the AMF down to the g Node B (Next Generation Node B) (gNB). This creates a functional routing overlap where the target slice path is completely pre-staged before the radio side alters its connection state. As soon as the target SMF detects an inbound resume 
+
+indication ( Step 6 ) from the gNB, it switches active downlink packet detection and forwarding action rules (PDRs/FARs). The target UPF immediately initiates a controlled Flush (Step 7 ) to empty the accumulated user-plane buffer queue directly into the newly redirected RAN stream. Once this buffer is entirely drained and synchronization is finalized, the target UPF issues an asynchronous Flush Callback 
+
+(Step 8 ) back to the centralized Orchestrator to confirm zero-data-loss user-plane alignment. Upon receiving this validation callback, the Orchestrator safely executes a final Teardown command ( Step 9 ) to the source SMF, which subsequently issues a Stop command (Step 10 ) to decommission the legacy source UPF processing loops. This deferred decommissioning strategy realizes a true Control and User Plane Separation (CUPS) primitive that entirely eliminates the transient packet-drop windows typical of standard 5G slice modifications. Figure 1 summarizes this workflow. The left side of the figure shows source-side export and shutdown, while the right side shows target-side retrieval, re-anchoring, and resumption. Together, these steps implement Orchra’s low latency migration path and preserve continuity of service for latency-sensitive MEC and URLLC-style workloads.   
+
+> Orchestrator Redis State Source SMF Source UPF Target SMF Target UPF gNB / RAN
+> 1. Export 2. PUT 3. Trigger & GET 4. N4 Establish
+> 5. N2 Switch
+> 6. Resume
+> 7. Flush 8. Flush Callback 9. Teardown
+> 10. Stop
+> Fig. 1. The Orchra Migration Loop: Source-side export is separated from target-side injection. The orchestrator uses Redis to stage UE state, then completes the path switch after the target control-plane and user-plane context are ready.
+
+III. P ERFORMANCE EVALUATION AND RESULTS 
+
+A. Experimental Platforms 
+
+The experimental evaluation was conducted using two Kubernetes-based 5G deployments built on the OpenAirIn-terface (OAI) core network and ueransim. Both deployments execute on the same bare metal Ubuntu 22.xx installation, ensuring identical hardware resources, network topology, and software environment. Consequently, any observed perfor-mance differences are attributable solely to the migration mechanism rather than variations in the underlying infrastruc-ture. 
+
+1) Baseline Deployment: The baseline platform imple-ments a conventional network slicing architecture using the Mosaic5G slice controller. It comprises a complete OpenAir-Interface (OAI) 5G core network, ueransim-based radio access components, and a MySQL backend. The software compo-nents deployed in the baseline environment are summarized in Table I. 
+
+2) Orchra Deployment: The Orchra deployment retains the same OAI core network functions and ueransim components while replacing the Mosaic5G slice controller with the pro-posed Orchra orchestration service. A Redis state store is additionally introduced to externalize and restore active SMF session contexts during migration. The deployed software components are likewise summarized in Table I. 
+
+B. Experimental Workflow 
+
+In the baseline deployment, slice switching follows the conventional OAI/Mosaic5G procedure, requiring the stan-dard control-plane signalling necessary to establish service on the destination slice. Conversely, Orchra performs stateful migration by exporting the active SMF session context to Redis, importing the stored context into the destination SMF, updating PFCP state at the UPF, and completing the required N2 signalling procedures without requiring complete NAS re-registration or PDU session re-establishment. To evaluate migration under realistic traffic conditions, a continuous User Datagram Protocol (UDP) stream is gener-ated on the ueransim-ue pod using iperf3 operating at 
+
+50 M bps with a reporting interval of 10 ms . Traffic remains active throughout every migration, allowing user-plane inter-ruption, packet loss, and jitter to be measured directly during slice transitions. We conducted N = 200 migration iterations, alternating between eMBB → URLLC and URLLC → eMBB .All measurements are collected automatically and exported into a unified CSV dataset for our subsequent statistical analysis (Section III-E). 
+
+C. Measurement Methodology 
+
+The evaluation distinguishes between three latency com-ponents: control-plane reconfiguration latency , user-plane re-covery latency , and the resulting end-to-end switching delay .Separating these metrics allows us to quantify the time spent performing control-plane state migration independently from the residual delay before user traffic resumes on the destination UPF. Unlike conventional slice switching, Orchra eliminates repeated NAS registration and PDU session establishment, leaving only the control-plane synchronization and forward-ing convergence required to resume service. The following timestamps are recorded during each migration:  
+
+> •
+
+ttrigger : migration request issued by the orchestrator;  
+
+> •
+
+texport : source SMF completes session state export;  
+
+> •
+
+timport : destination SMF completes state restoration;  
+
+> •
+
+tpfcp : UPF acknowledges PFCP session modification;  
+
+> •
+
+tn2 : AMF completes the N2 tunnel update, marking the end of the control-plane migration;  
+
+> •
+
+tfirst pkt : first user packet successfully received on the destination GTP-U tunnel. TABLE I SOFTWARE COMPONENTS IN THE EXPERIMENTAL DEPLOYMENTS                                       
+
+> OAI 5G Core Functions RAN / Storage Control & Orchestration Deployment AMF SMF UPF NRF AUSF UDM UDR MySQL ueransim Mosaic5G Redis Orchra Baseline ✓✓✓✓✓✓✓✓✓✓––
+> Orchra ✓✓✓✓✓✓✓✓✓–✓✓
+
+The individual state migration phases are computed as 
+
+texport = texport ,end − ttrigger ,timport = timport ,end − timport ,start ,tpfcp = tpfcp ,end − tpfcp ,start ,tn2 = tn2 ,end − tn2 ,start .
+
+(1) The aggregate migration metrics are defined as 
+
+tCP = texport + timport + tpfcp + tn2 ,tUP = tfirst pkt − tn2 ,end ,tswitch = tfirst pkt − ttrigger 
+
+= tCP + tUP .
+
+(2) Here, texport denotes the time required to serialize and ex-ternalize the session state at the source SMF, timport captures the time required to retrieve and restore the session state at the destination SMF, tpfcp represents the PFCP session reconfiguration latency over the N4 interface, and tn2 measures the duration of the N2 signaling required to complete the control-plane update. The aggregate control-plane migration latency, tCP , is the sum of these four phases. The user-plane recovery latency, tUP , measures the additional time required for the first packet to be received after control-plane completion, while tswitch represents the total end-to-end service interruption experienced during slice migration. For each metric, results are collected over N = 200 indepen-dent migration runs and summarized using the mean, standard deviation, and 95% confidence interval. 
+
+D. Security Architecture and Cryptographic Overhead Evalu-ation 
+
+The proposed framework employs a two-layer security architecture to protect externally stored session state during inter-slice migration. The first layer secures the Redis state repository using standard Kubernetes mechanisms, including namespace isolation, access control, and secret management. As these deployment-level protections introduce negligible runtime overhead, they are excluded from the performance evaluation. Beyond the infrastructure-level protections, Orchra secures externally stored session state using application-layer authenti-cated encryption. Under the baseline plaintext migration path, the source SMF serializes the active PDU session context into a JSON payload and stores it directly in Redis. Under the 
+
+secured migration path, the serialized state is encrypted and authenticated using the Advanced Encryption Standard oper-ating in Galois/Counter Mode (Advanced Encryption Standard - Galois/Counter Mode (AES-GCM)) with a 256-bit key before being externalized. Upon retrieval, the destination SMF verifies the authentication tag, decrypts the stored state, and reconstructs the active session context. Since cryptographic serialization and deserialization are per-formed for every migration, we isolate these micro-operations to quantify their contribution to the state export ( texport ) and state import ( timport ) latency relative to the plaintext state migration baseline. 
+
+E. Evaluation Results 
+
+Table II compares three network slice switching strategies: full pod recreation, process-level restart without pod recre-ation, and Orchra-assisted state migration. Results are reported as the mean, standard deviation, and 95% confidence interval over N = 200 independent migration runs. The pod recreation baseline incurs the highest service interruption because recreating the UE pod requires complete reinitialization of the communication stack. Consequently, the switching delay exceeds 2 s and is accompanied by the largest user-plane recovery latency, packet loss, and jitter. Preserving the existing pod and restarting only the UE process substantially reduces the interruption, but service continuity is still affected by transient forwarding disruption, resulting in measurable packet loss and increased latency. Orchra further reduces the interruption by transferring ex-ecution state rather than recreating network functions. The migration consists of state export, state import, PFCP re-configuration, and N2 completion, which together complete in approximately 48 ms . As a result, user-plane forwarding resumes almost immediately after the control-plane migration, requiring only about 2 ms before the first packet is observed on the destination UPF. Compared with the two baselines, Orchra therefore reduces the switching delay by more than an order of magnitude while avoiding costly UE reattachment and PDU session re-establishment procedures. The reduction in interruption directly translates into im-proved service quality. Packet loss decreases from 9.45% 
+
+under pod recreation and 3.12% under process restart to below 1% with Orchra, while the transit jitter is reduced to approximately 1.2 ms . These results indicate that preserving protocol state during migration enables rapid traffic resumption with minimal degradation of data-plane performance. Finally, the state micro-benchmarks demonstrate that pro-tecting migrated state with AES-GCM introduces only amodest computational overhead. The combined encryption and decryption penalty is approximately 1.3 ms , which is negligible compared with the overall migration latency and therefore does not materially affect the end-to-end switching performance. 
+
+1) Security Overhead Analysis: a) Read/Write Throughput with AES-GCM Cryptogra-phy: To isolate the performance penalty of our protection layering, Figure 2 illustrates the cumulative probability of the control-plane latency ( tCP ) with and without symmetric state encryption enabled.        
+
+> Fig. 2. Empirical Cumulative Distribution Function (CDF) comparing control-plane reconfiguration latencies between unsecured plaintext context and encrypted context migrations.
+
+The empirical results in this comparison demonstrate that symmetric state encryption introduces a deterministic, highly bounded horizontal translation to the right of the baseline migration curve, confirming a constant additive overhead that does not introduce stochastic jitter or processing variance. At the 50th percentile ( p50 ), the complete end-to-end control-plane migration latency ( tCP ) rises modestly from 13.5 ms to 14.8 ms, which aligns directly with the overall +1 .267 ± 0.11 
+
+ms net cryptographic penalty measured in the state micro-benchmarks. This performance delta remains stable across the upper bounds of the distribution ( p90 ), validating that the se-curity framework scales reliably under tail-latency conditions. However, the micro-benchmarks reveal a notable asymmetric throughput trade-off: while the read/decryption path is highly efficient (increasing by only 0.415 ms), the active write/en-cryption path increases by 90 .3% (from 0.943 ± 0.044 ms to 
+
+1.795 ± 0.087 ms), identifying state serialization as a critical write-throughput bottleneck that requires parallelization to avoid CPU starvation on the SMF control plane during high-concurrency event bursts. 
+
+b) Control Plane vs. User Plane Migration Latency: 
+
+Figure 3 is a CDF that highlights the operational distinction between the Control Plane (signaling, orchestration, and state synchronization) and the User Plane (active packet disruption during a switchover). The User Plane curve rises sharply and vertically, demonstrating highly deterministic, low-jitter be-havior where routing rule updates are applied within a tightly bounded, sub-millisecond range. In contrast, the Control Plane curve is horizontally translated to the right and features a more gradual slope, exposing the variable latency (jitter) inherent in non-deterministic cloud transactions, database interactions, and encryption overheads. Crucially, because the actual data-plane disruption window is kept exceptionally brief and de-coupled from the longer control-plane orchestration path, the results confirm a successful implementation of Control-User Plane Separation (CUPS).  
+
+> Fig. 3. Empirical CDF showing control-plane reconfiguration latency and user-plane transition delay.
+
+IV. C ONCLUSION AND FUTURE WORK 
+
+This paper presented Orchra, a stateful network slice mi-gration framework that enables seamless migration of user equipment (UE) sessions across network slices without requir-ing repeated registration or PDU session re-establishment. By externalizing session state, coordinating control-plane migra-tion, and re-anchoring the user plane, Orchra preserves session continuity while significantly reducing service interruption compared with conventional pod recreation and process restart approaches. Experimental evaluation on an OpenAirInterface-based 5G core demonstrates that the proposed framework reduces end-to-end switching latency to approximately 48 ms ,resumes user-plane forwarding within about 2 ms after control-plane completion, and maintains low packet loss and jitter. The results further show that protecting migrated state with authenticated encryption introduces only a modest processing overhead, making secure state migration practical for real-time operation. Although these results demonstrate the feasibility of stateful slice migration, several challenges remain before such mecha-nisms can be widely deployed. Existing 3GPP and Open Radio Access Network (O-RAN) specifications do not yet define standardized procedures for migrating UE context across slices or administrative domains, limiting interoperability between implementations [18]. In addition, maintaining consistent state across distributed control-plane functions during migration requires stronger coordination mechanisms to prevent partial updates or inconsistent network state in the presence of failures. As deployments scale to larger numbers of users and geographically distributed edge infrastructures, migration decisions will also need to become more adaptive in order to avoid unnecessary signaling and orchestration overhead [19]. Finally, future work will extend the evaluation to large-scale, multi-tenant deployments by incorporating user mobility, het-erogeneous transport networks, and fault scenarios to evaluate the robustness, scalability, and resilience of Orchra under realistic 5G edge operating conditions [20], [21]. ACKNOWLEDGMENT               
+
+> This work has been supported by the German Federal Ministry of Research, Technology and Space (BMFTR)
+
+TABLE II EVALUATION METRICS FOR ORCHRA -ASSISTED SLICE MIGRATION . P ERFORMANCE METRICS ARE REPORTED AS MEAN ± STANDARD DEVIATION TOGETHER WITH THE 95% CONFIDENCE INTERVAL OVER N = 200 INDEPENDENT EXPERIMENTAL RUNS .
+
+Metric Component Baseline: Pod Recreate Baseline: No Pod Recreate Orchra: State Migration Control Plane Performance 
+
+Export time ( texport ) [ms] – – 15 .24 ± 2.11 [0.41] Import time ( timport ) [ms] – – 22 .10 ± 3.45 [0.68] PFCP reconfiguration ( tpfcp ) [ms] – – 8.15 ± 1.02 [0.20] N2 update latency ( tn2 ) [ms] – – 2.86 ± 1.84 [1.73] 
+
+User Plane Performance 
+
+User-plane recovery latency (First packet delay) ( tUP ) [ms] 245 .50 ± 32 .10 [6.29] 112 .40 ± 15 .80 [3.10] 1.86 ± 1.57 [1.73] Total switching delay ( tswitch ) [ms] 2099 .17 ± 33 .29 [6.52] 181 .26 ± 18 .11 [3.55] 48 .35 ± 10 .67 [3.46] 
+
+Data Plane Quality (SLA) 
+
+Packet Loss Rate [%] 9.45 ± 1.82 [0.35] 3.12 ± 0.65 [0.12] 0.78 ± 0.08 [0.05] 
+
+Transit Jitter Delta ( ∆J) [ms] 15 .40 ± 4.12 [0.81] 8.57 ± 2.04 [0.40] 1.22 ± 0.18 [0.03] State Micro-benchmarks (Security) 
+
+Write Path (Plaintext) [ms] – – 0.943 ± 0.044 [0.01] Write Path (AES-GCM Encrypted) [ms] – – 1.795 ± 0.087 [0.02] Read Path (Plaintext) [ms] – – 0.621 ± 0.035 [0.01] Read Path (AES-GCM Decrypted) [ms] – – 1.036 ± 0.061 [0.01] Net Cryptographic Penalty [ms] – – +1.267 ± 0.11 [0.02] 
+
+within the projects SUSTAINET guarDian {16KIS2239K } and 
+
+Open6GHub+ {16KIS2402K }.UUID 
+
+REFERENCES [1] M. M. Sajjad, C. J. Bernardos, D. Jayalath, and Y. Tian, “Inter-Slice Mobility Management in 5G: Motivations, Standard Principles, Challenges and Research Directions,” IEEE Communications Standards Magazine , vol. 6, no. 2, pp. 93–100, 2022. [Online]. Available: https://doi.org/10.1109/MCOMSTD.0001.2000025 [2] I. Afolabi, T. Taleb, K. Samdanis, A. Ksentini, and H. Flinck, “Network slicing and softwarization: A survey on principles, enabling technolo-gies, and solutions,” IEEE Communications Surveys and Tutorials ,vol. 20, no. 3, pp. 2429–2453, 2018. [3] 3GPP, “5g system; technical realization of service based architecture; stage 3,” 3rd Generation Partnership Project, Technical Specification (TS) 29.500, 09 2023, version 16.15.0 Release 16. [Online]. Available: https://www.etsi.org/deliver/etsi ts/129500 129599/129500/ 16.15.00 60/ts 129500v161500p.pdf [4] 3GPP, “3gpp ts 28.531 v16.14.1 (2023-01): Management and orchestration; provisioning,” 3rd Generation Partnership Project (3GPP), Technical Specification TS 28.531, 09 2023, version 16.14.1, Release 16. [Online]. Available: https://www.3gpp.org/dynareport/28531.htm [5] F. Kaltenberger et al. , “Openairinterface: An open-source system for simulation, emulation, and real-time experimentation of 5G cellular networks,” IEEE Communications Magazine , vol. 58, no. 7, pp. 54–60, 2020. [6] N. Nikaein, C.-Y. Chang, and K. Alexandris, “Mosaic5g: agile and flexible service platforms for 5g research,” SIGCOMM Comput. Commun. Rev. , vol. 48, no. 3, p. 29–34, 09 2018. [Online]. Available: https://doi.org/10.1145/3276799.3276803 [7] M. M. Sajjad, D. Jayalath, Y.-C. Tian, and C. J. Bernardos, “On session continuation among slices for inter-slice mobility support in 3gpp service-based architecture,” in 2020 IEEE 31st Annual International Symposium on Personal, Indoor and Mobile Radio Communications ,2020, pp. 1–7. [8] N. A. Mohammedali, T. Kanakis, M. O. Agyeman, and A. Al-Sherbaz, “A survey of mobility management as a service in real-time inter/intra slice control,” IEEE Access , vol. 9, pp. 62 533–62 552, 2021. [9] M. M. Sajjad, C. J. Bernardos, D. Jayalath, and Y.-C. Tian, “Inter-slice mobility management in 5g: motivations, standard principles, challenges, and research directions,” in IEEE Communications Standards Magazine ,vol. 6, no. 1. IEEE, 2022, pp. 93–100. [10] E. Sakic and W. Kellerer, “Decoupling of distributed consensus, failure detection and agreement in sdn control plane,” in 2020 IFIP Networking Conference (Networking) . IEEE, 2020, pp. 467–475. [11] F. V´ azquez-Gallego, J. Nasreddine, E. Carmona-Cejudo, Y. Murillo, R. Vilalta, P. Veyssiere, M. Dalgitsis, M. A. Serrano, A. Antonopoulos, J. Polo, J. Bastida, and J. L. Luque, “Cross-border 5g seamless con-nectivity for connected and automated mobility: Challenges, network implementation, and lessons learnt,” in 2023 IEEE Future Networks World Forum (FNWF) , 2023, pp. 1–6. [12] A. Kousaridas, M. Fallgren, E. Fischer, F. Moscatelli, R. Vilalta, M. M¨ uhleisen, S. Barmpounakis, X. Vilajosana, S. Euler, B. Tossou 
+
+et al. , “5g vehicle-to-everything services in cross-border environments: Standardization and challenges,” IEEE Communications Standards Mag-azine , vol. 5, no. 1, pp. 22–30, 2021. [13] J. Marquez-Barja, S. A. Hadiwardoyo, V. Maglogiannis, D. Naudts, I. Moerman, P. Hellinckx, S. Verbrugge, S. Delaere, W. Vandenberghe, E. Kenis, M. C. Campodonico, R. Kusumakar, J. Meines, and J. Van-denbossche, “Enabling cross-border tele-operated transport in the 5g era: The 5g blueprint approach,” in 2021 IEEE 18th Annual Consumer Communications and Networking Conference (CCNC) , 2021, pp. 1–4. [14] T. Taleb, I. Afolabi, K. Samdanis, and F. Z. Yousaf, “On multi-domain network slicing orchestration architecture and federated resource control,” IEEE Network , vol. 33, no. 5, pp. 242–252, 2019. [15] ETSI, “5g; security assurance specification (scas) for the 5g core network (5gc) network product class,” European Telecommunications Standards Institute (ETSI), Technical Specification ETSI TS 133 517 V16.1.0, 10 2020. [Online]. Available: https://www.etsi.org/deliver/etsi ts/133500 133599/133517/16.01.00 60/ts 133517v160100p.pdf [16] H.-T. Nguyen, N.-Q. Nguyen, V. H. Le, S. D. Tran, and L. D. Hoang, “Proposed data roaming network simulation environment for 5g network,” in Proceedings of the 2025 10th International Conference on Cloud Computing and Internet of Things , ser. CCIOT ’25. Association for Computing Machinery, 2026, p. 138–147. [Online]. Available: https://doi.org/10.1145/3785520.3785539 [17] 3GPP, “NR; NR and NG-RAN Overall description; Stage-2,” 3rd Generation Partnership Project (3GPP), Technical Specification (TS) 38.300, 2020, version 16.0.0, Release 16. [Online]. Available: https://www.3gpp.org/dynareport/38300.htm [18] European Telecommunications Standards Institute, “Publicly available specification (pas); o-ran slicing architecture (o-ran.wg1.slicing-architecture-r003-v11.00),” ETSI, Technical Specification ETSI TS 104 041 V11.0.0, 03 2025. [Online]. Available: https://www.etsi.org/deliver/ etsi ts/104000 104099/104041/11.00.00 60/ts 104041v110000p.pdf [19] J. Lee, X. Zhang, Y. Huang et al. , “Onslicing: Online end-to-end network slicing with reinforcement learning,” IEEE/ACM Transactions on Networking , vol. 32, no. 4, 2024. [20] M. Ahmad, F. Bilal, M. Ali, S. M. A. Nawazish, A. Salman, S. Ali, F. Ahmad, and Z. A. Qazi, “Warping the edge: Enabling instant mobility for stateful applications over 5g and beyond,” in Proceedings of the Tenth ACM/IEEE Symposium on Edge Computing , ser. SEC ’25. Association for Computing Machinery, 2025. [Online]. Available: https://doi.org/10.1145/3769102.3770610 [21] H. Chien, Y.-D. Lin, C. Lai, and C. Wang, “End-to-end slicing as a service with computing and communication resource allocation for multi-tenant 5g systems,” IEEE Wireless Communications , vol. 26, no. 5, pp. 104–112, 2019, publisher Copyright: © 2019 IEEE.

@@ -1,0 +1,281 @@
+{
+  "date": "20260817-20260826",
+  "date_label": "2026-08-17 ~ 2026-08-26",
+  "generated_at": "2026-08-26 05:37:02 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.16860v1",
+      "route": "20260817-20260826/2608.16860v1-classical-adversarial-fault-tolerance-and-pcps",
+      "title": "Classical Adversarial Fault-Tolerance and PCPs",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "通过容错电路编译使计算在对抗性比特损坏下仍正确运行，直接对应系统容错需求。",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.19557v1",
+      "route": "20260817-20260826/2608.19557v1-when-do-llm-agents-help-deadline-aware-mixed-criticality-task-scheduling-at-the-autonomous-vehicle-edge",
+      "title": "When Do LLM Agents Help? Deadline-Aware Mixed-Criticality Task Scheduling at the Autonomous-Vehicle Edge",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "移动边缘服务器上的截止时间感知混合关键性任务调度",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.20819v1",
+      "route": "20260817-20260826/2608.20819v1-price-pricing-based-resource-incentives-for-quality-of-result-aware-computing-at-the-edge",
+      "title": "PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "提出基于定价的激励机制，用于边缘节点在过载条件下进行资源分配与质量调节",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.16157v1",
+      "route": "20260817-20260826/2608.16157v1-freetoken-efficient-edge-native-moe-serving-with-bandwidth-adaptive-execution",
+      "title": "FreeToken: Efficient Edge-Native MoE Serving with Bandwidth-Adaptive Execution",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "针对MoE服务的边缘原生资源映射与带宽自适应执行",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.17794v1",
+      "route": "20260817-20260826/2608.17794v1-threat-aware-task-offloading-and-caching-for-secure-uav-assisted-vehicular-consumer-electronics",
+      "title": "Threat Aware Task Offloading and Caching for Secure UAV Assisted Vehicular Consumer Electronics",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "无人机辅助车联网中威胁感知卸载与缓存",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.17849v1",
+      "route": "20260817-20260826/2608.17849v1-efficient-resource-optimization-for-split-federated-learning",
+      "title": "Efficient Resource Optimization for Split Federated Learning",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "在资源受限的边缘网络中联合优化模型切分与资源分配",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.19850v1",
+      "route": "20260817-20260826/2608.19850v1-resilience-in-trustworthy-wireless-systems",
+      "title": "Resilience in Trustworthy Wireless Systems",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "形式化定义无线系统韧性及恢复能力，直接对应网络韧性需求。",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.21910v1",
+      "route": "20260817-20260826/2608.21910v1-prism-predictive-runtime-in-place-scaling-and-model-selection-for-edge-microservices",
+      "title": "PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "边缘微服务运行时资源分配与模型选择",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.22075v1",
+      "route": "20260817-20260826/2608.22075v1-autonomous-cyber-defense-real-time-attack-detection-and-mitigation-in-software-defined-networks-using-machine-learning",
+      "title": "Autonomous Cyber Defense: Real-Time Attack Detection and Mitigation in Software-Defined Networks Using Machine Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "基于机器学习的SDN实时攻击检测与自动缓解，直接应对网络中断性威胁以保持可用性",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.22932v1",
+      "route": "20260817-20260826/2608.22932v1-airmoe-realizing-over-the-air-distributed-mixture-of-experts-inference-at-the-wireless-edge",
+      "title": "AirMoE: Realizing Over-the-Air Distributed Mixture-of-Experts Inference at the Wireless Edge",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "无线边缘的分布式混合专家推理，利用空中计算克服边缘设备资源限制与上行瓶颈",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.23123v1",
+      "route": "20260817-20260826/2608.23123v1-distributed-trajectory-planning-and-resource-allocation-for-dynamic-multi-uav-collaborative-computing",
+      "title": "Distributed Trajectory Planning and Resource Allocation for Dynamic Multi-UAV Collaborative Computing",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "分布式边缘计算中资源分配与轨迹规划联合优化",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.24841v1",
+      "route": "20260817-20260826/2608.24841v1-next-generation-o-ran-edge-energy-aware-joint-placement-and-migration-of-cloud-native-functions",
+      "title": "Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "O-RAN边缘中云原生函数的能量感知放置与迁移",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.20513v1",
+      "route": "20260817-20260826/2608.20513v1-making-deployments-safe-at-meta-health-checks-for-continuous-change-safety",
+      "title": "Making Deployments Safe at Meta: Health Checks for Continuous Change-Safety",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "通过健康检查和回滚保障部署安全与可靠性",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.20893v1",
+      "route": "20260817-20260826/2608.20893v1-orchra-stateful-aware-cross-slice-workload-migrations-in-the-6g-control-plane",
+      "title": "Orchra: Stateful-aware Cross-slice Workload Migrations in the 6G Control Plane",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "通过状态感知迁移减少运行中断",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.17352v1",
+      "route": "20260817-20260826/2608.17352v1-cognitive-graph-intelligence-for-adaptive-and-robust-ddos-attack-detection-in-next-generation-networks",
+      "title": "Cognitive Graph Intelligence for Adaptive and Robust DDoS Attack Detection in Next Generation Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "鲁棒DDoS检测以维持网络可用性",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.17874v1",
+      "route": "20260817-20260826/2608.17874v1-jetson-orb-slam3-accuracy-preserving-gpu-implementation-for-edge-computing-devices",
+      "title": "Jetson-ORB-SLAM3: Accuracy-Preserving GPU Implementation for Edge Computing Devices",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "在边缘计算设备上实现SLAM，使计算靠近数据源，符合边缘计算范式。",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    },
+    {
+      "paper_id": "2608.18390v1",
+      "route": "20260817-20260826/2608.18390v1-slo-scaler-uncertainty-aware-slo-driven-autoscaling-for-microservices",
+      "title": "SLO-Scaler: Uncertainty-Aware SLO-Driven Autoscaling for Microservices",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基于贝叶斯LSTM的不确定性感知自动伸缩，用于SLO驱动的资源分配",
+      "first_seen_at": "2026-08-26 05:37:02 UTC",
+      "updated_at": "2026-08-26 05:37:02 UTC"
+    }
+  ]
+}
