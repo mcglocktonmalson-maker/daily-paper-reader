@@ -1,0 +1,335 @@
+Title: Optimizing API Gateway Placement in Multi-Cloud Kubernetes
+
+URL Source: https://arxiv.org/pdf/2608.26573v1
+
+Published Time: Fri, 28 Aug 2026 00:27:32 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Optimizing API Gateway Placement in Multi-Cloud Kubernetes 
+
+Vinoth Punniyamoorthy 
+
+Texas, USA 
+
+0009-0009-3719-4949 
+
+Murali Shankar Dulam 
+
+Texas, USA 
+
+0009-0000-7231-834X 
+
+Aswathnarayan Muthukrishnan Kirubakaran 
+
+California, USA 
+
+0009-0006-6652-2663 
+
+Akshay Deshpande 
+
+California, USA 
+
+0009-0002-3007-3393 
+
+Nachiappan Chockalingam 
+
+Massachusetts, USA 
+
+0009-0007-4275-3771 
+
+Bikesh Kumar 
+
+Texas, USA 
+
+0009-0009-7190-1862 
+
+Naga Surya Pasupuleti 
+
+Texas, USA 
+
+0009-0001-0823-2186 
+
+Narender Reddy Bitla 
+
+Texas, USA 
+
+0009-0002-6862-3557 
+
+Abstract —The use of API gateways within geographically dis-tributed multi-cloud Kubernetes clusters poses a tradeoff between infrastructure cost, computational resources, and network laten-cies. We present an optimization formulation that addresses API gateway placement as a capacitated facility location problem that jointly determines which candidate clusters to activate, how many gateway replicas to deploy, and how regional traffic should be distributed across the selected clusters. The formulation imposes an upper bound on estimated client-to-cluster network round-trip latency, excluding gateway processing, queuing, and backend-service latency, and incorporates a utilization headroom factor for gateway replica capacity. We present both a mixed-integer linear programming (MILP) formulation and a constructive greedy heuristic that ranks candidates according to incremental cost, comprising cluster-activation and marginal replica costs, per unit of assignable capacity while explicitly accounting for already-committed load. Both formulations are applied to deterministic, seed-controlled, geography-based synthetic instances. For each problem size, 30 instances are generated with random seeds to analyze their performance. The greedy algorithm achieves an optimality gap of 3.2% to 4.7% to the MILP optimal solution, with a maximum observed gap of 25.0% for one particular instance, and a speedup of approximately 660× to 3,490× for 3 to 12 candidate clusters. In a canonical 10-candidate, 10-demand region instance, MILP-optimal deployment saves 24.2% in terms of monthly cost compared to the full-replication baseline. On the other hand, selecting the single cheapest candidate yields savings of 24.8% compared to the MILP optimum but does not satisfy the latency requirement for 3 out of 10 demand regions. Cutting the latency budget in half leads to an increase in the modeled cost by 15.1%, and the optimal number of clusters is expanded to 5 from 3. The results above are generated using synthetic planning instances, and hence they represent a proof-of-concept rather than indicative production cost or latency improvements. 
+
+Index Terms —API gateway, cloud computing, cost optimiza-tion, Kubernetes, multi-cloud deployment 
+
+I. I NTRODUCTION 
+
+API gateways provide a common entry point for authen-tication, authorization, rate limiting, routing, observability, and policy enforcement in cloud-native systems. As organiza-tions deploy applications across multiple Kubernetes clusters, cloud providers, and geographic regions, gateway replicas may need to be placed near distributed client populations to satisfy network-latency requirements. Activating gateways in additional clusters, however, introduces fixed operational expense and per-replica compute cost. Platform teams must therefore balance geographic proximity, available capacity, and infrastructure cost when planning gateway deployments. This paper investigates the following static planning prob-lem: given a set of candidate clusters, regional request demand, deployment costs, replica capacity, and estimated client-to-cluster network latency, which clusters should host gateway replicas, how many replicas should each selected cluster run, and how should regional traffic be assigned? The objective is to minimize monthly deployment cost subject to capacity and per-region latency constraints. In this paper, ℓij denotes an estimated client-to-cluster network round-trip time, not complete end-to-end application response time; gateway processing, queueing, load-balancer, TLS handshake, and backend-service latency are outside the model. The formulation is a static planning model, not a runtime routing or autoscaling mechanism: autoscaling adjusts replica counts within an already-selected cluster in response to live load, whereas this model decides which clusters should host capacity in the first place, on a planning cadence (e.g., quarterly). The MILP contains no redundancy, failure-domain, or cross-provider availability constraint, so no high-availability property should be inferred from a computed placement. Existing studies have examined API gateway performance and cost trade-offs on fixed deployment platforms policy integration and enforcement in containerized environments [1], and SLO-aware or cost-sensitive autoscaling of container-ized workloads within individual Kubernetes clusters [2], [3]. However, these approaches do not jointly determine gateway placement and replica allocation across heterogeneous multi-cloud Kubernetes clusters while explicitly considering both latency-SLA feasibility and deployment cost. None of these jointly optimize gateway location, replica count, and regional traffic assignment across candidate clusters. Capacitated facil-ity location with distance- or latency-restricted assignment is a long-studied combinatorial problem [4] that underlies content-delivery replica placement [5], [6], geographic k-center place-ment [7], response-time-optimized distributed cloud resource allocation, geo-distributed data placement, virtual network arXiv:2608.26573v1 [cs.DC] 27 Aug 2026 function placement in multi-cloud service chains, and SLA-or QoS-aware service placement in edge-cloud continuum systems. We adapt this established problem structure to API gateway replica placement specifically; the contribution is this adaptation and its empirical evaluation, not a new class of optimization problem. Kubernetes-native scheduling surveys address a related but distinct problem: placing pods onto nodes within a cluster, rather than deciding which geographically distributed clusters should host a service at all. This paper makes three significant contributions. First, we transform the multi-cloud API gateway placement into acapacitated facility location problem subject to a hard latency constraint per region and headroom ratio of replica utilization. This problem formulation is done through a mixed-integer linear programming (MILP) approach in which the units of the model are well specified and the feasibility verification process is just needed. Second, we design a simple greedy algorithm taking into account the assigned load and sorting the candidate clusters in descending order based on the increment of their cost. This cost is made up of the activation cost as well as the incremental cost due to replica installation per unit of available capacity along with the worst case of runtime. Third, we conduct extensive experiments, with 30 different seeds for each problem sizes, giving average, median, dispersion, and range of the optimality gap and runtime values. II. B ACKGROUND AND RELATED WORK 
+
+A. API Gateway Deployment and Governance 
+
+A controlled benchmark of Kong Gateway on Amazon ECS versus EKS found that ECS Fargate offers faster cold starts and lower operational overhead, while EKS achieves higher peak throughput and more consistent latency under sustained load, at roughly 8% higher monthly cost for the tested three-node configuration [8]. That work fixes the deployment to one cluster and compares orchestration platforms within it. Governance-aware, intent-driven architectures for multi-cluster API gateways address a different problem: once gateways are deployed across a fixed set of clusters, how security and per-formance policy are kept consistent and verifiable across them; the set of clusters is an input to that architecture, not a decision it makes. An SLO- and cost-aware autoscaling framework for Kubernetes adjusts pod replica counts within one cluster in response to live signals a runtime control problem distinct from the static, cross-cluster placement decision addressed here. 
+
+B. Facility Location Foundations 
+
+Capacitated facility location, deciding which candidate sites to open and how to assign demand to open sites to mini-mize total opening and delivery cost, is a classical NP-hard combinatorial problem. Distance- or latency-restricted variants appear in CDN replica placement, cloud content placement and geographic k-center placement. Our formulation is a direct instance of this family, specialized to gateway replicas as the facility and request throughput as the capacity unit. 
+
+C. Cloud and Edge Service Placement 
+
+Volley formulates geo-distributed cloud data placement to jointly minimize latency and inter-datacenter cost [9]. Response-time-optimized distributed cloud resource allocation models a convex capacitated facility location problem with integrated queuing [10]; our model omits queuing delay (Sec-tion VII) and targets a latency threshold rather than a response-time distribution. VNF placement in multi-cloud service chains solves a related facility-location-style problem [11]. In the edge-cloud continuum, SLA-aware heuristic placement [12], ILP-based QoS-aware placement [13], and learning-based latency-aware placement [14] address closely related prob-lems, situated within the broader fog/edge placement survey [15]. None targets API gateway replica placement specifically, and to our knowledge no prior formulation combines fixed activation cost, per-replica capacity, heterogeneous demand, and a strict per-region latency threshold in this domain. 
+
+D. Kubernetes Multi-Cluster Scheduling 
+
+Surveys of Kubernetes scheduling algorithms [16] char-acterize generic, multi-objective, AI-based, and autoscaling-enabled scheduling strategies, but these operate at the level of assigning pods to nodes within already-provisioned clusters. The placement decision in this paper is upstream of that layer: it determines which clusters should exist in the gateway fleet at all, before any pod-to-node scheduling takes place within them. III. P ROBLEM FORMULATION 
+
+Let I be the set of client demand regions and J the set of candidate clusters. For region i ∈ I: di is request demand (RPS) and SLA i is the maximum acceptable net-work round-trip latency (ms). For cluster j ∈ J: fj is fixed monthly activation cost (USD/month), cj is the monthly cost per gateway replica (USD/month), κj is the sustainable request capacity of one replica (RPS/replica) at full utilization, and rmax  
+
+> j
+
+is the maximum number of replicas permitted. A utilization headroom factor 0 < ρ ≤ 1 (here ρ = 0.8)caps each replica’s usable capacity at ρκ j , reserving margin for burst traffic and avoiding provisioning at benchmarked 100% capacity. Let ℓij (ms) be the estimated network latency between region i and cluster j. The SLA-feasible set for region 
+
+i is Fi = {j ∈ J : ℓij ≤ SLA i}.
+
+Feasibility. A necessary condition for the instance to be feasible is that Fi̸ = ∅ for every i ∈ I and that aggregate SLA-restricted capacity is at least aggregate demand; this condition is not sufficient in general, since different regions’ feasible sets can overlap and compete for the same restricted capacity, and final feasibility is certified by the solver’s status, not asserted a priori. Every instance used in this paper’s experiments is verified to satisfy Fi̸ = ∅ for all i before use (Section V); no SLA relaxation or nearest-cluster fallback is applied anywhere in the model or in either solution method. Decision variables: xj ∈ { 0, 1} (cluster j activated), yj ∈
+
+Z≥0 (replicas in cluster j), and zij ∈ [0 , 1] for j ∈ Fi (fraction of region i’s demand served by cluster j; traffic may be split across multiple SLA-feasible clusters via weighted routing). 
+
+min X
+
+> j∈J
+
+(fj xj + cj yj ) (1) s.t. X
+
+> j∈Fi
+
+zij = 1 ∀i ∈ I (2) 
+
+X
+
+> i∈I:
+> j∈Fi
+
+di zij ≤ ρ κ j yj ∀j ∈ J (3) 
+
+xj ≤ yj ≤ rmax  
+
+> j
+
+xj ∀j ∈ J (4) 
+
+xj ∈ { 0, 1}, y j ∈ Z≥0, z ij ∈ [0 , 1] (5) Constraint (2) assigns every region’s demand entirely to SLA-feasible clusters (infeasible pairs are excluded from the model by only defining zij for j ∈ Fi, not by a penalty term). Constraint (3) caps assigned load by usable replica capacity. Constraint (4) ties replica count to activation: an inactive clus-ter has zero replicas, an active one has at least one and at most 
+
+rmax  
+
+> j
+
+. The resulting optimization is a mixed-integer capacitated facility-location problem. Its computational hardness follows from the underlying facility-location structure, for which NP-hard special cases are well established [4]. IV. P ROPOSED APPROACH 
+
+A. Exact MILP Solution 
+
+The formulation above is solved with CBC 2.10.3 via PuLP 3.3.2, single-threaded, with a relative MIP-gap tolerance of 0.0 (i.e., the solver is required to certify true optimality, not merely a small gap) and a documented wall-clock time limit per instance (Section V). We report the solver’s returned status ( Optimal or time-limit-reached) for every instance rather than assuming optimality, and we report the number of decision variables and constraints per instance size. 
+
+B. Corrected Greedy Heuristic 
+
+An earlier version of this heuristic computed available cluster capacity as κj rmax  
+
+> j
+
+− κj yj , which ignored load already assigned to existing replicas’ headroom, and ranked candidate clusters by per-replica cost alone, ignoring fixed activation cost. Both are corrected in Algorithm 1: available capacity is computed from assigned load Lj directly against usable capacity ρκ j rmax  
+
+> j
+
+, replica count is recomputed by explicit ceiling division after each assignment, and candidates are ranked by total incremental cost (fixed cost, if not yet open, plus per-replica cost for any newly required replicas) divided by the load actually assignable to that candidate. With |I| regions and |J| clusters, each region considers at most |J| candidates per assignment round and requires at most |J| rounds in the worst case, giving O(|I|| J|2) worst-case time; in practice far fewer rounds are needed since most regions are satisfied by one or two clusters. The heuristic explicitly returns INFEASIBLE rather than silently leaving demand unassigned. 
+
+Algorithm 1 Cost-Ordered Greedy Placement (corrected) 
+
+Require: Clusters J with fj , c j , κ j , r max  
+
+> j
+
+; regions I with di;feasible sets Fi; headroom ρ
+
+Ensure: Opened clusters, replicas, assignment, cost, or 
+
+INFEASIBLE  
+
+> 1:
+
+Lj ← 0, y j ← 0 ∀j ∈ J; sort I by decreasing di 
+
+> 2:
+
+for each i ∈ I do  
+
+> 3:
+
+rem ← di 
+
+> 4:
+
+while rem > 0 and a feasible candidate with spare capacity remains do  
+
+> 5:
+
+for each j ∈ Fi with ρκ j rmax  
+
+> j
+
+− Lj > 0 do  
+
+> 6:
+
+take ← min( rem , ρκ j rmax  
+
+> j
+
+− Lj ) 
+
+> 7:
+
+y′ 
+
+> j
+
+← ⌈ (Lj + take )/(ρκ j )⌉; ∆y ← y′ 
+
+> j
+
+− yj 
+
+> 8:
+
+∆C ← fj ⊮[xj =0] + cj ∆y; rank by ∆C/ take  
+
+> 9:
+
+end for  
+
+> 10:
+
+Commit to the lowest-ratio candidate j∗: update 
+
+Lj∗ , yj∗ , open j∗ if needed, accumulate cost, rem −=
+
+take  
+
+> 11:
+
+end while  
+
+> 12:
+
+if rem > 0 then return INFEASIBLE (unassigned demand)  
+
+> 13:
+
+end if  
+
+> 14:
+
+end for  
+
+> 15:
+
+return opened clusters, y, assignment fractions, total cost V. E XPERIMENTAL SETUP 
+
+Candidate clusters are drawn from twelve real cloud provider regions across AWS, GCP, and Azure, each with a rel-ative pricing multiplier (0.85-1.20) applied to a base fixed cost of $72.00/month and a base per-replica cost of $248.00/month, reflecting representative inter-region price variation, not dated list prices from any specific provider. Each replica’s bench-marked capacity is κj = 1200 RPS, consistent with prior Kong Gateway benchmarking on comparable compute [8], with headroom ρ = 0 .8 and rmax  
+
+> j
+
+= 20 . Demand regions correspond to ten geographic client population centers with 
+
+di ∼ Uniform {200 , . . . , 4000 } RPS and SLA i drawn uni-formly from {50 , 75 , 100 , 150 } ms. Latency is synthesized as 
+
+ℓij = (5 .0 + dist ij /100) · U , where dist ij is the great-circle distance (km) between region and cluster coordinates and U ∼
+
+Uniform(0 .9, 1.15) is multiplicative jitter; this is a stated mod-eling simplification (Section VII), not measured production latency. All randomness (cluster/region draw, demand, jitter) is generated from a single seeded random.Random(seed) 
+
+instance per problem instance, with no dependence on global random state, so a given seed reproduces an identical instance regardless of what else has executed. Every instance is veri-fied strictly SLA-feasible before use; infeasible draws (rare) are discarded and the seed incremented, and the number of attempts required is logged. One canonical instance (10 clusters, 10 demand regions, requested seed 777, 3 attempts to reach a feasible draw) is used consistently for every baseline and sensitivity result in this paper; its full cluster and demand-region parameters are TABLE I CANONICAL INSTANCE : CANDIDATE CLUSTERS                                                
+
+> Cluster fj($) cj($) κj(RPS) rmax
+> j
+> aws-us-east-1 72.00 248.00 1200 20 aws-us-west-2 75.60 260.40 1200 20 aws-eu-west-1 80.64 277.76 1200 20 aws-ap-south-1 61.20 210.80 1200 20 aws-ap-southeast-1 68.40 235.60 1200 20 gcp-us-central1 70.56 243.04 1200 20 gcp-europe-west1 79.20 272.80 1200 20 gcp-asia-east1 64.80 223.20 1200 20 azure-eastus 73.44 252.96 1200 20 azure-westeurope 82.80 285.20 1200 20
+
+TABLE II CANONICAL INSTANCE : DEMAND REGIONS                                   
+
+> Demand region di(RPS) SLA (ms) Nearest cluster (ms)
+> north-america-east 2506 50 aws-us-east-1 (6.9) north-america-west 2435 100 aws-us-west-2 (16.0) europe-west 3498 75 gcp-europe-west1 (8.7) europe-central 3777 75 gcp-europe-west1 (10.6) asia-south 914 100 aws-ap-south-1 (8.9) asia-east 1849 50 gcp-asia-east1 (13.4) asia-southeast 3732 50 aws-ap-southeast-1 (8.7) south-america 2256 150 azure-eastus (67.8) oceania 992 150 aws-ap-southeast-1 (72.9) middle-east 1116 100 aws-ap-south-1 (23.1)
+
+given in Table I-II, and its complete 10 × 10 latency matrix is provided in the accompanying data repository rather than reproduced in full here. Solver runs used CBC 2.10.3 via PuLP 3.3.2, single-threaded, on a single commodity cloud sandbox VM (x86 64). VI. R ESULTS 
+
+A. MILP vs. Greedy Heuristic (Repeated Trials) 
+
+For five problem sizes, 30 independently seeded feasible instances were generated and solved by both methods. Ta-ble III reports aggregate statistics; CBC returned Optimal 
+
+status for 100% of all 150 instances. Fig. 1 shows the full gap distribution per size as box plots rather than a single point estimate. The gap does not shrink monotonically with problem size (median ranges from 0.0% at 3c/4d to 4.7% at 5c/6d), and single-instance maxima up to 25% occur even at small sizes, confirming the gap is driven by instance-specific cost/latency structure rather than scale alone. The measured MILP-to-greedy median runtime ratio ranges from approximately 660 ×
+
+to 3,490 × across the tested sizes, roughly 2.8 to 3.5 orders of magnitude; we report this range rather than a single ”three-to-four-orders-of-magnitude” figure, since the ratio itself varies by problem instance. 
+
+B. Solver Scaling Behavior 
+
+Fig. 2(a) shows MILP median solve time with p90 error bars for the sizes in Table III. Fig. 2(b) extends this to larger candidate-cluster counts (up to 30, 5 instances/size, 60-second time limit), where CBC returned Optimal status for 100% of instances at every size tested; no instance reached the time limit. Solve time is not monotonic in cluster count (median peaks at 12 clusters, then drops sharply by 16), indicating that 
+
+TABLE III GREEDY OPTIMALITY GAP AND RUNTIME VS . MILP ( N=30 
+
+> INSTANCES
+
+/SIZE , CBC O PTIMAL RATE 100% THROUGHOUT )                                
+
+> Size Gap mean Gap med. Gap max MILP tmed. Ratio
+> 3c/4d 3.62% 0.00% 11.14% 9.7 ms 662 ×
+> 5c/6d 4.73% 4.68% 25.02% 45.3 ms 1772 ×
+> 8c/8d 3.41% 1.43% 10.92% 111.4 ms 2155 ×
+> 10c/10d 3.20% 3.91% 15.88% 118.1 ms 1437 ×
+> 12c/10d 3.20% 3.62% 11.51% 313.2 ms 3489 ×
+
+Fig. 1. Greedy optimality gap distribution across 30 independently seeded instances per problem size (box: quartiles; whiskers: 1.5 ×IQR; solid line: median; dashed line: mean; circles: outliers). 
+
+branch-and-bound difficulty in this problem family depends on instance-specific cost/latency/feasibility structure at least as much as raw size; we do not claim MILP solving becomes impractical at any tested scale, only that its cost grows with size on average. The greedy heuristic was separately tested up to 80 candi-date clusters (10 instances/size, Table IV); its median runtime grows mildly and remains under 1.1 ms throughout, roughly linear in cluster count as expected from its O(|I|| J|2) worst case with small realized constants. 
+
+C. Baseline Comparison (Canonical Instance) 
+
+We compare against two precisely defined baselines on the canonical instance. Full replication opens every candi-date cluster and assigns each demand region to its lowest-latency SLA-feasible open cluster (here, effectively its nearest feasible cluster, since all clusters are open); each cluster is then provisioned only for the load actually assigned to it, under the identical utilization headroom ρ used by the proposed methods it does not duplicate global capacity at every cluster, which would not be a like-for-like comparison. 
+
+Single cheapest deploys only to the single lowest-per-replica-cost cluster regardless of latency. Table V and Fig. 3 report results; the MILP and greedy solutions activate the identical three clusters (aws-ap-south-1 , gcp-us-central1 ,
+
+gcp-asia-east1 ), differing only in replica allocation. On this instance, MILP-optimal placement costs 24.2% less than full replication while both achieve zero SLA violations (full replication achieves this because every region’s nearest Fig. 2. (a) MILP median solve time with p90 error bars, 30 instances/size. (b) MILP solve time at larger candidate-cluster counts, 5 instances/size, 60-second limit; all instances solved to certified optimality. TABLE IV GREEDY HEURISTIC RUNTIME AT LARGER SCALE (N=10 INSTANCES /SIZE )
+
+Clusters Median time Max time 
+
+12 0.082 ms 0.098 ms 20 0.263 ms 0.273 ms 30 0.390 ms 0.400 ms 50 0.615 ms 0.649 ms 80 1.026 ms 1.034 ms 
+
+feasible cluster is, by construction, among the opened set here; this need not hold in every instance). Single-cheapest is 24.8% cheaper than the MILP-optimal placement but violates the latency SLA for 3 of 10 regions, illustrating that the cheapest deployment and the SLA-compliant deployment are not the same thing on this instance. 
+
+D. SLA Sensitivity (Canonical Instance) 
+
+The per-region SLA threshold was scaled by a multiplier from 0.5 × to 3.0 × on the same canonical instance, i.e., the identical latency matrix, demand, and costs, varying only the SLA thresholds. Every tested multiplier remained feasible. Table VI and Fig. 4 report the MILP-optimal cost and number of activated clusters at each multiplier. On this instance, halving the SLA threshold (1.0 × → 0.5 ×)raises cost by 15.1% and increases activated clusters from 3 to 5; loosening it to 3 × reduces cost by 4.0% relative to the base threshold and settles at 2 clusters rather than collapsing to the single-cheapest baseline, since even a loose SLA does not make every region’s nearest low-cost cluster mutually compatible with a single-cluster solution here. We report this as a finding specific to the evaluated instance, not a general property of all instances. VII. D ISCUSSION 
+
+For the evaluated instances, avoiding unnecessary cluster activation was the primary source of modeled cost reduction relative to full replication; fixed per-cluster activation cost, not marginal replica cost, was the larger contributor to full replication’s cost premium. The greedy heuristic’s 3-5% mean, up to 25% single-instance-maximum optimality gap is real and does not shrink predictably with scale, so its 660-3,490 ×
+
+runtime advantage should be weighed against solution quality per use case: for infrequent planning cycles, MILP’s higher   
+
+> TABLE V PROPOSED METHODS VS .BASELINES (CANONICAL INSTANCE )
+
+Strategy Cost/mo Clusters SLA viol. 
+
+MILP-optimal (proposed) $5,684.80 3 0Greedy (proposed) $5,697.20 3 0Full replication (baseline) $7,501.52 10 0Single cheapest (baseline) $4,277.20 1 3 
+
+> Fig. 3. Monthly cost and SLA-violation count across four deployment strategies on the canonical instance.
+
+but still sub-second solve time is a reasonable cost for a certified-optimal answer; for frequent re-evaluation, the heuris-tic’s speed may be worth its gap, particularly if periodically checked against an exact solve. Translating a computed placement into a running deploy-ment requires downstream automation outside this paper’s scope: converting a placement into cluster-specific configu-ration and keeping it consistent with governance policy is the kind of problem governance-aware, intent-driven gateway architectures address, which could accept a computed place-ment as an input constraint. We do not model migration cost, rollout safety, or how often re-solving is warranted; the fast solve times measured here make frequent re-solving cheap, but detecting when it is warranted is left to future work. VIII. T HREATS TO VALIDITY 
+
+The latency matrix is synthesized from a great-circle prop-agation model with multiplicative jitter, not measured from live paths; it excludes routing asymmetry, congestion, and gateway/queueing/backend components (Section I). Demand, SLA targets, and cost multipliers are likewise synthetic, so costs should be read as normalized relative figures rather than list prices, and the 1200 RPS replica capacity derives from one prior benchmark under a specific configuration [8]. Modeling demand as divisible via weighted traffic steering understates difficulty: a single-cluster-per-region constraint would require binary zij . The model also excludes egress cost, provider quotas, heterogeneous instance types, failures, redundancy constraints, and migration cost. The greedy gap is verified against an exact bound only up to 12 clusters, not at the scales in Table IV. All figures are simulation outputs from one implementation on one hardware configuration. TABLE VI SLA SENSITIVITY , MILP-OPTIMAL (CANONICAL INSTANCE , FIXED LATENCY MATRIX )
+
+SLA mult. Cost/mo Clusters Status 
+
+0.5 × $6,545.60 5 Optimal 0.75 × $6,480.48 4 Optimal 1.0 × (base) $5,684.80 3 Optimal 1.5 × $5,595.20 2 Optimal 2.0 × $5,562.96 2 Optimal 3.0 × $5,458.00 2 Optimal 
+
+Fig. 4. Cost and open-cluster count as the SLA threshold is scaled on the canonical instance’s fixed latency matrix. 
+
+IX. C ONCLUSION AND FUTURE WORK 
+
+This paper formulated API gateway replica placement across multi-cloud Kubernetes clusters as a capacitated facility-location problem with a strict per-region latency threshold and replica utilization headroom, distinct from prior work on single-cluster gateway performance, post-deployment policy governance, and within-cluster autoscaling. An exact MILP formulation, solved to certified optimality with docu-mented solver configuration, and a corrected greedy heuristic were evaluated across repeated, independently seeded syn-thetic instances. On the tested instances, the greedy heuristic’s mean optimality gap was 3.2-4.7% at a measured 660-3,490 ×
+
+runtime advantage; on one canonical instance used consistently throughout, MILP-optimal placement cost 24.2% less than a precisely defined full-replication baseline with zero SLA violations, and tightening the latency SLA twofold raised cost by 15.1% on that same instance. These results demonstrate the formulation’s feasibility and the heuristic’s practical trade-off but do not establish production cost or latency improvements. Future work includes validating the latency model against measured inter-region paths, replacing point demand estimates with time-varying traffic, extending the model to redundancy and failure-domain constraints, and integrating the placement decision as an input to governance-aware gateway configura-tion tooling. REPRODUCIBILITY STATEMENT 
+
+The instance generator, MILP and greedy implementations, canonical instance parameter files (Tables I-II plus the full latency matrix), solver metadata, and all raw per-trial CSV results underlying every table and figure are provided in the accompanying code repository bundled with this submission [17]. REFERENCES [1] B. Kim and S. Lee, “KubeAegis: A Unified Security Policy Management Framework for Containerized Environments,” IEEE Access , vol. 12, pp. 160636–160652, 2024, doi: 10.1109/ACCESS.2024.3487990. [2] D.-D. Vu, M.-N. Tran, and Y. Kim, “Predictive Hybrid Autoscaling for Containerized Applications,” IEEE Access , vol. 10, pp. 109768–109778, 2022, doi: 10.1109/ACCESS.2022.3214985. [3] A. Marchese and O. Tomarchio, “SLO-Aware Container Orchestration on Kubernetes Clusters,” in Proc. IEEE 18th Int. Conf. Cloud Computing (CLOUD) , 2025, pp. 318–327, doi: 10.1109/CLOUD67622.2025.00040. [4] G. Cornuejols, G. L. Nemhauser, and L. A. Wolsey, “The uncapacitated facility location problem,” in Discrete Location Theory , P. B. Mirchan-dani and R. L. Francis, Eds. New York: Wiley, 1990, pp. 119-171. [5] J. Sahoo, M. A. Salahuddin, R. Glitho, H. Elbiaze, and W. Ajib, “A survey on replica server placement algorithms for content delivery networks,” IEEE Commun. Surveys Tuts. , vol. 19, no. 2, pp. 1013-1044, 2017. [6] M. A. Salahuddin, J. Sahoo, R. Glitho, H. Elbiaze, and W. Ajib, “A survey on content placement algorithms for cloud-based content delivery networks,” IEEE Access , vol. 6, pp. 91-114, 2018. [7] P. Hillmann, T. Uhlig, G. D. Rodosek and O. Rose, ”A novel approach to solve K-center problems with geographical placement,” 2015 IEEE International Conference on Service Operations And Logistics, And Informatics (SOLI), Yasmine Hammamet, Tunisia, 2015, pp. 31-36, doi: 10.1109/SOLI.2015.7367406. [8] V. Punniyamoorthy, S. R. Sankiti, N. Chockalingam, A. Agarwal, A. M. Kirubakaran, B. Kumar, K. Kannan, and S. Malempati, “Analyzing performance and operational trade-offs in Kong Gateway deployments on AWS ECS and EKS platforms,” in Proc. IEEE Int. Conf. Computer and Applications (ICCA) , 2025. [9] S. Agarwal, J. Dunagan, and N. Jain, “Volley: Automated data place-ment for geo-distributed cloud services,” in Proc. 7th USENIX Symp. Networked Systems Design and Implementation (NSDI) , 2010. [10] M. Keller and H. Karl, “Response-time-optimized distributed cloud resource allocation,” in Proc. ACM SIGCOMM Workshop on Distributed Cloud Computing (DCC) , 2014, pp. 47-52; extended version arXiv preprint arXiv:1601.06262 , 2016. [11] D. Bhamare, M. Samaka, A. Erbad, R. Jain, L. Gupta, and H. A. Chan, “Optimal virtual network function placement in multi-cloud service function chaining architecture,” Computer Communications, vol. 102, pp. 1–16, 2017, doi: 10.1016/j.comcom.2017.02.011. [12] L. Almeida and M. Peixoto, “Tetris: An SLA-aware application placement strategy in the edge-cloud continuum,” arXiv preprint arXiv:2511.00294 , 2025. [13] N. Hudson, H. Khamfroush, and D. E. Lucani, “QoS-aware placement of deep learning services on the edge with multiple service implemen-tations,” in Proc. IEEE ICCCN Workshop on Big Data and Machine Learning for Networking , 2021. [14] K. Abedpour, M. Garshasbi Herabad, Z. Li, and J. Taheri, “EP-NCO: Latency-aware service placement using neural combinatorial optimisers for edge-cloud systems,” arXiv preprint arXiv:2606.25553 , 2026. [15] F. A¨ ıt Salaht, F. Desprez, and A. Lebre, “An overview of service placement problem in fog and edge computing,” ACM Comput. Surv. ,vol. 53, no. 3, article 65, 2020. [16] K. Senjab, S. Abbas, N. Ahmed, and A. U. R. Khan, “A survey of Kubernetes scheduling algorithms,” J. Cloud Comput. , vol. 12, no. 1, article 87, 2023. [17] V. Punniyamoorthy, “Multi-Cloud Kubernetes API Gateway Placement: Source Code and Experimental Artifacts,” 2026. [Online]. Available: https://github.com/Vinodhsrii/Multi-Cloud-Kubernetes. Accessed: Aug. 26, 2026.

@@ -1,0 +1,772 @@
+Title: 2608.19471v1.pdf
+
+URL Source: https://arxiv.org/pdf/2608.19471v1
+
+Published Time: Fri, 21 Aug 2026 00:14:33 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+1
+
+# Exact Multistate Reliability and Upgrade Design for Heterogeneous HBM Systems via Threshold-Pruned BAT 
+
+Wei-Chang Yeh* 
+
+Department of Industrial Engineering and Engineering Management, National Tsing Hua University, Hsinchu 300044, Taiwan 
+
+* Correspondence: yeh@ieee.org 
+
+Abstract − High Bandwidth Memory (HBM) systems can exhibit partial service rather than only full service or complete isolation: a controller-visible service unit may deliver full, reduced, or zero bandwidth because of sub-channel isolation, lane remapping, or protection overhead. This paper develops an exact multistate reliability framework in which each service unit carries an arbitrary finite set of bandwidth states and reliability is the probability that aggregate delivered bandwidth meets a demand. The binary k-out-of-n model is recovered as a special case, while closed-form binary-mapping error relations quantify mean-bandwidth distortion and provide a screening test for the simpler abstraction. For exact single-threshold evaluation a threshold-pruned multistate Binary-Addition-Tree (TP-mBAT) algorithm is proposed. It is deliberately regime-specific: fixed-grid dynamic programming is preferable on a compact common grid, where a 16-unit commensurate control required 273 pruned-DP updates versus 362,506 TP-mBAT node visits. On a reproducible 14-unit incommensurate benchmark, TP-mBAT is compared against a dynamic program carrying the same threshold rules, so that no baseline is weakened. Both expand the same state space, 6,862 nodes against 6,861 updates, and the separation lies entirely in retained state: 17 traversal entries against 412,121 probability states at central demand, reducing measured peak storage from 25.02 MB to 1,152 B. An exact probability-transfer sensitivity identifies when moving mass from a degraded state to a higher-bandwidth state changes system success, and a reserved-unit floor model admits a third exact pruning rule that is vacuous without such floors. A latent package-state mixture captures shared stress, where ignoring dependence overstates reliability by 8.73 percentage points. 
+
+Keywords: High Bandwidth Memory; multistate reliability; bandwidth reliability; Binary-Addition-Tree; BAT; heterogeneous systems; incommensurate bandwidth; exact threshold evaluation; sensitivity analysis 
+
+1. INTRODUCTION 
+
+High Bandwidth Memory (HBM) has become a key technology for AI accelerators, high-performance computing, and bandwidth-intensive processors. Its three-dimensional integration 2
+
+provides high data rates but also creates complex interactions among DRAM, TSV, bonding interfaces, thermal effects, and controller-level management. The system-level reliability question is therefore not a binary alive/failed classification, but whether the remaining memory bandwidth can meet the workload requirement [1–9]. 
+
+The binary abstraction treats each controller-visible service unit as contributing either full bandwidth or zero, which reduces reliability evaluation to a tractable threshold problem. This representation is appropriate when intermediate degraded states are negligible [1–9]. However, modern memory systems may exhibit intermediate service conditions: a sub-channel may be partially isolated while the remainder continues to serve requests; remapping or protection mechanisms may reduce effective bandwidth; and different units may have different nominal capacities or failure probabilities. Under these conditions, the system cannot be characterized solely by the number of operational binary components; the relevant random variable becomes the delivered bandwidth itself [22–25]. 
+
+This paper builds a hierarchical multistate reliability framework at the controller-visible service-unit level, without assuming a one-to-one correspondence between physical DRAM dies and memory channels. Each unit may occupy an arbitrary finite set of bandwidth states. Unit capacities are aggregated into stacks and then into system-level bandwidth, and reliability is evaluated against a specified demand. Universal generating functions and dynamic aggregation provide exact distribution-based baselines [26–28], while the proposed threshold-pruned multistate binary-addition-tree method (TP-mBAT) evaluates a specified threshold directly through safe branch pruning. The companion binary study established the binary pooled-bandwidth formulation [29]; the present paper addresses the complementary regime where binary service states are insufficient. 
+
+TP-mBAT is designed for a specific computational regime, not as a universal replacement for dynamic programming. When bandwidth states lie on a compact common grid, fixed-grid DP is efficient; TP-mBAT targets heterogeneous and effectively incommensurate bandwidth values, where exact sparse DP may accumulate a large number of distinct partial sums. The pruning logic of TP-mBAT specialises the upper and lower feasibility bounds of GE-MBAT [17] to the additive bandwidth setting, where general max-flow computations reduce to scalar comparisons. When reserved service units provide positive guaranteed capacity floors, an additional exact pruning rule becomes available. 
+
+The main contributions are: 3
+
+1. TP-mBAT algorithm – a threshold-pruned multistate BAT with traversal storage bounded by 𝑂𝑂 (𝑈𝑈 ⋅ 𝐿𝐿max ).
+
+2. Solver-relationship theorem (Proposition 1) – establishing the computational boundary between dynamic programming and TP-mBAT, providing a clear solver-selection rule. 
+
+3. Probability-transfer sensitivity and heterogeneous upgrade design – identifying the residual-capacity interval in which a state upgrade changes system success, and demonstrating minimum-cost heterogeneous unit upgrades. 
+
+4. Extensions for shared dependence and reserved-unit floors – a latent package-state mixture captures common-cause dependence, and reserved-unit floors introduce a third exact pruning rule based on the positive guaranteed contribution of unassigned reserved units. 
+
+When each service unit is restricted to full-bandwidth or failed states, the multistate formulation reduces exactly to the binary pooled-bandwidth model [29]. This paper focuses on the broader regime where intermediate service levels, heterogeneous capacities, and non-negligible degraded-state probabilities must be retained explicitly. 
+
+2. MULTISTATE HBM SERVICE MODEL 
+
+A memory controller exposes service units and their service levels to a workload, not physical dies or fault states. The model built here takes this exposed view as its primitive: controller-visible service units carry multistate bandwidth variables; units aggregate into stacks and stacks into systems; pooled and replicated service are kept distinct because they are different reliability events; and a latent package state captures dependence arising from shared package-level or operating conditions. 
+
+2.1. Controller-Visible Service Unit and Bandwidth States 
+
+Consider 𝑆𝑆 HBM stacks; stack 𝑠𝑠 contains 𝐶𝐶𝑠𝑠 controller-visible service units, with total unit count 
+
+𝑈𝑈 = ∑ 𝐶𝐶𝑠𝑠 𝑠𝑠 . Unit 𝑢𝑢 has a random bandwidth contribution 𝑋𝑋𝑢𝑢 taking values from the finite set 𝒜𝒜𝑢𝑢 =
+
+�𝑎𝑎𝑢𝑢 ,0, … , 𝑎𝑎𝑢𝑢 ,𝐿𝐿𝑢𝑢 �, where 𝑎𝑎𝑢𝑢 ,0 = 0 is the failed state and 𝑎𝑎𝑢𝑢 ,𝐿𝐿𝑢𝑢 is the full bandwidth. The associated probabilities are 𝑝𝑝𝑢𝑢 ,𝑙𝑙 :
+
+𝑋𝑋𝑢𝑢 ∈ 𝒜𝒜𝑢𝑢 , 0= 𝑎𝑎𝑢𝑢 ,0<⋯<𝑎𝑎𝑢𝑢 ,𝐿𝐿𝑢𝑢 , (1) 
+
+Pr �𝑋𝑋𝑢𝑢 = 𝑎𝑎𝑢𝑢 ,𝑙𝑙 � = 𝑝𝑝𝑢𝑢 ,𝑙𝑙 , � 𝑝𝑝𝑢𝑢 ,𝑙𝑙 𝐿𝐿𝑢𝑢 𝑙𝑙=0 = 1. (2) 4
+
+The three-state case {0 , 𝛼𝛼𝑢𝑢 , 𝑏𝑏𝑢𝑢𝑏𝑏𝑢𝑢 } is useful, but no derivation below relies on it. Stack bandwidth is 𝑊𝑊 𝑠𝑠 = � 𝑋𝑋𝑠𝑠 ,𝑖𝑖 𝐶𝐶𝑠𝑠 𝑖𝑖=1 , and total system bandwidth is 𝑊𝑊 tot = ∑ 𝑋𝑋𝑢𝑢 𝑢𝑢 . Pooled reliability is the probability that the sum of all unit capacities meets demand 𝐷𝐷 :
+
+𝑅𝑅 pool (𝐷𝐷 ) = Pr( 𝑊𝑊 tot ≥ 𝐷𝐷 ). (3) 
+
+When multiple stacks are alternatives rather than additive bandwidth contributors, a different event applies. If success means at least one stack reaches a local threshold 𝜏𝜏 , the reliability is 1 −
+
+[1 − 𝑅𝑅 stack (𝜏𝜏 )] 𝑆𝑆 . This formula is not applicable to pooled bandwidth; the correct event for pooling is Equation (3), which depends on the distribution of the sum. This distinction is central to the framework. 
+
+2.2. Conditional Dependence through a Shared Package State 
+
+Service-unit states may be correlated when they share thermal, power, manufacturing, package-level, or other common conditions. Introduce a discrete latent state 𝐻𝐻 ∈ {1 , … , 𝐾𝐾 } with 𝜋𝜋ℎ =Pr( 𝐻𝐻 = ℎ) . Conditional on 𝐻𝐻 = ℎ , units are independent with state probabilities 𝑝𝑝𝑢𝑢 ,𝑙𝑙∣ℎ . The unconditional pooled reliability is a finite mixture of conditional reliabilities: 
+
+𝑅𝑅 pool (𝐷𝐷 ) = ∑ 𝜋𝜋ℎ 𝐾𝐾 ℎ=1 𝑅𝑅 pool (𝐷𝐷 ∣ 𝐻𝐻 = ℎ). (4) 
+
+Stack-specific latent states can be introduced analogously when stacks experience distinct regimes. This construction can induce positive dependence and also provides a calibration path when field data classify operating conditions into a small number of package regimes. 
+
+2.3. Reserved Service Units and Capacity Floors 
+
+Not every unit is interchangeable with its neighbours. Some channels may be pinned to latency-critical traffic, reserved for metadata or error-correction overhead, or bound to a compute tile. In such cases, surplus bandwidth elsewhere cannot substitute for that unit's contribution, so aggregate capacity alone may overstate deliverable service. 
+
+Let ℛ ⊆ {1 , … , 𝑈𝑈 } be the set of reserved units, and let 𝑐𝑐𝑢𝑢 > 0 be the capacity floor that unit 𝑢𝑢 
+
+must individually meet. The reliability of interest is the joint event that the pooled demand is met and every reserved unit clears its floor: 
+
+𝑅𝑅 res (𝐷𝐷 ) = Pr( ∑ 𝑋𝑋𝑢𝑢 𝑈𝑈 𝑢𝑢=1 , ≥, 𝐷𝐷 𝑋𝑋𝑢𝑢 ≥ 𝑐𝑐𝑢𝑢 ∀𝑢𝑢 ∈ ℛ ). (5) 
+
+Two limits are worth naming: ℛ = ∅ recovers the pooled model; ℛ = {1 , … , 𝑈𝑈 } gives a fully reserved system, though the pooled demand remains an additional requirement unless the floors jointly imply it. 5
+
+The constraint is enforced at the state-set level rather than by a post hoc filter. For each reserved unit, every state with bandwidth below 𝑐𝑐𝑢𝑢 is deleted from 𝒜𝒜𝑢𝑢 . The retained probabilities are not renormalized: the removed mass corresponds to floor violations, which are failure events and must not be redistributed. Feasibility requires 𝑐𝑐𝑢𝑢 ≤ 𝑎𝑎𝑢𝑢 ,𝐿𝐿𝑢𝑢 for every 𝑢𝑢 ∈ ℛ ; otherwise 𝑅𝑅 res (𝐷𝐷 ) = 0 . After deletion, the smallest retained state at or above 𝑐𝑐𝑢𝑢 defines the effective floor: 
+
+𝑐𝑐̂𝑢𝑢 = min �𝑎𝑎𝑢𝑢 ,𝑙𝑙 : 𝑎𝑎𝑢𝑢 ,𝑙𝑙 ≥ 𝑐𝑐𝑢𝑢� , 𝑢𝑢 ∈ ℛ . (6) 
+
+This satisfies 𝑐𝑐̂𝑢𝑢 ≥ 𝑐𝑐𝑢𝑢 , providing positive lower bounds on the contributions of unassigned reserved units. Section 4.5 uses these bounds to derive an additional exact pruning rule. When ℛ = ∅,the rule is inactive and the model reduces to the unreserved case. 
+
+3. EXACT BANDWIDTH RELIABILITY 
+
+Exact bandwidth reliability follows from the aggregate capacity distribution, with the binary model recovered as a special case. 
+
+3.1. Probability Generating Function and Dynamic Aggregation 
+
+Assume all bandwidth values are integer multiples of a basic increment Δ, and let 𝑑𝑑𝑢𝑢 ,𝑙𝑙 = 𝑎𝑎𝑢𝑢 ,𝑙𝑙 /Δ.The probability generating function of unit 𝑢𝑢 is 
+
+𝐺𝐺𝑢𝑢 (𝑧𝑧 ) = � 𝑝𝑝𝑢𝑢 ,𝑙𝑙 𝐿𝐿𝑢𝑢 𝑙𝑙=0 𝑧𝑧 𝑑𝑑𝑢𝑢 ,𝑙𝑙 . (7) 
+
+If units are unconditionally independent, the total bandwidth generating function is the product 
+
+𝐺𝐺 tot (𝑧𝑧 ) = ∏ 𝐺𝐺𝑢𝑢 𝑢𝑢 (𝑧𝑧 ). The coefficient of 𝑧𝑧 𝑑𝑑 gives the exact probability that total bandwidth equals 𝑑𝑑Δ .Let 𝑑𝑑 ∗ = ⌈𝐷𝐷 /Δ⌉ ; then the pooled reliability is 
+
+𝑅𝑅 pool (𝐷𝐷 ) = � [𝑧𝑧 𝑑𝑑 ]𝐺𝐺 tot (𝑧𝑧 )𝑑𝑑≥𝑑𝑑 ∗ . (8) 
+
+When the latent dependence structure of Section 2.2 is present, the product form applies conditionally on 𝐻𝐻 = ℎ. Define the conditional generating functions 𝐺𝐺𝑢𝑢∣ℎ (𝑧𝑧 ) = � 𝑝𝑝𝑢𝑢 ,𝑙𝑙∣ℎ 𝑙𝑙 𝑧𝑧 𝑑𝑑𝑢𝑢 ,𝑙𝑙 and 
+
+𝐺𝐺 tot ∣ℎ (𝑧𝑧 ) = � 𝐺𝐺𝑢𝑢∣ℎ 𝑢𝑢 (𝑧𝑧 ). The unconditional pooled reliability is then 
+
+𝑅𝑅 pool (𝐷𝐷 ) = ∑ 𝜋𝜋ℎ 𝐾𝐾 ℎ=1 � [𝑧𝑧 𝑑𝑑 ]𝐺𝐺 tot ∣ℎ (𝑧𝑧 )𝑑𝑑≥𝑑𝑑 ∗ . (9) 
+
+When 𝐾𝐾 = 1 , this reduces to the unconditional-independent case. 
+
+Equations (8)–(9) can be evaluated by repeated convolution. If bandwidth values lie on a compact common grid, a fixed-grid DP stores probabilities by integer capacity index. Let 𝑀𝑀max = � 𝑑𝑑𝑢𝑢 ,𝐿𝐿𝑢𝑢 𝑢𝑢 
+
+be the maximum discrete aggregate-capacity index, and let 𝑓𝑓 𝑟𝑟 (𝑑𝑑 ) be the probability that the first 𝑟𝑟 
+
+units deliver total discrete capacity 𝑑𝑑 . With 𝑓𝑓 0(0) = 1 , the recursion is 6
+
+𝑓𝑓 𝑟𝑟 (𝑑𝑑 ) = � 𝑝𝑝𝑟𝑟 ,𝑙𝑙 𝐿𝐿𝑟𝑟 𝑙𝑙=0 𝑓𝑓 𝑟𝑟−1 �𝑑𝑑 − 𝑑𝑑𝑟𝑟 ,𝑙𝑙 �. (10) 
+
+This recursion computes the full distribution exactly with time 𝑂𝑂 (𝑈𝑈𝐿𝐿max𝑀𝑀max ) and memory 
+
+𝑂𝑂 (𝑀𝑀max ). When bandwidths are heterogeneous and admit only a very fine common integer scaling, the grid may become impractically large; a sparse exact DP can retain only reachable sums (represented as scaled integers, rationals, or another collision-free exact representation), but its dictionary size can approach � (𝑢𝑢 𝐿𝐿𝑢𝑢 + 1) . This distinction motivates TP-mBAT: it avoids building the complete reachable-sum set when only a single threshold is required and threshold pruning is effective. 
+
+3.2. Binary 𝒌𝒌 -out-of-𝒏𝒏 as a Special Case 
+
+If all 𝑈𝑈 units are identical and have only two states {0 , 𝑏𝑏 } with full-service probability 𝑝𝑝 , then 
+
+𝐺𝐺𝑢𝑢 (𝑧𝑧 ) = 1 − 𝑝𝑝 + 𝑝𝑝 𝑧𝑧  (taking Δ = 𝑏𝑏 ), and the total generating function is (1 − 𝑝𝑝 + 𝑝𝑝 𝑧𝑧 )𝑈𝑈 . For demand 
+
+𝐷𝐷 = 𝑘𝑘 𝑏𝑏 , the coefficient expansion gives 
+
+𝑅𝑅 pool (𝑘𝑘 𝑏𝑏 ) = � �𝑈𝑈 𝑗𝑗 �𝑈𝑈 𝑗𝑗=𝑘𝑘 𝑝𝑝 𝑗𝑗 (1 − 𝑝𝑝 )𝑈𝑈−𝑗𝑗 . (11) 
+
+Thus, the classical 𝑘𝑘 -out-of- 𝑛𝑛 expression (with 𝑛𝑛 = 𝑈𝑈 ) is exactly recovered. The multistate formulation is therefore a strict generalization, not a competing model. Equation (11) is the classical binary k-out-of-n reliability formula [18–21], obtained here as the two-state restriction of the multistate model rather than assumed. 
+
+3.3. Expected-Bandwidth Error Induced by Binary Mapping 
+
+For a three-state unit 𝑋𝑋 ∈ {0 , 𝛼𝛼 , 𝑏𝑏𝑏𝑏 } with probabilities 𝑝𝑝 fail , 𝑝𝑝 deg , 𝑝𝑝 full , the exact mean bandwidth is 
+
+𝜇𝜇 = 𝑏𝑏�𝑝𝑝 full + 𝛼𝛼𝑝𝑝 deg �. (12) 
+
+An optimistic binary mapping replaces the degraded state 𝛼𝛼 𝑏𝑏  by 𝑏𝑏 , while a conservative mapping replaces it by zero. For 𝜇𝜇 > 0 , the corresponding relative mean-bandwidth errors are 
+
+𝜀𝜀 opt = (1−𝛼𝛼 )𝑝𝑝 deg 
+
+> 𝑝𝑝 full +𝛼𝛼𝑝𝑝 deg
+
+, (13) 
+
+𝜀𝜀 cons = 𝛼𝛼𝑝𝑝 deg 
+
+> 𝑝𝑝 full +𝛼𝛼𝑝𝑝 deg
+
+. (14) 
+
+These expressions generalize the half-bandwidth relation of Paper 1 [29, Eqs. (33)–(34)] to arbitrary 𝛼𝛼 . At 𝛼𝛼 = 0.5 , the two errors coincide at 𝑝𝑝 deg /�2𝑝𝑝 full + 𝑝𝑝 deg � ; for 𝛼𝛼 ≠ 0.5 , they are asymmetric. These quantities measure expected-bandwidth distortion only; threshold-reliability error is examined separately in Section 6.2. 7
+
+4. THRESHOLD-PRUNED MULTISTATE BAT 
+
+Exact threshold evaluation is #P-hard in general. TP-mBAT therefore prunes subtrees whenever threshold bounds certify success or failure, targeting heterogeneous or effectively incommensurate single-threshold problems while leaving compact-grid cases to dynamic programming. 
+
+4.1. State Representation, Pruning Rules, Algorithm, and Correctness 
+
+Let 𝑥𝑥𝑢𝑢 ∈ {0 , 1, … , 𝐿𝐿𝑢𝑢 } denote the selected state index of service unit 𝑢𝑢 . A complete system state is 
+
+𝑥𝑥 = ( 𝑥𝑥1 , … , 𝑥𝑥𝑈𝑈 ). Its bandwidth and probability are 
+
+𝐵𝐵 (𝑥𝑥 ) = � 𝑎𝑎𝑢𝑢 ,𝑥𝑥𝑢𝑢 𝑢𝑢 
+
+, Pr( 𝑥𝑥 ) = � 𝑝𝑝𝑢𝑢 ,𝑥𝑥𝑢𝑢 𝑢𝑢 
+
+. (15) 
+
+The correctness of TP-mBAT does not depend on service-unit order. For reproducibility, the numerical study orders units by decreasing maximum bandwidth contribution 𝑎𝑎𝑢𝑢 ,𝐿𝐿𝑢𝑢 . This is a deterministic heuristic rather than a claim of optimal ordering; alternative orderings can change the number of visited nodes without changing the returned probability. 
+
+At a partial state after 𝑟𝑟 units have been assigned, let 𝐵𝐵𝑟𝑟 be the accumulated bandwidth, 𝑃𝑃 𝑟𝑟 the probability of the partial assignment, and 𝑀𝑀 rem (𝑟𝑟 ) the sum of the maximum possible bandwidths of all unassigned units: 
+
+𝑀𝑀 rem (𝑟𝑟 ) = � 𝑎𝑎𝑢𝑢 ,𝐿𝐿𝑢𝑢 𝑈𝑈 𝑢𝑢=𝑟𝑟+1 
+
+. (16) 
+
+Two exact rules follow. 
+
+Success aggregation rule. If 𝐵𝐵𝑟𝑟 ≥ 𝐷𝐷 , every descendant state meets the demand. Because the probabilities of all remaining states sum to one, the entire descendant probability mass equals 𝑃𝑃 𝑟𝑟 and can be added to reliability immediately. 
+
+Failure pruning rule. If 𝐵𝐵𝑟𝑟 + 𝑀𝑀 rem (𝑟𝑟 ) < 𝐷𝐷 , even the maximum possible contribution of all remaining units cannot meet the demand. The entire branch contributes zero and is discarded. 
+
+Both rules are the additive specialisation of the F+ and F- bounds of GE-MBAT [17], which are themselves an extension of the infeasible-vector tests of QBAT [11]. Section 4.4 states the correspondence and its consequences for what is and is not claimed as new here. 
+
+Algorithm 1 states the procedure for computing 𝑅𝑅 pool (𝐷𝐷 ). Units are processed in the order fixed above, and the two rules are applied at every node before any child is generated, so that no state excluded by either rule is ever created. For 𝑅𝑅 res (𝐷𝐷 ), the modifications described in Section 4.5 apply. 
+
+Algorithm 1. TP-mBAT for 𝑅𝑅 pool (𝐷𝐷 )
+
+Input: state values 𝑎𝑎 [𝑢𝑢 , 𝑙𝑙 ], probabilities 𝑝𝑝 [𝑢𝑢 , 𝑙𝑙 ], demand 𝐷𝐷 8
+
+Output: exact pooled-bandwidth reliability 𝑅𝑅 
+
+1. Reorder service units, default: decreasing maximum capacity 
+
+2. Precompute M_rem[r] from Equation (16) 
+
+3. R ← 0 
+
+4. Push root node (r=0, B=0, P=1) onto a stack 
+
+5. while stack is not empty: 
+
+6. Pop (r, B, P) 
+
+7. if B ≥ D: 
+
+8. R ← R + P 
+
+9. continue 
+
+10. if B + M_rem[r] < D: 
+
+11. continue 
+
+12. if r = U: 
+
+13. continue 
+
+14. u ← r + 1 
+
+15. for each state l of service unit u, in decreasing capacity: 
+
+16. Push (r+1, B+a[u,l], P·p[u,l]) 
+
+17. return R 
+
+For the latent dependence model of Equation (4), TP-mBAT is executed independently under each package state ℎ using 𝑝𝑝𝑢𝑢 ,𝑙𝑙∣ℎ . The final reliability is the 𝜋𝜋ℎ -weighted sum. The conditional calculations are independent and can be parallelized. 
+
+Theorem 1. TP-mBAT returns the exact value of 𝑅𝑅 pool (𝐷𝐷 ) under the state probabilities supplied to the algorithm. 
+
+Proof. Each complete multistate vector appears exactly once in the underlying mixed-radix addition tree. A branch satisfying 𝐵𝐵𝑟𝑟 ≥ 𝐷𝐷 contains only successful descendants, so replacing those descendants by their total conditional probability of one preserves their combined mass 𝑃𝑃 𝑟𝑟 . A branch satisfying 𝐵𝐵𝑟𝑟 + 𝑀𝑀 rem (𝑟𝑟 ) < 𝐷𝐷 contains only failing descendants and contributes zero. Every branch not removed by either rule is expanded until one of the rules applies or a terminal state is reached. Therefore no successful probability mass is omitted or duplicated, and the returned sum equals 
+
+Pr( 𝑊𝑊 tot ≥ 𝐷𝐷 ). □9
+
+4.2. Worked Example 
+
+A three-unit instance is small enough to trace completely and is chosen so that both pruning rules fire. The service units are heterogeneous and their capacities admit no common grid coarser than 
+
+0.1 𝑏𝑏0 .
+
+Table 1. Worked example: three heterogeneous three-state service units. 
+
+Unit  Full  Degraded  Failed 
+
+u1 1.0 b0 (0.70)  0.6 b0 (0.20)  0 (0.10) 
+
+u2 0.8 b0 (0.60)  0.5 b0 (0.30)  0 (0.10) 
+
+u3 0.7 b0 (0.50)  0.3 b0 (0.30)  0 (0.20) 
+
+The demand is 𝐷𝐷 = 1.5 𝑏𝑏0 . Units are ordered by decreasing maximum capacity, which is already the listed order, so the maximum attainable remainders are 𝑀𝑀 rem (0) = 2.5 , 𝑀𝑀 rem (1) = 1.5 ,
+
+𝑀𝑀 rem (2) = 0.7 , and 𝑀𝑀 rem (3) = 0 .
+
+Children are pushed in decreasing capacity, so the lowest-capacity child is popped first. This affects peak stack occupancy but not reliability or node count. 
+
+TP-mBAT visits 25 nodes, eight of which require expansion, and agrees exactly with exhaustive enumeration. The threshold-pruned DP likewise performs eight surviving-state expansions, as predicted by Proposition 1 for a collision-free surviving set. The complete 25-node traversal is given in Supplementary Table S1. 
+
+4.3. Computational Complexity and Solver Relationship 
+
+Remark 1 (computational hardness). Exact evaluation of Pr( ∑ 𝑋𝑋𝑢𝑢 𝑢𝑢 ≥ 𝐷𝐷 ) is #P-hard. Restricting every unit to two states {0 , 𝑎𝑎𝑢𝑢 } with equal probabilities gives 
+
+Pr( ∑ 𝑋𝑋𝑢𝑢 𝑢𝑢 ≥ 𝐷𝐷 ) ⋅ 2𝑈𝑈 = ∣∣{𝑆𝑆 ⊆ [𝑈𝑈 ]: ∑ 𝑎𝑎𝑢𝑢 𝑢𝑢∈𝑆𝑆 ≥ 𝐷𝐷 }∣∣ (17) 
+
+and the difference between the values at 𝐷𝐷 and 𝐷𝐷 + 1 counts the subsets of exact sum: 
+
+[Pr( ∑ 𝑋𝑋𝑢𝑢 𝑢𝑢 ≥ 𝐷𝐷 ) − Pr( ∑ 𝑋𝑋𝑢𝑢 𝑢𝑢 ≥ 𝐷𝐷 + 1)] ⋅ 2𝑈𝑈 = ∣∣{𝑆𝑆 ⊆ [𝑈𝑈 ]: ∑ 𝑎𝑎𝑢𝑢 𝑢𝑢∈𝑆𝑆 = 𝐷𝐷 }∣∣ (18) 
+
+Thus #SUBSET-SUM reduces to exact threshold reliability [30,31], establishing #P-hardness and exponential worst-case behavior. 
+
+Compact integer grids nevertheless admit pseudo-polynomial dynamic programming, whereas exact scaling of effectively incommensurate capacities can require an impractically fine grid. Difficulty depends on both capacity collisions and how surviving partial sums cluster near the threshold, as examined in Section 6.3. 10 
+
+Because the objective is an additive sum, the same success and infeasibility bounds are available to dynamic programming. The fair comparator is therefore a threshold-pruned DP using the same rules. 
+
+It follows that the correct comparator is a dynamic program applying the same two rules, not an unpruned one. Let the surviving set after 𝑟𝑟 assignments be 
+
+Σ𝑟𝑟 = { partial assignments , 𝑥𝑥1 , … 𝑥𝑥𝑟𝑟 : 𝐵𝐵𝑟𝑟 < 𝐷𝐷 and 𝐵𝐵𝑟𝑟 + 𝑀𝑀 rem (𝑟𝑟 ) ≥ 𝐷𝐷 }, (19) 
+
+that is, the partial assignments that are neither already successful nor already infeasible. The condition ∣ 𝐶𝐶𝑟𝑟 ∣ =∣ Σ𝑟𝑟 ∣ at every 𝑟𝑟 corresponds to the case where the accumulated capacities are collision-free; a superincreasing capacity set is an extreme example. 
+
+Proposition 1 (solver relationship). Let a threshold-pruned dynamic program apply the success-collapse and infeasibility-pruning rules of Section 4.1 under the same unit ordering as TP-mBAT, and write 𝐶𝐶𝑟𝑟 = { 𝐵𝐵 (𝑥𝑥 ): 𝑥𝑥 ∈ Σ𝑟𝑟 } for the set of distinct accumulated capacities among the surviving partial assignments at position 𝑟𝑟 . Then the dynamic program retains and expands exactly one state for each element of 𝐶𝐶𝑟𝑟 , aggregating the probability masses of assignments that share a capacity, while TP-mBAT expands every assignment in Σ𝑟𝑟 individually. Consequently the dynamic-program expansion count never exceeds that of TP-mBAT, with equality when the surviving capacities are collision-free, that is when ∣ 𝐶𝐶𝑟𝑟 ∣ =∣ Σ𝑟𝑟 ∣ at every 𝑟𝑟 . The peak traversal storage of TP-mBAT is 
+
+𝑂𝑂 (𝑈𝑈 ⋅ 𝐿𝐿max ) irrespective of ∣ Σ𝑟𝑟 ∣ , whereas the dynamic program retains ∣ 𝐶𝐶𝑟𝑟 ∣ probability states. 
+
+Proof. Both methods discard a partial assignment exactly when 𝐵𝐵𝑟𝑟 ≥ 𝐷𝐷 , in which case the whole descendant mass 𝑃𝑃 𝑟𝑟 is added, or when 𝐵𝐵𝑟𝑟 + 𝑀𝑀 rem (𝑟𝑟 ) < 𝐷𝐷 , in which case the branch contributes zero. The surviving sets are therefore identical. The dynamic program additionally combines states with equal accumulated capacity, which can only reduce the number of subsequent expansions, giving the inequality; when capacities are collision-free no such combination occurs and the counts coincide. TP-mBAT stores only the current root-to-node path and its pending siblings. With all children pushed onto the stack at each expanded node, a tighter bound is 1 + ∑ 𝐿𝐿𝑢𝑢 𝑈𝑈 𝑢𝑢=1 ≤ 1 + 𝑈𝑈 ⋅ 𝐿𝐿max , so the stack is bounded by 𝑂𝑂 (𝑈𝑈 ⋅ 𝐿𝐿max ) regardless of how many assignments survive. □
+
+Proposition 1 concerns expansions rather than time: pruned DP never expands more surviving states and gains whenever equal capacities can be merged. TP-mBAT instead offers bounded traversal storage, which matters when the surviving set is wide; Sections 6.3 and 6.7 report the corresponding experiments. 11 
+
+4.4. Relation to GE-MBAT and Scope of Contribution 
+
+GE-MBAT [17] uses upper and lower completion bounds by assigning unassigned arcs to full capacity or zero, with the underlying tests traced to QBAT [11]. In the additive HBM setting, these max-flow bounds reduce to scalar capacity comparisons at each node. The mixed-radix encoding is inherited from multistate BAT [12], and subtree probability aggregation follows the super-vector concept of bounded and quick BAT variants [15]. These inherited elements are not claimed as new. 
+
+The contribution is their HBM-specific characterization: scalar-bound evaluation, the traversal-memory guarantee, Proposition 1's exact relationship to pruned DP, the resulting solver-selection boundary, and the reserved-floor rule of Section 4.5. Proposition 1 is central; TP-mBAT is not claimed to be universally faster. 
+
+Table 2 summarizes the resulting comparison with GE-MBAT. 
+
+Table 2. Comparison with GE-MBAT [17]. 
+
+Aspect  GE-MBAT [17]  Proposed evaluator 
+
+System  Multistate flow network with topology  Unordered service units, no topology 
+
+Success criterion  Maximum flow F(X) ≥ d Coordinate sum ∑u Xu ≥ D
+
+Upper bound  F⁺: max-flow with unassigned arcs at full capacity  Br + Mrem(r), a running sum 
+
+Lower bound  F−: max-flow with unassigned arcs at zero  Br, a running sum 
+
+Cost per bound  Maximum-flow evaluation  One addition and one comparison 
+
+Application of bounds 
+
+At selected points, with layered-arc decomposition to limit the number of flow computations 
+
+At every node; no decomposition required 
+
+Guaranteed-success rule 
+
+Vacuous: F − sets unassigned arcs to zero  Active under the floors of Section 2.3 
+
+Constraint class  Global demand level only  Global demand plus per-unit floors on a subset 
+
+4.5. An Additional Exact Rule under Reserved-Unit Floors 
+
+The two rules of Section 4.1 use the accumulated bandwidth 𝐵𝐵𝑟𝑟 and the maximum attainable remainder 𝑀𝑀 rem (𝑟𝑟 ). Under the reserved-unit model of Section 2.3 a third quantity becomes available: a guaranteed minimum remainder, formed from the effective floors of the reserved units not yet assigned. Define the retained-mass product for the unassigned reserved units: 
+
+Πrem (𝑟𝑟 ) = � ∑ 𝑝𝑝𝑢𝑢 ,𝑙𝑙 𝑙𝑙 :𝑎𝑎𝑢𝑢 ,𝑙𝑙≥𝑐𝑐𝑢𝑢 𝑢𝑢>𝑟𝑟 𝑢𝑢∈ℛ 
+
+. (20) 12 
+
+Using the effective floor 𝑐𝑐̂𝑢𝑢 rather than the floor 𝑐𝑐𝑢𝑢 itself is free: both are known once the sub-floor states have been deleted, but the effective floor is never smaller and is usually strictly larger. The guaranteed minimum remainder is 
+
+𝑚𝑚 rem (𝑟𝑟 ) = ∑ 𝑐𝑐̂𝑢𝑢 𝑢𝑢>𝑟𝑟 𝑢𝑢∈ℛ 
+
+. (21) 
+
+In the unreserved case ℛ is empty, 𝑚𝑚 rem (𝑟𝑟 ) is identically zero, and the rule below can never fire. It is therefore not an improvement to the unreserved algorithm but a rule that the floor constraints themselves create. 
+
+Guaranteed-success rule. If 𝐵𝐵𝑟𝑟 + 𝑚𝑚 rem (𝑟𝑟 ) ≥ 𝐷𝐷 , then every descendant of the node that satisfies all remaining floors also meets the demand, so the branch closes immediately and contributes 𝑃𝑃 𝑟𝑟 ⋅Πrem (𝑟𝑟 ).
+
+Theorem 2. With the success aggregation rule of Section 4.1 restated so that a closing node contributes 𝑃𝑃 𝑟𝑟 ⋅ Π rem (𝑟𝑟 ) , the addition of the guaranteed-success rule leaves the returned value unchanged and equal to 𝑅𝑅 res (𝐷𝐷 ).
+
+Proof. Consider a node closed by the new rule at position 𝑟𝑟 . Its descendants that violate some remaining floor are excluded from the event by construction and their mass has already been removed from the retained state sets, so the descendant mass that remains in the event is exactly 𝑃𝑃 𝑟𝑟 ⋅Πrem (𝑟𝑟 ). Among those descendants, each assigns every remaining reserved unit one of its retained states, and every retained state is at least that unit's effective floor, hence a total of at least 𝐵𝐵𝑟𝑟 +
+
+𝑚𝑚 rem (𝑟𝑟 ) ≥ 𝐷𝐷 , so all of them are successes. Replacing the subtree by 𝑃𝑃 𝑟𝑟 ⋅ Π rem (𝑟𝑟 ) therefore neither omits nor duplicates any successful mass. The same weighting is required of the original success rule: on a reserved instance the deleted states are floor violations rather than absent outcomes, so a node closed because 𝐵𝐵𝑟𝑟 ≥ 𝐷𝐷 also contributes only 𝑃𝑃 𝑟𝑟 ⋅ Π rem (𝑟𝑟 ), and the unweighted form would over-count. When ℛ is empty, Πrem (𝑟𝑟 ) = 1 , 𝑚𝑚 rem (𝑟𝑟 ) = 0 , and both statements reduce to those of Theorem 1. □
+
+The rule changes the number of nodes expanded but not the storage bound: it closes subtrees earlier without adding anything to the traversal stack, so the 𝑂𝑂 (𝑈𝑈 ⋅ 𝐿𝐿max ) bound of Proposition 1 is unaffected. 
+
+Closing a subtree earlier changes floating-point accumulation order. Across the reservation levels of Section 6.8, the largest difference between the two- and three-rule variants is 6.33 × 10⁻¹⁵; the rule 
+
+is exact in exact arithmetic. 13 
+
+Unlike GE-MBAT's zero assignment for unassigned arcs, reserved-unit floors provide a positive lower bound on the contributions of unassigned reserved units. This positive guaranteed remainder enables the additional success rule. Without reserved-unit floors, the remainder is zero and the rule is vacuous. 
+
+5. RELIABILITY SENSITIVITY AND UPGRADE DESIGN 
+
+Exact reliability also yields probability-transfer sensitivities for heterogeneous upgrade design and screening of binary approximations. 
+
+5.1. Probability-Transfer Sensitivity and Heterogeneous Upgrades 
+
+Consider service unit 𝑢𝑢 , transferring probability 𝜀𝜀 from state 𝑎𝑎 with bandwidth 𝑤𝑤𝑎𝑎 to state 𝑏𝑏 with bandwidth 𝑤𝑤𝑏𝑏 > 𝑤𝑤𝑎𝑎 . Let 𝑊𝑊 −𝑢𝑢 = ∑ 𝑋𝑋𝑣𝑣 𝑣𝑣≠𝑢𝑢 . Then  
+
+> 𝑑𝑑𝑅𝑅 pool
+> 𝑑𝑑𝑑𝑑
+
+= Pr( 𝐷𝐷 − 𝑤𝑤𝑏𝑏 ≤ 𝑊𝑊 −𝑢𝑢 < 𝐷𝐷 − 𝑤𝑤𝑎𝑎 ). (22) 
+
+Because reliability is linear in the state-probability vector of a single unit, for any feasible 0 ≤ 𝜀𝜀 ≤ 𝑝𝑝𝑢𝑢 ,𝑎𝑎 , the exact change is 
+
+Δ𝑅𝑅 pool = 𝜀𝜀 ⋅ Pr( 𝐷𝐷 − 𝑤𝑤𝑏𝑏 ≤ 𝑊𝑊 −𝑢𝑢 < 𝐷𝐷 − 𝑤𝑤𝑎𝑎 ). (23) 
+
+For the latent-mixture model, with conditional transfer 𝜀𝜀ℎ ,
+
+Δ𝑅𝑅 pool = ∑ 𝜋𝜋ℎ 𝐾𝐾 ℎ=1 𝜀𝜀ℎ ⋅ Pr( 𝐷𝐷 − 𝑤𝑤𝑏𝑏 ≤ 𝑊𝑊 −𝑢𝑢 < 𝐷𝐷 − 𝑤𝑤𝑎𝑎 ∣ 𝐻𝐻 = ℎ). (24) 
+
+This sensitivity naturally leads to a heterogeneous upgrade problem. For each unit 𝑢𝑢 , an action 
+
+𝑚𝑚 ∈ ℳ𝑢𝑢 has cost 𝑐𝑐𝑢𝑢 ,𝑚𝑚 and replaces the state probabilities by 𝑝𝑝𝑢𝑢 ,𝑙𝑙 (𝑚𝑚 ). The minimum-cost reliability design is: 
+
+y* = arg min_y Σ_{u,m} c[u,m] y[u,m], s.t. R_pool(D; y) ≥ R_tar, Σ_m y[u,m] = 1 ∀u. (25) 
+
+Every action set contains a null action of zero cost that leaves the state probabilities unchanged, so selecting exactly one action per unit is equivalent to selecting a subset of units to upgrade. 
+
+Equation (25) can assign different actions to different units; solver choice follows Proposition 1 and the grid/collision structure of Sections 3.1 and 4.3. Under latent dependence, actions may specify conditional probabilities 𝑝𝑝𝑢𝑢 ,𝑙𝑙∣ℎ (𝑚𝑚 ).
+
+5.2. Mean-Bandwidth Screening for Binary Approximation 
+
+Equations (13)–(14) provide a fast screening test on expected bandwidth. Given tolerance 𝜖𝜖 , the optimistic and conservative mapping errors satisfy respectively 
+
+> (1−𝛼𝛼 )𝑝𝑝 deg
+> 𝑝𝑝 full +𝛼𝛼𝑝𝑝 deg
+
+≤ 𝜖𝜖 , 𝛼𝛼𝑝𝑝 deg 
+
+> 𝑝𝑝 full +𝛼𝛼𝑝𝑝 deg
+
+≤ 𝜖𝜖 . (26) 14 
+
+This test does not bound threshold-reliability error; counterexamples in Section 6.2 show that mean distortion and threshold error are not reliably ordered ( 𝛼𝛼 = 0.70 : 4.784% mean distortion vs. 8.042% threshold error; 𝛼𝛼 = 0.30 : 5.109% mean distortion vs. 0% threshold error). The screening test is therefore only a filter on mean-bandwidth distortion: passing it does not license a binary model, and failing it does not by itself condemn one. Threshold decisions require direct evaluation of threshold error, which the exact solver of Section 4 provides. 
+
+6. NUMERICAL EXPERIMENTS 
+
+The experiments validate exactness, characterize solver-selection regimes, and quantify the principal modeling effects. 
+
+6.1. Experimental Setup, Baselines, and Validation 
+
+All timings were produced on a single host (Intel Core Ultra 7 265K, 20 physical cores) running Ubuntu 24.04, compiled with g++ 13.3.0 -O3 -std=c++17. Every solver is CPU-only and single-threaded; the process was pinned to a single logical CPU. Timing used a steady clock, reporting the median of 15 runs after 10 warm-up runs. Frequency scaling remained under OS control, so wall-clock times are implementation- and platform-dependent. Operation counts and peak-state counts are deterministic for fixed instances and reproducible on any platform. Reported reliabilities agree to double-precision numerical accuracy; validation experiments below show maximum absolute differences on the order of 10 −15 .
+
+Algorithmic correctness was checked in two ways. First, 50 randomly generated three-state systems with 𝑈𝑈 = 4 to 8 were evaluated by exhaustive enumeration and TP-mBAT; the maximum absolute probability difference was 3.22 × 10 −15 . Second, 200 independently generated systems with 𝑈𝑈 = 4 to 10 were compared between TP-mBAT and exact convolution; the maximum absolute difference was 7.66 × 10 −15 . These discrepancies support Theorem 1 computationally. 
+
+All deterministic exact solvers use the same unit ordering and are compared under matched conditions; wall-clock time and byte allocation remain implementation-dependent. 
+
+Experiments cover the commensurate negative control, incommensurate solver benchmark, binary-mapping accuracy, service semantics, shared stress, Monte Carlo validation, heterogeneous upgrades, scalability, and reserved-unit floors. The primary comparator is a threshold-pruned sparse DP using the same two rules as TP-mBAT; naive and capped DPs, exhaustive enumeration, and Monte Carlo serve as secondary checks. Parameters are specified with each experiment. 15 
+
+6.2. Binary-Mapping Accuracy 
+
+Table 3 isolates the 𝛼𝛼 ≠ 0.5 generalization. Eight identical three-state units use �𝑝𝑝 full , 𝑝𝑝 deg , 𝑝𝑝 fail � =(0.78 , 0.14 , 0.08) and 𝐷𝐷 = 6 𝑏𝑏 , with 𝛼𝛼 varying away from 0.5 . The 𝛼𝛼 = 0.5 sweep from Paper 1 [29] is not recomputed. Equations (13)–(14) predict unequal optimistic and conservative mean errors when 𝛼𝛼 ≠ 0.5 .
+
+Table 3. Binary-mapping accuracy for eight units, �𝑝𝑝 full , 𝑝𝑝 deg , 𝑝𝑝 fail � = (0.78 , 0.14 , 0.08) , 𝐷𝐷 = 6 𝑏𝑏 .
+
+α Exact Rpool  Mean εopt (%)  Mean εcons (%)  Threshold err. opt. (%)  Threshold err. cons. (%) 
+
+0.30  0.751356  11.922  5.109  +30.284  0.000 
+
+0.40  0.795721  10.048  6.699  +23.020  -5.576 
+
+0.60  0.883160  6.481  9.722  +10.841  -14.924 
+
+0.70  0.906039  4.784  11.162  +8.042  -17.072 
+
+As Figure 1 shows, the two binary mappings behave increasingly asymmetrically as the degraded-state bandwidth fraction moves away from the half-bandwidth case. 
+
+Figure 1. Relative threshold-reliability error as the degraded-state bandwidth fraction 𝛼𝛼 varies for 
+
+𝑈𝑈 = 8 , 𝐷𝐷 = 6 𝑏𝑏 , and �𝑝𝑝 full , 𝑝𝑝 deg , 𝑝𝑝 fail � = (0.78 , 0.14 , 0.08) . The half-bandwidth case 𝛼𝛼 = 0.5 is shown only as a reference line; its numerical sweep is reported in Paper 1 [29]. 
+
+When degraded bandwidth is small, the conservative mapping can be exact because degraded states do not add enough capacity to change success, while the optimistic mapping overstates reliability by more than 30%. As 𝛼𝛼 increases, the conservative mapping becomes pessimistic and the optimistic error shrinks. Thus the binary approximation depends on both 𝑝𝑝 deg and the degraded-state service value 𝛼𝛼 .16 
+
+6.3.Solver Selection: When TP-mBAT Helps and When It Does Not 
+
+Four exact solvers are compared: TP-mBAT; naïve sparse DP (no threshold rules); capped DP (success collapse only); and pruned DP (both rules). All return the same reliability to within 1 × 10 −12 Counting conventions: TP-mBAT operations are node visits (stack pops); DP operations are 
+
+candidate updates . Peak states are maximum stack entries for TP-mBAT and maximum dictionary keys for the DPs. 
+
+For the collision-free benchmark rows reported below, the TP-mBAT node-visit count exceeds the pruned-DP candidate-update count by exactly one, corresponding to the TP root. This one-count offset follows from the reporting convention; Proposition 1 separately predicts equality of true expansion counts when surviving capacities are collision-free. The reported counters are consistent with this. 
+
+Table 4. Incommensurate benchmark at D = 0.875 of maximum aggregate capacity. 
+
+U Solver  Operations  Peak states  Peak bytes  Exact reliability 
+
+10  TP-mBAT  658  5 288 B  0.435493408392 
+
+10  DP naïve  88,572  59,049  2.799 MB  0.435493408392 
+
+10  DP capped  88,569  58,983  2.797 MB  0.435493408392 
+
+10  DP pruned  657  54  3,864 B  0.435493408392 
+
+12  TP-mBAT  2,572  6 288 B  0.425804070437 
+
+12  DP naïve  797,160  531,434  25.225 MB  0.425804070437 
+
+12  DP capped  797,139  531,164  25.218 MB  0.425804070437 
+
+12  DP pruned  2,571  230  15,096 B  0.425804070437 
+
+14  TP-mBAT  6,862  7 288 B  0.410855920925 
+
+14  DP naïve  7,173,300  4,780,410  227.429 MB  0.410855920925 
+
+14  DP capped  7,173,258  4,779,738  227.413 MB  0.410855920925 
+
+14  DP pruned  6,861  539  37,424 B  0.410855920925 
+
+Against a naïve or capped DP, TP-mBAT appears up to roughly three orders of magnitude better in the reported operation counts, but that margin reflects a rule the DP is entitled to use. Against the pruned DP, the node-visit and update counts differ by exactly one; the separation is retained state: 7 stack entries versus 539 keys at 𝑈𝑈 = 14 .
+
+Table 5. Peak-state and traversal-storage profile across demand, U = 14, incommensurate benchmark. 
+
+D/max  TP-mBAT peak 
+
+DP pruned keys 
+
+Peak-state ratio 
+
+TP bytes 
+
+DP bytes  Storage ratio 
+
+0.500  17  412,121  24,242×  1,152 B  25.02 MB  21,718× 
+
+0.650  13  166,010  12,770×  576 B  9.48 MB  16,456× 17 
+
+D/max  TP-mBAT peak 
+
+DP pruned keys 
+
+Peak-state ratio 
+
+TP bytes 
+
+DP bytes  Storage ratio 
+
+0.750  10  33,687  3,369×  576 B  2.00 MB  3,469× 
+
+0.875  7 539  77×  288 B  37.4 kB  130× 
+
+0.950  4 14  4×  96 B  1.24 kB  13× 
+
+Byte figures are measured allocation high-water marks and therefore include container and transient reallocation overhead; they are implementation-dependent and reported as empirical storage measurements. In this benchmark, the retained-state separation grows as the demand moves toward the central region of the attainable capacity range, where pruning is least effective. At 𝐷𝐷 = 0.50 , DP holds 412,121 states while TP-mBAT holds at most 17 entries. Figure 2 summarizes this retained-state behavior across system size and demand. 
+
+Figure 2. Peak retained states in the heterogeneous incommensurate benchmark. (a) Scaling with the number of service units at 𝐷𝐷 = 0.875 of maximum capacity. (b) Dependence on demand fraction at 
+
+𝑈𝑈 = 14 . Both axes are logarithmic. The capped dynamic program is shown to isolate the effect of the infeasibility rule. 
+
+Table 6. Commensurate negative control, 𝑈𝑈 = 16 , states {0 , 1, 2} , 𝐷𝐷 = 26 .
+
+Solver  Operations  Peak states  Exact reliability 
+
+TP-mBAT  362,506  9 0.655673664947 
+
+DP naive  768  33  0.655673664947 
+
+DP capped  741  26  0.655673664947 18 
+
+Solver  Operations  Peak states  Exact reliability 
+
+DP pruned  273  7 0.655673664947 
+
+On a compact common grid, pruned DP is superior on both axes: 273 updates and 7 states against 362,506 node visits. Extensive capacity collisions allow DP to merge aggressively; the tree cannot exploit them. When a compact grid exists, DP is the correct solver. 
+
+Table 7. Effect of capacity structure at 𝑈𝑈 = 20 binary units, 𝐷𝐷 = 0.5 of maximum capacity. Collision-freeness alone does not make an instance hard. Peak states count retained probability states after each update and exclude the root, so a solver whose branches all close on their first test retains none; this is why the superincreasing instance reports zero. 
+
+Capacity structure  TP-mBAT nodes 
+
+DP pruned updates 
+
+DP pruned peak states 
+
+Commensurate, small integer grid 
+
+155,657  588  39 
+
+Superincreasing (3 i), collision-free 
+
+3 2 0
+
+Random large, unstructured 
+
+163,703  163,702  18,802 
+
+The superincreasing row is instructive: capacities are collision-free, so DP cannot merge, yet both solvers terminate in a handful of operations because the bound is exact at every level. The hard regime is the random large, unstructured case, where neither merging nor bounding is effective; the node-visit and update counts differ only by the root, and the separation is retained state. Across 101 instances (seeds 20260812–20260912), TP-mBAT visits range from 146,935 to 351,499; the canonical instance is specified in Supplementary Section S4.2. 
+
+The experiments support a narrow selection rule: use fixed-grid or pruned DP when capacities share a compact common grid, when the full distribution is required, or when storage is not the constraint. Use TP-mBAT when capacities are effectively incommensurate, a single threshold is required, and storage is constrained: it carries out equivalent state-space exploration while traversal memory is bounded by 𝑂𝑂 (𝑈𝑈 ⋅ 𝐿𝐿max ).
+
+6.4. Service Semantics and Dependence Effects 
+
+This experiment verifies the distinction introduced in Section 2.1 between pooled bandwidth and replicated service. Each stack contains 𝐶𝐶 = 4 units with �𝑝𝑝 full , 𝑝𝑝 deg , 𝑝𝑝 fail � = (0.70 , 0.15 , 0.15) and 
+
+𝛼𝛼 = 0.5 . For comparison, the replicated local threshold is set to 𝜏𝜏 = 𝐷𝐷 /𝑆𝑆 . At high aggregate demand, the two events diverge sharply. 19 
+
+Table 8. Pooled-bandwidth and replicated-service reliability at high aggregate demand. Each stack holds 𝐶𝐶 = 4 three-state units with �𝑝𝑝 full , 𝑝𝑝 deg , 𝑝𝑝 fail � = (0.70 , 0.15 , 0.15) and 𝛼𝛼 = 0.5 .
+
+S D/(SCb)  τ=D/S  Rrep  Rpool  Gap 
+
+2 0.750  3b  0.920391  0.687343  +0.233048 
+
+3 0.875  3.5b  0.829876  0.240830  +0.589046 
+
+4 0.875  3.5b  0.905735  0.185361  +0.720374 
+
+Figure 3 illustrates the resulting divergence between replicated-service and pooled-bandwidth reliability at high aggregate demands. 
+
+Figure 3. Replicated-service and pooled-bandwidth reliability for high aggregate demands. The two values answer different service questions and should not be substituted for one another. 
+
+This experiment evaluates the latent-mixture construction of Section 2.2 against an independence model with identical unconditional marginals. For 𝑈𝑈 = 16 units with state values {0 , 0.5 , 𝑏𝑏𝑏𝑏 }, the normal conditional probabilities are (0.85 , 0.10 , 0.05) and the stressed probabilities are 
+
+(0.55 , 0.25 , 0.20) , with 𝐷𝐷 = 12 𝑏𝑏 . The comparator treats units as independent while preserving the same unconditional unit marginals. 
+
+Table 9. Effect of a shared latent package state for 𝑈𝑈 = 16 and 𝐷𝐷 = 12 𝑏𝑏 , against an independence calculation built from the same unconditional unit marginals. 
+
+P(stressed)  Exact latent mixture  Independent same marginals 
+
+Independence bias (pp) 
+
+0.00  0.987389  0.987389  0.000 
+
+0.05  0.952150  0.979082  +2.693 
+
+0.10  0.916911  0.967625  +5.071 
+
+0.20  0.846433  0.933687  +8.725 
+
+Figure 4 shows how the reliability bias caused by assuming independence increases with the probability of the stressed package state. At 20% stressed probability, independence overstates 20 
+
+reliability by 8.725 percentage points. Unit marginals alone do not determine simultaneous capacity loss. 
+
+Figure 4. Effect of a shared stressed package state. Treating the same unconditional marginals as independent can materially overstate high-demand reliability. 
+
+6.5. Monte Carlo Sampling Burden 
+
+Monte Carlo is included as a stochastic baseline to show the sampling effort required to resolve the high-reliability probabilities computed exactly by the methods of Sections 3 and 4. A high-reliability case: 𝑈𝑈 = 16 , �𝑝𝑝 full , 𝑝𝑝 deg , 𝑝𝑝 fail � = (0.85 , 0.10 , 0.05) , 𝛼𝛼 = 0.5 , 𝐷𝐷 = 10 𝑏𝑏 , exact 𝑅𝑅 pool =0.9998267173 . Twenty independent replications at each sample size. 
+
+Table 10. Monte Carlo sampling burden for 𝑈𝑈 = 16 , 𝐷𝐷 = 10 𝑏𝑏 and exact 𝑅𝑅 pool = 0.9998267173 ,over twenty replications at each sample size. 
+
+Samples/run  Mean estimate  Median |error|  95th-percentile |error| 
+
+10,000  0.9997850  7.33 × 10 ⁻⁵ 3.37 × 10 ⁻⁴
+
+100,000  0.9998190  2.50 × 10 ⁻⁵ 5.67 × 10 ⁻⁵
+
+1,000,000  0.9998229  9.28 × 10 ⁻⁶ 1.78 × 10 ⁻⁵
+
+Exact algorithms return the same probability without sampling error. Monte Carlo remains useful for validation but is not competitive for high-precision threshold probabilities. 
+
+6.6. Heterogeneous Upgrade Selection 
+
+Equation (25) is illustrated on the first eight benchmark units specified in the Supplementary Material. Demand is 75% of their maximum capacity, and base reliability is 0.828777. Each unit has 21 
+
+one optional action transferring 0.08 probability mass from degraded to full, with normalized costs 1.00, 0.95, 1.10, 0.80, 1.20, 0.90, 1.05, and 0.85. 
+
+Table 11. Minimum-cost heterogeneous upgrade selection over the first eight benchmark units at 
+
+𝐷𝐷 = 6.012431417 𝑏𝑏0 .
+
+Target R*  Selected upgraded units 
+
+Normalized action cost  Exact Rpool 
+
+0.850  1, 4  1.80  0.852558 
+
+0.870  1, 4, 5, 8  3.85  0.871071 
+
+0.890  1, 2, 3, 4, 5, 6, 7, 8  7.85  0.891114 
+
+The minimum-cost set depends on both unit-specific states and the system threshold. At 𝑅𝑅 tar =0.85 , units 1 and 4 are selected, even though units 4 and 8 are cheaper together but do not reach the target. The example demonstrates exact multistate reliability in selecting heterogeneous, unit-specific interventions. 
+
+6.7. Central-Demand Scalability 
+
+Central-demand scaling tests whether the storage separation persists as system size grows. 
+
+Table 12 shows the central-demand regime at 𝐷𝐷 = 0.50 of maximum capacity. The traversal peak grows from 17 to 21 entries while the DP grows from 412 thousand to 29 million states and from 25 MB to 1.63 GB, a divergence of four orders of magnitude where pruning helps least. 
+
+Table 12. Central demand, 𝐷𝐷 = 0.50 of maximum capacity. TP peak states against pruned dynamic-program keys and measured allocation. 
+
+U TP peak states 
+
+DP pruned keys 
+
+DP measured bytes 
+
+DP median time 
+
+14  17  412,121  25.02 MB  60.9 ms 
+
+16  19  3,468,490  194.16 MB  1,457 ms 
+
+18  21  28,933,671  1.628 GB  17,445 ms 
+
+6.8. Reserved-Unit Floors and the Third Rule 
+
+The guaranteed-success rule of Section 4.5 is exercised on the fourteen-unit benchmark at 𝐷𝐷 =0.65 of maximum capacity ( 9.121829426 𝑏𝑏0 ), with uniform floor 0.40 𝑏𝑏0 . Reserved-set size varies from none to all fourteen. Each value was checked against independent sub-stochastic convolution. 
+
+The guaranteed remainder uses effective floors 𝑐𝑐̂𝑢𝑢 (Section 2.3) rather than nominal floors. Using effective floors reduces node visits by 2.1% at four reserved units and 21.3% at fourteen; the reductions in Table 13 would be lower if nominal floors were used. 22 
+
+Table 13. Effect of the guaranteed-success rule as the number of reserved units varies. 𝑈𝑈 = 14 , 𝐷𝐷 =0.65 of maximum capacity, floor 0.40 𝑏𝑏0 . Peak states are identical for both variants; peak traversal bytes are 576 throughout. 
+
+|S|  Exact Rres  Nodes, two rules  Nodes, three rules  Reduction  Peak states 
+
+0 0.982315394994  1,139,227  1,139,227  0.0%  13 
+
+4 0.689450457409  510,378  412,383  19.2%  13 
+
+7 0.533157610196  237,261  172,708  27.2%  13 
+
+10  0.408981300859  88,870  56,215  36.7%  13 
+
+12  0.342467126261  39,815  20,786  47.8%  12 
+
+14  0.286723427738  14,771  5,273  64.3%  12 
+
+Reliability falls steeply with reserved-set size, from 0.982315 to 0.286723, demonstrating that pooled capacity overstates deliverable service when units are pinned. The node-visit reduction from the third rule grows from 0% to 64.3%, while peak state count is unchanged (13 falling to 12), confirming that the rule reduces work, not storage. The zero-reservation row is a consistency check: with ℛ = ∅, the model reduces exactly to the unreserved problem. 
+
+7. DISCUSSION AND CONCLUSIONS 
+
+Paper 1 [29] derives closed-form results within the binary abstraction. This paper starts where it fails: intermediate bandwidth, heterogeneous units, and multistate capacity distributions. Experiments quantify three distinct modeling errors: binary mapping, pooled-vs-replicated semantics, and common-cause dependence. They also confirm that TP-mBAT is regime-specific, not a universal DP replacement. In the 16-unit commensurate control, DP is superior (273 updates vs. 362,506 node visits). In the 14-unit incommensurate benchmark, the separation is retained state (7 entries vs. 539 states; 17 vs. 412,121 at central demand), as explained by Proposition 1. 
+
+The framework complements rather than replaces binary models, reducing to 𝑘𝑘 -out-of-𝑛𝑛 as a special case. Key contributions: TP-mBAT with 𝑂𝑂 (𝑈𝑈 ⋅ 𝐿𝐿max ) traversal storage, Proposition 1establishing the solver-selection boundary, probability-transfer sensitivity and heterogeneous upgrades, and reserved-unit floors with a third exact pruning rule. Limitations include static probabilities and exponential worst-case complexity; future work will link fixed probabilities to dynamic thermal/degradation occupancy models. 
+
+Data and Code Availability 
+
+The analytical formulas and algorithm definitions are contained in the manuscript. The C++ benchmark source, complete worked-example trace, omitted scalability diagnostics, exact 23 
+
+heterogeneous benchmark vector, α-sweep calculations, upgrade-selection data, instance specifications, Monte Carlo seeds, and numerical-analysis script are provided as Supplementary Material for reproducibility. 
+
+References 
+
+1. JEDEC Solid State Technology Association. High Bandwidth Memory (HBM) DRAM Standard; JESD235D; JEDEC Solid State Technology Association: Arlington, VA, USA, 2021. 
+
+2. O’Connor, M. Highlights of the High-Bandwidth Memory (HBM) Standard. In Proceedings of the Memory Forum, Minneapolis, MN, USA, 14 June 2014. 
+
+3. Micron Technology, Inc. Integrating and Operating HBM2E Memory; Technical Brief, Rev. A; Micron Technology, Inc.: Boise, ID, USA, 2021. 
+
+4. Asifuzzaman, K.; Abuelala, M.; Hassan, M.; Cazorla, F.J. Demystifying the Characteristics of High Bandwidth Memory for Real-Time Systems. In Proceedings of ICCAD 2021, pp. 1-9. doi:10.1109/ICCAD51958.2021.9643473. 
+
+5. Stocksdale, T.; Chang, M.-T.; Zheng, H.; Mueller, F. Architecting HBM as a High Bandwidth, High Capacity, Self-Managed Last-Level Cache. In Proceedings of PDSW −DISCS 2017. doi:10.1145/3149393.3149394. 
+
+6. Patti, R.S. Three-Dimensional Integrated Circuits and the Future of System-on-Chip Designs. Proc. IEEE 2006, 94, 1214-1224. doi:10.1109/JPROC.2006.873612. 
+
+7. Lau, J.H. Through-Silicon Vias for 3D Integration; McGraw-Hill Education: New York, NY, USA, 2013. 
+
+8. Pan, D.Z.; Lim, S.K.; Athikulwongse, K.; Jung, M.; Mitra, J.; Pak, J.; Yang, M.; Yoon, J.S. Design for Manufacturability and Reliability for TSV-Based 3D ICs. In Proceedings of CICC 2010, pp. 1-8. 
+
+9. Qu, C.; Dai, R.; Zheng, J.; Hu, Y.; Zhang, J. Thermal and Mechanical Reliability of Thermal Through-Silicon Vias in Three-Dimensional Integrated Circuits. Microelectron. Reliab. 2023, 143, 114952. doi:10.1016/j.microrel.2023.114952. 
+
+10. Yeh, W.-C. Novel Binary-Addition Tree Algorithm (BAT) for Binary-State Network Reliability Problem. Reliab. Eng. Syst. Saf. 2021, 208, 107448. doi:10.1016/j.ress.2021.107448. 
+
+11. Yeh, W.-C. A Quick BAT for Evaluating the Reliability of Binary-State Networks. Reliab. Eng. Syst. Saf. 2021, 216, 107917. doi:10.1016/j.ress.2021.107917. 24 
+
+12. Yeh, W.-C.; Hao, Z.; Forghani-elahabad, M.; Wang, G.-G.; Lin, Y.-L. Novel Binary-Addition Tree Algorithm for Reliability Evaluation of Acyclic Multistate Information Networks. Reliab. Eng. Syst. Saf. 2021, 210, 107427. doi:10.1016/j.ress.2021.107427. 
+
+13. Yeh, W.-C.; Tan, S.-Y.; Zhu, W.; Huang, C.-L.; Yang, G.-Y. Novel Binary-Addition Tree Algorithm for Calculating the Direct Lower-Bound of Binary-State Network Reliability. Reliab. Eng. Syst. Saf. 2022, 223, 108497. doi:10.1016/j.ress.2022.108497. 
+
+14. Yeh, W.-C.; Forghani-elahabad, M.; El Khadiri, M.; Jiang, Y.; Lin, C.-S. New Binary-Addition Tree Algorithm for the All-Multiterminal Binary-State Network Reliability Problem. Reliab. Eng. Syst. Saf. 2022, 224, 108543. doi:10.1016/j.ress.2022.108543. 
+
+15. Yeh, W.-C. QB-II for Evaluating the Reliability of Binary-State Networks. Reliab. Eng. Syst. Saf. 2023, 230, 108900. doi:10.1016/j.ress.2022.108900. 
+
+16. Yeh, W.-C. A New Hybrid Inequality BAT for Comprehensive All-Level d-MP Identification Using Minimal Paths in Multistate Flow Network Reliability Analysis. Reliab. Eng. Syst. Saf. 2024, 244, 109876. doi:10.1016/j.ress.2023.109876. 
+
+17. Hao, Z.; Yeh, W.-C. GE-MBAT: An Efficient Algorithm for Reliability Assessment in Multi-State Flow Networks. Reliab. Eng. Syst. Saf. 2025, 260, 110916. doi:10.1016/j.ress.2025.110916. 
+
+18. Barlow, R.E.; Heidtmann, K.D. Computing k-out-of-n System Reliability. IEEE Trans. Reliab. 1984, R-33, 322-323. doi:10.1109/TR.1984.5221828. 
+
+19. Rushdi, A.M. Reliability of k-out-of-n Systems. In New Trends in System Reliability Evaluation; Misra, K.B., Ed.; Elsevier: Amsterdam, 1993; pp. 185-227. 
+
+20. Sarje, A.K.; Prasad, V.S.S.Y. On the Reliability Computation of a k-out-of-n System. Microelectron. Reliab. 1993, 33, 2065-2071. doi:10.1016/0026-2714(93)90074-9. 
+
+21. Yeh, W.-C. A Simple Algorithm for Evaluating the k-out-of-n Network Reliability. Reliab. Eng. Syst. Saf. 2004, 83, 93-101. doi:10.1016/j.ress.2003.09.011. 
+
+22. Lee, S.-H.; Kim, S.-J.; Lee, J.-S.; Rhi, S.-H. Thermal Issues Related to Hybrid Bonding of 3D-Stacked High Bandwidth Memory: A Comprehensive Review. Electronics 2025, 14, 2682. doi:10.3390/electronics14132682. 
+
+23. Tian, W.; Dang, H.; Li, D.; Cong, Y.; Chen, Y. Reliability Simulation Analysis of TSV Structure in Silicon Interposer under Temperature Cycling. Micromachines 2024, 15, 986. doi:10.3390/mi15080986. 25 
+
+24. Wu, R.; Zhou, S.; Lu, J.; Shen, Z.; Xu, Z.; Shu, J.; Yang, K.; Lin, F.; Zhang, Y. Removing Obstacles before Breaking Through the Memory Wall: A Close Look at HBM Errors in the Field. In Proceedings of USENIX ATC 2024, pp. 851-867. 
+
+25. Wu, R.; Zhou, S.; Lu, J.; Shen, Z.; Xu, Z.; Shu, J.; Yang, K.; Lin, F.; Zhang, Y. Looking Back to Move Forward: Unveiling the Mysteries of HBM Errors to Predict Future Failures. ACM Trans. Storage 2025. doi:10.1145/3767333. 
+
+26. Lisnianski, A.; Levitin, G. Multi-State System Reliability: Assessment, Optimization and Applications; World Scientific: Singapore, 2003. doi:10.1142/5221. 
+
+27. Levitin, G. The Universal Generating Function in Reliability Analysis and Optimization; Springer: London, 2005. doi:10.1007/1-84628-245-4. 
+
+28. Levitin, G.; Lisnianski, A. Importance and Sensitivity Analysis of Multi-State Systems Using the Universal Generating Function Method. Reliab. Eng. Syst. Saf. 1999, 65, 271-282. 
+
+29. Yeh, W.-C.; Benedict, R. Closed-Form Reliability and Bandwidth Evaluation for HBM Architectures via Binary-Die k-out-of-N Aggregation. Electronics, accepted for publication, 2026. 
+
+30. Valiant, L.G. The complexity of enumeration and reliability problems. SIAM J. Comput. 1979, 8, 410–421. 
+
+31. Ball, M.O. Computational complexity of network reliability analysis: an overview. IEEE Trans. Reliab. 1986, 35, 230–239.

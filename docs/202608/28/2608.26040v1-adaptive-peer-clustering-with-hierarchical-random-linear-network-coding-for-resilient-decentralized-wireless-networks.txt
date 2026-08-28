@@ -1,0 +1,561 @@
+Title: Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks
+
+URL Source: https://arxiv.org/pdf/2608.26040v1
+
+Published Time: Thu, 27 Aug 2026 01:25:09 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 1
+
+# Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks 
+
+Navaneetha Krishnan K and Harinisri V 
+
+Abstract —Decentralized wireless collectives including vehicu-lar swarms, IoT clusters, and edge AI networks require com-munication protocols that maintain robustness under dynamic topologies and heterogeneous link quality. While Random Linear Network Coding (RLNC) provides algebraic resilience against packet erasures, its performance degrades significantly when peers exhibit diverse channel conditions. This paper presents Adaptive Peer Clustering with Hierarchical RLNC (APC-RLNC), a system that dynamically groups peers by exponentially weighted moving average (EWMA) reliability metrics and applies multi-tier network coding within and across clusters. We formalize the clustering optimization problem, derive closed-form decoding probability bounds for Markov erasure channels, and prove 
+
+O(√T ) regret for online reconfiguration under the Follow-the-Regularized-Leader (FTRL) framework. Our implementation includes both a high-fidelity network simulator and a proof-of-concept testbed deployment on Jetson Nano edge devices. Evaluation across diverse scenarios including high-mobility ve-hicular networks, burst-error channels, and adversarial inter-ference demonstrates 5.2–9.8 percentage-point packet delivery ratio (PDR) improvements, 10–23% latency reductions, and up to 30% higher node retention compared to state-of-the-art baselines. The system exhibits linear scalability to 500+ nodes and maintains real-time reconfiguration overhead below 3%. APC-RLNC establishes adaptive clustering as a foundational primitive for AI-native 6G wireless systems. 
+
+Index Terms —Network coding, wireless networks, adaptive clustering, edge computing, 6G, O-RAN. 
+
+I. I NTRODUCTION 
+
+# DECENTRALIZED wireless collectives – vehicular swarms, IoT clusters, and edge AI networks – require communication protocols that maintain robustness under dy-namic topologies and heterogeneous link quality. Robustness is challenged whenever high-mobility movement patterns, energy-harvesting intermittency causes transient node failures, or adversarial interference disrupts communication [3]. Fully decentralized communication protocols face three critical challenges: (1) heterogeneous link quality – channel erasure probabilities vary by orders of magnitude due to mobility, fading, multipath, and interference; (2) dynamic topology (churn) – peers join and leave frequently, with typical churn rates of 2–10% per transmission round, invalidating 
+
+N. Krishnan K is with the Department of Electronics and Communication Engineering, SIMATS Engineering, Saveetha Institute of Medical and Tech-nical Sciences, Chennai, India (e-mail: knavaneeth385@gmail.com). Harinisri V. is with the Department of Physics and Nanotechnology, SRM Institute of Science and Technology, Chennai, India (e-mail: harinis-riv2003@gmail.com). Manuscript submitted August 27, 2026. 
+
+static redundancy strategies; and (3) energy constraints and scale – edge devices are power-limited (often sub-5 W), yet must coordinate across hundreds to thousands of peers. Random Linear Network Coding (RLNC) elegantly ad-dresses packet loss by transmitting random linear combina-tions of source packets over finite fields [4], [5]. A receiver can decode the original generation once it collects enough linearly independent coded packets. However, classical RLNC assumes homogeneous channel conditions: all receivers expe-rience identical erasure rates. In heterogeneous settings this assumption breaks down – reliable peers waste bandwidth on excessive redundancy while unreliable peers starve, leading to throughput collapse and fairness violations [6], [7]. This work was in part motivated by recent demonstra-tions that programmable, near-real-time RAN control loops are practical on real hardware rather than purely theoretical constructs [25], which encouraged us to design APC-RLNC as a coding-layer primitive that could plug directly into such control loops. 
+
+A. Key Insight and Contribution 
+
+Our central insight is that clustering peers by link reliabil-ity enables localized redundancy optimization without global coordination overhead. Peers with similar erasure statistics form reliability clusters and apply intra-cluster RLNC with tailored redundancy. Hierarchical inter-cluster coding provides secondary protection against cluster-level failures. This de-composition yields three key advantages:  
+
+> •
+
+Reduced redundancy waste: High-reliability clusters require minimal coding overhead, while low-reliability clusters receive proportional protection.  
+
+> •
+
+Scalability: Clustering complexity is O(N log N ) with distributed algorithms; intra-cluster RLNC operations parallelize trivially.  
+
+> •
+
+Fault isolation: Unreliable or adversarial peers affect only their local cluster, preserving global decoding ca-pability. This paper makes the following contributions: 1) System design and implementation: We present APC-RLNC, a complete framework integrating EWMA re-liability tracking, online clustering optimization, and hierarchical RLNC encoding and decoding. The system is implemented both in a high-fidelity Python/NumPy simulator and as a proof-of-concept on embedded Jetson Nano devices. arXiv:2608.26040v1 [eess.SP] 26 Aug 2026 IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 2
+
+2) Theoretical grounding: We derive closed-form decod-ing probability bounds under Markov erasure channels (Theorem 1) and prove O(√T ) regret for the online clustering reconfiguration policy under the FTRL frame-work (Theorem 2). 3) Empirical evaluation: We evaluate APC-RLNC against uniform-redundancy and centralized-feedback baselines across nominal, high-mobility, burst-error, and adversar-ial scenarios, and validate the simulator against a 10-node Jetson Nano hardware testbed. The remainder of this paper is organized as follows. Sec-tion II surveys related work. Section III formalizes the system model. Section IV presents theoretical analysis. Section V details the APC-RLNC design. Section VI describes the imple-mentation. Section VII reports simulation and testbed results. Section VIII discusses implications and limitations. Section IX surveys related deployments, and Section X concludes. II. R ELATED WORK 
+
+A. Network Coding in Wireless Systems 
+
+Classical RLNC theory [4], [5] established near-optimal throughput for multicast networks under uniform erasure. Extensions to sliding-window coding [9] and systematic codes [24] improved latency and decoding complexity but retained homogeneity assumptions. PACE [6] introduced adaptive re-dundancy control via centralized feedback, yet presumed static peer groupings. ARLNC [7] proposed adjustable field sizes but did not address heterogeneous channels. Recent work on BATS codes [10] reduced encoding overhead via sparse matrices but required centralized rate allocation. Our approach complements these by enabling decentralized, link-quality-driven adaptation. 
+
+B. Peer Clustering in Distributed Systems 
+
+Early P2P clustering schemes – CDC [11] and CAGA [12] – organized peers by proximity or content affinity, not channel quality. In federated learning, clustering mitigates non-IID data distributions [14], but optimizes model convergence rather than transmission efficiency. To our knowledge, APC-RLNC is the first framework explicitly clustering by erasure statistics for redundancy optimization. 
+
+C. Adaptive Wireless Protocols 
+
+Opportunistic routing [15] and rate adaptation [16] dynam-ically adjust per-link parameters but operate at fixed topology granularity. Multi-tier coding schemes [17] partition networks hierarchically yet use static assignments. Our online clustering algorithm continuously adapts to time-varying channels with provable regret bounds. 
+
+D. 6G and Edge AI Systems 
+
+AI-native wireless systems [1], [2] emphasize decentral-ized intelligence, ultra-low latency, and resilience. O-RAN architectures [18] introduce programmable RAN Intelligent Controllers (RICs) where APC-RLNC can deploy as an xApp. Recent work on neural-network-assisted protocol design [2] complements our approach: APC-RLNC provides a robust baseline coding layer, while ML optimizes higher-level policy. III. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+A. Network Topology and Dynamics 
+
+Consider a decentralized wireless network of nodes Vt =
+
+{1, . . . , N t} at discrete time t = 0 , 1, 2, . . . , T . The topol-ogy forms an undirected graph Gt = ( Vt, E t), where edge 
+
+(i, j ) ∈ Et exists if nodes i and j can communicate. Each link experiences time-varying erasure probability pij (t) ∈ [0 , 1] .Nodes depart with rate λleave and new nodes join to maintain expected size N . Churn follows a Poisson process with per-step rate ρchurn ∈ [0 .02 , 0.10] .For vehicular scenarios, nodes move according to a random waypoint model with velocity vi ∼ Uniform (5 , 30) m/s. Path loss follows 
+
+pij (t) = min 
+
+
+
+1, p 0
+
+ dij (t)
+
+d0
+
+α
+
+, (1) where dij (t) is distance, α = 3 .5 is the path-loss exponent, and p0 = 0 .05 , d0 = 50 m are calibration constants. 
+
+B. RLNC Fundamentals 
+
+A generation consists of K original packets {p1, . . . , p K }
+
+over finite field F256 . An encoder transmits K + R coded packets: 
+
+cj =
+
+> K
+
+X
+
+> k=1
+
+αj,k pk, αj,k ∼ Uniform (F256 ). (2) Decoding succeeds if the receiver collects at least K linearly independent coded packets. For a node with per-packet erasure probability pi, the success probability is 
+
+Pdecode (pi; K, R ) = 
+
+> K+R
+
+X
+
+> k=K
+
+K + Rk
+
+
+
+(1 − pi)k p K+R−ki . (3) 
+
+C. Heterogeneous Channel Models 
+
+We consider three channel models:  
+
+> •
+
+Bernoulli: pi ∼ Uniform (0 .05 , 0.25) , i.i.d. per node.  
+
+> •
+
+2-state Markov: each link alternates between good (pg = 0 .05 ) and bad ( pb = 0 .40 ) states with transition probabilities Pgb = Pbg = 0 .10 . 
+
+> •
+
+Velocity-dependent fading: for vehicular networks, 
+
+pi(t) = pbase + β · | vi(t)|, where β = 0 .003 s/m models Doppler effects. 
+
+D. Reliability Scoring 
+
+Each node i maintains an EWMA reliability score: 
+
+si(t) = α ℓ i(t) + (1 − α) si(t − 1) , (4) where ℓi(t) ∈ [0 , 1] is the instantaneous packet success rate and α = 0 .2 is the smoothing factor. The score si(t) estimates 
+
+1 − pi(t).IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 3
+
+E. Clustering Objective 
+
+At reconfiguration epochs t ∈ { 0, τ, 2τ, . . . }, peers partition into C(t) clusters {C 1,t , . . . , CC(t),t } by minimizing 
+
+L(C1: C , t ) = 
+
+> C
+
+X
+
+> c=1
+
+h
+
+Var i∈C c [si(t)] − λ |C c|
+
+i
+
+, (5) where Var( ·) penalizes intra-cluster heterogeneity and λ > 0
+
+rewards larger clusters. Balancing these two terms prevents over-fragmentation while maintaining homogeneity. 
+
+F. Hierarchical RLNC 
+
+Within cluster c, nodes apply local RLNC with redundancy 
+
+Rc = ⌈β |C c| ¯p erase  
+
+> c
+
+⌉ , (6) where ¯p erase  
+
+> c
+
+= 1
+
+> |C c|
+
+P 
+
+> i∈C c
+
+pi and β ≥ 1 is a safety margin. Clusters exchange bridge packets – RLNC-encoded summaries of their local generations – to provide secondary protection. A global decoder can recover the generation if at least K total degrees of freedom arrive across all clusters. IV. T HEORETICAL ANALYSIS 
+
+A. Decoding Success Probability Theorem 1 (Hierarchical Decoding Probability): For inde-pendent clusters with per-cluster success probabilities P (c)
+
+> succ
+
+,the system-level decoding probability is 
+
+Psys = 1 −
+
+> C
+
+Y
+
+> c=1
+
+
+
+1 − P (c)
+
+> succ
+
+
+
+. (7) 
+
+Proof: Decoding fails globally if and only if all clusters fail. By independence, Pfail,sys = Q 
+
+> c
+
+P (c) 
+
+> fail
+
+= Q
+
+> c
+
+
+
+1 − P (c)
+
+> succ
+
+
+
+.
+
+Worked example. For the 2-state Markov model with steady-state πg = πb = 0.5, the average erasure rate is ¯pc =0.5(0 .05) + 0 .5(0 .40) = 0 .225 . With K = 32 and Rc = 16 
+
+(so K + Rc = 48 ), Eq. (3) gives 
+
+P (c) 
+
+> succ
+
+=
+
+> 48
+
+X
+
+> k=32
+
+48 
+
+k
+
+
+
+(0 .775) k(0 .225) 48 −k ≈ 0.971 . (8) For C = 5 independent clusters, Eq. (7) gives 
+
+Psys ≈ 1 − (1 − 0.971) 5 = 1 − (0 .029) 5 ≈ 0.99999998 , (9) i.e., system-level reliability remains extremely close to certain even though any single cluster only reaches ≈97.1% on its own – illustrating why hierarchical bridge coding across independent clusters is valuable even at moderate per-cluster redundancy. 1                  
+
+> 1An earlier draft of this manuscript reported P(c)
+> succ ≈0.989 for these parameters; that value does not follow from Eq. (3) at Rc= 16 (it corresponds instead to Rc≈18 ). The number above, ≈0.971 , is the value Eq. (3) actually yields at K= 32 , R c= 16 ,¯pc= 0 .225 , and has been verified against 4,000-trial Monte Carlo simulation of the encoder/decoder to within 0.2%.
+
+B. Online Optimization Regret 
+
+Let xt ∈ ∆C be the clustering assignment at epoch t, where 
+
+∆C is the C-simplex. The loss ℓt(xt) measures clustering quality from Eq. (5). Define cumulative regret: Regret (T ) = 
+
+> T
+
+X
+
+> t=1
+
+ℓt(xt) − min 
+
+> x∗∈∆C
+> T
+
+X
+
+> t=1
+
+ℓt(x∗). (10) 
+
+Theorem 2 (Online Clustering Regret): Under convex loss relaxation and Lipschitz constant G, the FTRL algorithm with squared-Euclidean regularization ψ(x) = 12 ∥x∥22 achieves Regret (T ) ≤ G2√2T . (11) 
+
+Proof: Standard FTRL analysis [19] with ηt = 1 /√t
+
+yields regret O(√T ); the explicit constant follows from the Lipschitz bound G.
+
+Worked example. With G = 0.05 and T = 500 steps, Eq. (11) gives Regret (500) ≤ (0 .05) 2√2 × 500 ≈ 0.079 , (12) negligible relative to the cumulative loss accrued over the same horizon, and consistent with the empirical regret trace produced by our FTRL implementation (Section VI). 2
+
+C. Complexity Analysis  
+
+> •
+
+Clustering: Mini-batch k-means with k = ⌊√N / 2⌋ has complexity O(N k ) per epoch.  
+
+> •
+
+Encoding: Per-cluster RLNC encoding is O(K2); total 
+
+O(CK 2). 
+
+> •
+
+Decoding: Gaussian elimination is O(K3) per cluster; hierarchical recovery adds O(CK ) overhead. For N = 100 , K = 32 , C ≈ 10 : per-epoch cost is approxi-mately 5,000 operations, well below real-time constraints on modern edge devices. V. APC-RLNC S YSTEM DESIGN 
+
+Fig. 1 illustrates the APC-RLNC architecture. The frame-work consists of five modules. 
+
+A. Reliability Tracking Module 
+
+Nodes maintain lightweight state:  
+
+> •
+
+Link ACKs: per-packet acknowledgments estimate ℓi(t). 
+
+> •
+
+EWMA update: Eq. (4) smooths noisy measurements.  
+
+> •
+
+Neighbor exchange: peers broadcast si(t) (2 bytes) periodically. 
+
+B. Distributed Clustering Module 
+
+Every τ steps, nodes collaboratively execute Algorithm 1. The algorithm uses gossip-based consensus to estimate global statistics (mean, variance per tentative cluster) and converges in O(log N ) rounds [20].                        
+
+> 2An earlier draft approximated this quantity as GpT /τ ≈
+> 0.05 p500 /20 ≈0.25 using the reconfiguration period τ,which is not the quantity Theorem 2 bounds – τdoes not appear in Eq. (11). The corrected value above follows directly from the stated bound. IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 4
+> Fig. 1. APC-RLNC system architecture. Each peer tracks link-level reliability via EWMA, participates in distributed clustering every τepochs, and performs hierarchical RLNC encoding and decoding within and across clusters.
+
+Algorithm 1 Distributed Adaptive Clustering 
+
+Require: Reliability scores {si(t)}i∈N (t), regularization λ
+
+Ensure: Cluster assignments {C c} 
+
+> 1:
+
+Initialize k = ⌊√N / 2⌋ cluster centers uniformly  
+
+> 2:
+
+for r = 1 to Rmax (gossip rounds) do  
+
+> 3:
+
+Each node broadcasts (si, clusterID i) 
+
+> 4:
+
+Update local centroid estimates via weighted average  
+
+> 5:
+
+Reassign i to cluster c∗ = arg min c |si − μc| 
+
+> 6:
+
+end for  
+
+> 7:
+
+Compute loss (Eq. (5)) and merge/split clusters if benefi-cial  
+
+> 8:
+
+return Final clusters {C c}
+
+C. Hierarchical Coding Module 
+
+Nodes in cluster c encode local generations with Rc redun-dancy (Eq. (6)). Cluster representatives (elected by random rotation) form bridge packets: 
+
+bj =
+
+> C
+
+X
+
+> c=1
+
+γj,c Summary c, γj,c ∼ Uniform (F256 ), (13) where Summary c is a digest of cluster c’s generation. Bridge redundancy scales with cross-cluster heterogeneity: 
+
+Rbridge = ⌈0.5 · C · Var( {¯pc})⌉ . (14) 
+
+D. Energy Management 
+
+Nodes track per-packet energy consumption: 
+
+Ei(t) = Etx ·ntx ,i (t)+ Erx ·nrx ,i (t)+ Ecomp ·(encode +decode ),
+
+(15) 
+
+> Fig. 2. Hierarchical RLNC structure. Inner loops encode within clusters; outer loop generates bridge packets for cross-cluster resilience.
+
+where Etx = 0 .2 J, Erx = 0 .1 J, Ecomp = 0 .05 J. Nodes with 
+
+Ei < E threshold enter low-power mode, reducing transmission duty cycle by 50%. 
+
+E. Robustness to Adversarial Nodes 
+
+Malicious nodes may report false si(t). We employ:  
+
+> •
+
+Byzantine-resilient aggregation: a median-of-means es-timator with b = ⌈√N ⌉ buckets tolerates fewer than 13
+
+adversaries [21].  
+
+> •
+
+Cluster isolation: adversarial nodes form separate clus-ters via anomaly detection (Mahalanobis distance greater than 3σ). VI. I MPLEMENTATION 
+
+A. Simulation Platform 
+
+We developed a high-fidelity discrete-event simulator in Python 3.12:  
+
+> •
+
+Network: NetworkX for topology; NumPy for algebraic operations.  
+
+> •
+
+Coding: custom GF(256) arithmetic, with an optional Cython-accelerated extension providing a 5× speedup on the encode/decode hot loop.  
+
+> •
+
+Mobility: a random-waypoint model matching Sec-tion III, with an optional loader for real SUMO floating-car-data traces.  
+
+> •
+
+Validation: outputs match the analytical model of Eq. (3) to within 1%. Each simulation run spans 500 steps ( ≈10 minutes real time). We average 50 independent runs per configuration. IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 5                                                   
+
+> TABLE I NOMINAL CONDITIONS (30 N ODES , 2% C HURN , B ERNOULLI ERASURE ). MEAN ±STD .OVER 50 R UNS .Scheme PDR (%) Latency (ms) Overhead (%) Retention (%) Random 97 .04 ±0.8158 ±12 20.0 65.2 Static 97 .28 ±0.7151 ±11 19.2 71.5 PACE 97 .51 ±0.6149 ±10 18.9 73.1 ARLNC 97 .62 ±0.6147 ±10 18.7 74.2
+> APC-RLNC 97.82 ±0.5 142 ±918.6 78.3
+
+B. Testbed Deployment 
+
+Hardware: 10 NVIDIA Jetson Nano devices (4-core ARM Cortex-A57, 4 GB RAM) running Ubuntu 20.04. 
+
+Network: 802.11ac Wi-Fi in ad-hoc mode; OpenWRT routers emulate controlled packet loss via tc /netem .
+
+Software stack:  
+
+> •
+
+Clustering: Go implementation (concurrency via gor-outines) executing Algorithm 1 over real UDP gossip broadcasts.  
+
+> •
+
+RLNC: a self-contained GF(256)/RLNC C++ library mirroring the simulator’s encoder/decoder bit-for-bit, with a custom hierarchical wrapper.  
+
+> •
+
+Orchestration: Kubernetes manages node lifecycle and reconfiguration. 
+
+Metrics: latency measured via kernel timestamps; throughput logged at the application layer; CPU/memory profiled with 
+
+perf .
+
+C. Reproducibility 
+
+Code, simulation configurations, evaluation scripts, testbed orchestration manifests, and the datasets used to generate the reported figures and tables are publicly available at https: //github.com/ka-cyber/apc-rlnc, enabling independent repro-duction of the reported results. VII. E VALUATION 
+
+A. Experimental Setup 
+
+Baselines: 
+
+1) Random: uniform RLNC with fixed R = 16 .2) Static Clustering: initial clustering at t = 0 , no adap-tation. 3) PACE: adaptive redundancy via centralized feedback [6]. 4) ARLNC: adjustable field size (GF(16) to GF(256)) [7]. PACE and ARLNC are included as reference baselines using the configurations described in their respective publications. The open-source artifact released with this work implements the Random, Static, and APC-RLNC schemes; implementa-tions of third-party baseline algorithms are not redistributed. 
+
+Metrics: PDR (fraction of generations decoded successfully), latency (time from first packet transmission to decoding completion), overhead (redundancy ratio R/ (K + R)), and retention (fraction of nodes remaining in their assigned cluster across reconfiguration epochs).                                         
+
+> TABLE II VEHICULAR NETWORK (50 N ODES , 5% C HURN , V ELOCITY -D EPENDENT
+> FADING )Scheme PDR (%) Latency (ms) Retention (%) Random 94 .12 ±1.3198 ±18 58.4 Static 95 .02 ±1.1187 ±16 62.7 PACE 96 .18 ±0.9178 ±14 68.1 ARLNC 96 .84 ±0.8172 ±13 70.3
+> APC-RLNC 99.32 ±0.6 145 ±11 82.1
+> Fig. 3. Fig. 3. Packet delivery ratio (PDR) versus burst duration for the 2-state Markov channel. APC-RLNC and the Static redundancy baseline exhibit a ceiling effect across the evaluated burst durations, while the Random baseline degrades substantially as burst duration increases. These results indicate that the current redundancy scaling is conservative under the simulated conditions, maintaining near-perfect decoding for adaptive and static redundancy policies.
+
+B. Nominal Conditions (30 Nodes, 2% Churn) 
+
+Table I shows APC-RLNC achieves a 0.8 percentage-point PDR gain over Random (0.82% relative), a 10% latency reduction, and 20% higher retention. Gains are statistically significant ( t-test, p < 0.01 ). 
+
+C. High-Mobility Vehicular Networks (50 Nodes, 5% Churn) 
+
+Table II shows APC-RLNC delivers a 5.2 percentage-point PDR gain (5.5% relative) over Random and an 18% latency reduction. Adaptive clustering tracks mobility-induced erasure changes every τ = 20 steps ( ≈12 seconds), maintaining cluster coherence despite topology churn. 
+
+D. Burst-Error Channels (100 Nodes, 2-State Markov) 
+
+Fig. 3 presents packet delivery ratio (PDR) as a function of burst duration under the 2-state Markov channel model. Across the evaluated burst durations, APC-RLNC maintains near-perfect delivery, while the Static redundancy baseline exhibits similar ceiling performance because its fixed redun-dancy remains sufficient under the simulated loss conditions. In contrast, the Random baseline degrades steadily as burst duration increases, reaching approximately 60.6% PDR at a burst duration of 50 packets. The results therefore demonstrate that redundancy-based protection dominates burst resilience in the present configuration, while APC-RLNC primarily pre-serves this robustness through adaptive clustering rather than IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 6                                                       
+
+> TABLE III ADVERSARIAL ATTACK (30 N ODES , 20% M ALICIOUS NODES )Scheme PDR (%) Latency (ms) Random (no defense) 88 .24 ±2.1221 ±24
+> Static (no defense) 89 .67 ±1.9209 ±22
+> APC-RLNC (isolated) 98.02 ±0.7 151 ±12
+> Fig. 4. Clustering runtime versus network size. APC-RLNC scales linearly (O(Nlog N)); reconfiguration overhead remains less than 3% of total runtime even at 500 nodes. TABLE IV SIMULATION VERSUS TESTBED (10 J ETSON NANO NODES , 2% EMULATED LOSS )Metric Simulation Testbed Error PDR (%) 97.82 96 .91 ±1.20.93% Latency (ms) 142 156 ±18 9.86% Throughput (Mbps) 1.24 1.18 ±0.15 4.84% CPU util. (%) 7.2 7.8±1.18.33%
+
+yielding large additional gains over an already conservative static allocation. 
+
+E. Adversarial Interference (30 Nodes, 20% Malicious) 
+
+Table III shows Byzantine-resilient aggregation isolates adversaries into separate clusters. APC-RLNC achieves a9.8 percentage-point PDR gain over non-clustered baselines, demonstrating robustness to malicious behavior. 
+
+F. Scalability (500 Nodes) 
+
+Fig. 4 shows that at N = 500 , clustering takes 42 ms per epoch (3% of a 1.5 s epoch duration). The distributed gossip-based algorithm exhibits linear-in-N log N complexity as predicted by theory. 
+
+G. Testbed Validation (10 Nodes) 
+
+Table IV shows that the testbed measurements closely match the simulation results, with all reported metrics remaining within 10% error. The small latency discrepancy stems primar-ily from kernel scheduling and networking stack overhead that are not explicitly modeled in the simulator. CPU utilization remains below 8%, confirming that APC-RLNC operates in real time on resource-constrained Jetson Nano edge devices. Overall, the close agreement between simulation and hard-ware measurements provides experimental validation of the proposed framework under practical deployment conditions. 
+
+H. Energy Consumption 
+
+Energy per successfully delivered generation: Random 4.82 J, Static 4.61 J, APC-RLNC 4.21 J (12.7% reduction ver-sus Random). Reduced retransmissions in APC-RLNC lower total energy draw, which is critical for battery-powered IoT devices. VIII. D ISCUSSION 
+
+A. When Does Clustering Help 
+
+Clustering provides the largest gains when: (a) heterogeneity is high – variance in pi exceeds 0.05 (in homogeneous networks, uniform RLNC suffices); (b) churn is moderate –
+
+ρchurn ∈ [0 .02 , 0.10] (higher churn requires shorter τ , increas-ing overhead; lower churn makes adaptation unnecessary); (c) 
+
+scale permits parallelism – N ≳ 30 to amortize clustering cost. 
+
+B. Comparison with Centralized Approaches 
+
+Centralized schemes (e.g., SDN-based rate control) can achieve optimal allocations but require full topology knowl-edge ( O(N 2) communication), exhibit single-point-of-failure vulnerabilities, and incur millisecond-scale control-plane la-tency. APC-RLNC trades minor optimality (approximately 1– 2% versus an oracle) for decentralization, fault tolerance, and sub-second adaptation. 
+
+C. Integration with AI-Native Systems 
+
+APC-RLNC complements ML-driven protocols in feder-ated learning (reliable gradient aggregation over heteroge-neous wireless links), swarm robotics (hierarchically coded coordination messages), and edge inference (latency-critical model distribution with adaptive redundancy). Future work will explore joint optimization of clustering and ML training schedules. 
+
+D. O-RAN Deployment 
+
+In O-RAN architectures, APC-RLNC deploys as a near-RT RIC xApp: the E2 interface reports link-level statistics (RSSI, CQI) to the RIC every 10 ms; xApp logic computes EWMA scores, triggers reconfiguration, and sends redundancy policies to the MAC layer; no physical-layer changes are required for backward compatibility. Prototyping on OpenAirInterface confirms feasibility with sub-5 ms control-loop latency. IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 7
+
+E. Limitations  
+
+> •
+
+Fairness: the current objective (Eq. (5)) optimizes av-erage PDR; persistently unreliable nodes may receive insufficient protection. Future extensions will incorporate max-min fairness constraints.  
+
+> •
+
+Security: Byzantine-resilient aggregation tolerates fewer than 13 adversaries; stronger cryptographic guarantees (e.g., zero-knowledge proofs) remain future work.  
+
+> •
+
+Non-stationary channels: extreme Doppler shifts (e.g., high-speed rail at 350 km/h) may violate EWMA conver-gence assumptions; Kalman-filter-based tracking is under investigation.  
+
+> •
+
+Redundancy scaling: Equation (6) scales redundancy with cluster size and average erasure probability. Under relatively stable cluster sizes and the evaluated burst-error settings, this policy can over-provision redundancy, producing a ceiling effect in which both APC-RLNC and Static redundancy achieve near-perfect decoding. Future work will investigate normalized or budget-constrained redundancy allocation to better expose adaptive gains under moderate burst conditions. IX. R ELATED SYSTEMS AND DEPLOYMENTS 
+
+Landon et al. [9] implemented RLNC at the IP layer of a 5G testbed, demonstrating throughput gains under moderate packet loss; however, their design assumes homogeneous UE populations and centralized gNB control. APC-RLNC extends this to fully decentralized heterogeneous settings. Stamer et al. [22] proposed P4-based RLNC data planes for programmable switches, focusing on wired networks with deterministic latency; wireless volatility is not addressed. Fan et al. [10] applied BATS codes to distributed com-putation over lossy wireless networks, optimizing matrix-multiplication workloads but requiring centralized coordina-tion for code allocation. APC-RLNC’s decentralized clustering eliminates this bottleneck. Hassouna et al. [23] developed an O-RAN testbed with near-RT RIC xApps for robotic teleoperation using USRP X310 SDRs, reporting sub-second haptic control-loop latency. APC-RLNC can integrate as an xApp providing adaptive redun-dancy policies, complementing their control-loop mechanisms. X. C ONCLUSION 
+
+This paper introduced APC-RLNC, a decentralized frame-work that dynamically clusters wireless peers by link relia-bility and applies hierarchical random linear network coding for robust communication. Through theoretical analysis –deriving closed-form decoding probabilities, proving O(√T )
+
+online optimization regret, and establishing complexity bounds – we demonstrated that adaptive clustering improves RLNC performance in heterogeneous wireless environments. Evaluation across diverse scenarios validates the approach: 0.8–1.2% PDR gain and 10–12% latency reduction under nominal conditions; 5.2% PDR gain and 18% latency reduc-tion in high-mobility vehicular networks; robust near-perfect packet delivery under burst-error channels while substan-tially outperforming the Random redundancy baseline; and a 9.8% PDR gain under adversarial interference via Byzantine-resilient isolation. The system exhibits linear complexity to 500 nodes with under 3% reconfiguration overhead. Hardware validation on a 10-node Jetson Nano testbed indicates real-world feasibility with ≥1 Mbps coded throughput, under 8% CPU load, and millisecond-scale reconfiguration latency. APC-RLNC establishes adaptive clustering as a founda-tional primitive for AI-native 6G wireless systems, enabling decentralized intelligence, collaborative learning, and resilient communication at scale. Future work will integrate reinforce-ment learning for parameter tuning, extend to mmWave and THz bands, and deploy on larger-scale O-RAN testbeds with USRP or commercial SDR platforms. The framework’s open-source release aims to catalyze community adoption and further innovation in resilient wireless networking. REFERENCES [1] W. Saad, M. Bennis, and M. Chen, “A vision of 6G wireless systems: Applications, trends, technologies, and open research problems,” IEEE Network , vol. 34, no. 3, pp. 134–142, 2020. [2] K. B. Letaief, W. Chen, Y. Shi, J. Zhang, and Y.-J. A. Zhang, “The roadmap to 6G: AI-empowered wireless networks,” IEEE Communica-tions Magazine , vol. 57, no. 8, pp. 84–90, 2019. [3] C. Shi, F. Li, and M. Chen, “Adversarial attacks and defenses in wireless communication systems,” IEEE Communications Surveys & Tutorials ,vol. 22, no. 2, pp. 1168–1197, 2020. [4] T. Ho, M. M´ edard, R. K¨ otter, D. Karger, M. Effros, J. Shi, and B. Leong, “A random linear network coding approach to multicast,” IEEE Transactions on Information Theory , vol. 52, no. 10, pp. 4413–4430, 2006. [5] C. Fragouli and E. Soljanin, “Network coding fundamentals,” Founda-tions and Trends in Networking , vol. 2, no. 1, pp. 1–133, 2007. [6] S. Pandi, F. H. P. Fitzek, and C. Wietfeld, “PACE: Redundancy engi-neering in RLNC for low-latency communication,” IEEE Access , vol. 5, pp. 20477–20493, 2017. [7] R. Dilanchian, A. Khalili, and K. Khanmohammadi, “Adjustable ran-dom linear network coding (ARLNC),” Digital Communications and Networks , vol. 10, no. 3, pp. 701–710, 2024. [8] Y. Li, X. Wang, and M. Xiao, “On vector random linear network coding in wireless broadcasts,” IEEE Transactions on Communications , vol. 73, no. 5, pp. 2892–2906, 2025. [9] L. Landon, V. Adat Vasudevan, J. Sung, and M. M´ edard, “Rethinking re-liability using network coding: A practical 5G evaluation,” in Proc. IEEE Conf. on Local Computer Networks (LCN) , 2025, arXiv:2508.10247. [10] B. Fan, B. Tang, Z. Qu, and B. Ye, “Network coding approaches for distributed computation over lossy wireless networks,” Entropy , vol. 25, no. 3, art. 428, 2023, doi: 10.3390/e25030428. [11] L. Ramaswamy, B. Gedik, and L. Liu, “A distributed approach to node clustering in decentralized peer-to-peer networks,” IEEE Transactions on Parallel and Distributed Systems , vol. 16, no. 9, pp. 814–829, 2005. [12] G. Chinis, “Distributed clustering for peer-to-peer networks,” M.Sc. thesis, University of Crete, 2011. [13] H. Yang, Q. Liu, S. Chen, and P.-Y. Chen, “Lead federated neuromorphic learning for wireless edge artificial intelligence,” Nature Communica-tions , vol. 13, art. 4269, 2022. [14] A. Soliman, S. Girdzijauskas, M. Bouguelia, S. Pashami, and S. Nowaczyk, “Decentralized and adaptive k-means clustering for non-IID data using HyperLogLog counters,” Peer-to-Peer Networking and Applications , vol. 13, no. 5, pp. 1991–2002, 2020. [15] S. Biswas and R. Morris, “ExOR: Opportunistic multi-hop routing for wireless networks,” in Proc. ACM SIGCOMM , 2005. [16] G. Holland, N. Vaidya, and P. Bahl, “A rate-adaptive MAC protocol for multi-hop wireless networks,” in Proc. ACM MobiCom , 2001. [17] D. Nguyen, T. Tran, T. Nguyen, and B. Bose, “Wireless broadcast using network coding,” IEEE Transactions on Vehicular Technology , vol. 58, no. 2, pp. 914–925, 2009. [18] O-RAN Alliance, “O-RAN specifications and architecture,” 2024. [On-line]. Available: https://www.o-ran.org/specifications [19] E. Hazan, Introduction to Online Convex Optimization . Boston, MA, USA: Now Publishers, 2016. IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS 8
+
+[20] L. Xiao and S. Boyd, “Fast linear iterations for distributed averaging,” 
+
+Systems & Control Letters , vol. 53, no. 1, pp. 65–78, 2004. [21] Y. Chen, L. Su, and J. Xu, “Distributed statistical machine learning in adversarial settings: Byzantine gradient descent,” in Proc. ACM SIGMETRICS , 2017. [22] F. Stamer, D. Schueler, and M. Zitterbart, “Network coding in P4,” Tech. Rep. NET-2021-05-1, Karlsruhe Institute of Technology, 2021. [23] S. Hassouna, J. Kaur, B. Kizilkaya, J. ur Rehman Kazim, S. Ansari, A. A. Kherani, B. Lall, Q. H. Abbasi, and M. Imran, “Development of open radio access networks (O-RAN) for real-time robotic tele-operation,” Communications Engineering , vol. 4, art. 174, 2025, doi: 10.1038/s44172-025-00524-0. [24] B. Shrader and N. M. Jones, “Systematic wireless network coding,” in Proc. IEEE Military Communications Conference (MILCOM) , 2009, doi: 10.1109/MILCOM.2009.5380081. [25] B. T. Geetha and N. K. K, “Optimizing Dynamic Spectrum Access in Cognitive Radio Networks Using Novel Reinforcement Learning Approach Compared with Game Theory Approach Based on Effi-ciency,” in 2025 IEEE International Conference on Advanced Com-puting Technologies (ICACT) , Tirupati, India, 2025, pp. 796–801, doi: 10.1109/ICACT67549.2025.11351393.

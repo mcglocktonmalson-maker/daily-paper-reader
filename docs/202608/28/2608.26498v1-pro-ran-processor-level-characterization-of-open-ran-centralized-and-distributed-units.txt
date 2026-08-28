@@ -1,0 +1,240 @@
+Title: PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units
+
+URL Source: https://arxiv.org/pdf/2608.26498v1
+
+Published Time: Fri, 28 Aug 2026 00:22:03 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units 
+
+# Moojan Kamalzadeh, Larry Horner, Linqi Xiao, Abhishek Bhattacharyya, Ehsan Bahaloo Horeh, Padmapriya Patil, Venkateswarlu Gudepu, and Andrea Fumagalli 
+
+The University of Texas at Dallas Richardson, Texas, USA mozhan.kamalzadeh@utdallas.edu 
+
+Abstract 
+
+Open Radio Access Network (O-RAN) disaggregates RAN protocol functions and enables Centralized Unit (CU) and Dis-tributed Unit (DU) software to execute on general-purpose computing platforms. Different CU and DU protocol responsi-bilities produce different processor workloads and execution paths. Conventional performance metrics, including CPU utilization and throughput, quantify aggregate resource us-age without identifying function-level execution costs or processor microarchitectural bottlenecks. Processor-level characterization, on the other hand, provides insights into resource provisioning, function placement, software opti-mization, and hardware acceleration. The paper describes a controlled characterization frame-work that evaluates independently deployed CU and DU functions under matched hardware and traffic conditions. The experimental platform integrates the Linux Foundation OCUDU implementation with an emulated User Equipment, a ZeroMQ-based radio interface, and an Open5GS core. Au-tomated validation confirms registration and bidirectional packet delivery before process-scoped Intel VTune Hotspots and Top-Down Microarchitecture Analysis. Under traffic load, accumulated process CPU time increases from 17 .3 to 37 .4 s for the CU and from 462 .0 to 628 .4 s for the DU during equal 300-s profiling intervals. The measurements identify distinct CU and DU execution characteristics and motivate function-specific processor analysis and optimization. 
+
+1 Introduction 
+
+Fifth-generation (5G) mobile networks support a wide range of services — enhanced mobile broadband, industrial au-tomation, autonomous systems, and massive machine-type communication. Growing throughput, latency, reliability, and scalability requirements increase the computational de-mands on the Radio Access Network (RAN). Advances in wireless transmission address radio-side requirements, while programmable computing platforms execute increasingly complex RAN protocol functions. Software-defined RAN ar-chitectures therefore require a detailed understanding of computational behavior for resource provisioning, function placement, and system optimization. Traditional RAN deployments rely on vertically integrated systems in which a single vendor tightly couples hardware, protocol software, and management components. Vertical integration limits independent development, replacement, evaluation, and optimization of individual RAN functions. Open RAN architectures, including those standardized by the O-RAN Alliance, address vertical-integration limitations through functional disaggregation and open standard in-terfaces between RAN components [9]. Functional disag-gregation enables independent software evolution, multi-vendor interoperability, controlled experimentation, and de-ployment on general-purpose computing infrastructure. RAN disaggregation separates protocol processing be-tween the Centralized Unit (CU) and Distributed Unit (DU). The CU executes higher-layer control-plane and user-plane protocol functions, whereas the DU executes lower-layer ra-dio processing, scheduling, and time-sensitive operations as-sociated with radio transmission. Different protocol respon-sibilities produce different computational workloads even when the CU and DU execute on identical processor plat-forms. Higher-layer packet processing, control procedures, scheduling, synchronization, and physical-layer processing exercise processor resources through different execution paths and resource-access patterns. Traditional system-level measurements provide limited visibility into processor-level differences between CU and DU execution. CPU utilization, throughput, latency, and memory consumption quantify overall resource usage and system per-formance, but provide limited information about processor-resource consumption. Two RAN functions may report sim-ilar CPU utilization while processor cycles concentrate in different software routines, instruction paths, synchroniza-tion operations, cache accesses, or memory-access patterns. CPU utilization therefore quantifies processor occupancy but does not explain the underlying execution behavior or processor bottlenecks. arXiv:2608.26498v1 [cs.NI] 27 Aug 2026 Moojan Kamalzadeh et al. 
+
+Processor-level characterization provides deeper visibility into software-based RAN execution on shared and cloud com-puting infrastructure. Function-level profiling identifies soft-ware routines responsible for processor-time consumption, while microarchitectural analysis identifies pipeline behavior associated with instruction execution, front-end limitations, back-end limitations, and speculative execution. Detailed characterization supports CPU-core allocation, CU/DU co-location, workload isolation, cloud placement, software op-timization, and hardware-acceleration decisions. Existing experimental studies of open and virtualized RAN platforms predominantly evaluate interoperability, deployment char-acteristics, throughput, latency, energy consumption, and aggregate CPU utilization [1, 2, 4–6, 11, 12]. Existing mea-surements provide valuable end-to-end system-level char-acterization but offer limited processor-level comparison of independently executing CU and DU software functions. The study presented in this paper focuses on evaluating the processor-level behavior of CU and DU functions under identical hardware and traffic conditions. The experimental evaluation uses the Linux Foundation-hosted Open Central-ized Unit Distributed Unit (OCUDU) implementation as an open-source CU/DU platform [8]. The experimental platform integrates OCUDU with an emulated User Equipment (UE), a ZeroMQ (ZMQ)-based radio interface, and an Open5GS 5G Core [10]. The evaluation characterizes CU and DU processes inde-pendently under matched baseline and sustained bidirec-tional traffic conditions using Intel VTune Profiler. Hotspots analysis attributes processor time to individual software func-tions. Top-Down Microarchitecture Analysis (TMA) [13] categorizes processor pipeline slots into Retiring, Front-End Bound, Back-End Bound, and Bad Speculation. Joint Hotspots and TMA analysis links software-level execution paths to processor microarchitectural behavior. The combined anal-ysis identifies both where CU and DU processes consume processor time and how CU and DU execution utilizes pro-cessor resources. The key contributions of this study are as follows: 
+
+• A reproducible end-to-end methodology for processor-level characterization of independently deployed 5G CU and DU functions using automated network vali-dation and process-scoped Intel VTune profiling. 
+
+• A controlled CU/DU comparison on identical comput-ing platforms under matched baseline and sustained bidirectional-load conditions. 
+
+• A function-level Hotspots analysis combined with TMA to relate software execution paths to processor microarchitectural behavior. 
+
+• A processor-level characterization that identifies dis-tinct CU and DU execution behavior beyond aggre-gate CPU-utilization measurements, supporting function-aware provisioning, placement, optimization, and hardware acceleration. 
+
+• An Ansible-based automation platform for deploy-ment, traffic generation, end-to-end validation, profil-ing, symbol resolution, and result collection (outside the scope of the paper). 
+
+2 Related Work 
+
+Open-source O-RAN platforms support deployment, experi-mentation, and interoperability evaluation. Campus5G pro-vides a campus-scale private 5G Open RAN platform [5], X5G provides a programmable multi-vendor 5G platform with GPU-accelerated Physical-layer (PHY) processing and a near-real-time RAN Intelligent Controller [11], and OpenRAN Gym provides an Artificial Intelligence / Machine Learning (AI/ML) framework for data collection and experimentation on O-RAN testbeds [2]. System-level studies further evaluate open-source 5G implementations using throughput, latency, scalability, computational efficiency, and aggregate CPU uti-lization [1, 6]. Platform-level and system-level evaluations characterize deployment and end-to-end performance with-out function-level attribution of processor execution across independently deployed CU and DU processes. Processor-level studies analyze software execution using hardware performance counters and microarchitectural met-rics. The work in [4] profiles an srsRAN DU using Linux perf 
+
+counters — CPU utilization, cache misses, context switches, and Instructions Per Cycle (IPC) — for CPU-affinity and fre-quency selection. Another work [12] applies Intel VTune to a monolithic OAI gNB/UE platform co-located with Multi-access Edge Computing applications and reports thread-level CPU usage and top-down microarchitectural metrics. Exist-ing processor-level studies characterize a DU implementa-tion or a monolithic RAN configuration without a matched comparison between independently deployed CU and DU processes. As previously stated, the proposed work char-acterizes Linux Foundation OCUDU CU and DU processes under matched baseline and sustained-load conditions us-ing process-scoped Hotspots analysis and TMA, enabling direct comparison of function-level CPU-time distribution and processor microarchitectural behavior. 
+
+3 System Model 
+
+The system model consists of an end-to-end 5G architecture and a processor-profiling framework, as shown in Figure 1. The 5G architecture includes an emulated UE, DU, CU, and a 5G Core (5GC). The UE exchanges in-phase and quadrature PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units Workload Tools  Profiling Tools 
+
+> UE
+> DU
+> RLC
+> MAC/Scheduler
+> PHY (High/Low)
+> CU
+> CU-CP
+> (Control Plane)
+> RRC, PDCP-C,
+> Context Mgmt.,
+> Mobility Mgmt
+> CU-UP
+> (User Plane)
+> SDAP, PDCP-U
+> 5GC
+> AMF
+> SMF
+> UPF
+> IQ Samples
+> (ZMQ)
+> F1-C (Control)
+> F1-U (User)
+> NG-C (Control)
+> NG-U (User)
+
+Figure 1: End-to-end 5G system model 
+
+(IQ) samples with the DU through a ZMQ-based radio inter-face. The DU executes lower-layer RAN functions — PHY processing, Medium Access Control (MAC) scheduling, and Radio Link Control (RLC). The CU executes higher-layer pro-tocol functions and separates control-plane and user-plane processing. The CU Control Plane (CU-CP) executes Radio Resource Control (RRC), control-plane Packet Data Conver-gence Protocol (PDCP), context management, and mobility management, while the CU User Plane (CU-UP) executes Ser-vice Data Adaptation Protocol (SDAP) and user-plane PDCP. F1-C and F1-U interfaces connect the DU with the CU for control-plane and user-plane communication, respectively. The CU connects with the 5GC through NG-C and NG-U interfaces. The 5GC includes the Access and Mobility Man-agement Function (AMF), Session Management Function (SMF), and User Plane Function (UPF). The framework also includes workload-generation and processor-profiling tools. Workload tools generate controlled end-to-end traffic between the UE and 5GC and establish matched baseline and sustained-load operating conditions. Profiling tools monitor the independently executing CU and DU processes under each operating condition. Process-scoped Hotspots analysis quantifies CPU-time distribution across software functions, while TMA identifies processor bottlenecks. The separation between workload generation and process profiling maintains identical traffic conditions for CU and DU measurements and enables direct comparison of software execution and microarchitectural behavior. 
+
+4 Experimental Setup 
+
+The experimental setup implements the end-to-end 5G sys-tem along with automated profiling tools as depicted in Fig-ure 2. An end-to-end standalone 5G deployment is built using an emulated UE, an OCUDU DU and CU, and an Open5GS core network. The platform supports automated deployment, traffic generation, end-to-end validation, and process-scoped processor profiling. 
+
+4.1 Platform and Deployment 
+
+Separate hosts execute srsUE, one OCUDU DU, one OCUDU CU, and Open5GS. The experiments use OCUDU commit ef 8af93d , srsUE commit 6bcbd9e , and Open5GS v2.7.6. The UE and DU exchange digitized IQ samples through a ZMQ-based radio interface. Required PHY, ZMQ-RF, and Non-Access Stratum (NAS) modifications enable ZMQ-based cell acquisition and 5G registration. The UE host also executes the uplink traffic client, while the core-network side hosts the corresponding traffic endpoint. The CU and DU hosts use identical single-socket processor platforms with 40 physical cores and 80 logical processors. Memory, operating-system, kernel, CPU-frequency, CPU-affinity, Simultaneous Multithreading (SMT), and container resource configurations remain identical across all measure-ments. The common configuration controls processor-platform variation during CU/DU comparison. Specific processor mod-els and server-identifying hardware details are omitted in accordance with the testbed confidentiality agreement. The OCUDU CU and DU are deployed as independent Ku-bernetes workloads running the ocu and odu processes, re-spectively. An Ansible-based workflow controls deployment, traffic execution, network validation, Intel VTune collection, symbol resolution, and result extraction. 
+
+4.2 Radio and Network Configuration 
+
+Experiments use standalone 5G New Radio (NR) with Fre-quency Division Duplex (FDD) operation in band n3. A 10 MHz channel bandwidth and 15 kHz subcarrier spacing provide 52 Physical Resource Blocks (PRBs). The Downlink (DL) Absolute Radio Frequency Channel Number (ARFCN) is 368500, and DL and Uplink (UL) transmissions support modulation up to 64-Quadrature Amplitude Modulation (64-QAM). One emulated UE uses Public Land Mobile Network (PLMN) identifier 00101 and Tracking Area Code (TAC) 7. The CU and DU use the Third Generation Partnership Project (3GPP) Option 2 functional split, with F1-C and F1-U carrying control- and user-plane traffic, respectively. A ZMQ-based radio interface exchanges digitized IQ samples be-tween the DU and UE without physical Radio Frequency (RF) hardware. Radio timing, scheduling, Physical-layer (PHY) processing, UE registration, and Protocol Data Unit (PDU) session procedures remain active during the experiments. It is worth noting that the OCUDU testmode supports multiple UEs, which will be considered in future work. 
+
+4.3 Traffic Generation and Validation 
+
+The evaluation considers baseline and sustained-load operat-ing conditions under identical radio, software, and hardware Moojan Kamalzadeh et al. INFRASTRUCTURE & ORCHESTRATION 
+
+EXPERIMENT & PROFILING 
+
+Ansible Automation Pipeline 
+
+kubectl exec / kubectl cp 
+
+UE Host  Core Host 
+
+> ZMQ
+> (IPC)
+
+F1-C 
+
+F1-U  N2 / N3 
+
+DL traffic (via UPF) 
+
+> OPEN RAN TESTBED (SYSTEM UNDER TEST)
+> Kubernetes Cluster (v1.36.1)
+
+Helm Charts 
+
+ocudu-du 
+
+ocudu-cu 
+
+TRex (core-originated downlink) 
+
+runs on separate host 
+
+injects DL traffic via UPF gateway 
+
+Intel VTune 
+
+Hotspots, Microarchitecture Exploration 
+
+attaches to odu / ocu processes in pods 
+
+> iperf3 Server
+
+(UL traffic sink) 
+
+Generate Traffic Run VTune  Collect Results  
+
+> Finalize Symbols
+
+Generate Reports 
+
+srsUE (5G NR SA) 
+
+iperf3 Client (UL traffic)  DU Host 
+
+ODU 
+
+CU Host 
+
+OCU 
+
+Open5GS (AMF, SMF,UPF) 
+
+Figure 2: Experimental setup of the OCUDU-based 5G testbed 
+
+configurations. The baseline condition maintains UE regis-tration and an established PDU session without application-layer offered traffic. The load condition applies sustained bidirectional traffic using fixed DL and UL traffic parameters. DL User Datagram Protocol (UDP) traffic originates from TRex [3] and traverses the 5GC user plane toward the UE. UL traffic originates from an iperf3 client bound to the UE tunnel interface and terminates at an iperf3 server on the core-network side. The automation workflow validates end-to-end operation before every profiling collection. Validation confirms UE registration, PDU-session establishment, and bidirectional packet delivery. DL validation verifies CU PDCP activity and UE Physical Downlink Shared Channel (PDSCH) reception. UL validation verifies DU Buffer Status Report (BSR) activity, Physical Uplink Shared Channel (PUSCH) transmission, CU PDCP activity, and core-side packet reception. Processor profiling starts after successful validation and stable traffic delivery. 
+
+4.4 Profiling and Symbol Resolution 
+
+Intel VTune Profiler 2025.4 [7] attaches to the process iden-tifiers of the ocu and odu processes for process-scoped pro-filing. Hotspots and Microarchitecture Exploration collec-tions execute independently for CU and DU under baseline and sustained-load conditions, producing eight 300-s collec-tions across two processes, two traffic conditions, and two profiling analyses. OCUDU executables and supporting run-time, ZMQ, and kernel components retain debug symbols for function-level attribution. Hotspots analysis quantifies CPU time across software functions and libraries, while TMA classifies pipeline slots into Retiring, Front-End Bound, Back-End Bound, and Bad Speculation. Retiring represents completed instructions, Front-End Bound represents instruction-delivery limitations, Bad Speculation represents discarded work, and Back-End Bound 
+
+represents unavailable data or execution resources. 0 10 20 30 40 CPU Time (s) Load Baseline 17.3s 37.4s       
+
+> std::this_thread:: sleep_for epoll_wait __GI___sendmmsg __recvmmsg __GI__IO_fwrite std::__atomic_base <...>::load byte_bu ff er iterator operators any_task_consumer impl::try_pop Other functions
+
+Figure 3: Whole-process CU hotspots 0 100 200 300 400 500 600 700 CPU Time (s) Load Baseline 462.0s 628.4s      
+
+> zmq_recv std::this_thread:: sleep_for pthread mutex lock/unlock std::chrono:: steady_clock::now general_task_worker ::operator() ring_bu ff er_impl:: pop_into #1/#2 copy_user_generic send_dl_tti_request Other functions
+
+Figure 4: Whole-process DU hotspots PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units 
+
+Table 1: Displayed hotspot functions, software operations, and CPU times                                                                                             
+
+> Hotspot function(s) Software operation Category Base. (s) Load (s) Δ(s) Centralized Unit (CU)
+> std::this_thread::sleep_for Worker sleep between processing intervals Sleep/wait 15.3 15.3 0.0
+> epoll_wait Socket-event monitoring libc / system 0.6 1.9 +1.3
+> __GI___sendmmsg Batch packet transmission libc / system 0.0 1.8 +1.8
+> __recvmmsg Batch packet reception libc / system 0.0 1.3 +1.3
+> __GI__IO_fwrite Runtime output libc / system 0.0 0.7 +0.7
+> std::__atomic_base<...>::load Shared-state access Runtime & sync 0.1 1.2 +1.1
+> byte_buffer_segment_byte_iterator_impl::operator++ byte_buffer_segment_byte_iterator_impl::operator==
+> Segmented-buffer traversal and iterator comparison OCUDU buffer traversal 0.0 1.5 +1.5
+> any_task_consumer_impl::try_pop Task retrieval OCUDU task queues 0.4 0.6 +0.2
+> Other Functions Lower-ranked functions Multiple categories 0.9 13.1 +12.2
+> Distributed Unit (DU)
+> zmq_recv IQ-sample reception ZMQ transport 177.5 183.5 +6.0
+> std::this_thread::sleep_for Worker sleep between processing intervals Sleep/wait 47.4 46.6 -0.8
+> ___pthread_mutex_lock ___pthread_mutex_unlock
+> Mutex coordination Runtime & sync 38.1 35.2 -2.9
+> std::chrono::_V2::steady_clock::now Timing reference Runtime & sync 11.4 11.0 -0.4
+> general_task_worker:: make_blocking_pop_task::operator()
+> Blocking task retrieval OCUDU task queues 8.1 7.9 -0.2
+> ring_buffer_impl::pop_into#1 ring_buffer_impl::pop_into#2
+> Ring-buffer retrieval OCUDU ring buffers 16.2 14.6 -1.6
+> copy_user_generic User–kernel memory copy Linux kernel 7.4 7.6 +0.2
+> fapi_to_phy_fastpath_translator::send_dl_tti_request Downlink scheduling translation Scheduler / PHY–FAPI 5.8 5.5 -0.3
+> Other Functions Lower-ranked functions Multiple categories 150.1 316.5 +166.4
+
+Rows containing multiple named functions report the combined CPU time of the displayed instances. 
+
+5 Results 
+
+The evaluation characterizes the execution of CU and DU at the function and microarchitectural levels under baseline and sustained-load conditions. The results are discussed in the following subsections. 
+
+5.1 Function-Level CPU-Time Distribution 
+
+VTune CPU time measures how long the profiled process actively executes on the processor. CPU time is accumulated across all process threads and can therefore exceed the pro-filing duration when multiple threads execute concurrently. Figures 3 and 4 show the whole-process CPU-time distri-bution, while Table 1 maps each displayed function to the corresponding software operation and processing category and reports baseline, load, and CPU-time change. Rows con-taining multiple functions represent combined CPU time, while Other Functions aggregates lower-ranked functions below the display threshold. For the CU, Figure 3 and Table 1 show a clear load-dependent shift in execution. Sleep/wait time remains nearly constant, while packet I/O, buffer traversal, shared-state access, and task-queue operations increase under sustained traffic. Packet transmission and reception also emerge under load. CU exe-cution therefore shifts from an event-waiting baseline toward active user-plane packet processing and worker coordination. The Other Functions contribution also increases, indicating additional processing across multiple lower-ranked runtime, synchronization, and support functions rather than one dom-inant hotspot. For the DU, Figure 4 and Table 1 show a different exe-cution pattern. IQ-sample reception remains the dominant operation under both conditions, while timing, synchroniza-tion, task-queue, ring-buffer, memory-copy, and scheduling functions remain approximately stable. Most additional DU CPU time appears in lower-ranked functions. Continuous IQ processing, radio timing, and scheduling remain active without sustained application traffic, creating a substantial traffic-independent DU processing baseline. In contrast, the CU maintains UE context and session state during baseline operation and activates substantial user-plane processing under traffic. The measurements therefore characterize the DU as predominantly timing-driven and the CU as more traffic-responsive. 
+
+5.2 Microarchitecture Behavior 
+
+Figures 5 and 6 show the top-level TMA distributions, while Table 2 reports Retiring, Front-End Bound, Bad Speculation, and Back-End Bound under baseline and load conditions. The TMA categories quantify useful instruction execution, instruction-delivery limitations, discarded speculative work, and back-end resource limitations, respectively. For the CU, Figure 5 and Table 2 show a clear load-dependent shift toward back-end limitations. Back-End Bound increases from 47.3 % to 58.2 %, while Retiring remains nearly constant Moojan Kamalzadeh et al. 0 25 50 75 100 
+
+> Load 100.0% 100.0%
+> Retiring Front-End Bound Bad Speculation Back-End Bound
+> Baseline
+
+Figure 5: Top-level TMA metrics (CU) 0 25 50 75 100 
+
+> Load 99.9% 100.0%
+> Retiring Front-End Bound Bad Speculation Back-End Bound
+> Baseline
+
+Figure 6: Top-level TMA metrics (DU) Table 2: Top-level TMA metrics (%)                     
+
+> Metric CU Base. CU load DU Base. DU load Retiring 23.6 23.9 27.5 29.4 Front-End Bound 13.5 10.1 8.6 9.3 Bad Speculation 15.6 7.8 9.3 11.4 Back-End Bound 47.3 58.2 54.5 49.9
+
+at 23.6–23.9 %. Front-End Bound decreases from 13.5 % to 10.1 %, and Bad Speculation decreases from 15.6 % to 7.8 %. CU execution therefore experiences greater back-end pres-sure under sustained traffic without a corresponding increase in the Retiring share. For the DU, Figure 6 and Table 2 show a more stable mi-croarchitectural distribution. Back-End Bound remains the dominant category despite decreasing from 54.5 % to 49.9 %, while Retiring increases from 27.5 % to 29.4 %. Front-End Bound changes from 8.6 % to 9.3 %, and Bad Speculation changes from 9.3 % to 11.4 %. Continuous radio processing during baseline operation produces a substantial processor workload before sustained application traffic, resulting in a smaller baseline-to-load microarchitectural shift. Overall, Hotspots and TMA show different CU and DU load responses. The CU shows a clear processor-level shift, while Retiring remains nearly unchanged. The DU remains predominantly Back-End Bound under both conditions. Traf-fic increases CU activity across packet-processing and co-ordination functions. DU load increases CPU time mainly across lower-ranked functions, while leading operations re-main stable. The measurements therefore show distinct CU and DU execution characteristics under matched conditions. 
+
+6 Summary and Future Work 
+
+A processor-level characterization framework is presented for independently deployed OCUDU CU and DU functions in an end-to-end 5G system. Process-scoped Intel VTune Hotspots and TMA quantify function-level CPU-time dis-tribution and processor microarchitectural behavior under matched baseline and sustained-load conditions. Experimen-tal results show accumulated process CPU time increasing from 17 .3 to 37 .4 s for the CU and from 462 .0 to 628 .4 s for the DU during equal 300-s profiling intervals. CU execu-tion exhibits a stronger load-dependent microarchitectural shift, with Back-End Bound increasing from 47.3 % to 58.2 %, while DU behavior changes more gradually. The measured differences motivate function-specific resource provisioning, placement, software optimization, and hardware accelera-tion. Future work focuses on multi-UE workloads, additional traffic profiles, broader radio configurations, and processor-level evaluation across additional CU/DU implementations and computing platforms. 
+
+Acknowledgments 
+
+The work reported here is supported by NSF grant CNS-1956357. 
+
+References               
+
+> [1] Maria Barbosa, Marcelo Silva, Ednelson Cavalcanti, and Kelvin Dias. 2025. Open-Source 5G Core Platforms: A Low-Cost Solution and Performance Evaluation. In Proceedings of the International Conference on Information Networking (ICOIN) .[2] Leonardo Bonati, Michele Polese, Salvatore D’Oro, Stefano Basagni, and Tommaso Melodia. 2023. OpenRAN Gym: AI/ML Development, Data Collection, and Testing for O-RAN on PAWR Platforms. Computer Networks 233 (2023), 109502. doi:10.1016/j.comnet.2022.109502 [3] Cisco Systems. 2026. TRex: Realistic Traffic Generator. Version 3.08. Open-source stateful and stateless traffic generator. [4] Francisco Crespo, Javier Villegas, Carlos Baena, Eduardo Baena, Sergio Fortes, and Raquel Barco. 2025. Energy-Aware CPU Orchestration in O-RAN: A dApp-Driven Lightweight Approach. arXiv:2508.00629 [cs.NI] doi:10.48550/arXiv.2508.00629 [5] Andrew E. Ferguson, Ujjwal Pawar, Tianxin Wang, and Mahesh K. Marina. 2025. Campus5G: A Campus Scale Private 5G Open RAN Testbed. ACM SIGCOMM Computer Communication Review (2025). [6] Moussa Guemdani, Pengwenlong Gu, Chi-Dung Phung, and Stefano Secci. 2025. Comparative E2E Performance Analysis of O-RAN Designs in a 5G Standalone Testbed. In 2025 IEEE 26th International Conference on High Performance Switching and Routing (HPSR) . 1–6. doi:10.1109/ HPSR64165.2025.11038873 [7] Intel Corporation. 2025. Intel VTune Profiler. https://www.intel.co m/content/www/us/en/developer/tools/oneapi/vtune-profiler.html. Version 2025.4.
+
+PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units 
+
+[8] Linux Foundation. 2026. OCUDU. Open-source cloud-native CU/DU implementation. [9] O-RAN Alliance. 2024. O-RAN Architecture Description . Technical Specification O-RAN.WG1.O-RAN-Architecture-Description. O-RAN Alliance. [10] Open5GS Project. 2026. Open5GS. https://open5gs.org. [11] Davide Villa, Imran Khan, Florian Kaltenberger, Nicholas Hedberg, Rúben Soares da Silva, Stefano Maxenti, Leonardo Bonati, Anupa Kelkar, Chris Dick, Eduardo Baena, Josep M. Jornet, Tommaso Melodia, Michele Polese, and Dimitrios Koutsonikolas. 2025. X5G: An Open, Programmable, Multi-vendor, End-to-end, Private 5G O-RAN Testbed with NVIDIA ARC and OpenAirInterface. IEEE Transactions on Mobile Computing (2025). doi:10.1109/TMC.2025.3580764 [12] Jianda Wang and Yang Hu. 2020. Performance Analysis of 5G NR vRAN Platform and its Implications on Edge Computing. In 2020 IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS) . 215–217. doi:10.1109/ISPASS48437.2020.00037 [13] Ahmad Yasin. 2014. A Top-Down method for performance analysis and counters architecture. In 2014 IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS) . 35–44. doi:10 .1109/ISPASS.2014.6844459

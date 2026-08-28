@@ -1,0 +1,735 @@
+Title: Throughput Maximization for MapReduce-Based Collaborative Computing over Energy-Harvesting Wireless Devices
+
+URL Source: https://arxiv.org/pdf/2608.25549v1
+
+Published Time: Thu, 27 Aug 2026 00:54:38 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+> 1
+
+# Throughput Maximization for MapReduce-Based Collaborative Computing over Energy-Harvesting Wireless Devices 
+
+Yuhang Li, Siqi Sun, Hongen Zheng, Xiaojing Chen, Shunqing Zhang, Senior Member, IEEE , and Yanzan Sun 
+
+Abstract —This paper studies resource allocation for MapReduce-based collaborative computing over heterogeneous wireless devices powered by renewable energy harvesting. We formulate a long-run average throughput maximization problem that jointly optimizes computing load, phase time allocations, transmit power, and per-device energy consumption, subject to battery evolution, CPU frequency, and latency constraints. To solve this problem online without prior knowledge of channel states or energy arrivals, we propose a DDPG-CVX algorithm that couples Deep Deterministic Policy Gradient (DDPG) with convex programming. DDPG determines the per-slot energy budget for each device from observed battery and channel states; the remaining resource allocation variables are then resolved to global optimality by an embedded convex solver. This two-phase decomposition reduces the action-space dimensionality of DDPG while preserving per-slot solution quality. Simulations show that DDPG-CVX achieves 1.25 ×∼ 32.36 × the throughput of representative benchmarks. 
+
+Index Terms —MapReduce, collaborative computing, resource allocation, DDPG, convex optimization 
+
+I. I NTRODUCTION 
+
+Intelligent applications, such as real-time deep learning (DL) inference, extended reality, and autonomous navigation, impose heavy computational demands on resource-constrained end devices [1], [2]. Collaborative computing alleviates this burden by distributing inference tasks among heterogeneous wireless devices [3]. The MapReduce framework is a natural fit: Each device computes partial results in the Map phase, exchanges intermediate outputs through an access point (AP) in the Shuffle phase, and aggregates them in the Reduce phase [4]. For renewable-energy-powered devices, energy-aware resource management is essential to sustain this col-laborative pipeline. Resource allocation in this framework faces three chal-lenges. First, existing schemes often assume homogeneous devices with similar computing capabilities and energy bud-gets [5], [6], whereas practical heterogeneity in hardware, channel conditions, and harvested energy can reduce through-put and energy efficiency. Second, prior studies mainly focus on computation–communication tradeoffs from a network-coding perspective [7]–[9], leaving the joint optimization of 
+
+This work was supported by Shanghai Municipal Science and Technology Commission Foundation grant 25DP1500300. (Corresponding author: Xiao-jing Chen.) 
+
+The authors are with the Key Laboratory of Specialty Fiber Optics and Optical Access Networks, Shanghai University, Shanghai 200444, China. Emails: {liyuhang, sunsiqi1303, 13482746459, jodiechen, shunqing, yanzan-sun }@shu.edu.cn. 
+
+computing load, time allocation, transmit power, and energy largely unexplored. Third, finite batteries and uncertain renew-able energy arrivals couple current decisions with future fea-sibility, making methods based on perfect channel and energy knowledge unsuitable [10]. MapReduce-based collaborative computing under energy-harvesting constraints has not yet been investigated. Recent deep reinforcement learning (DRL)-based studies have considered long-term resource management in hierar-chical federated learning [10], distributed unmanned aerial vehicle (UAV)-driven multi-access edge computing [11], and cellular-connected UAV path planning [12]. Yet, these settings differ fundamentally from MapReduce-based collaborative computing, where computation, communication, phase timing, and energy dynamics are tightly coupled. We therefore develop a centralized DRL framework for long-term energy planning over heterogeneous energy-harvesting devices, while solving per-slot resource allocation via convex optimization. Table I compares the proposed framework with representative studies. The main contributions are summarized as follows. 1) We establish a MapReduce-based framework for collab-orative computing over heterogeneous wireless devices, in which the Map, Shuffle, and Reduce phases are explicitly modeled alongside computation energy, uplink transmission energy, and battery dynamics with energy harvesting, capturing the practical heterogeneity and energy sustainability requirements. 2) We formulate a long-run average throughput maximiza-tion problem that jointly optimizes computing load, phase durations, transmit power, and device energy con-sumption under computation, communication, latency, and battery constraints. The formulation captures tem-poral coupling caused by battery dynamics and time-varying channels. 3) We develop a two-phase algorithm in which Deep De-terministic Policy Gradient (DDPG) determines the per-device energy budgets based on battery and channel states, while convex optimization globally solves the per-slot resource allocation. This decomposition reduces the DRL action dimension, enabling faster convergence and higher throughput than DDPG alone. Simulations confirm that DDPG-CVX consistently achieves higher throughput than all baselines across diverse battery and hardware configurations, validating its effectiveness in heterogeneous, energy-constrained deployments. arXiv:2608.25549v1 [eess.SY] 26 Aug 2026 2
+
+TABLE I COMPARISON WITH REPRESENTATIVE RELATED STUDIES .                                                                               
+
+> Ref. Supported model / assumptions Main variables Method Complexity / overhead Main distinction
+> [5] Homogeneous MapReduce-type distributed computing Computation load and communication load Coded distributed computing with coded multicasting Offline coding and data-placement design No energy harvesting (EH) or online resource control [6] Collaborative fog computing with heterogeneous users Computing load, CPU frequency, and transmit power Convex optimization via KKT and Lagrange duality Per-task centralized convex optimization No long-term EH dynamics or DRL-based online planning [7]–[9] Heterogeneous coded distributed computing Data placement, coding, and computation/communication load MILP/approximation, or combinatorial design Mainly offline MILP/coding/ design overhead No joint phase-time, transmit-power, and EH battery control [10] Hierarchical federated learning Client scheduling and communication/computation resources Two-phase DRL-based resource management DRL training and policy inference Different wireless control scenarios without MapReduce phase coupling [11], [12] UAV-driven MEC or cellular-connected UAV systems UAV control, offloading, resource allocation, or path planning Distributed many-agent DRL or QiER-enhanced DRL DRL training and policy inference Different wireless control scenarios without MapReduce phase coupling
+> This work MapReduce collaborative computing with heteroge-neous EH devices Load, phase time, transmit power, and energy budget DDPG energy planning plus convex per-slot allocation
+> O(KH 2)actor inference and O(N3.5)
+> convex solving Joint MapReduce and EH-aware online control
+> AP
+> .....
+> Ba ery
+> (,,,)(,,,). . . (,,,)(,,,)(,,,). . . (,,,)(,,,)(,,,). . . (,,,)
+> 1Map 2Map NMap
+> 1Reduce
+> 2Reduce
+> NReduce
+> (,,) = ()
+> (,,) = (
+> (,,) = ())
+> A
+> Device
+> 12N
+
+Fig. 1. System model of MapReduce-based collaborative computing. 
+
+The remainder of this paper is organized as follows. Sec-tion II presents the system model and problem formulation. Section III details the DDPG-CVX algorithm. Section IV evaluates performance, and Section V concludes the paper. II. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+A. MapReduce-Based Collaborative Computing 
+
+We consider N heterogeneous wireless devices, indexed by n ∈ N := {1, . . . , N }, connected to a common access point (AP). Time is divided into slots t ∈ T := {1, . . . , T }
+
+of duration τ . Each device n aims to execute a specified computing task φ(dn,t , θ) within a time slot. Here, dn,t 
+
+denotes the local input data for device n at slot t, and θ
+
+represents the L-bit data (e.g., a pretrained DL model) that is common to all N devices. As illustrated in Fig. 1, φ(dn,t , θ)
+
+can represent the inference process performed using model θ
+
+on input dn,t at slot t. Let Dt denote the size of the input data dn,t . Motivated by this application and the observation that DL models typically contain far more parameters than a single input sample, we assume L ≫ Dt [5]. Due to the large size of θ, it may be infeasible for a single device to accomplish the computing task φ(dn,t , θ) within one time slot. In the MapReduce framework, the N devices collaborate to execute the computational tasks {φ(dn,t , θ)}Nn=1 . The L-bit data θ can be partially processed at each time slot. Let ln,t 
+
+denote the number of bits of θ assigned to device n at time slot t (i.e., the size of partition θn,t ), satisfying 
+
+> N
+
+∑
+
+> n=1
+
+ln,t ≤ L. (1) The local input data {dn,t }Nn=1 are assumed to have been shared among devices via the AP during initialization. The MapReduce framework consists of the following three phases. 
+
+1) MAP: In the Map phase, each device computes in-termediate values based on its assigned DL model partition 
+
+θn,t of ln,t bits. The intermediate values computed by de-vice n (i.e., partial inference results using the model subset 
+
+θn,t ) are {mn(d1,t , θn,t ), m n(d2,t , θn,t ), . . . , m n(dn,t , θn,t )},where mn denotes the Map function executed on device n.
+
+2) SHUFFLE: In the Shuffle phase, the AP facilitates the exchange of intermediate computation results among devices. The size of the intermediate result mn(dx,t , θn,t ) produced by device n for device x is proportional to the computing load (i.e., the size ln,t of θn,t ), and is given by βl n,t . Consequently, device n must transmit (N − 1) βl n,t bits to the other devices via the AP. For notational convenience, let α := ( N − 1) β.
+
+3) REDUCE: In the Reduce phase, each device x
+
+aggregates a total of ∑Nn=1 βl n,t bits of intermediate computation results {mn(dx,t , θn,t )}Nn=1 received from all collaborating devices, and produces the final inference result of task φ(dx,t , θ) as 
+
+{ρx
+
+(m1(dx,t , θ1,t ), m 2(dx,t , θ2,t ), . . . , m N (dx,t , θN,t ))},where ρx(·) is the Reduce function executed at device x.Let tMAP  
+
+> n,t
+
+, tSHU  
+
+> n,t
+
+, and tRED  
+
+> n,t
+
+denote the latency of device n
+
+in the Map, Shuffle, and Reduce phases during time slot 
+
+t, respectively. Since Reduce begins only after all devices complete their Map and Shuffle operations, the system-level waiting time before Reduce is determined by the slowest device as T MS  
+
+> t
+
+= max n∈N 
+
+(tMAP  
+
+> n,t
+
++ tSHU 
+
+> n,t
+
+). To complete a MapReduce task within a single time slot, it must hold that 
+
+T MS  
+
+> t
+
++ tRED  
+
+> n,t
+
+≤ τ. (2) Since all devices prefer to complete the Reduce phase simul-taneously at the end of slot t to conserve energy, they share a common Reduce-phase latency tRED  
+
+> n,t
+
+= tRED  
+
+> t
+
+.
+
+B. Computation, Communication and Battery Models 
+
+At time slot t, device n processes the DL model partition 
+
+θn,t of ln,t bits for N input samples during the Map phase. Let cn denote the effective number of CPU cycles required per bit of the model partition at device n, and let kn be 3
+
+the chip-architecture-dependent capacitance coefficient. The energy consumed for computation [13] in the Map phase is EMAP  
+
+> n,t
+
+= kn (N c nln,t )3
+
+(tMAP  
+
+> n,t
+
+)2 . Similarly, the energy consumed by device n to aggregate the intermediate results during the Reduce phase is ERED  
+
+> n,t
+
+= kn (cnβ ∑Nn=1 ln,t )3
+
+(tRED  
+
+> n,t
+
+)2 .Let f max  
+
+> n
+
+denote the maximum CPU frequency of device n.The CPU frequency constraints are 
+
+N c nln,t 
+
+tMAP 
+
+> n,t
+
+≤ f max  
+
+> n
+
+, cnβ ∑Nn=1 ln,t 
+
+tRED 
+
+> n,t
+
+≤ f max  
+
+> n
+
+. (3) During the Shuffle phase, devices exchange intermediate results through the AP using orthogonal frequency-division multiple access (OFDMA). Downlink transmission time and energy are neglected, as we focus on resource-constrained devices. Let pn,t ∈ [0 , p max  
+
+> n
+
+] denote the transmit power of device n at slot t, where pmax  
+
+> n
+
+is the maximum transmit power. According to Shannon’s theorem, the achievable uplink rate of device n at slot t is Rn,t (pn,t ) = BW log 2
+
+(
+
+1 + pn,t hn,t  
+
+> N0,t BW
+
+)
+
+,where N0,t is the noise power spectral density at the AP, hn,t 
+
+is the channel gain from device n to the AP, and BW is the equally assigned uplink bandwidth for the devices. Let pcn denote the constant circuit power consumption at device n. The total energy consumed by device n during the Shuffle phase is ESHU  
+
+> n,t
+
+= pcntSHU  
+
+> n,t
+
++ ESHU,tx  
+
+> n,t
+
+, where ESHU,tx  
+
+> n,t
+
+=
+
+pn,t tSHU  
+
+> n,t
+
+is the transmission energy. The data transmission constraint for the Shuffle phase is 
+
+αl n,t ≤ tSHU  
+
+> n,t
+
+Rn,t (pn,t ) , (4) which ensures that the bits transmitted during the Shuffle phase are sufficient to deliver all required intermediate results. Each device is powered by renewable energy and equipped with a rechargeable battery of capacity Emax . Let Ebat  
+
+> n,t
+
+denote the battery level at the beginning of slot t. To reserve energy for sensing, signaling, and critical operations, we introduce a reserve level Eres and impose Eres ≤ Ebat  
+
+> n,t
+
+≤ Emax , ∀n, t. The battery state evolves as 
+
+Ebat  
+
+> n,t +1
+
+= min {Ebat  
+
+> n,t
+
++ Eget  
+
+> n,t
+
+− Etot 
+
+> n,t
+
+, E max 
+
+} , (5) where Eget  
+
+> n,t
+
+is the stochastic renewable energy available to device n at the beginning of slot t, harvested from solar, indoor light, or other ambient energy. Etot  
+
+> n,t
+
+= EMAP  
+
+> n,t
+
++ ESHU  
+
+> n,t
+
++ ERED 
+
+> n,t
+
+is the total energy consumed by device n at slot t. The energy availability constraint holds to maintain the reserve level Eres :
+
+Etot  
+
+> n,t
+
+≤ Ebat  
+
+> n,t
+
++ Eget  
+
+> n,t
+
+− Eres . (6) 
+
+C. Problem Formulation 
+
+Let Φt = {ln,t , t MAP  
+
+> n,t
+
+, t SHU  
+
+> n,t
+
+, t RED  
+
+> n,t
+
+, p n,t , E tot 
+
+> n,t
+
+, ∀n}. By opti-mizing Φt, the objective is to maximize the average system (computational) throughput. The problem is 
+
+max 
+
+> Φt
+
+lim  
+
+> T→∞
+
+1
+
+T
+
+> T
+
+∑
+
+> t=1
+> N
+
+∑
+
+> n=1
+
+ln,t s.t. (1) ∼ (6) , 0 ≤ pn,t ≤ pmax  
+
+> n
+
+.
+
+(7) The lim T →∞ 1
+
+> T
+
+∑Tt=1 (·) operator in (7) defines the long-run time-average throughput, a standard formulation for online resource allocation under stochastic, unpredictable channel and energy-arrival processes, as in [14]. In the numerical evalua-tion, the long-run time-average objective is approximated by the finite-horizon empirical time-average 1
+
+> T
+
+∑Tt=1 
+
+∑Nn=1 ln,t 
+
+evaluated over a sufficiently large number of slots T .III. P ROPOSED DDPG-CVX F RAMEWORK 
+
+Problem (7) is difficult to solve directly because future channel states and energy arrivals are unknown, while the battery dynamics in (5) couple decisions across time slots. Although problem (7) can be modeled as an Markov decision process (MDP), directly applying DDPG results in a high-dimensional action space that grows with the number of devices and hinders convergence. We therefore propose a two-phase framework. In the first phase, DDPG determines the per-device energy budgets ¯En,t ≥ Etot 
+
+> n,t
+
+. In the second phase, the remaining per-slot resource allocation is solved globally through convex optimization, and the resulting throughput is used as the reward for DDPG training. 
+
+A. Proposed DDPG-Based Resource Control 
+
+Problem (7) is formulated as an MDP with the 3-tuple 
+
+(S, A, r), comprising state S, action A, and reward r. The system state at time slot t is st = {Ebat 
+
+> n,t
+
+, h n,t , ∀n} ∈ S.The action at slot t is at = { ¯En,t , ∀n} ∈ A. Consistent with the objective in (7), the immediate reward is defined as 
+
+rt = ∑Nn=1 ln,t −ζ, where ζ is a fixed positive penalty incurred when the DDPG-generated energy budget violates the energy availability constraint (6). This design avoids introducing an additional optimization bias. At slot t, the DDPG agent observes state st, selects action at = μ(st), receives reward rt, and transitions to 
+
+st+1 . The action-value function is defined as Qμ(s, a) = 
+
+Eμ[ ∞∑
+
+> i=0
+
+γirt+i|st = s, at = a], where γ ∈ [0 , 1] is the discount factor. DDPG employs an actor network to approximate the policy μ and a critic network to estimate Qμ(s, a). Each net-work has online and target versions, with the target networks improving training stability. Let μ(st|ωμ) and Q(st, at|ωQ) denote the actor and critic online networks with parameters ωμ and ωQ, re-spectively. Let μ′(st|ωμ′
+
+) and Q′(st, at|ωQ′
+
+) denote the corresponding target networks with parameters ωμ′
+
+and 
+
+ωQ′
+
+. The critic online network is updated by min-imizing L(ωQ) = 1
+
+> B
+
+∑
+
+> t
+
+[( ηt − Q(st, μ (st|ωμ)|ωQ)) 2],where ηt = rt + γQ ′(st+1 , μ ′(st+1 |ωμ′
+
+)|ωQ′
+
+) and 
+
+B is the mini-batch size. The actor online network is optimized by ascending the gradient ∇ωμ J(ωμ) ≈
+
+> 1
+> B
+
+∑
+
+> t
+
+∇at Q(st, at|ωQ)∇ωμ μ(st|ωμ) to maximize the policy objective J(ωμ) = Eωμ [Q(st, μ (st|ωμ)|ωQ)] , where ∇ωμ
+
+denotes the gradient with respect to ωμ. The target networks are updated via soft updates: ωμ′
+
+← λωμ + (1 − λ)ωμ′
+
+and 
+
+ωQ′
+
+← λωQ + (1 − λ)ωQ′
+
+, where λ is the update rate. The DDPG-CVX workflow is illustrated in Fig. 2. At slot t, the actor generates the energy budgets at from the 4         
+
+> Environment Experience replay memory Mini-batch Critic online network Loss Function Critic target network Actor online network Actor target network Convex optimization
+> ,+1
+> ,
+> Random sample
+> +1
+> (,)
+> Updating Soft update
+> (,)+1 ,+1
+> Policy gradient updating
+> DDPG AGENT
+> Fig. 2. Architecture of the proposed DDPG-CVX framework.
+
+observed state st. Given at, the remaining optimization vari-ables Φ′ 
+
+> t
+
+:= {tMAP  
+
+> n,t
+
+, t SHU  
+
+> n,t
+
+, t RED  
+
+> t
+
+, p n,t , l n,t , ∀n, t } are determined via convex optimization to evaluate the reward, as detailed in Section III-B. The slot concludes with the agent receiving reward rt and transitioning to state st+1 . During training, zero-mean Gaussian noise is added to the actor output for exploration, and the resulting energy budgets are clipped to the feasible range. Transitions {st, at, r t, st+1 } are stored in an experience replay buffer. Mini-batches of B transitions are sampled to update the actor and critic online networks, followed by the target-network updates. Experience replay reduces temporal correlations among training samples and improves learning stability. The MDP assumes that Ebat  
+
+> n,t
+
+and hn,t are available at the decision time. In practice, only the estimated state ˆst =
+
+{ ˆEbat 
+
+> n,t
+
+, ˆhn,t , ∀n} may be observed because of estimation errors or delayed feedback. Exploration and experience replay of DDPG can improve tolerance to mild errors, while stronger uncertainty can be addressed through noisy-state training, history-augmented policies, or conservative energy margins. 
+
+B. Resource Allocation via Convex Optimization 
+
+At each time slot t, given the action at = { ¯En,t , ∀n}
+
+generated by DDPG, problem (7) reduces to the following per-slot subproblem without battery constraints: 
+
+max 
+
+> Φ′
+> t
+> N
+
+∑
+
+> n=1
+
+ln,t (8) s.t. (1) ∼ (4) , 0 ≤ pn,t ≤ pmax  
+
+> n
+
+,Etot  
+
+> n,t
+
+= EMAP  
+
+> n,t
+
++ ESHU  
+
+> n,t
+
++ ERED  
+
+> n,t
+
+≤ ¯En,t , ∀n. 
+
+The linear constraints, including the time slot constraint 
+
+tMAP  
+
+> n,t
+
++ tSHU  
+
+> n,t
+
++ tRED  
+
+> t
+
+≤ τ and the CPU frequency constraints 
+
+N c nln,t ≤ f max  
+
+> n
+
+tMAP  
+
+> n,t
+
+and cnβ ∑ 
+
+> n
+
+ln,t ≤ f max  
+
+> n
+
+tRED  
+
+> n,t
+
+, trivially satisfy convexity. For the communication constraint αl n,t ≤
+
+tSHU  
+
+> n,t
+
+Rn,t (pn,t ), we introduce the substitution ESHU,tx  
+
+> n,t
+
+=
+
+pn,t tSHU  
+
+> n,t
+
+to eliminate pn,t , yielding 
+
+αl n,t − tSHU  
+
+> n,t
+
+BW log 2
+
+(
+
+1 + ESHU,tx  
+
+> n,t
+
+hn,t 
+
+N0BW t SHU 
+
+> n,t
+
+)
+
+≤ 0, ∀n, t. (9) The left-hand side of (9) is convex in (ln,t , t SHU  
+
+> n,t
+
+, E SHU,tx  
+
+> n,t
+
+).The term αl n,t is linear, and the second term is concave in (tSHU  
+
+> n,t
+
+, E SHU,tx  
+
+> n,t
+
+) as the perspective of the concave loga-rithmic function [15], so their difference is convex. Addi-tionally, EMAP  
+
+> n,t
+
+= kn(N c nln,t )3/(tMAP  
+
+> n,t
+
+)2 is jointly convex in (ln,t , t MAP  
+
+> n,t
+
+) for ln,t , t MAP  
+
+> n,t
+
+> 0, as it takes the form 
+
+x3/y 2 whose positive semi-definiteness of the Hessian can be verified directly. Similarly, the Reduce phase energy ERED  
+
+> n,t
+
+=
+
+kn(cnβ ∑ 
+
+> n
+
+ln,t )3/(tRED  
+
+> n,t
+
+)2 is convex in (ln,t , t RED  
+
+> n,t
+
+). Since the objective and all constraints are convex in Φ′
+
+> t
+
+, subproblem (8) is a convex program and can be solved globally using standard methods such as the interior-point method [15]. Once DDPG fixes the energy budgets { ¯En,t }, CVX optimizes the remaining computing load, phase durations, and transmit energy. This yields an accurate reward signal and avoids the infeasibility caused by directly exploring all resource variables with DRL. 
+
+Complexity Analysis. The per-slot complexity consists of actor inference and convex optimization. For a K-layer fully connected actor with hidden width H, the inference complex-ity is approximately O(KH 2). The convex subproblem (8) contains (4 N + 1) variables and has a worst-case interior-point complexity of O(N 3.5), which is tractable for moderate-scale deployments (e.g., up to a few tens of devices per AP, consistent with typical MapReduce collaborative-computing group sizes). For larger systems, computation can be reduced using warm starts, first-order solvers, or neural surrogates, which are left for future work. IV. P ERFORMANCE EVALUATION 
+
+We set N = 5 , BW = 30 MHz, N0,t = 1 nW/Hz, and τ =100 ms. Channel gains follow a complex Gaussian distribution 
+
+CN (0 , 10 −3). Device hardware parameters are drawn hetero-geneously: Emax ∈ [100 , 10 , 000] μJ, kn ∈ [10 −28 , 10 −27 ],
+
+pmax  
+
+> n
+
+∈ [10 , 25] mW, pcn ∈ [10 , 25] mW, f max  
+
+> n
+
+∈ [1 , 3] GHz, and cn ∈ [500 , 1500] . The harvested energy is generated inde-pendently for each device and time slot following a bounded uniform distribution Eget  
+
+> n,t
+
+∼ U [0 , 200] μJ. Both the actor and critic networks contain two hidden fully connected layers with 32 and 64 neurons, respectively, and ReLU activations. The discount factor is γ = 0 .95 , the actor/critic learning rate is 
+
+2×10 −3, the replay-buffer size is 4000, B = 32 , and λ = 0 .01 .We compare the proposed DDPG-CVX algorithm against the following baselines: 1) Greedy Allocation (GA): Each device depletes its entire battery at every time slot, i.e., 
+
+¯En,t = Ebat 
+
+> n,t
+
+. 2) Random Budget (RB): The energy budgets 
+
+¯En,t are randomly generated within the feasible range. 3) Average Allocation (AA): The computational load is divided equally among all devices, i.e., ln,t = lm,t , ∀n, m ∈ N . 4) DDPG-only: The full optimization problem is solved directly by a standalone DDPG agent. 5) MAX Frequency (MAXF): 
+
+Every device operates at its peak CPU frequency f max  
+
+> n
+
+re-gardless of the energy state. For GA, RB, AA and MAXF, the remaining variables are obtained using CVX. For DDPG-only, the normalized actor outputs are mapped to physical resource variables and projected onto the feasible set. Its best-performing configuration uses actor and critic learning rates of 10 −3, a replay-buffer capacity of 10 5, a mini-batch size of 64, γ = 0 .95 , and zero-mean Gaussian exploration noise. Fig. 3 shows the throughput performance over episodes. DDPG-CVX converges to the highest throughput within 1,000 episodes, while DDPG-only converges more slowly and to a lower value due to the high-dimensional action space. GA, RB and AA settle at substantially lower levels, as their fixed or random policies cannot adapt to varying channel and bat-5        
+
+> 0250 500 750 1000 1250 1500 1750 2000
+> Episode
+> 10 5
+> Throughput (bits)
+> GA AA DDPG-CVX MAXF DDPG-only RB
+
+Fig. 3. Throughput performance over episodes under different algorithms.        
+
+> 02000 4000 6000 8000 10000
+> Energy constraint Emax (μJ)
+> 10 3
+> 10 4
+> 10 5
+> Throughput (bits)
+> GA AA DDPG-CVX MAXF DDPG-only RB
+
+Fig. 4. System throughput versus different battery capacities. 
+
+tery conditions. MAXF performs worst, as continuous peak-frequency operation rapidly depletes the batteries and limits communication. Specifically, DDPG-CVX achieves 1.25 ×,
+
+1.51 ×, 1.75 ×, 2.87 ×, and 32 .36 × the throughput of DDPG-only, GA, RB, AA, and MAXF, respectively. Fig. 4 shows the system throughput versus battery capacity 
+
+Emax , ranging from 100 to 10 ,000 μJ. DDPG-CVX achieves the highest throughput across the entire range, as larger bat-teries enable sustained computation and the proposed method jointly optimizes computing load, transmit power, and phase durations. Its advantage over DDPG-only demonstrates the benefit of solving the per-slot resource allocation through convex optimization rather than exploring all variables directly in a high-dimensional action space. Fig. 5 examines robustness to hardware heterogeneity by scaling the capacitance coefficient kn from 0.4 to 2.4. As kn
+
+grows, all algorithms suffer throughput loss since each CPU cycle becomes more energy-intensive, constraining the data volume processed per slot. Despite this uniform trend, DDPG-CVX maintains the highest throughput across the entire range by jointly redistributing CPU frequencies and computing load to compensate for the increased per-cycle energy cost. We further test the discount factor γ ∈ { 0.90 , 0.95 , 0.99 }
+
+and the actor/critic learning rate ηa = ηc ∈ {10 −3, 2 ×
+
+10 −3, 5 × 10 −3}. As shown in Table II, γ = 0.95 and 
+
+ηa = ηc = 2 ×10 −3 achieve the highest throughput among the tested settings. The results show that the achieved throughput is sensitive to the discount factor and learning-rate settings, highlighting the need for careful hyperparameter tuning. V. C ONCLUSION 
+
+This paper proposed DDPG-CVX for MapReduce-based collaborative computing over heterogeneous energy-harvesting devices. DDPG performs long-term energy planning, while convex optimization globally solves the per-slot resource allo-cation, reducing the DRL action dimension. Simulation results         
+
+> 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50
+> Capacitance coefficient scaling factor
+> 10 5
+> Throughput (bits)
+> GA AA DDPG-CVX MAXF DDPG-only RB
+
+Fig. 5. System throughput versus different capacitance coefficients. TABLE II THROUGHPUT UNDER DIFFERENT HYPERPARAMETER SETTINGS .                 
+
+> Learning rate Discount factor γ
+> 0.90 0.95 0.99 10 −3188192 186158 182387
+> 2×10 −3187069 189218 186401
+> 5×10 −3184445 184865 185268
+
+demonstrate consistent throughput gains over the considered baselines under diverse hardware configurations. REFERENCES [1] A. Khoshsirat, G. Perin, and M. Rossi, “Decentralized LLM inference over edge networks with energy harvesting,” in Proc. Globecom . IEEE, 2024, pp. 3703–3708. [2] K. Yang, Y. Shi, W. Yu, and Z. Ding, “Energy-efficient processing and robust wireless cooperative transmission for edge inference,” IEEE Internet Things J. , vol. 7, no. 10, pp. 9456–9470, 2020. [3] S. Sasi and O. G¨ unl¨ u, “Novel constructions for computation and communication trade-offs in private coded distributed computing,” IEEE Trans. Commun. , vol. 74, pp. 971–986, 2026. [4] F. Li, J. Chen, and Z. Wang, “Wireless mapreduce distributed comput-ing,” IEEE Trans. Inf. Theory , vol. 65, no. 10, pp. 6101–6114, 2019. [5] S. Li, M. A. Maddah-Ali, Q. Yu, and A. S. Avestimehr, “A fundamental tradeoff between computation and communication in distributed com-puting,” IEEE Trans. Inf. Theory , vol. 64, no. 1, pp. 109–128, 2018. [6] A. Paris, H. Mirghasemi, I. Stupia, and L. Vandendorpe, “Leveraging user-diversity in energy-efficient edge-facilitated collaborative fog com-puting,” IEEE Access , vol. 9, pp. 95 636–95 650, 2021. [7] Y. Deng and M. Dong, “Design and optimization of heterogeneous coded distributed computing with nonuniform file popularity,” IEEE Trans. Mob. Comput. , vol. 24, no. 10, pp. 10 456–10 473, 2025. [8] N. Shakya, F. Li, and J. Chen, “On distributed computing with hetero-geneous communication constraints,” IEEE/ACM Trans. Netw. , vol. 30, no. 6, pp. 2776–2787, 2022. [9] M. Cheng, Y. Wu, X. Li, and D. Wu, “Asymptotically optimal coded distributed computing via combinatorial designs,” IEEE/ACM Trans. Netw. , vol. 32, no. 4, pp. 3018–3033, 2024. [10] X. Chen, Z. Li, W. Ni, X. Wang, S. Zhang, Y. Sun, S. Xu, and Q. Pei, “Toward dynamic resource allocation and client scheduling in hierarchical federated learning: A two-phase deep reinforcement learning approach,” IEEE Trans. Commun. , vol. 72, no. 12, pp. 7798–7813, 2024. [11] Y. Li, A. S. Madhukumar, T. Zheng Hui Ernest, G. Zheng, W. Saad, and A. Hamid Aghvami, “Energy-efficient UAV-driven multi-access edge computing: A distributed many-agent perspective,” IEEE Trans. Commun. , vol. 73, no. 9, pp. 8405–8420, 2025. [12] Y. Li, A. H. Aghvami, and D. Dong, “Path planning for cellular-connected UAV: A DRL solution with quantum-inspired experience replay,” IEEE Trans. Wireless Commun. , vol. 21, no. 10, pp. 7897–7912, 2022. [13] Y. Liu, C. Tan, K. Wang, and W. Chen, “Hybrid task offloading and resource optimization in vehicular edge computing networks,” IEEE Wireless Commun. Lett. , vol. 13, no. 6, pp. 1715–1719, 2024. [14] X. Chen, J. Xu, W. Ni, S. Hu, Z. Qin, and S. Zhang, “Energy-efficient resource allocation for multi-user semantic communications: A deep reinforcement learning approach,” IEEE Wireless Commun. Lett. , vol. 14, no. 5, pp. 1541–1545, 2025. [15] S. Boyd and L. Vandenberghe, Convex Optimization . Cambridge University Press, Mar. 2004.

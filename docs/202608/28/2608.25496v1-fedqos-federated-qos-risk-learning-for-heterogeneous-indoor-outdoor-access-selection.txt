@@ -1,0 +1,431 @@
+Title: FedQoS: Federated QoS-Risk Learning for Heterogeneous Indoor-Outdoor Access Selection
+
+URL Source: https://arxiv.org/pdf/2608.25496v1
+
+Published Time: Thu, 27 Aug 2026 00:50:06 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# FedQoS: Federated QoS-Risk Learning for Heterogeneous Indoor-Outdoor Access Selection 
+
+Nguyen Van Thieu, Ti Ti Nguyen, Ons Aouedi, Zerihun Huruy, Vu Nguyen Ha, and Symeon Chatzinotas 
+
+Interdisciplinary Centre for Security, Reliability and Trust (SnT), University of Luxembourg, Luxembourg 
+
+{vanthieu.nguyen, titi.nguyen, ons.aouedi, huruy.zerihun, vu-nguyen.ha, symeon.chatzinotas }@uni.lu 
+
+Abstract —Reliable access selection in dynamic and hetero-geneous indoor-outdoor environments is challenging because instantaneous radio measurements alone cannot capture future QoS degradation caused by mobility, blockage, traffic load, and resource competition. This paper proposes FedQoS, a federated QoS-risk learning framework for predicting the future reliability of candidate access links and supporting access-node selection without centralizing user-level network data. In FedQoS, each ac-cess node locally learns from its observed network logs, including radio, traffic, load, and service-context features, while a global QoS-risk predictor is trained through federated aggregation. The learned model estimates the probability of QoS failure for each candidate link, and the controller uses these risk scores to select reliable access nodes under dynamic network conditions. To evaluate the framework, we construct physics-based synthetic indoor-outdoor wireless datasets using the Sionna framework, covering normal traffic, mobility, event-driven con-gestion, and non-IID client observations. Simulation results show that learning-based access selection substantially reduces the QoS-failure rate compared with signal-based and historical-QoS heuristic methods. FedQoS achieves near-centralized predictive performance and provides clear reliability gains under mild non-IID data while remaining competitive under the more challenging severe non-IID condition. These results demonstrate the potential of federated QoS-risk learning for reliable, data-local access selection in dynamic wireless environments. 
+
+Index Terms —Federated learning, wireless network, quality of service, handover, indoor-outdoor connectivity. 
+
+I. I NTRODUCTION 
+
+Heterogeneous wireless access networks are becoming a key component of future indoor-outdoor connectivity. In dense en-vironments such as enterprise buildings, public venues, trans-portation hubs, and university campuses, users move across rooms, corridors, building entrances, outdoor walkways, and temporarily crowded areas, while their candidate serving nodes span indoor access points (APs), terrestrial base stations (BSs), and static or quasi-static aerial nodes. Deciding which node should serve each user at a given time, the user association or access selection problem, directly affects throughput, load balancing, delay, handover behavior, and quality of service [1]. Conventional network selection mechanisms are based on radio-layer metrics such as received signal strength, received power, or SINR [2]. While these signal-oriented criteria are 
+
+© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works. 
+
+straightforward and interpretable, they frequently fall short in heterogeneous networks. For example, a user attached to the node with the strongest signal may still experience poor ser-vice if that node is heavily loaded, whereas an alternative node with a weaker signal may deliver higher long-term through-put or reduced latency. This limitation is well recognized in the literature; max-SINR or max-power association can cause severe load imbalance [3], motivating biasing and load balancing schemes [1], while QoS and delay-aware methods further incorporate attainable rate, load, required resources, or queueing delay into the association decision [4], [5]. These studies establish that the association should not be driven by instantaneous radio strength alone. Learning-based methods have since been investigated for association and radio resource management. Deep reinforce-ment learning (DRL) and multi-agent learning are applied when explicit optimization is difficult due to non-convexity, dynamic, or incomplete data. On the other hand, federated learning (FL) has been introduced to reduce raw-data shar-ing in wireless control, e.g., federated DRL for user access control in Open RAN and for distributed control of NextG networks [6], [7]. Despite this progress, most learning-based association works formulate the problem as direct control or RL and learn a policy from a reward signal [8]. Such policies can be difficult to interpret and tune because their behavior depends strongly on the reward design. Moreover, existing federated wireless-control frameworks [9] mainly target policy learning, resource allocation, or user-side learning, rather than access node-side supervised QoS-risk prediction from local logs [10]. Yet in practical deployments, each AP, BS, or aerial node naturally observes local user-candidate measurements, load states, service demands, handover context, and realized QoS outcome, exactly the signals needed to learn whether a choice will lead to a QoS violation over a short future horizon [11]. This paper proposes FedQoS, a federated QoS-risk learning framework for heterogeneous indoor-outdoor access selection. Instead of directly learning an association action, FedQoS learns a supervised probabilistic model that predicts the future QoS-failure risk of each user-candidate pair, i.e., the probabil-ity that a candidate AP, BS, or static aerial node will violate the user’s QoS requirement within a prediction window. The QoS-risk predictor incorporates access-node load through its input features, while the access controller combines the resulting risk arXiv:2608.25496v1 [cs.LG] 26 Aug 2026 score with an explicit handover cost to select the serving node. The federated design follows the distributed nature of access-node logs, where each node trains on its own observations and shares only model updates. Because these clients are naturally non-IID (differing in user density, mobility, load, and QoS-failure rates), FedQoS couples stabilized local training with a QoS-aware aggregation weight that reflects both local data volume and local QoS-failure exposure, so that nodes observing QoS-critical conditions contribute more without discarding the statistical reliability of larger clients. The main contributions of this paper are summarized as follows:  
+
+> •
+
+Formulate heterogeneous indoor-outdoor access selection as a federated supervised QoS-risk prediction problem over user-candidate access pairs.  
+
+> •
+
+Propose FedQoS combining stabilized local training with a QoS-aware aggregation rule to handle heterogeneous, non-IID observations from APs/BSs/aerial nodes.  
+
+> •
+
+Develop a reliability-oriented access-selection rule that converts predicted QoS-failure probabilities into access decisions, with access-node load captured by the learned risk model and handover cost handled explicitly by the controller.  
+
+> •
+
+Construct realistic dynamic datasets using ray-tracing and system-level wireless simulation and evaluate FedQoS against centralized, local-only, FedAvg, and FedProx learning and representative non-learning baselines. II. S YSTEM MODEL AND PROPOSED FED QOS A LGORITHM 
+
+A. Heterogeneous Indoor-Outdoor Access Setting 
+
+We consider a heterogeneous indoor-outdoor access network composed of indoor APs, terrestrial BSs, and static aerial access nodes (ANs) serving a varying number of users within a campus area, as illustrated in Fig. 1. The ANs are considered to provide a flexible connection to the users. In the following, it is assumed that their positions are fixed during the considered decision process of T time slots. It is worth noting that trajectory and placement optimization are out of the scope of this work. Let A be the set of all access nodes, and denote by Ut the set of active users in slot t, where t ∈ { 0, 1, . . . , T − 1}. This work aims to develop an FL-based access controller to instruct users to select the most suitable access node for their next communication. In particular, in the slot t, the controller can select an access node atu ∈ A from the candidate set Ctu ⊆ A 
+
+that contains a limited number of feasible service nodes selected from the measurement report. In the implementation, the candidate set is formed from the current serving node, the top-K candidates according to the logging association score, and occasional probing candidates. To maintain the users’ QoS, the access node should be selected for each active user so that the corresponding transmission rate for that connection is not less than Rmin  
+
+> u
+
+.To build such a controller, in this system, each access node acts as a federated client where its local data set is denoted by Di. A user–candidate sample observed while user u is served by node atu is stored at the serving node. Therefore, the observer client for that sample is otu = atu, and the sample belongs to Dotu . This construction matches practical operation, where the access node can collect its users’ measurements, service context, recent history, and candidate reports. The objective of the access controller is to select, for each user, an access node that is likely to satisfy the user’s quality-of-service (QoS) requirement over a short future horizon. Un-like conventional access selection based only on the strongest received signal, the considered environment is affected by indoor blockages, floor transitions, wall penetration loss, dynamic user density, access-node load, and heterogeneous AP/BS/AN coverage. Therefore, the access node with the strongest instantaneous signal is not necessarily the one that provides the lowest QoS-failure risk. 
+
+B. User–Candidate Feature Vector 
+
+For user u and access node a, the local controller constructs a feature vector for slot t as 
+
+xtu,a = ctu, ca, mtu,a , lta, rtu, htu,a 
+
+, (1) where ctu denotes user-side context such as coarse in-door/outdoor zone, floor index, mobility state, and radio-positioning features; ca denotes access-node attributes such as node type, carrier, bandwidth, transmit power, antenna config-uration, and height; mtu,a contains instantaneous or recently averaged link measurements such as reference signal received power (RSRP), received signal strength indicator (RSSI), signal-to-interference-plus-noise ratio (SINR), channel quality indicator (CQI), block error rate (BLER), or achievable-rate indicators; lta contains access-node load information such as active-user count, physical resource block (PRB) utilization; 
+
+rtu represents the user service requirement, including Rmin  
+
+> u
+
+;and htu,a contains handover-related indicators such as whether 
+
+a = at−1 
+
+> u
+
+, dwell time, and recent handover history. The proposed framework does not require raw user logs to be uploaded to a central server. Each access node stores the logs observed for users served or probed by that node. The central controller receives only model parameters or model updates during federated training. 
+
+C. Future QoS-Failure Label 
+
+The learning target is the future QoS outcome of a candidate access decision. Let ∆ be the prediction horizon. If user u is associated with candidate access node a at slot t, let ¯Rt, ∆ 
+
+> u,a
+
+and 
+
+¯ϵt, ∆ 
+
+> u,a
+
+denote the average throughput and BLER over the future window [t, t + ∆] . Given the min-rate requirement Rmin  
+
+> u
+
+and max tolerable BLER ϵmax , the QoS-failure label is defined as 
+
+ytu,a = 1( ¯Rt, ∆  
+
+> u,a <R min
+> u
+
+) or (¯ϵt, ∆ 
+
+> u,a >ϵ max
+
+). (2) Thus, ytu,a = 1 means that candidate node a is expected to violate the QoS requirement of user u over the prediction horizon, whereas ytu,a = 0 means that the candidate is expected to satisfy the requirement. Fig. 1: An example of an indoor-outdoor access network and the FedQoS system. The learning target is not the instantaneous SINR alone. SINR is treated as one of the explanatory features. The label in (2) captures the combined effect of radio quality, resource contention, service demand, and mobility over a short future horizon. This formulation is useful because two candidate links with similar SINR can have different QoS outcomes due to different load, scheduling, or handover conditions. 
+
+D. QoS-Risk Learning 
+
+Let Di = {(xn, y n)}Ni 
+
+> n=1
+
+denote the local dataset stored at access node i ∈ A , where Ni = |D i|. The datasets are naturally non-IID because access nodes observe different lo-cations, building structures, user densities, channel conditions, service mixes, and mobility patterns. For example, indoor APs mainly observe room and corridor users, whereas BSs and UAVs observe more outdoor or overloaded-event users. The QoS-risk model is denoted by fθ , where θ is the model parameter vector. Given the input feature vector xtu,a , the model outputs 
+
+ptu,a = fθ
+
+ xtu,a 
+
+ ∈ [0 , 1] , (3) where ptu,a estimates the probability that candidate a will fail the QoS requirement of user u over the prediction horizon: 
+
+ptu,a ≈ Pr  ytu,a = 1 | xtu,a 
+
+ . (4) The local empirical loss at client i is 
+
+Fi(θ) = 1
+
+|D i|
+
+X
+
+> (x,y )∈D i
+
+ℓ (fθ (x), y ) , (5) where ℓ(·, ·) is the binary cross-entropy loss. Then the con-ventional centralized solution would minimize 
+
+min 
+
+> θ
+
+X
+
+> i∈A
+
+Ni
+
+N Fi(θ), N = X
+
+> i∈A
+
+Ni, (6) which requires collecting all local access logs at a central server. FedQoS instead solves this problem federatively, where each access node keeps Di locally and exchanges only model parameters with an edge controller. 
+
+E. FedQoS Local Update 
+
+At communication round r, the edge controller broadcasts the current global model θr to a subset of participating access nodes Sr ⊆ A . Each selected client i ∈ S r initializes its local model by θri, 0 = θr . FedQoS builds its local training step on a proximal objective [12] to stabilize learning under heterogeneous local data. Specifically, client i minimizes 
+
+eFi(θ; θr ) = Fi(θ) + μ
+
+2 ∥θ − θr ∥22 , (7) where μ ≥ 0 penalizes the deviation of the local model from the current global model. After E local epochs, client i obtains 
+
+θr+1  
+
+> i
+
+and uploads it to the edge controller. 
+
+F. FedQoS Aggregation 
+
+A standard sample-size weighted aggregation can be domi-nated by high-traffic access nodes, such as a BS serving many outdoor users. However, for QoS-risk learning, clients that observe many rare failure events are also important. FedQoS therefore uses a QoS-aware aggregation rule that balances Algorithm 1: FedQoS: Federated QoS-Risk Learning and Handover-Aware Access Selection 
+
+Require: Access nodes A, local datasets {D i}i∈A , rounds R,epochs E, coefficient μ, q, λ, ηh, ϵmax , ξh, and Tdwell .
+
+Ensure: Global QoS-risk model fθR . 
+
+> 1:
+
+Initialize global model parameters θ0. 
+
+> 2:
+
+for round r = 0 , 1, . . . , R − 1 do  
+
+> 3:
+
+Edge server selects participating clients Sr ⊆ A . 
+
+> 4:
+
+Broadcast θr to all clients i ∈ S r . 
+
+> 5:
+
+for each client i ∈ S r in parallel do  
+
+> 6:
+
+Set local model θri, 0 = θr and train it using (7).  
+
+> 7:
+
+Obtain updated local model θr+1  
+
+> i
+
+. 
+
+> 8:
+
+Compute aggregation weight ωri by (8)  
+
+> 9:
+
+Upload θr+1  
+
+> i
+
+and ωri to the controller  
+
+> 10:
+
+end for  
+
+> 11:
+
+Compute aggregation coefficients {αri }i∈S r by (9)  
+
+> 12:
+
+Update the global model using (10).  
+
+> 13:
+
+end for  
+
+> 14:
+
+Deploy fθR to all access nodes.  
+
+> 15:
+
+for each access-decision slot t do  
+
+> 16:
+
+for each active user u ∈ U t do  
+
+> 17:
+
+Construct candidate set Ctu. 
+
+> 18:
+
+Predict ptu,a for all a ∈ C tu using (3).  
+
+> 19:
+
+Select a⋆,t u by (12)  
+
+> 20:
+
+Trigger handover only if (13) is satisfied  
+
+> 21:
+
+end for  
+
+> 22:
+
+end for 
+
+sample size and local risk. We define the local QoS-failure rate as ρri = 1
+
+> Ni
+
+P 
+
+> (x,y )∈D i
+
+y and the unnormalized FedQoS aggregation weight as follows: 
+
+ωri = ( Ni)q (1 + λρ ri ) , i ∈ S r . (8) where q ∈ [0 , 1] controls the dependence on client dataset size and λ ≥ 0 controls the emphasis on clients that observe more QoS failures. Setting q = 1 and λ = 0 recovers standard sample-size weighted aggregation. Smaller values of q reduce the domination of very large clients, while positive λ increases the influence of high-risk clients. Then the normalized aggre-gation coefficient can be calculated as 
+
+αri = ωri
+
+P 
+
+> j∈S r
+
+ωrj
+
+, i ∈ S r . (9) The global model is updated as 
+
+θr+1 = X
+
+> i∈S r
+
+αri θr+1  
+
+> i
+
+. (10) This aggregation rule encourages the global model to preserve information from high-risk access regions without ignoring the statistical reliability of larger local datasets. 
+
+G. Handover-Aware Access Selection 
+
+After training, the global model is deployed at the edge controller or at local access controllers. For a candidate a ∈Ctu, the model estimates the probability of QoS failure ptu,a .The access decision minimizes a handover-aware risk score: 
+
+Jtu,a = ptu,a + ηh1a̸=at−1 
+
+> u
+
+, (11) where ηh ≥ 0 is the handover cost coefficient. The indicator 
+
+1 a̸ = at−1
+
+> u
+
+ equals one if selecting candidate a triggers a handover, and zero otherwise. The best candidate is 
+
+a⋆,t u = arg min 
+
+> a∈C tu
+
+Jtu,a . (12) To avoid ping-pong handovers, the controller triggers a han-dover only if the candidate improves the current serving score by at least a hysteresis margin ξh and the user has remained with the current serving node for at least Tdwell slots: 
+
+Jtu,a t−1
+
+> u
+
+− Jtu,a ⋆,t u
+
+> ξ h, t − tlast  
+
+> u
+
+≥ Tdwell , (13) where tlast  
+
+> u
+
+is the most recent handover time of user u. If (13) is not satisfied, the user remains connected to at−1 
+
+> u
+
+. Finally, Algorithm 1 summarizes the proposed FedQoS approach. III. E XPERIMENTAL SETUP 
+
+We use Sionna RT and Sionna SYS [13], [14] to generate physics-based network logs for heterogeneous indoor-outdoor environments. The logs are partitioned by observing access node, and each node trains only on its local data while exchanging model parameters with the edge controller. The resulting models are evaluated as both QoS-failure predictors and access-selection policies. 
+
+A. Sionna-Based Dataset Generation 
+
+We construct a 200 m × 200 m campus containing three multi-floor buildings, indoor APs, one outdoor BS, two quasi-static UAV-mounted access nodes, outdoor walkways, and an event area. Indoor structures, material-dependent walls, furniture, vegetation, vehicles, and other outdoor obstacles create blockage and non-line-of-sight conditions. The APs represent private-5G indoor small cells, the BS represents an outdoor campus cell, and the UAVs remain at fixed hovering positions during each simulation episode. Table I summarizes the common simulation and learning parameters. For each scenario, Sionna RT computes geometry-aware propagation between users and access nodes, while Sionna SYS generates QoS-related quantities such as received power, SINR, BLER, throughput, access-node load, and resource utilization. The simulated users follow short indoor-outdoor trajectories, including normal occupancy, class transition, out-door event, stress-event, and access-node degradation scenar-ios. These scenarios capture room/corridor usage, mobility between indoor and outdoor areas, local crowding, heavy-load conditions, and temporary radio or load degradation. Each log entry is a user-candidate tuple (u, a, t ) from Ctu,which contains the current serving node and the top-K feasible measurement candidates. Sionna probes these candidates over the prediction window to obtain future throughput and BLER and derive the QoS-failure labels. In practice, serving-link outcomes are logged directly, while unselected links require probing, dual connectivity, or controlled exploration. Samples remain at their observing access nodes and are locally split into 70%/15%/15% training, validation, and test sets. We evaluate two naturally non-IID conditions using the same campus, radio configuration, user-density ranges, predic-tion horizon, and learning settings. The mild non-IID condition mainly contains normal and class-transition traffic, uses ser-vice rates of 1/5/10 Mbps, and rarely includes AP outages. The severe non-IID condition uses 2/8/15 Mbps, increases event-, stress-, and outage-related traffic, and introduces higher client heterogeneity through stronger room skew, user churn, probing, and reduced candidate sets. TABLE I: Default simulation and learning parameters.                                          
+
+> Parameter Value
+> Campus area 200 m ×200 m
+> Buildings 3 multi-floor buildings (A, B, C) Floors / APs per building A: 2/4, B: 3/9, C: 4/16 Floor height 4 m
+> Access nodes 29 APs, 1 outdoor BS, 2 UAVs Carrier frequency 3.5 GHz
+> Access-node transmit powers AP/BS/UAV: 24/37/30 dBm Access-node antenna gains AP/BS/UAV: 4/12/7 dBi OFDM subcarriers / spacing 1596 / 30 kHz Simulated bandwidth 47.88 MHz OFDM symbols per slot 14 BLER target ϵmax 0.10 Decision-slot duration 1 second Prediction window 5 seconds Candidate construction Top-Kmeasurement candidates Top-Kcandidates for mild setting 4Top-Kcandidates for severe setting 3AP-outage scenario share Mild: 5% ; Severe: 30%
+> Handover factors ηh,ξh,Tdwell 0.08, 0.04, 3 time slots ML model Multi-Layer Perceptron Hidden layer 2 layers with size (96, 96) Activations ReLU, Sigmoid (output layer) Federated rounds 50 Local epochs and batch size 1, 128 Optimizer and learning rate Adam with lr=0.001 FedProx/FedQoS coefficient ( μ)0.01 FedQoS parameters (q, λ )(0 .75 ,0.5)
+
+B. Baselines and Metrics 
+
+The proposed FedQoS algorithm is compared with four learning baselines. Centralized pools all training data at a central server and serves as a centralized learning refer-ence. Local-only trains an independent model at each access node without model aggregation. FedAvg performs standard sample-size-weighted federated averaging, whereas FedProx 
+
+adds a proximal regularization term during local training to mitigate client drift under heterogeneous data. We also compare FedQoS with several non-learning access-selection policies. Current serving keeps each user connected to its existing serving node. Strongest SINR selects the candidate with the highest instantaneous SINR. Load-aware RSRP jointly considers received signal power and access-node load. AP-first prioritizes AP candidates whenever available and falls back to a BS or UAV otherwise. Historical QoS 
+
+selects the candidate with the lowest historical QoS-failure rate in the training logs. Finally, Oracle selects candidates using their realized future QoS outcomes and is included only as a non-implementable performance reference. For QoS-risk prediction, we report balanced accuracy, re-call, and F1-score. Balanced accuracy accounts for the im-balance between successful and failed QoS samples, recall measures the ability to detect imminent QoS failures, and the F1-score summarizes the balance between failure detection and false alarms. Higher values indicate better prediction performance. For access-selection performance, we report the QoS-failure rate, mean throughput, and mean BLER of the selected links. The QoS-failure rate is the primary system-level metric because the objective is to avoid future QoS violations. A lower failure rate and BLER indicate more reliable access selection, whereas a higher throughput indicates better data-rate performance. IV. R ESULTS AND DISCUSSION 
+
+We report results under the mild and severe non-IID condi-tions described in Section III-A. Learning-based results are averaged over ten random seeds and reported as mean ±
+
+standard deviation. 
+
+A. Prediction and Access-Selection Performance 
+
+Table II(a) compares the QoS-failure prediction perfor-mance. In both settings, all federated methods clearly out-perform local-only training, demonstrating that collaboration across access-node clients compensates for the limited and het-erogeneous observations available at individual nodes. As ex-pected, the centralized model generally provides the strongest overall reference because it has direct access to the complete training dataset. In the mild non-IID setting, FedQoS achieves the highest balanced accuracy and recall among the federated methods. Its F1-score remains nearly identical to those of FedAvg and FedProx, indicating that the improved failure sensitivity does not materially degrade the overall classification balance. In particular, FedQoS favors the detection of imminent QoS violations, which is desirable because missed failures can lead directly to poor access-selection decisions. FedProx and FedAvg provide slightly higher displayed F1-score, but the differences are small relative to the variability across random seeds. Under severe non-IID data, FedQoS achieves the highest mean balanced accuracy, recall, and F1 among the federated methods. Although the numerical differences from FedAvg and FedProx remain modest, FedQoS consistently preserves failure-detection performance under stronger topology-induced heterogeneity, increased user density, and partial AP unavail-ability. The substantial gap between all federated models and local-only training also confirms that isolated access nodes cannot learn sufficiently general QoS-failure predictors from their own observations. Overall, FedQoS maintains prediction quality comparable to conventional federated learning under mild non-IID data and TABLE II: Prediction and access-selection performance over ten seeds. Boldface marks the best mean among Local-only, FedAvg, FedProx, and FedQoS, with standard deviation breaking ties at the displayed precision.                                                                                                                                                                                                                                                   
+
+> (a) QoS-failure prediction
+> Mild non-IID Severe non-IID Method BAcc. ↑Recall ↑F1 ↑BAcc. ↑Recall ↑F1 ↑
+> Centralized 0.9493 ±0.0044 0.9174 ±0.0100 0.8902 ±0.0027 0.9688 ±0.0026 0.9617 ±0.0071 0.9475 ±0.0021
+> Local-only 0.9234 ±0.0041 0.8738 ±0.0089 0.8420 ±0.0040 0.9466 ±0.0014 0.9344 ±0.0028 0.9114 ±0.0019
+> FedAvg 0.9421 ±0.0039 0.9089 ±0.0102 0.8675 ±0.0023 0.9670 ±0.0022 0.9599 ±0.0077 0.9441 ±0.0012
+> FedProx 0.9407 ±0.0036 0.9056 ±0.0088 0.8675 ±0.0030 0.9671 ±0.0024 0.9606 ±0.0078 0.9440 ±0.0012
+> FedQoS 0.9440 ±0.0049 0.9137 ±0.0125 0.8672 ±0.0025 0.9679 ±0.0029 0.9617 ±0.0085 0.9451 ±0.0014
+> (b) Access-selection performance
+> Mild non-IID Severe non-IID Method Failure ↓Throughput (Mbps) ↑BLER ↓Failure ↓Throughput (Mbps) ↑BLER ↓
+> Current serving 0.1083 20 .0043 0.0459 0.2969 18 .6359 0.0418
+> Strongest SINR 0.0962 20 .3100 0.0386 0.2795 19 .6464 0.0413
+> Load-aware RSRP 0.0928 19 .6950 0.0374 0.2762 20 .6446 0.0414
+> AP-first 0.0983 20 .5194 0.0395 0.2706 20 .7833 0.0418
+> Historical QoS 0.0905 20 .4140 0.0363 0.2668 21 .3871 0.0365
+> Centralized 0.0025 ±0.0005 18 .0545 ±0.0744 0.0007 ±0.0002 0.1357 ±0.0007 19 .3097 ±0.0669 0.0091 ±0.0003
+> Local-only 0.0055 ±0.0004 17 .6719 ±0.0503 0.0020 ±0.0002 0.1441 ±0.0009 19 .1336 ±0.0316 0.0105 ±0.0003
+> FedAvg 0.0036 ±0.0005 17 .7452 ±0.0443 0.0012 ±0.0002 0.1356 ±0.0008 19 .2150 ±0.0321 0.0095 ±0.0004
+> FedProx 0.0033 ±0.0003 17 .7062 ±0.0387 0.0010 ±0.0001 0.1358 ±0.0003 19 .1920 ±0.0245 0.0095 ±0.0002
+> FedQoS 0.0031 ±0.0002 17 .6586 ±0.0476 0.0009 ±0.0001 0.1356 ±0.0003 19 .1817 ±0.0346 0.0096 ±0.0002
+> Oracle 0.0004 27 .1080 0.0004 0.1289 25 .0075 0.0041
+
+provides the strongest failure-oriented predictive performance under the severe non-IID condition. Table II(b) evaluates the downstream access-selection per-formance. The conventional policies represent different practi-cal selection principles, including maintaining the current serv-ing node, selecting the strongest SINR, considering both RSRP and load, prioritizing AP connectivity, and exploiting historical QoS. However, these policies rely mainly on instantaneous or past measurements and cannot directly anticipate future QoS violations. Consequently, their failure rates and BLER values remain substantially higher than those of the learning-based policies in both settings. In the mild non-IID setting, FedQoS achieves the lowest mean QoS-failure rate and BLER among the federated meth-ods. Its failure rate is reduced by approximately 13 .9% relative to FedAvg and 6.1% relative to FedProx. The reductions rela-tive to local-only training and historical QoS are approximately 
+
+43 .6% and 96 .6% , respectively. These gains show that the overall FedQoS design improves not only failure prediction but, more importantly, the access decisions derived from the predicted probabilities. FedQoS obtains these reliability improvements with only a small throughput reduction. Its average throughput is approxi-mately 0.49% below FedAvg and 0.27% below FedProx. This behavior is consistent with the objective of FedQoS: rather than selecting links solely for their instantaneous data rate, the policy favors candidates with a lower predicted risk of future QoS violation. The resulting reduction in failure rate and BLER therefore outweighs the marginal throughput cost. The severe non-IID setting is substantially more challeng-ing, as indicated by the higher failure rates of all policies. Nevertheless, all learning-based approaches still markedly outperform the conventional heuristics. FedQoS ties FedAvg at the displayed precision for the lowest federated failure rate and remains close to FedAvg and FedProx in both throughput and BLER. Its throughput is less than 0.2% below FedAvg, while the BLER difference is only 10 −4. Hence, the three federated methods operate at very similar system-level performance in this setting, with FedQoS retaining a reliability-oriented operating point under stronger client heterogeneity. The oracle achieves the lowest failure rate and BLER and the highest throughput because it selects access links using future QoS outcomes. It is therefore included only as an unattainable reference rather than an implementable competi-tor. Overall, FedQoS provides the clearest reliability gains under mild non-IID data and remains robust and competitive under the more difficult severe non-IID condition. 
+
+B. Sensitivity to q and λ
+
+We evaluate the sensitivity of FedQoS to the client-size exponent q and the QoS-risk emphasis parameter λ. Since the policy QoS-failure rate is the primary system-level objective, Fig. 2 reports its variation over the evaluated parameter grid. In the mild non-IID setting, the QoS-failure rate varies only from approximately 0.00302 to 0.00334 . The lowest value is obtained near (q, λ ) = (0 .75 , 1.5) , while a broad region with moderate or large q provides nearly identical perfor-mance. The common setting used in the main experiments, 
+
+(q, λ ) = (0 .75 , 0.5) , also lies within this low-failure region. The severe non-IID setting is similarly stable, with the QoS-failure rate remaining within approximately 0.13553 –0.13594 
+
+across the complete grid. Although the minimum is observed near (q, λ ) = (0 .5, 4) , several neighboring combinations yield almost indistinguishable results. This indicates a broad performance plateau rather than a sharply localized optimum. Across both settings, q has a more visible influence than 
+
+λ, particularly when q is close to zero. Hence, controlling the contribution of clients with highly unequal dataset sizes is 0 0.25 0.5 0.75 1Client-size exponent q                                
+
+> 00.5 11.5 2345QoS-risk emphasis  λ
+> 0.00327 0.00313 0.00313 0.00309 0.00327 0.00330 0.00313 0.00313 0.00309 0.00334 0.00330 0.00309 0.00313 0.00306 0.00330 0.00334 0.00313 0.00313 0.00302 0.00327 0.00334 0.00313 0.00313 0.00302 0.00334 0.00327 0.00316 0.00316 0.00302 0.00330 0.00334 0.00316 0.00313 0.00302 0.00327 0.00323 0.00316 0.00316 0.00302 0.00330 best
+
+Policy QoS failure rate 
+
+> 0.00305 0.00310 0.00315 0.00320 0.00325 0.00330 QoS failure rate
+
+(a) Mild non-IID setting. 0 0.25 0.5 0.75 1Client-size exponent q                                
+
+> 00.5 11.5 2345QoS-risk emphasis  λ
+> 0.13578 0.13575 0.13572 0.13569 0.13569 0.13585 0.13575 0.13566 0.13559 0.13566 0.13582 0.13569 0.13569 0.13572 0.13569 0.13585 0.13575 0.13556 0.13569 0.13563 0.13591 0.13569 0.13566 0.13572 0.13566 0.13591 0.13569 0.13559 0.13575 0.13569 0.13594 0.13569 0.13553 0.13575 0.13569 0.13594 0.13569 0.13563 0.13559 0.13566 best
+
+Policy QoS failure rate  
+
+> 0.13555 0.13560 0.13565 0.13570 0.13575 0.13580 0.13585 0.13590 QoS failure rate
+
+(b) Severe non-IID setting. 
+
+Fig. 2: Sensitivity of the policy QoS-failure rate to the client-size exponent q and QoS-risk emphasis parameter λ.more important than aggressively increasing the risk emphasis. Once a reasonable client-size weighting is selected, λ mainly fine-tunes the resulting policy. Overall, the sensitivity analysis shows that FedQoS remains stable over a broad range of parameter values and that the reported policy gains do not depend on narrowly tuned values of q and λ.V. C ONCLUSION 
+
+This paper presented FedQoS, a federated QoS-risk learn-ing framework for reliable access selection in heterogeneous indoor-outdoor environments. Instead of relying only on in-stantaneous signal strength, FedQoS learns the future QoS-failure risk of candidate access links from distributed network observations collected at APs, UAVs, and the BS. The learned risk scores are then used to support reliability-aware access decisions without centralizing user-level data. Simulation re-sults on physics-based synthetic campus datasets show that learning-based access selection substantially reduces QoS fail-ures and BLER compared with conventional signal-based and historical-QoS heuristics. FedQoS achieves near-centralized prediction performance and remains effective under both mild and severe non-IID conditions. Its stable performance across a broad range of aggregation parameters further demonstrates its potential for reliable access selection in dynamic heteroge-neous networks. ACKNOWLEDGMENT 
+
+This work was supported in part by the Luxembourg National Research Fund (FNR) through the CHIST-ERA SHIELD project under Grant INTER/CHIST24/19023763/SHIELD, and in part by the FNR AFR program through the FULFIL project under Grant 2000141. 
+
+REFERENCES [1] D. Liu, L. Wang, Y. Chen, M. Elkashlan, K.-K. Wong, R. Schober, and L. Hanzo, “User association in 5g networks: A survey and an outlook,” 
+
+IEEE Communications Surveys & Tutorials , vol. 18, no. 2, pp. 1018– 1044, 2016. [2] Y. Kim, J. Jang, and H. J. Yang, “Distributed resource allocation and user association for max-min fairness in hetnets,” IEEE Transactions on Vehicular Technology , vol. 73, no. 2, pp. 2983–2988, 2023. [3] Q. Ye, B. Rong, Y. Chen, M. Al-Shalash, C. Caramanis, and J. G. Andrews, “User association for load balancing in heterogeneous cellular networks,” IEEE Transactions on Wireless Communications , vol. 12, no. 6, pp. 2706–2716, 2013. [4] T. Zhou, Y. Huang, W. Huang, S. Li, Y. Sun, and L. Yang, “Qos-aware user association for load balancing in heterogeneous cellular networks,” in 2014 IEEE 80th Vehicular Technology Conference (VTC2014-Fall) .IEEE, 2014, pp. 1–5. [5] F. Kong, X. Sun, V. C. Leung, and H. Zhu, “Delay-optimal biased user association in heterogeneous networks,” IEEE Transactions on Vehicular Technology , vol. 66, no. 8, pp. 7360–7371, 2017. [6] Y. Cao, S.-Y. Lien, Y.-C. Liang, K.-C. Chen, and X. Shen, “User access control in open radio access networks: A federated deep reinforcement learning approach,” IEEE Transactions on Wireless Communications ,vol. 21, no. 6, pp. 3721–3736, 2021. [7] P. Tehrani, F. Restuccia, and M. Levorato, “Federated deep reinforcement learning for the distributed control of nextg wireless networks,” in 2021 IEEE international symposium on dynamic spectrum access networks (DySPAN) . IEEE, 2021, pp. 248–253. [8] N. Zhao, Y.-C. Liang, D. Niyato, Y. Pei, M. Wu, and Y. Jiang, “Deep reinforcement learning for user association and resource allocation in heterogeneous cellular networks,” IEEE Transactions on Wireless Communications , vol. 18, no. 11, pp. 5141–5152, 2019. [9] W. Y. B. Lim, N. C. Luong, D. T. Hoang, Y. Jiao, Y.-C. Liang, Q. Yang, D. Niyato, and C. Miao, “Federated learning in mobile edge networks: A comprehensive survey,” IEEE communications surveys & tutorials ,vol. 22, no. 3, pp. 2031–2063, 2020. [10] D. Bega, M. Gramaglia, M. Fiore, A. Banchs, and X. Costa-Perez, “Deepcog: Optimizing resource provisioning in network slicing with ai-based capacity forecasting,” IEEE Journal on Selected Areas in Communications , vol. 38, no. 2, pp. 361–376, 2019. [11] M. S. Mollel, A. I. Abubakar, M. Ozturk, S. F. Kaijage, M. Kisangiri, S. Hussain, M. A. Imran, and Q. H. Abbasi, “A survey of machine learning applications to handover management in 5g and beyond,” IEEE Access , vol. 9, pp. 45 770–45 802, 2021. [12] T. Li, A. K. Sahu, M. Zaheer, M. Sanjabi, A. Talwalkar, and V. Smith, “Federated optimization in heterogeneous networks,” Proceedings of Machine learning and systems , vol. 2, pp. 429–450, 2020. [13] J. Hoydis, S. Cammerer, F. A¨ ıt Aoudia, A. Vem, N. Binder, G. Marcus, and A. Keller, “Sionna: An open-source library for next-generation physical layer research,” arXiv preprint arXiv:2203.11854 , 2022. [14] J. Hoydis, F. A¨ ıt Aoudia, S. Cammerer, F. Euchner, M. Nimier-David, S. ten Brink, and A. Keller, “Sionna RT: Differentiable ray tracing for radio propagation modeling,” arXiv preprint arXiv:2303.11103 , 2023.

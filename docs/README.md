@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-17 ~ 2026-08-26</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-28</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 17 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 16 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>10</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-26 05:37:02 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-28 02:59:22 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,10 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日共生成 17 篇推荐（精读 6 篇，速读 11 篇）</p>
-<p>精读：《Classical Adversarial Fault-Tolerance and PCPs》（9.0/10）, 《When Do LLM Agents Help? Deadline-Aware Mixed-Criticality Task Scheduling at the Autonomous-Vehicle Edge》（9.0/10）</p>
-<p>速读：《Resilience in Trustworthy Wireless Systems》（8.0/10）, 《PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices》（8.0/10）, 《Autonomous Cyber Defense: Real-Time Attack Detection and Mitigation in Software-Defined Networks Using Machine Learning》（8.0/10）</p>
-<p>这些结果覆盖了当下较热的方向，建议先看精读区论文的关键问题与方法。</p>
+<p>今日推荐聚焦边缘AI与去中心化网络，精读两篇高分论文：LLM边缘推理的吞吐量最大化方案与分层随机线性网络编码的弹性组网策略。最值得关注的是两阶段Maskable PPO方法，能有效提升边缘推理性能；若关注网络鲁棒性，可重点看自适应对等聚类方案。建议后续可结合多集群API网关部署，探索边缘AI与网络优化的联合实践。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -77,7 +74,7 @@
     <strong class="dpr-home-dashboard-count">6 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Classical Adversarial Fault-Tolerance and PCPs">Classical Adversarial Fault-Tolerance and PCPs</span></li><li><span class="dpr-home-dashboard-paper-title" title="When Do LLM Agents Help? Deadline-Aware Mixed-Criticality Task Scheduling at the Autonomous-Vehicle Edge">When Do LLM Agents Help? Deadline-Aware Mixed-Criticality Task Scheduling at the Autonomous-Vehicle Edge</span></li><li><span class="dpr-home-dashboard-paper-title" title="PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge">PRICE: Pricing-based Resource Incentives for Quality-of-Result-aware Computing at the Edge</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Goodput Maximization for Large Language Model Edge Inference: A Two-Phase Maskable PPO Approach">Goodput Maximization for Large Language Model Edge Inference: A Two-Phase Maskable PPO Approach</span></li><li><span class="dpr-home-dashboard-paper-title" title="Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks">Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks</span></li><li><span class="dpr-home-dashboard-paper-title" title="SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs">SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs</span></li></ul>
   </div>
   <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>6</strong></span></div>
 </section>
@@ -87,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">11 篇</strong>
+    <strong class="dpr-home-dashboard-count">10 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Resilience in Trustworthy Wireless Systems">Resilience in Trustworthy Wireless Systems</span></li><li><span class="dpr-home-dashboard-paper-title" title="PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices">PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices</span></li><li><span class="dpr-home-dashboard-paper-title" title="Autonomous Cyber Defense: Real-Time Attack Detection and Mitigation in Software-Defined Networks Using Machine Learning">Autonomous Cyber Defense: Real-Time Attack Detection and Mitigation in Software-Defined Networks Using Machine Learning</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Optimizing API Gateway Placement in Multi-Cloud Kubernetes">Optimizing API Gateway Placement in Multi-Cloud Kubernetes</span></li><li><span class="dpr-home-dashboard-paper-title" title="Thermo-FL: Thermal-Aware Robust Federated Fine-Tuning of Large Language Models for Edge AI">Thermo-FL: Thermal-Aware Robust Federated Fine-Tuning of Large Language Models for Edge AI</span></li><li><span class="dpr-home-dashboard-paper-title" title="Centrality-Based Deployment of Queue Policies in Acyclic Multipath Routing Networks">Centrality-Based Deployment of Queue Policies in Acyclic Multipath Routing Networks</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>11</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>10</strong></span></div>
 </section>
 </div>
 

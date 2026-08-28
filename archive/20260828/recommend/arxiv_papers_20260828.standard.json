@@ -1,0 +1,648 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-28T02:51:22.059079+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 7,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 10,
+    "quick_skim_target": 11,
+    "quick_selected": 10
+  },
+  "deep_dive": [
+    {
+      "id": "2608.25543v1",
+      "source": "arxiv",
+      "title": "Goodput Maximization for Large Language Model Edge Inference: A Two-Phase Maskable PPO Approach",
+      "abstract": "This paper presents a novel two-phase maskable proximal policy optimization (TP-MPPO) algorithm, which maximizes the system goodput counting request throughput with strict service level objective (SLO) compliance for large language model (LLM) inference services in wireless edge networks. In the first phase of TP-MPPO, we optimize the task offloading decisions by MPPO with action masking mechanism, effectively avoiding exploring invalid actions and reducing the action space. In the second phase, closed-form solutions are derived for uplink bandwidth allocation; a greedy algorithm is designed for downlink bandwidth allocation to provide immediate rewards for the MPPO in the next round. The two stages alternate till convergence. Simulation results demonstrate that TP-MPPO can improve the system reward by 33.3%--87.5% compared to its benchmarks and achieve the highest goodput.",
+      "authors": [
+        "Xiaojing Chen",
+        "Qi Zhang",
+        "Wei Ni",
+        "Shunqing Zhang",
+        "Yanzan Sun"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY",
+        "cs.AI"
+      ],
+      "published": "2026-08-26T08:55:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.25543v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "task offloading and bandwidth allocation for edge LLM inference",
+      "llm_evidence_cn": "面向边缘LLM推理的任务卸载与带宽分配",
+      "llm_evidence": "面向边缘LLM推理的任务卸载与带宽分配",
+      "canonical_evidence": "面向边缘LLM推理的任务卸载与带宽分配",
+      "llm_tldr_en": "Presents TP-MPPO, a two-phase maskable PPO algorithm maximizing goodput for LLM inference in wireless edge networks, with masked offloading decisions, closed-form uplink bandwidth, and greedy downlink allocation under SLO compliance.",
+      "llm_tldr_cn": "面向无线边缘网络的大语言模型推理服务，本文提出两阶段可掩蔽PPO(TP-MPPO)算法以最大化满足服务等级目标(SLO)的系统有效吞吐量。第一阶段利用动作掩蔽机制优化任务卸载决策，压缩动作空间并避免无效探索；第二阶段为上行带宽分配推导闭式解，并为下行带宽设计贪婪算法，为下一轮MPPO提供即时奖励。两阶段交替迭代直至收敛，在严格满足SLO的前提下有效提升请求吞吐量。",
+      "llm_tldr": "面向无线边缘网络的大语言模型推理服务，本文提出两阶段可掩蔽PPO(TP-MPPO)算法以最大化满足服务等级目标(SLO)的系统有效吞吐量。第一阶段利用动作掩蔽机制优化任务卸载决策，压缩动作空间并避免无效探索；第二阶段为上行带宽分配推导闭式解，并为下行带宽设计贪婪算法，为下一轮MPPO提供即时奖励。两阶段交替迭代直至收敛，在严格满足SLO的前提下有效提升请求吞吐量。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.26040v1",
+      "source": "arxiv",
+      "title": "Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks",
+      "abstract": "Decentralized wireless collectives including vehicular swarms, IoT clusters, and edge AI networks require communication protocols that maintain robustness under dynamic topologies and heterogeneous link quality. While Random Linear Network Coding (RLNC) provides algebraic resilience against packet erasures, its performance degrades significantly when peers exhibit diverse channel conditions. This paper presents Adaptive Peer Clustering with Hierarchical RLNC (APC-RLNC), a system that dynamically groups peers by exponentially weighted moving average (EWMA) reliability metrics and applies multi-tier network coding within and across clusters. We formalize the clustering optimization problem, derive closed-form decoding probability bounds for Markov erasure channels, and prove O(sqrt(T)) regret for online reconfiguration under the Follow-the-Regularized-Leader (FTRL) framework. Our implementation includes both a high-fidelity network simulator and a proof-of-concept testbed deployment on Jetson Nano edge devices. Evaluation across diverse scenarios including high-mobility vehicular networks, burst-error channels, and adversarial interference demonstrates 5.2-9.8 percentage-point packet delivery ratio (PDR) improvements, 10-23% latency reductions, and up to 30% higher node retention compared to state-of-the-art baselines. The system exhibits linear scalability to 500+ nodes and maintains real-time reconfiguration overhead below 3%. APC-RLNC establishes adaptive clustering as a foundational primitive for AI-native 6G wireless systems.",
+      "authors": [
+        "Navaneetha Krishnan Kamalakannan",
+        "Harinisri Velmurugan"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP",
+        "cs.DC",
+        "cs.IT",
+        "cs.NI"
+      ],
+      "published": "2026-08-26T17:17:01+00:00",
+      "link": "https://arxiv.org/pdf/2608.26040v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "resilient wireless networks against packet erasures and topology changes",
+      "llm_evidence_cn": "抗丢包与拓扑变化的无线网络韧性",
+      "llm_evidence": "抗丢包与拓扑变化的无线网络韧性",
+      "canonical_evidence": "抗丢包与拓扑变化的无线网络韧性",
+      "llm_tldr_en": "Proposes APC-RLNC, adaptive peer clustering with hierarchical random linear network coding, to maintain robust communication in decentralized wireless networks like edge AI under dynamic topologies and heterogeneous link quality.",
+      "llm_tldr_cn": "去中心化无线网络（如车载群、IoT簇和边缘AI网络）需要应对动态拓扑与链路质量差异带来的通信韧性挑战。本文提出自适应对等聚类与层次化随机线性网络编码（APC-RLNC），按可靠性指标动态分组并执行多级网络编码。该方法在差异构链路条件下显著提升抗丢包能力，为边缘无线网络的可靠传输提供了可扩展的编码与聚类方案。",
+      "llm_tldr": "去中心化无线网络（如车载群、IoT簇和边缘AI网络）需要应对动态拓扑与链路质量差异带来的通信韧性挑战。本文提出自适应对等聚类与层次化随机线性网络编码（APC-RLNC），按可靠性指标动态分组并执行多级网络编码。该方法在差异构链路条件下显著提升抗丢包能力，为边缘无线网络的可靠传输提供了可扩展的编码与聚类方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.26559v1",
+      "source": "arxiv",
+      "title": "SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs",
+      "abstract": "Civil aviation space-air-ground integrated networks (SAGINs) are expected to support heterogeneous cockpit and cabin services over dynamic air-to-air (A2A), air-to-ground (A2G), and air-to-satellite (A2S) data links. This paper studies service function chain (SFC)-aware online access-side aggregated data-link orchestration for civil aviation SAGINs enabled by software-defined networking and network function virtualization (SDN/NFV). We jointly orchestrate spatial bearer resources and temporal elasticity enabled by temporal elastic mapping and parking (TEMP). A rolling-slot model is developed with four request-level actions: NOW, TEMP, REJECT, and DROP, under a lexicographic objective that prioritizes service success, then normalized access-orchestration delay, and finally residual TEMP-related risk. To avoid exhaustive search over the full binary action space, we propose Model-Induced Risk and Scarcity-Aware Refinement (MRSAR), which derives deferred-realization risk from the success-prioritized objective and resource-scarcity signals from data-link and TEMP buffer constraints. These signals guide valuation-based feasible construction and bounded neighborhood refinement. Simulation results show that MRSAR remains close to the Gurobi-MILP reference in service success, outperforms arrival-order and delay-myopic greedy baselines, controls REJECT and DROP failures, and achieves a favorable quality-complexity tradeoff for rolling online orchestration.",
+      "authors": [
+        "Ziyang Guo",
+        "Bing Du"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-27T03:00:40+00:00",
+      "link": "https://arxiv.org/pdf/2608.26559v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "SFC-aware orchestration with SDN/NFV",
+      "llm_evidence_cn": "面向服务功能链的SDN/NFV编排",
+      "llm_evidence": "面向服务功能链的SDN/NFV编排",
+      "canonical_evidence": "面向服务功能链的SDN/NFV编排",
+      "llm_tldr_en": "Studies SFC-aware online aggregated data-link orchestration for civil aviation SAGINs with SDN/NFV, jointly managing spatial bearer resources and temporal elasticity via a rolling-slot model with NOW, TEMP, REJECT, and DROP actions under a lexicographic objective.",
+      "llm_tldr_cn": "面向民航空天地一体化网络，需为动态数据链上的异构服务提供按序处理的服务功能链。本文在SDN/NFV架构下提出SFC感知的在线聚合数据链编排，联合优化空间承载资源与时间弹性映射/停放。采用滚动时隙模型，提供NOW、TEMP、REJECT、DROP四种请求动作，并按优先级最大化服务成功。该工作为资源受限的动态网络中的服务功能链部署与编排提供了系统化方法。",
+      "llm_tldr": "面向民航空天地一体化网络，需为动态数据链上的异构服务提供按序处理的服务功能链。本文在SDN/NFV架构下提出SFC感知的在线聚合数据链编排，联合优化空间承载资源与时间弹性映射/停放。采用滚动时隙模型，提供NOW、TEMP、REJECT、DROP四种请求动作，并按优先级最大化服务成功。该工作为资源受限的动态网络中的服务功能链部署与编排提供了系统化方法。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ordered set of virtual network functions that process traffic in sequence",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.19471v1",
+      "source": "arxiv",
+      "title": "Exact Multistate Reliability and Upgrade Design for Heterogeneous HBM Systems via Threshold-Pruned BAT",
+      "abstract": "High Bandwidth Memory (HBM) systems can exhibit partial service rather than only full service or complete isolation: a controller-visible service unit may deliver full, reduced, or zero bandwidth because of sub-channel isolation, lane remapping, or protection overhead. This paper develops an exact multistate reliability framework in which each service unit carries an arbitrary finite set of bandwidth states and reliability is the probability that aggregate delivered bandwidth meets a demand. The binary k-out-of-n model is recovered as a special case, while closed-form binary-mapping error relations quantify mean-bandwidth distortion and provide a screening test for the simpler abstraction. For exact single-threshold evaluation a threshold-pruned multistate Binary-Addition-Tree (TP-mBAT) algorithm is proposed. It is deliberately regime-specific: fixed-grid dynamic programming is preferable on a compact common grid, where a 16-unit commensurate control required 273 pruned-DP updates versus 362,506 TP-mBAT node visits. On a reproducible 14-unit incommensurate benchmark, TP-mBAT is compared against a dynamic program carrying the same threshold rules, so that no baseline is weakened. Both expand the same state space, 6,862 nodes against 6,861 updates, and the separation lies entirely in retained state: 17 traversal entries against 412,121 probability states at central demand, reducing measured peak storage from 25.02 MB to 1,152 B. An exact probability-transfer sensitivity identifies when moving mass from a degraded state to a higher-bandwidth state changes system success, and a reserved-unit floor model admits a third exact pruning rule that is vacuous without such floors. A latent package-state mixture captures shared stress, where ignoring dependence overstates reliability by 8.73 percentage points.",
+      "authors": [
+        "Wei-Chang Yeh"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.PF",
+        "math.OC"
+      ],
+      "published": "2026-08-19T22:04:08+00:00",
+      "link": "https://arxiv.org/pdf/2608.19471v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Multistate reliability framework for systems with partial service under component failures",
+      "llm_evidence_cn": "针对组件故障导致部分服务能力的系统，提出精确多态可靠性建模",
+      "llm_evidence": "针对组件故障导致部分服务能力的系统，提出精确多态可靠性建模",
+      "canonical_evidence": "针对组件故障导致部分服务能力的系统，提出精确多态可靠性建模",
+      "llm_tldr_en": "Develops an exact multistate reliability framework where each service unit has arbitrary bandwidth states, quantifying probability that aggregate bandwidth meets demand; recovers binary k-out-of-n model as special case.",
+      "llm_tldr_cn": "针对高带宽存储器(HBM)等设备可能仅提供部分服务能力而非完全失效的问题，本文提出精确的多态可靠性框架。每个服务单元可具有任意有限个带宽状态，以聚合带宽是否满足需求来定义可靠性。该方法将二元k-out-of-n模型作为特例，并给出二元映射误差的闭式关系。该框架为存在多种降级模式的系统可靠性评估提供了更精细的工具。",
+      "llm_tldr": "针对高带宽存储器(HBM)等设备可能仅提供部分服务能力而非完全失效的问题，本文提出精确的多态可靠性框架。每个服务单元可具有任意有限个带宽状态，以聚合带宽是否满足需求来定义可靠性。该方法将二元k-out-of-n模型作为特例，并给出二元映射误差的闭式关系。该框架为存在多种降级模式的系统可靠性评估提供了更精细的工具。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ability of a system to continue operating correctly in the presence of component failures",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.25403v1",
+      "source": "arxiv",
+      "title": "Retry Amplification in Distributed Systems: A Systematic Analysis of Retry Policies and Their Role in Cascading Failures",
+      "abstract": "Retry mechanisms are a standard component of resilient distributed systems, but their collective behavior, when every tier in a call path retries concurrently, is less well understood than the per-client guidance that produced them. This paper introduces the retry amplification factor (RAF), a metric quantifying the additional request volume that retry policies generate during partial failures. In a study of 200 open-source Python microservice projects, explicit retry logic is detected in 11.5%, and an audit of our own false negatives places true prevalence near 41%. Among the projects detected, 60.9% contain at least one configuration without backoff, and after manual verification exactly one of 113 production configurations randomizes its delay. We then evaluate these policies in simulation (n = 100 trials per strategy). Under correlated failures, a naive standard retry policy reduces the success rate from 55.4% to 41.5% relative to performing no retries at all. We catalog five recurring anti-patterns, propose Adaptive Retry Budgeting (ARB), and show that budget-constrained retries maintain success rates close to the no-retry baseline while still recovering from transient faults. These results indicate that retry behavior should be designed as a system-level property rather than configured locally at each call site.",
+      "authors": [
+        "Rishabh Mehan",
+        "Jasmit Kaur Saluja"
+      ],
+      "primary_category": "cs.SE",
+      "categories": [
+        "cs.SE"
+      ],
+      "published": "2026-08-26T06:04:03+00:00",
+      "link": "https://arxiv.org/pdf/2608.25403v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Analyzes retry policies and cascading failures in distributed systems with a new amplification metric",
+      "llm_evidence_cn": "分析分布式系统中的重试策略与级联故障，提出重试放大因子指标",
+      "llm_evidence": "分析分布式系统中的重试策略与级联故障，提出重试放大因子指标",
+      "canonical_evidence": "分析分布式系统中的重试策略与级联故障，提出重试放大因子指标",
+      "llm_tldr_en": "Introduces retry amplification factor (RAF) to quantify extra request volume from retry policies during partial failures; studies 200 open-source Python microservice projects, revealing common misconfigurations.",
+      "llm_tldr_cn": "重试机制是分布式系统韧性的常规组件，但多层同时重试的集体行为常被忽视。本文提出重试放大因子（RAF）度量部分故障期间重试策略产生的额外请求量。对200个开源Python微服务项目分析发现显式重试逻辑占11.5%，且多数配置缺少退避，揭示级联故障风险。该工作为设计可控的重试策略、提升系统韧性提供了定量依据。",
+      "llm_tldr": "重试机制是分布式系统韧性的常规组件，但多层同时重试的集体行为常被忽视。本文提出重试放大因子（RAF）度量部分故障期间重试策略产生的额外请求量。对200个开源Python微服务项目分析发现显式重试逻辑占11.5%，且多数配置缺少退避，揭示级联故障风险。该工作为设计可控的重试策略、提升系统韧性提供了定量依据。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ability of a system to continue operating correctly in the presence of component failures",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.25549v1",
+      "source": "arxiv",
+      "title": "Throughput Maximization for MapReduce-Based Collaborative Computing over Energy-Harvesting Wireless Devices",
+      "abstract": "This paper studies resource allocation for MapReduce-based collaborative computing over heterogeneous wireless devices powered by renewable energy harvesting. We formulate a long-run average throughput maximization problem that jointly optimizes computing load, phase time allocations, transmit power, and per-device energy consumption, subject to battery evolution, CPU frequency, and latency constraints. To solve this problem online without prior knowledge of channel states or energy arrivals, we propose a DDPG-CVX algorithm that couples Deep Deterministic Policy Gradient (DDPG) with convex programming. DDPG determines the per-slot energy budget for each device from observed battery and channel states; the remaining resource allocation variables are then resolved to global optimality by an embedded convex solver. This two-phase decomposition reduces the action-space dimensionality of DDPG while preserving per-slot solution quality. Simulations show that DDPG-CVX achieves 1.25$\\times$$\\sim$32.36$\\times$ the throughput of representative benchmarks.",
+      "authors": [
+        "Yuhang Li",
+        "Siqi Sun",
+        "Hongen Zheng",
+        "Xiaojing Chen",
+        "Shunqing Zhang",
+        "Yanzan Sun"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY",
+        "cs.DC"
+      ],
+      "published": "2026-08-26T09:02:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.25549v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "computing, spectrum and energy resource allocation for collaborative MapReduce at wireless edge",
+      "llm_evidence_cn": "面向无线边缘协作MapReduce的计算、通信与能量资源分配",
+      "llm_evidence": "面向无线边缘协作MapReduce的计算、通信与能量资源分配",
+      "canonical_evidence": "面向无线边缘协作MapReduce的计算、通信与能量资源分配",
+      "llm_tldr_en": "The paper formulates a long-run throughput maximization problem for MapReduce-based collaborative computing over energy-harvesting wireless devices, solved by a DDPG-CVX algorithm coupling deep reinforcement learning and convex programming.",
+      "llm_tldr_cn": "针对能量收集无线设备上的MapReduce协作计算，本文构建长期平均吞吐量最大化问题，联合优化计算负载、时隙分配、发射功率与能耗。提出DDPG-CVX算法，利用DDPG决定能量预算并用凸优化求解其余分配，无需信道先验即可在线决策，提升了边缘协作计算效率。",
+      "llm_tldr": "针对能量收集无线设备上的MapReduce协作计算，本文构建长期平均吞吐量最大化问题，联合优化计算负载、时隙分配、发射功率与能耗。提出DDPG-CVX算法，利用DDPG决定能量预算并用凸优化求解其余分配，无需信道先验即可在线决策，提升了边缘协作计算效率。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.26573v1",
+      "source": "arxiv",
+      "title": "Optimizing API Gateway Placement in Multi-Cloud Kubernetes",
+      "abstract": "The use of API gateways within geographically distributed multi-cloud Kubernetes clusters poses a tradeoff between infrastructure cost, computational resources, and network latencies. We present an optimization formulation that addresses API gateway placement as a capacitated facility location problem that jointly determines which candidate clusters to activate, how many gateway replicas to deploy, and how regional traffic should be distributed across the selected clusters. The formulation imposes an upper bound on estimated client-to-cluster network round-trip latency, excluding gateway processing, queuing, and backendservice latency, and incorporates a utilization headroom factor for gateway replica capacity. We present both a mixed-integer linear programming (MILP) formulation and a constructive greedy heuristic that ranks candidates according to incremental cost, comprising cluster-activation and marginal replica costs, per unit of assignable capacity while explicitly accounting for already committed load. Both formulations are applied to deterministic, seed-controlled, geography-based synthetic instances. For each problem size, 30 instances are generated with random seeds to analyze their performance. The greedy algorithm achieves an optimality gap of 3.2% to 4.7% to the MILP optimal solution, with a maximum observed gap of 25.0% for one particular instance, and a speedup of approximately 660x to 3,490x for 3 to 12 candidate clusters. In a canonical 10-candidate, 10-demand region instance, MILP-optimal deployment saves 24.2% in terms of monthly cost compared to the full-replication baseline. On the other hand, selecting the single cheapest candidate yields savings of 24.8% compared to the MILP optimum but does not satisfy the latency requirement for 3 out of 10 demand regions.",
+      "authors": [
+        "Vinoth Punniyamoorthy",
+        "Murali Shankar Dulam",
+        "Aswathnarayan Muthukrishnan Kirubakaran",
+        "Akshay Deshpande",
+        "Nachiappan Chockalingam",
+        "Bikesh Kumar",
+        "Naga Surya Pasupuleti",
+        "Narender Reddy Bitla"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-27T03:31:24+00:00",
+      "link": "https://arxiv.org/pdf/2608.26573v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "capacitated facility location for gateway replica placement and traffic distribution",
+      "llm_evidence_cn": "以容量约束的设施选址问题优化网关副本放置与流量分配",
+      "llm_evidence": "以容量约束的设施选址问题优化网关副本放置与流量分配",
+      "canonical_evidence": "以容量约束的设施选址问题优化网关副本放置与流量分配",
+      "llm_tldr_en": "Formulates API gateway placement in multi-cloud Kubernetes as a capacitated facility location problem, jointly deciding cluster activation, replica count, and traffic distribution under latency and utilization constraints.",
+      "llm_tldr_cn": "针对多云Kubernetes中API网关部署的资源与延迟权衡，提出将网关放置建模为容量受限的设施选址问题，联合决定激活哪些候选集群、部署多少网关副本以及区域流量如何分配。模型对客户端到集群的网络时延设置上界，并引入利用率余量因子。数值实验验证了该优化在成本、资源与时延之间的有效平衡，为分布式服务网关的部署提供了可复用的优化方法。",
+      "llm_tldr": "针对多云Kubernetes中API网关部署的资源与延迟权衡，提出将网关放置建模为容量受限的设施选址问题，联合决定激活哪些候选集群、部署多少网关副本以及区域流量如何分配。模型对客户端到集群的网络时延设置上界，并引入利用率余量因子。数值实验验证了该优化在成本、资源与时延之间的有效平衡，为分布式服务网关的部署提供了可复用的优化方法。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.21172v1",
+      "source": "arxiv",
+      "title": "Thermo-FL: Thermal-Aware Robust Federated Fine-Tuning of Large Language Models for Edge AI",
+      "abstract": "Federated fine-tuning enables large language models to adapt on edge devices without centralizing private data, but practical deployments must address hardware instability and adversarial update corruption together. Thermally constrained clients may throttle, slow local training, or delay synchronous aggregation, while Byzantine clients and communication-layer adversaries can corrupt the updates used to form the global model. To address these challenges, we present Thermo-FL, a thermal-aware federated LoRA fine-tuning framework that uses device temperature as an active control signal for local adapter training and sparse update transmission. On the client side, Thermo-FL adjusts the active LoRA-layer fraction and transmitted update density as devices heat or cool, reducing workload under thermal stress. On the server side, Thermo-FL introduces TERRA, a robust aggregation pipeline for dynamically sparse LoRA updates that combines norm filtering, mask-aware directional validation, adaptive active-coordinate clipping, and mask-aware aggregation. We evaluate Thermo-FL using both a large-scale emulator and a Jetson-based physical testbed. In the emulator, Thermo-FL improves robustness under adversarial sparse aggregation and achieves the strongest BoolQ accuracy across clean and attack settings while remaining competitive on GSM8K. In the physical prototype, Thermo-FL stabilizes device temperature, reduces compressed upload size through bitmap sparse encoding, and preserves GSM8K utility under sign-flip/scale and MITM perturbations. These results show that secure edge LLM adaptation should jointly consider hardware behavior, workload regulation, sparse communication, and aggregation robustness.",
+      "authors": [
+        "Shiva Shrestha",
+        "Kazi Shaharair Sharif",
+        "Zongxing Xie",
+        "Jiajing Huang",
+        "Anhao Xiang",
+        "Honghui Xu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.DC"
+      ],
+      "published": "2026-08-21T14:41:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.21172v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "edge AI federated learning robust to Byzantine clients and thermal failures",
+      "llm_evidence_cn": "边缘AI联邦学习，对拜占庭客户端与热故障具有鲁棒性",
+      "llm_evidence": "边缘AI联邦学习，对拜占庭客户端与热故障具有鲁棒性",
+      "canonical_evidence": "边缘AI联邦学习，对拜占庭客户端与热故障具有鲁棒性",
+      "llm_tldr_en": "Thermo-FL uses device temperature as a control signal in federated LoRA fine-tuning, adjusting active layers and sparse updates to resist thermal throttling and Byzantine corruption in edge AI.",
+      "llm_tldr_cn": "边缘设备上的联邦微调需同时应对硬件热不稳定与恶意更新破坏。本文提出Thermo-FL框架，利用设备温度作为主动控制信号，动态调整LoRA活跃层与传输更新，以缓解热降频和拜占庭客户端影响，提升边缘AI联邦学习的鲁棒性与可靠性。",
+      "llm_tldr": "边缘设备上的联邦微调需同时应对硬件热不稳定与恶意更新破坏。本文提出Thermo-FL框架，利用设备温度作为主动控制信号，动态调整LoRA活跃层与传输更新，以缓解热降频和拜占庭客户端影响，提升边缘AI联邦学习的鲁棒性与可靠性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.24131v1",
+      "source": "arxiv",
+      "title": "Centrality-Based Deployment of Queue Policies in Acyclic Multipath Routing Networks",
+      "abstract": "Excessive queueing delays constitute a significant impediment to latency-sensitive network applications. Although effective deployment of Active Queue Management (AQM) strategies has been proposed as a necessary solution, deployment remains sparse. This paper studies AQM deployment in a specific class of networks where routers/switches have a topological hierarchy, form acyclic paths, and adopt multipath routing. Our approach rests on the well-established premise that AQM deployment impacts packet-forwarding dynamics in networks carrying TCP flows, thus establishing a direct link between stability and network performance. We use fluid models for TCP and queue dynamics in the network, along with a simple threshold-based queue policy to outline a closed-loop model for the network. Stability analyses reveal that while the network is vulnerable to instability as the average round-trip time (RTT) of the TCP flows increases, it tolerates a much larger RTT without losing stability when the threshold-based AQM is deployed in an appropriate router. We then define a Katz centrality-based metric to choose the most appropriate router for AQM deployment, and argue that doing so ensures the greatest stabilising effect. Finally, packet-level simulations corroborate that the proposed deployment strategy ensures low-latency operation of the network.",
+      "authors": [
+        "Mahima Gupta",
+        "Acquin Biju",
+        "Rijul Jain",
+        "Dipesh Sharma",
+        "Sreelakshmi Manjunath"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-25T06:50:30+00:00",
+      "link": "https://arxiv.org/pdf/2608.24131v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Centrality-based deployment of network function policies in routing networks",
+      "llm_evidence_cn": "基于中心性的网络功能策略部署方法",
+      "llm_evidence": "基于中心性的网络功能策略部署方法",
+      "canonical_evidence": "基于中心性的网络功能策略部署方法",
+      "llm_tldr_en": "Develops a centrality-based strategy for deploying AQM queue policies in acyclic multipath routing networks, using fluid models and threshold-based queues to reduce delays and improve stability.",
+      "llm_tldr_cn": "针对延迟敏感网络应用，本文研究无环多路径网络中主动队列管理（AQM）策略的有效部署问题。采用TCP与队列动力学的流体模型及简单阈值队列策略，提出基于中心性的部署方法，改善网络稳定性和性能。该方法为网络功能（如AQM）的放置提供了可借鉴的中心性选择思路，对边缘网络中的服务功能链部署也有方法论启示。",
+      "llm_tldr": "针对延迟敏感网络应用，本文研究无环多路径网络中主动队列管理（AQM）策略的有效部署问题。采用TCP与队列动力学的流体模型及简单阈值队列策略，提出基于中心性的部署方法，改善网络稳定性和性能。该方法为网络功能（如AQM）的放置提供了可借鉴的中心性选择思路，对边缘网络中的服务功能链部署也有方法论启示。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "What are effective strategies for deploying service function chains on edge nodes?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.24636v1",
+      "source": "arxiv",
+      "title": "Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity",
+      "abstract": "The primary goal of a distributed storage system is to ensure that clients can both write and read data in a reliable and consistent manner, even in the presence of failures. While existing asynchronous verifiable information dispersal (AVID) protocols achieve optimal space complexity for storage and communication complexity for data retrieval in a Byzantine setting, the crucial operations of data dispersal and node recovery have received less attention.   We propose an efficient AVID protocol that simultaneously guarantees low complexities for dispersal, storage, retrieval, and recovery. At the core of the proposed protocol lies a novel mechanism to encode data in a two-dimensional matrix and a bespoke dispersal algorithm. The protocol maintains an optimal communication complexity for retrieval while substantially improving upon the state of the art for recovery. Additionally, we describe how the protocol can be modified in order to reduce the space complexity and the communication complexity for dispersal, at the expense of a higher communication complexity for retrieval and recovery. As the proposed protocols strike a balance across all considered metrics, they are suitable for a broad range of real-world use cases.",
+      "authors": [
+        "Thomas Locher",
+        "Yvonne-Anne Pignolet"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.CR",
+        "cs.IT"
+      ],
+      "published": "2026-08-25T14:48:30+00:00",
+      "link": "https://arxiv.org/pdf/2608.24636v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "fault-tolerant asynchronous verifiable information dispersal protocol",
+      "llm_evidence_cn": "面向故障场景的异步可验证信息分发协议，提升系统容错性",
+      "llm_evidence": "面向故障场景的异步可验证信息分发协议，提升系统容错性",
+      "canonical_evidence": "面向故障场景的异步可验证信息分发协议，提升系统容错性",
+      "llm_tldr_en": "Introduces a two-dimensional matrix encoding and custom dispersal algorithm to simultaneously achieve low complexity for data dispersal, storage, retrieval, and recovery in asynchronous Byzantine settings.",
+      "llm_tldr_cn": "分布式存储系统需要在存在故障的情况下保证数据读写的一致可靠。现有AVID协议虽达到最优空间与检索复杂度，但对数据分发和节点恢复关注不足。本文提出一种高效AVID协议，基于二维矩阵编码和定制分发算法，同时实现分发、存储、检索与恢复的低复杂度。该协议增强了分布式系统在拜占庭故障下的弹性。该工作对边缘存储等可靠性场景具有方法借鉴意义。",
+      "llm_tldr": "分布式存储系统需要在存在故障的情况下保证数据读写的一致可靠。现有AVID协议虽达到最优空间与检索复杂度，但对数据分发和节点恢复关注不足。本文提出一种高效AVID协议，基于二维矩阵编码和定制分发算法，同时实现分发、存储、检索与恢复的低复杂度。该协议增强了分布式系统在拜占庭故障下的弹性。该工作对边缘存储等可靠性场景具有方法借鉴意义。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ability of a system to continue operating correctly in the presence of component failures",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25053v1",
+      "source": "arxiv",
+      "title": "Hydra: Phase-Aware Workload Characterization of LLM Inference across Edge SoC Generations, Backends, and Quantization Levels",
+      "abstract": "Edge LLM deployment is shaped by more than model size and precision: inference backend, hardware platform, memory traffic, and power management all affect latency and efficiency. We present Hydra, a common-schema, phase-aware workload characterization framework for LLM inference on edge SoCs. Hydra instruments HuggingFace Transformers and llama.cpp with a shared per-prompt timing schema and fuses those records with hardware telemetry, enabling a multi-dimensional characterization of performance, system-resource utilization, and efficiency across prefill and decode phases. Using Hydra, we evaluate three consecutive edge System-on-Chip (SoC) generations (AGX Xavier, AGX Orin, and AGX Thor), 13 instruction-tuned LLMs from seven families, five execution formats, and consider input/output-length sensitivity. The resulting artifact contains roughly 107K per-prompt records and is publicly released with Hydra. Our analysis shows that aggregate latency alone hides key deployment effects: backend structure changes where latency is introduced, quantization reduces memory traffic and energy but does not predict power monotonically, and SoC generation changes how utilization and efficiency should be interpreted. By connecting phase-level timing with system-resource utilization and efficiency metrics, Hydra enables reproducible, phase-aware characterization of edge LLM inference. Hydra's source code and the collected per-prompt trace corpus are available open-source at: https://github.com/amirtaherin/hydra",
+      "authors": [
+        "Amir Taherin",
+        "Sana Taghipour Anvari",
+        "Charles Amante",
+        "Yixiao Chen",
+        "Ruben Noroian",
+        "Zlatan Feric",
+        "Nicolas Bohm Agostini",
+        "Pu Zhao",
+        "José Cano",
+        "Bin Ren",
+        "Yanzhi Wang",
+        "David Kaeli"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.AI",
+        "cs.DC",
+        "cs.PF"
+      ],
+      "published": "2026-08-25T18:43:43+00:00",
+      "link": "https://arxiv.org/pdf/2608.25053v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "edge SoC workload characterization for LLM inference",
+      "llm_evidence_cn": "面向边缘SoC的LLM推理负载特征刻画",
+      "llm_evidence": "面向边缘SoC的LLM推理负载特征刻画",
+      "canonical_evidence": "面向边缘SoC的LLM推理负载特征刻画",
+      "llm_tldr_en": "Presents Hydra, a phase-aware workload characterization framework for LLM inference on edge SoCs, fusing per-prompt timing with hardware telemetry to evaluate performance and efficiency across generations, backends, and quantization levels.",
+      "llm_tldr_cn": "边缘大语言模型部署不仅取决于模型大小与精度，还受推理后端、硬件平台、内存与功耗管理影响。本文提出Hydra框架，以统一时序模式对HuggingFace Transformers与llama.cpp进行阶段感知插桩，并与硬件遥测融合。基于三个边缘SoC代际和多种量化设置，Hydra刻画了预填与解码阶段的性能与资源效率差异。该工作为边缘计算环境下的模型推理调优与资源规划提供了系统化分析工具。",
+      "llm_tldr": "边缘大语言模型部署不仅取决于模型大小与精度，还受推理后端、硬件平台、内存与功耗管理影响。本文提出Hydra框架，以统一时序模式对HuggingFace Transformers与llama.cpp进行阶段感知插桩，并与硬件遥测融合。基于三个边缘SoC代际和多种量化设置，Hydra刻画了预填与解码阶段的性能与资源效率差异。该工作为边缘计算环境下的模型推理调优与资源规划提供了系统化分析工具。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25373v1",
+      "source": "arxiv",
+      "title": "Designing Core Layer in Campus Network Using Software-Defined Networking",
+      "abstract": "As one of the layers in campus network, core layer or backbone network should provide interconnectivity and routing between internal and external networks, including other campus networks or the Internet. With that requirement, designing this layer to be highly available to interconnect and route traffic is a high priority. By using software-defined networking (SDN) paradigm, we attempt to design core layer in campus network employing best practices of network topology and routing protocol at the layer with a use case of core layer in a university campus network. We use RouteFlow as the SDN platform supporting a traditional routing protocol, i.e. Open Shortest Path First (OSPF), over OpenFlow (OF) network infrastructure. The experimental testbed/environment consists of two virtual machines (VMs). The first VM is used as the SDN/OF data plane with Open vSwitch in Mininet network emulator, and the second one representing SDN control plane comprising RouteFlow with POX controller. We evaluated the design by testing the interconnectivity using ping for the OF switches in the topology and hosts that are connected to the switches. We also tracked the route of the packets by monitoring traffic passed through all network interfaces of the switches using tcpdump. This case was evaluated since we need to make sure that packets were routed with the shortest path from source to destination using OSPF that was implemented in the virtual network at the top of the SDN platform.",
+      "authors": [
+        "Iwan Setiawan",
+        "Azis Wisnu Widhi Nugraha",
+        "Sauqi Asrorul Zaza"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-26T04:47:20+00:00",
+      "link": "https://arxiv.org/pdf/2608.25373v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "high-availability core network design using SDN and OSPF",
+      "llm_evidence_cn": "利用SDN与OSPF实现高可用核心网络设计",
+      "llm_evidence": "利用SDN与OSPF实现高可用核心网络设计",
+      "canonical_evidence": "利用SDN与OSPF实现高可用核心网络设计",
+      "llm_tldr_en": "Designs a highly available campus core layer using SDN with RouteFlow and OSPF, applying best practices for topology and routing to ensure resilient interconnectivity and traffic forwarding.",
+      "llm_tldr_cn": "针对校园网核心层对高可用互联和路由的优先需求，采用软件定义网络范式，结合RouteFlow平台在OpenFlow基础设施上运行OSPF路由协议，设计并验证了核心网络基础设施。实验测试床环境展示了该设计在拓扑与路由层面的高可用性，为园区骨干网络的韧性建设提供了实践参考。",
+      "llm_tldr": "针对校园网核心层对高可用互联和路由的优先需求，采用软件定义网络范式，结合RouteFlow平台在OpenFlow基础设施上运行OSPF路由协议，设计并验证了核心网络基础设施。实验测试床环境展示了该设计在拓扑与路由层面的高可用性，为园区骨干网络的韧性建设提供了实践参考。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25496v1",
+      "source": "arxiv",
+      "title": "FedQoS: Federated QoS-Risk Learning for Heterogeneous Indoor-Outdoor Access Selection",
+      "abstract": "Reliable access selection in dynamic and heterogeneous indoor-outdoor environments is challenging because instantaneous radio measurements alone cannot capture future QoS degradation caused by mobility, blockage, traffic load, and resource competition. This paper proposes FedQoS, a federated QoS-risk learning framework for predicting the future reliability of candidate access links and supporting access-node selection without centralizing user-level network data. In FedQoS, each access node locally learns from its observed network logs, including radio, traffic, load, and service-context features, while a global QoS-risk predictor is trained through federated aggregation. The learned model estimates the probability of QoS failure for each candidate link, and the controller uses these risk scores to select reliable access nodes under dynamic network conditions. To evaluate the framework, we construct physics-based synthetic indoor-outdoor wireless datasets using the Sionna framework, covering normal traffic, mobility, event-driven congestion, and non-IID client observations. Simulation results show that learning-based access selection substantially reduces the QoS-failure rate compared with signal-based and historical-QoS heuristic methods. FedQoS achieves near-centralized predictive performance and provides clear reliability gains under mild non-IID data while remaining competitive under the more challenging severe non-IID condition. These results demonstrate the potential of federated QoS-risk learning for reliable, data-local access selection in dynamic wireless environments.",
+      "authors": [
+        "Nguyen Van Thieu",
+        "Ti Ti Nguyen",
+        "Ons Aouedi",
+        "Zerihun Huruy",
+        "Vu Nguyen Ha",
+        "Symeon Chatzinotas"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-26T08:07:43+00:00",
+      "link": "https://arxiv.org/pdf/2608.25496v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "predicts future reliability of access links to support resilient access selection",
+      "llm_evidence_cn": "预测候选接入链路未来可靠性，支撑弹性接入选择",
+      "llm_evidence": "预测候选接入链路未来可靠性，支撑弹性接入选择",
+      "canonical_evidence": "预测候选接入链路未来可靠性，支撑弹性接入选择",
+      "llm_tldr_en": "FedQoS uses federated aggregation of local network logs to build a global QoS-risk predictor that estimates future reliability of access links in heterogeneous indoor-outdoor environments.",
+      "llm_tldr_cn": "异构室内外动态环境下，仅靠瞬时无线测量难以预测移动、阻塞与负载带来的QoS退化。FedQoS提出联邦QoS风险学习框架，各接入节点利用本地日志学习，通过联邦聚合训练全局风险预测器，不集中用户级数据。该模型估计每个候选接入链路的QoS失败概率，支撑接入节点选择。实验验证了其在异构环境下对接入可靠性的预测能力。该框架有助于提升网络在动态条件下的韧性。",
+      "llm_tldr": "异构室内外动态环境下，仅靠瞬时无线测量难以预测移动、阻塞与负载带来的QoS退化。FedQoS提出联邦QoS风险学习框架，各接入节点利用本地日志学习，通过联邦聚合训练全局风险预测器，不集中用户级数据。该模型估计每个候选接入链路的QoS失败概率，支撑接入节点选择。实验验证了其在异构环境下对接入可靠性的预测能力。该框架有助于提升网络在动态条件下的韧性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25535v1",
+      "source": "arxiv",
+      "title": "Resilient Decentralized Wireless Federated Learning via Gradient Tracking with AdamW",
+      "abstract": "Wireless Internet-of-Things (IoT) edge networks require decentralized learning (DecL) methods that can operate reliably under both heterogeneous local data and communication-constrained wireless links. However, existing decentralized optimization schemes often incur substantial communication overhead and degraded performance when transmissions are constrained by strict airtime budgets, fading channels, and packet losses. This paper proposes QEF-GT-AdamW, a communication-efficient and outage-resilient algorithm for DecL over wireless communication (WCom) networks. The proposed method combines gradient tracking to mitigate the effect of non-IID data, AdamW-based adaptive optimization to improve training stability, and dual-stream biased quantization with error feedback to reduce communication payloads for both model and tracking exchanges. To address unreliable broadcast communication, the proposed framework further employs a local fallback strategy when scheduled packets are not successfully received. We explicitly model the effect of bandwidth, transmit power, airtime constraints, and fading channels on DecL performance, and establish convergence guarantees for the proposed algorithm under compressed and unreliable wireless communication. Experimental results on heterogeneous MNIST and CIFAR-10 settings show that QEF-GT-AdamW consistently improves robustness and convergence performance over representative DecL baselines while achieving favorable accuracy-communication trade-offs under limited wireless resources.",
+      "authors": [
+        "Nguyen Van Thieu",
+        "Ti Ti Nguyen",
+        "Ons Aouedi",
+        "Vu Nguyen Ha",
+        "Symeon Chatzinotas"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.DC",
+        "cs.NI"
+      ],
+      "published": "2026-08-26T08:46:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.25535v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "outage-resilient decentralized learning over wireless edge networks",
+      "llm_evidence_cn": "无线边缘网络中抗中断的去中心化学习",
+      "llm_evidence": "无线边缘网络中抗中断的去中心化学习",
+      "canonical_evidence": "无线边缘网络中抗中断的去中心化学习",
+      "llm_tldr_en": "Proposes QEF-GT-AdamW, a communication-efficient and outage-resilient algorithm for decentralized federated learning over wireless edge networks, combining gradient tracking, AdamW, and dual-stream biased quantization to handle non-IID data and packet losses.",
+      "llm_tldr_cn": "针对无线IoT边缘网络中去中心化学习在异构本地数据和通信受限链路下可靠运行的需求，本文提出QEF-GT-AdamW算法。该算法融合梯度跟踪以缓解非独立同分布数据影响、基于AdamW的自适应优化以提升训练稳定性，并使用双流有偏量化有效压缩通信量。实验表明该方法在严格空气时间预算、衰落信道和丢包条件下仍保持高效通信与抗中断能力，为边缘无线联邦学习提供了稳健的优化手段。",
+      "llm_tldr": "针对无线IoT边缘网络中去中心化学习在异构本地数据和通信受限链路下可靠运行的需求，本文提出QEF-GT-AdamW算法。该算法融合梯度跟踪以缓解非独立同分布数据影响、基于AdamW的自适应优化以提升训练稳定性，并使用双流有偏量化有效压缩通信量。实验表明该方法在严格空气时间预算、衰落信道和丢包条件下仍保持高效通信与抗中断能力，为边缘无线联邦学习提供了稳健的优化手段。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25658v1",
+      "source": "arxiv",
+      "title": "Stochastic End-to-End Latency Modeling of the IoT-Edge-Cloud Continuum: Impact of Jitter and Traffic Variability on Deterministic Service Provisioning",
+      "abstract": "6G will integrate communication and computing capabilities in a IoT-edge-cloud continuum, enabling nodes to distribute workloads across the continuum. To support time-sensitive services, both communications and computing latencies must be controlled. Two key sources of temporal variability are arrival-time jitter and traffic variability. They can both impact the timing at which data is generated, transmitted and processed, and the resulting fluctuations can propagate throughout the continuum, increasing latency uncertainty. This paper studies the impact of stochastic temporal variability on the ability to support end-to-end deterministic service levels across the continuum. To this end, we present a novel queueing-based end-to-end latency model for the continuum, which we openly release. The model jointly captures computing and communication latency, and characterizes the complete end-to-end latency distribution, including tail latency. Our analysis shows that services with stringent latency deadlines and larger computing demands are more sensitive to temporal variabilities, making local execution the preferred option. In contrast, services with more relaxed deadlines are more resilient to temporal variabilities when executed locally or at the edge despite higher average and tail latencies. Edge offloading is beneficial under good cellular connectivity and increasing local processing workloads, whereas cloud execution is more sensitive to traffic variabilities because of the additional communication latency. Our analysis also shows that services offloaded are more sensitive to traffic variability than jitter due to higher communication latencies. These findings highlight that effective service offloading must jointly consider service requirements and sources of temporal variability to guarantee deterministic service levels.",
+      "authors": [
+        "Keyvan Aghababaiyan",
+        "Javier Gozalvez",
+        "Baldomero Coll-Perales"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-26T11:40:18+00:00",
+      "link": "https://arxiv.org/pdf/2608.25658v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "IoT-Edge-Cloud continuum and edge workload distribution for time-sensitive services",
+      "llm_evidence_cn": "研究IoT-边缘-云连续体中的端到端延迟建模，边缘节点分布式处理负载",
+      "llm_evidence": "研究IoT-边缘-云连续体中的端到端延迟建模，边缘节点分布式处理负载",
+      "canonical_evidence": "研究IoT-边缘-云连续体中的端到端延迟建模，边缘节点分布式处理负载",
+      "llm_tldr_en": "Models stochastic end-to-end latency in the IoT-Edge-Cloud continuum for time-sensitive services, showing how jitter and traffic variability propagate and affect deterministic service provisioning.",
+      "llm_tldr_cn": "针对6G IoT-边缘-云连续体中时间敏感服务的确定性保障问题，本文研究了到达抖动和流量变化对端到端延迟的影响。通过端到端延迟建模分析随机时间变异性在连续体中的传播机制，揭示了延迟不确定性放大的原因。结果表明需要同时管控通信与计算延迟才能支持确定性服务水平。该工作为边缘计算环境下服务部署的延迟评估提供了理论工具。",
+      "llm_tldr": "针对6G IoT-边缘-云连续体中时间敏感服务的确定性保障问题，本文研究了到达抖动和流量变化对端到端延迟的影响。通过端到端延迟建模分析随机时间变异性在连续体中的传播机制，揭示了延迟不确定性放大的原因。结果表明需要同时管控通信与计算延迟才能支持确定性服务水平。该工作为边缘计算环境下服务部署的延迟评估提供了理论工具。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.26498v1",
+      "source": "arxiv",
+      "title": "PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units",
+      "abstract": "Open Radio Access Network (O-RAN) disaggregates RAN protocol functions and enables Centralized Unit (CU) and Distributed Unit (DU) software to execute on general-purpose computing platforms. Different CU and DU protocol responsibilities produce different processor workloads and execution paths. Conventional performance metrics, including CPU utilization and throughput, quantify aggregate resource usage without identifying function-level execution costs or processor microarchitectural bottlenecks. Processor-level characterization, on the other hand, provides insights into resource provisioning, function placement, software optimization, and hardware acceleration. The paper describes a controlled characterization framework that evaluates independently deployed CU and DU functions under matched hardware and traffic conditions. The experimental platform integrates the Linux Foundation OCUDU implementation with an emulated User Equipment, a ZeroMQ-based radio interface, and an Open5GS core. Automated validation confirms registration and bidirectional packet delivery before process-scoped Intel VTune Hotspots and Top-Down Microarchitecture Analysis. Under traffic load, accumulated process CPU time increases from 17.3 s to 37.4 s for the CU and from 462.0 s to 628.4 s for the DU during equal 300-s profiling intervals. The measurements identify distinct CU and DU execution characteristics and motivate function-specific processor analysis and optimization.",
+      "authors": [
+        "Moojan Kamalzadeh",
+        "Larry Horner",
+        "Linqi Xiao",
+        "Abhishek Bhattacharyya",
+        "Ehsan Bahaloo Horeh",
+        "Padmapriya Patil",
+        "Venkateswarlu Gudepu",
+        "Andrea Fumagalli"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.PF"
+      ],
+      "published": "2026-08-27T00:45:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.26498v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "query:edge-sfc"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "characterizing software network functions on virtualized RAN platforms",
+      "llm_evidence_cn": "虚拟化RAN平台上软件网络功能的特征刻画",
+      "llm_evidence": "虚拟化RAN平台上软件网络功能的特征刻画",
+      "canonical_evidence": "虚拟化RAN平台上软件网络功能的特征刻画",
+      "llm_tldr_en": "Presents a controlled characterization framework for O-RAN CU/DU software running on general-purpose platforms, identifying function-level execution costs and microarchitectural bottlenecks to guide resource provisioning and function placement.",
+      "llm_tldr_cn": "开放无线接入网(O-RAN)将CU和DU功能软件化并部署到通用计算平台，现有聚合指标难以刻画函数级开销。本文提出一种受控的处理器级特征刻画框架，系统评估CU和DU在不同协议职责下的处理器工作负载和执行路径，识别微架构瓶颈。基于该信息可为资源供给、功能放置、软件优化和硬件加速提供依据，从而提升虚拟化RAN网络功能的部署效率。",
+      "llm_tldr": "开放无线接入网(O-RAN)将CU和DU功能软件化并部署到通用计算平台，现有聚合指标难以刻画函数级开销。本文提出一种受控的处理器级特征刻画框架，系统评估CU和DU在不同协议职责下的处理器工作负载和执行路径，识别微架构瓶颈。基于该信息可为资源供给、功能放置、软件优化和硬件加速提供依据，从而提升虚拟化RAN网络功能的部署效率。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "software implementation of a network function running on virtualized infrastructure",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

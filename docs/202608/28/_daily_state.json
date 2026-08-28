@@ -1,0 +1,265 @@
+{
+  "date": "20260828",
+  "date_label": "",
+  "generated_at": "2026-08-28 02:59:22 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.25543v1",
+      "route": "202608/28/2608.25543v1-goodput-maximization-for-large-language-model-edge-inference-a-two-phase-maskable-ppo-approach",
+      "title": "Goodput Maximization for Large Language Model Edge Inference: A Two-Phase Maskable PPO Approach",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向边缘LLM推理的任务卸载与带宽分配",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.26040v1",
+      "route": "202608/28/2608.26040v1-adaptive-peer-clustering-with-hierarchical-random-linear-network-coding-for-resilient-decentralized-wireless-networks",
+      "title": "Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "抗丢包与拓扑变化的无线网络韧性",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.26559v1",
+      "route": "202608/28/2608.26559v1-sfc-aware-online-aggregated-data-link-orchestration-for-sdnnfv-enabled-sagins",
+      "title": "SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向服务功能链的SDN/NFV编排",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.19471v1",
+      "route": "202608/28/2608.19471v1-exact-multistate-reliability-and-upgrade-design-for-heterogeneous-hbm-systems-via-threshold-pruned-bat",
+      "title": "Exact Multistate Reliability and Upgrade Design for Heterogeneous HBM Systems via Threshold-Pruned BAT",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "针对组件故障导致部分服务能力的系统，提出精确多态可靠性建模",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25403v1",
+      "route": "202608/28/2608.25403v1-retry-amplification-in-distributed-systems-a-systematic-analysis-of-retry-policies-and-their-role-in-cascading-failures",
+      "title": "Retry Amplification in Distributed Systems: A Systematic Analysis of Retry Policies and Their Role in Cascading Failures",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "分析分布式系统中的重试策略与级联故障，提出重试放大因子指标",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25549v1",
+      "route": "202608/28/2608.25549v1-throughput-maximization-for-mapreduce-based-collaborative-computing-over-energy-harvesting-wireless-devices",
+      "title": "Throughput Maximization for MapReduce-Based Collaborative Computing over Energy-Harvesting Wireless Devices",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向无线边缘协作MapReduce的计算、通信与能量资源分配",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.26573v1",
+      "route": "202608/28/2608.26573v1-optimizing-api-gateway-placement-in-multi-cloud-kubernetes",
+      "title": "Optimizing API Gateway Placement in Multi-Cloud Kubernetes",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "以容量约束的设施选址问题优化网关副本放置与流量分配",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.21172v1",
+      "route": "202608/28/2608.21172v1-thermo-fl-thermal-aware-robust-federated-fine-tuning-of-large-language-models-for-edge-ai",
+      "title": "Thermo-FL: Thermal-Aware Robust Federated Fine-Tuning of Large Language Models for Edge AI",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "边缘AI联邦学习，对拜占庭客户端与热故障具有鲁棒性",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.24131v1",
+      "route": "202608/28/2608.24131v1-centrality-based-deployment-of-queue-policies-in-acyclic-multipath-routing-networks",
+      "title": "Centrality-Based Deployment of Queue Policies in Acyclic Multipath Routing Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基于中心性的网络功能策略部署方法",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.24636v1",
+      "route": "202608/28/2608.24636v1-asynchronous-verifiable-information-dispersal-with-low-space-and-communication-complexity",
+      "title": "Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向故障场景的异步可验证信息分发协议，提升系统容错性",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25053v1",
+      "route": "202608/28/2608.25053v1-hydra-phase-aware-workload-characterization-of-llm-inference-across-edge-soc-generations-backends-and-quantization-levels",
+      "title": "Hydra: Phase-Aware Workload Characterization of LLM Inference across Edge SoC Generations, Backends, and Quantization Levels",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向边缘SoC的LLM推理负载特征刻画",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25373v1",
+      "route": "202608/28/2608.25373v1-designing-core-layer-in-campus-network-using-software-defined-networking",
+      "title": "Designing Core Layer in Campus Network Using Software-Defined Networking",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "利用SDN与OSPF实现高可用核心网络设计",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25496v1",
+      "route": "202608/28/2608.25496v1-fedqos-federated-qos-risk-learning-for-heterogeneous-indoor-outdoor-access-selection",
+      "title": "FedQoS: Federated QoS-Risk Learning for Heterogeneous Indoor-Outdoor Access Selection",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "预测候选接入链路未来可靠性，支撑弹性接入选择",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25535v1",
+      "route": "202608/28/2608.25535v1-resilient-decentralized-wireless-federated-learning-via-gradient-tracking-with-adamw",
+      "title": "Resilient Decentralized Wireless Federated Learning via Gradient Tracking with AdamW",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "无线边缘网络中抗中断的去中心化学习",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.25658v1",
+      "route": "202608/28/2608.25658v1-stochastic-end-to-end-latency-modeling-of-the-iot-edge-cloud-continuum-impact-of-jitter-and-traffic-variability-on-deterministic-service-provisioning",
+      "title": "Stochastic End-to-End Latency Modeling of the IoT-Edge-Cloud Continuum: Impact of Jitter and Traffic Variability on Deterministic Service Provisioning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "研究IoT-边缘-云连续体中的端到端延迟建模，边缘节点分布式处理负载",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    },
+    {
+      "paper_id": "2608.26498v1",
+      "route": "202608/28/2608.26498v1-pro-ran-processor-level-characterization-of-open-ran-centralized-and-distributed-units",
+      "title": "PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "虚拟化RAN平台上软件网络功能的特征刻画",
+      "first_seen_at": "2026-08-28 02:59:22 UTC",
+      "updated_at": "2026-08-28 02:59:22 UTC"
+    }
+  ]
+}
