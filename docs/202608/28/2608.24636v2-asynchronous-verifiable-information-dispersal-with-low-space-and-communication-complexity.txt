@@ -1,0 +1,1213 @@
+Title: Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity
+
+URL Source: https://arxiv.org/pdf/2608.24636v2
+
+Published Time: Thu, 27 Aug 2026 00:43:39 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity 
+
+# Thomas Locher 
+
+DFINITY Switzerland 
+
+# Yvonne-Anne Pignolet ∗
+
+StableClear Switzerland 
+
+## Abstract 
+
+The primary goal of a distributed storage system is to ensure that clients can both write and read data in a reliable and consistent man-ner, even in the presence of failures. While existing asynchronous verifiable information dispersal (AVID) protocols achieve optimal space complexity for storage and communication complexity for data retrieval in a Byzantine setting, the crucial operations of data dispersal and node recovery have received less attention. We pro-pose an efficient AVID protocol that simultaneously guarantees low complexities for dispersal, storage, retrieval, and recovery. At the core of the proposed protocol lies a novel mechanism to encode data in a two-dimensional matrix and a bespoke dispersal algorithm. The protocol maintains an optimal communication complexity for retrieval while substantially improving upon the state of the art for recovery. Additionally, we describe a protocol variant that offers a reduced space complexity and communication complexity for dispersal, at the expense of a higher communication complexity for recovery and, depending on its parameterization, also retrieval. As the proposed protocols strike a balance across all considered metrics, they are suitable for a broad range of real-world use cases. 
+
+## CCS Concepts 
+
+• Computer systems organization → Fault-tolerant network topologies ; • Theory of computation → Distributed algo-rithms ; Cryptographic protocols ; Error-correcting codes ; • Infor-mation systems → Distributed storage .
+
+## Keywords 
+
+asynchronous verifiable information dispersal, distributed storage, Byzantine fault tolerance, erasure coding, regenerating codes, node recovery 
+
+ACM Reference Format: 
+
+Thomas Locher and Yvonne-Anne Pignolet. 2026. Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity. In 
+
+38th ACM Symposium on Parallelism in Algorithms and Architectures (SPAA ’26), July 06–10, 2026, London, United Kingdom. ACM, New York, NY, USA, 12 pages. https://doi.org/10.1145/3816782.3819202 
+
+## 1 Introduction 
+
+Distributed storage systems are a foundational pillar of modern infrastructure, supporting applications that range from global-scale 
+
+> ∗Part of this work was done while at DFINITY.
+> This work is licensed under a Creative Commons Attribution 4.0 International License.
+> SPAA ’26, London, United Kingdom
+> © 2026 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-2761-0/2026/07 https://doi.org/10.1145/3816782.3819202
+
+cloud services to decentralized archives and blockchain scalability solutions. Emerging decentralized storage platforms such as Wal-rus [12] and Shelby [16] are beginning to deploy these techniques at scale, underscoring the practical relevance of distributed storage systems. The primary bottleneck for scaling such systems is the significant overhead—comprising storage footprint, bandwidth con-sumption, and maintenance costs—required to manage data across nodes that may (and do) fail at any time. Offering resilience against a broad range of disruptions, including network partitions, soft-ware bugs, and malicious behavior, is a challenging requirement. 
+
+Asynchronous verifiable information dispersal (AVID) protocols have been established as a core primitive to provide robust guarantees without any assumptions on network delays. Since their introduction by Cachin and Tessaro [9], AVID proto-cols have been evaluated primarily on two metrics: space complex-ity (storage requirement) and communication complexity (band-width requirement) for data retrieval. State-of-the-art constructions achieve a storage overhead factor of 1 .5 (i.e., 1 .5 times the original data is stored) when strictly less than a third of all nodes are Byzan-tine , that is, exhibit arbitrary faulty behavior. This factor is optimal: for any data item 𝑚 , storing less than 1 .5|𝑚 | bits in total would allow ≈𝑛 /3 Byzantine nodes to concentrate their share and deny access to 𝑚 , where |𝑚 | denotes the size of 𝑚 in bits and 𝑛 is the total number of storage nodes. This focus, however, does not reflect the operational realities of many modern workloads. In particular, there is an explosive growth of “dark data” and write-once-read-never archives [2, 25], estimated to account for 30–80% of all data in highly regulated industries such as healthcare and finance, where information must be reliably ingested and retained over long pe-riods of time but is practically never accessed. Thus, the costs of initial data dispersal (distributing data across nodes), continuous storage footprint, background node repair, and retrieval (access-ing data on demand) must all be considered, and the right balance among them depends on the use case scenario. Many AVID protocols incur a significant dispersal overhead and lack efficient node recovery : when a node fails, the replacement node has to download the entire dataset to reconstruct its share of the data—an approach that is practically infeasible at scale, even when node failures are infrequent. Recent work has begun to address this shortcoming by reducing the dispersal and recovery overheads. For example, Alhaddad et al. [3] proposed an AVID protocol with an overhead factor for dispersal of only 3; however, the protocol incurs the same (sub-optimal) overhead factor of 3 for storage and data retrieval as well. It was later shown how to keep the overhead factor of storage and data retrieval at 1 .5 at a higher but still constant overhead factor for data dispersal [5]. This approach is compatible with minimum storage regenerating (MSR) codes [14] to improve recovery performance. While these codes enable efficient recovery, they typically incur higher communication costs during arXiv:2608.24636v2 [cs.DC] 26 Aug 2026 SPAA ’26, July 06–10, 2026, London, United Kingdom Thomas Locher and Yvonne-Anne Pignolet 
+
+Protocol Storage Dispersal Retrieval Recovery Cachin-Tessaro [9] 1.5|𝑚 | 𝒏 |𝒎 | 1.5|𝑚 | 1.5|𝒎 |
+
+Alhaddad et al. [3] 3|𝑚 | 3|𝑚 | 3|𝑚 | 3|𝒎 |
+
+Alhaddad et al. [5] 1.5|𝑚 | 9|𝑚 | 1.5|𝑚 | 1.5|𝒎 |
+
+Danezis et al. [12] 4.5|𝑚 | 7|𝑚 | 1.5|𝑚 | 7.5|𝑚 |/ 𝑛 
+
+This work (§3) 3|𝑚 | 6|𝑚 | 1.5|𝑚 | 4.5|𝑚 |/ 𝑛 
+
+This work (§4, 𝛾 = 1.8) 1.8|𝑚 | 6.12 |𝑚 | 1.6|𝑚 | 16 .2|𝑚 |/ 𝑛 
+
+This work (§4, 𝛾 = 1.5) 1.5|𝑚 | 4.5|𝑚 | 1.5|𝑚 | 1.5|𝒎 |
+
+Table 1: Comparison of the space and communication com-plexity for distributed storage protocols for data item 𝑚 of size |𝑚 | with up to ⌊( 𝑛 − 1)/ 3⌋ Byzantine nodes in a network of 𝑛 nodes. Entries in bold are not asymptotically optimal with respect to |𝑚 | and 𝑛 .
+
+retrieval. Danezis et al. [12] introduced the Red Stuff protocol, which prioritizes efficient recovery. Yet, this efficiency comes at a steep cost, requiring a storage overhead factor of 4 .5, three times the theoretical minimum. In this paper, we present AVID protocols that improve upon the state of the art across the entire operational spectrum. Our approach is built from standard primitives (erasure codes, vector commitments); the contribution lies in a novel two-dimensional encoding scheme and dispersal algorithm. Concretely, our main contribution is a protocol that achieves a storage overhead factor of 3, a 33% improvement over Red Stuff, while simultaneously reducing communication complexity for both dispersal and node recovery by 14% and 40%, respectively. As an additional contribution, we introduce a parameterized variant of our protocol based on MSR codes, trading off the cost of storage and dispersal for retrieval and recovery efficiency, thereby enabling deployment tuning to use-case requirements. Table 1 provides a comparison of various distributed storage pro-tocols. The additive term independent of |𝑚 | is 𝑂 (𝑛 2 |𝜋 |) for all met-rics across all listed protocols, where |𝜋 | denotes the commitment-proof size, which is discussed in detail in §2. Depending on the commitment and batching scheme, the additive term for storage and retrieval is 𝑂 (𝑛 |𝜋 | + 𝑛 2 log (𝑛 )) for certain protocols. While no single protocol dominates all metrics, the proposed protocols show that efficient recovery can be achieved with lower storage overhead and reduced dispersal cost. Note that the main protocol (§3) guarantees an optimal overhead for data retrieval and strictly outperforms the protocol of Danezis et al. in all other metrics. The complexities of the protocol variant (§4) can be tuned using a parameter 𝛾 ≥ 3/2, which corresponds to the storage overhead factor. When choosing, e.g., 𝛾 = 1.8, the space complexity is nearly optimal but it still underperforms the main protocol in all other dimensions. For 𝛾 = 3/2, the complexities match the complexities of the protocol by Alhaddad et al. [5], with the dispersal complexity cut in half. Thus, we also improve upon the state of the art for the class of space-optimal AVID protocols. The constants in Table 1 translate directly to operating costs. Consider a network of 𝑛 = 100 nodes with 1 Gbps bandwidth per node storing a 1 GB data item. When using our main protocol, each node stores 30 MB, versus 45 MB when using Red Stuff—a saving of 15 MB per item per node. The commitment-proof over-head is ≈60 KB (using Merkle trees) or ≈6 KB (using KZG commit-ments [19]) per item per node—three to four orders of magnitude below the data footprint—, confirming that the term dependent on 
+
+|𝑚 | dominates operational costs. At corpus scale (1 PB of content), Red Stuff requires 4.5 PB of network-wide storage while our main protocol requires only 3 PB, a reduction of 1.5 PB. When a node fails, the replacement node must download 75 TB under Red Stuff versus 45 TB under our protocol in §3, saving 30 TB ( ≈2.8 days of repair traffic at saturated bandwidth). Depending on storage and bandwidth costs, the protocol variant in §4 is attractive for deployments that prioritize minimizing storage further, accepting a higher recovery and, for 𝛾 > 3/2, retrieval overhead. The remainder of the paper is organized as follows. The system model and preliminaries are introduced in §2. The main AVID proto-col and the protocol variant are presented in §3 and §4, respectively. Related work is summarized in §5, and §6 concludes the paper. 
+
+## 2 Model and Preliminaries 
+
+The considered system consists of a storage network of 𝑛 nodes 
+
+{𝑣 1, . . . , 𝑣 𝑛 } and an unbounded set of clients {𝑐, 𝑐 ′, . . . }. The nodes comprising the storage network are also called storage nodes . The goal is to store data efficiently and keep the stored data consis-tent and available despite the presence of up to 𝑡 := ⌊( 𝑛 − 1)/ 3⌋
+
+Byzantine nodes in the storage network. A Byzantine node may deviate from a given protocol in arbitrary ways, e.g., it may not store data, provide invalid or inconsistent data, or simply crash and stop participating in protocol execution entirely. Clients may also be Byzantine, aiming to transition the storage network into an inconsistent state or causing undue load in terms of consumed storage space and bandwidth, possibly by colluding with the Byzan-tine nodes. Nodes and clients that never fail and adhere to a given protocol at all times are called honest .We assume that the network topology is static and known to all storage nodes and clients and that all communication occurs over authenticated channels. Furthermore, communication is assumed to be asynchronous , i.e., every message is guaranteed to arrive at the targeted recipient but the delay until it is received is unbounded. In other words, there is an adversary with complete control over message scheduling, yet it cannot drop or alter messages of honest storage nodes and clients, nor create messages on their behalf. The adversary can adaptively corrupt nodes and clients during protocol execution, subject to the constraint that at most 𝑡 nodes may be corrupted. Any corrupted node is fully controlled by the adversary. Naturally, it must be possible to store data in the storage network. To this end, a client executes a dispersal algorithm to have some data item 𝑚 of size |𝑚 | stored. Throughout this paper, |𝑚 | denotes the worst-case (i.e., incompressible) size of 𝑚 in bits. Once the data item is stored, any client can execute a retrieval algorithm to read 𝑚 from the storage network. Each data item 𝑚 is assigned a unique identifier 𝑖𝑑 = ID( 𝑚 ), where ID is a function mapping from the message space to an identifier space with a negligible probability that any two data items can be found that map to the same identifier. As mentioned before, the client may be Byzantine as well. A Byzantine client may disseminate invalid data in the storage network, which is acceptable assuming that the client has AVID with Low Space and Communication Complexity SPAA ’26, July 06–10, 2026, London, United Kingdom 
+
+paid for the consumed resources beforehand. If the stored data item is invalid, the result of retrieval with parameter 𝑖𝑑 must be ⊥,indicating that no valid data item is stored for this identifier. The conditions of AVID, which have been slightly rephrased from their original specification [9], are captured formally in the following definition. 
+
+Definition 2.1 (Asynchronous verifiable information dispersal (AVID)). In an asynchronous network of 𝑛 nodes where up to 
+
+𝑡 < 𝑛 /3 nodes may be Byzantine, the following conditions must hold for some parameter ℓ ≤ 𝑛 − 𝑡 .
+
+• Termination : If an honest client 𝑐 disperses 𝑚 , then all honest nodes eventually terminate the dispersal of 𝑚 .
+
+• Agreement : If some honest node terminates the dispersal of 
+
+𝑚 , then all honest nodes eventually terminate the dispersal. 
+
+• Availability : If ℓ honest nodes terminate the dispersal of 𝑚 ,then any client can eventually retrieve some data item. 
+
+• Correctness : If ℓ honest nodes terminate the dispersal of 𝑚 
+
+and clients 𝑐 ′ and 𝑐 ′′ retrieve 𝑚 ′ and 𝑚 ′′ , then 𝑚 ′ = 𝑚 ′′ . If the writing client is honest, then 𝑚 = 𝑚 ′ = 𝑚 ′′ .The parameter ℓ is related to the storage overhead as well as the communication complexity. Our protocol in §3 uses ℓ := 𝑛 − 𝑡 as it minimizes the complexities but it can be made to work for smaller 
+
+ℓ as well. In short, the conditions state that if one honest node terminates the dispersal, then all other honest nodes terminate the dispersal, and all clients read consistent results (as soon as at least 
+
+ℓ nodes have terminated the dispersal). Moreover, if the writing client 𝑐 is honest, it is further guaranteed that all reading clients read client 𝑐 ’s dispersed data item. AVID protocols typically do not consider the fact that nodes must eventually be replaced in long-running systems. For any stored data item 𝑚 , the corresponding state of a node 𝑣 can be recreated on a (new) node 𝑣 ′ by retrieving 𝑚 and then deriving the parts of 𝑚 
+
+that 𝑣 ′ must store, discarding the other parts. With this approach the entire state of the storage network must be sent to 𝑣 ′, which is practically infeasible. Thus, a recovery algorithm is needed that is efficient in the sense that the amount of transferred data exceeds the state size of 𝑣 merely by a small factor. The quality of AVID protocols is measured primarily along two dimensions: how much data the storage nodes store and how much data must be transferred when reading or writing, or when recov-ering the state of a failed node. In this context, the space complexity 
+
+is formally defined as follows. 
+
+Definition 2.2 (Space complexity). For any data item 𝑚 , the space complexity is the maximum number of bits stored across all honest nodes to provide access to 𝑚 once dispersal has terminated. The space complexity is a function of the network size 𝑛 , message size |𝑚 |, and cryptographic parameters specific to the protocol. This definition does not take into account that the memory consumption may be higher during the execution of the dispersal algorithm because nodes may temporarily buffer received data that is not part of their long-term storage. This omission is justified in that the primary concern is to minimize the long-term storage consumption; moreover, the maximum amount of data buffered at any stage is upper bounded by the amount of data transmitted, which is captured in the following definition. 
+
+Definition 2.3 (Communication complexity). For any operation, the communication complexity is the maximum total number of bits transmitted by all honest nodes (and the initiating client, if any) to carry out said operation. As mentioned above, the relevant operations are dispersal, re-trieval, and recovery. For protocols where honest nodes that did not receive their share of data during the dispersal execute the recovery algorithm in order to participate in the retrieval (e.g., [12]), the ques-tion is how to properly define the communication complexity of dispersal and retrieval. Since these recovery operations occur only once during the first retrieval, we count the communication com-plexity of the required recovery operations as part of the dispersal. An example of this calculation is given in §5. In addition to the space and communication complexity, we also consider the round complexity , i.e., the maximum number of commu-nication rounds required to carry out each operation, where each round consists of the steps of sending messages, receiving messages of this round, and then carrying out some local computation. The primary technique to keep these complexities low in all recent papers on AVID (and related problems such as reliable broad-cast) is erasure coding . An (𝑛, 𝑘 )-erasure code is used to encode any message 𝑚 into 𝑛 so-called fragments 𝑓 1, . . . , 𝑓 𝑛 in such a way that any subset of 𝑘 fragments can be used to decode message 𝑚 .In this paper, the functions to encode data and decode fragments are called encode and decode , respectively. Concretely, given a vector 𝑚 = (𝑚 1, . . . , 𝑚 𝑘 ) of 𝑘 data elements, where each 𝑚 𝑖 is a string of bits, and a parameter 𝑛 , encode (𝑚, 𝑛 ) returns a vector 
+
+𝑣 ′ = (𝑓 1, . . . , 𝑓 𝑛 ) of 𝑛 fragments. The function decode takes any sub-set of 𝑘 distinct fragments 𝑓 𝑖 1 , . . . , 𝑓 𝑖 𝑘 as input and outputs a vector 
+
+(𝑚 1, . . . , 𝑚 𝑘 ). Without loss of generality, we can assume that the used erasure code is systematic , which means that the output of the 
+
+encode function contains the input vector. Concretely, we assume in the following that 𝑚 𝑖 = 𝑓 𝑖 for all 𝑖 ∈ [ 𝑘 ], where [𝑘 ] := {1, . . . , 𝑘 }.The other fragments 𝑓 𝑘 +1, . . . , 𝑓 𝑛 are called recovery fragments . More-over, we consider linear erasure codes, where each encoded symbol is a linear combination of the original message symbols over a finite field. Given an input vector 𝑚 = (𝑚 1, . . . , 𝑚 𝑘 ) of size |𝑚 |, the size of a fragment 𝑓 𝑖 is max (| 𝑚 |/ 𝑘, ⌈log (𝑛 )⌉) . The size is at least ⌈log (𝑛 )⌉ 
+
+due to the fact that erasure coding works with a field of cardinality at least 𝑛 . In the following, we assume that |𝑚 |/ 𝑘 ≥ ⌈ log (𝑛 )⌉ and thus |𝑓 𝑖 | = |𝑚 |/ 𝑘 for all 𝑖 ∈ [ 𝑛 ]. This assumption already holds for moderately large |𝑚 | and practical values of 𝑛 but it can further be justified in that fragments are always accompanied by a corre-sponding commitment proof (discussed below) whose size exceeds the symbol size of erasure coding for known commitment schemes. An asymmetric signature scheme is assumed to be in place and all exchanged messages are authenticated. The only other crypto-graphic tool that is required is a vector commitment scheme to pre-vent Byzantine nodes from disseminating invalid fragments, which would foil any attempt to reconstruct 𝑚 . Concretely, we use vector commitments with the following properties. First, given a vector 𝑑 
+
+of data elements, any node can deterministically create a binding commitment C𝑑 to 𝑑 . Second, given vector 𝑑 and an index 𝑖 , any node can generate a proof 𝜋 𝑑 [𝑖 ] attesting that 𝑑 [𝑖 ] is the 𝑖 th data el-ement of 𝑑 . In other words, once a node has obtained the full vector, SPAA ’26, July 06–10, 2026, London, United Kingdom Thomas Locher and Yvonne-Anne Pignolet 
+
+𝐴 :=
+
+©«
+
+𝑚 1,1 · · · 𝑚 1,𝑛 −𝑡 
+
+... . . . ...𝑚 𝑛 −𝑡, 1 · · · 𝑚 𝑛 −𝑡,𝑛 −𝑡 
+
+ª®®®¬
+
+𝑛 − 𝑡 𝑛 − 𝑡 𝐴 ′ :=
+
+©«
+
+𝐴 𝑅 𝑐 
+
+ª®®®®®¬
+
+𝑛 − 𝑡 𝑛 − 𝑡 𝑡 𝑀 :=
+
+©«
+
+𝐴 𝑅 𝑟 𝑆 𝑟 
+
+𝑅 𝑐 𝑅 𝑟𝑐 𝑆 𝑟𝑐 
+
+ª®®®®®¬
+
+𝑛 − 𝑡 𝑡 𝑛 𝑛 − 𝑡 𝑡 
+
+Figure 1: The data item 𝑚 is embedded in a square matrix 𝐴 with 𝑛 − 𝑡 elements in each row and column. The columns of 𝐴 are 
+
+(𝑛, 𝑛 − 𝑡 )-erasure coded and then concatenated to create 𝐴 ′. The rows of 𝐴 ′ are (2𝑛, 𝑛 − 𝑡 )-erasure coded and then stacked on each other to create the 𝑛 × 2𝑛 -matrix 𝑀 of size 2(𝑛 /( 𝑛 − 𝑡 )) 2 |𝑚 |.
+
+it can generate all proofs for data elements in vector 𝑑 itself. Natu-rally, proofs can be evaluated against a commitment C𝑑 , verifying that the proof is valid for the committed vector 𝑑 . The gen_proofs 
+
+function used in the protocols performs 𝑂 (𝑛 log 𝑛 ) hash evaluations for Merkle-tree commitments, and 𝑂 (𝑛 log 𝑛 ) field operations for KZG commitments; this computational overhead is small for practi-cal values of 𝑛 and can therefore be considered to have a negligible effect on the latency of all operations in a real-world deployment. These concepts are extended to two dimensions in our construc-tions: data is erasure-coded into a matrix 𝑀 , such that given suf-ficiently many (i.e., 𝑛 − 𝑡 ) elements of a row or column of 𝑀 , the entire row or column can be derived using the function decode .As the entire protocol deals with matrix 𝑀 , we unify the terms “element” and “fragment” and solely use “element” throughout the remainder of the paper. In order to protect the integrity of 𝑀 , a commitment C𝑀 to 𝑀 and a matrix of proofs 𝜋 𝑀 is created where 
+
+𝜋 𝑀 [𝑖, 𝑗 ] proves that 𝑀 [𝑖, 𝑗 ] is the correct element at indices 𝑖 and 𝑗 
+
+under commitment C𝑀 . Given sufficiently many (i.e., 𝑛 −𝑡 ) elements of a row or column of 𝑀 and their proofs, the commitment scheme must support constructing proofs for the full row or column using the function gen_proofs . Such a commitment can be implemented, e.g., using a Merkle tree, where a set of specific inner nodes, one per height, constitutes a membership proof. Given that the height is logarithmic in 𝑛 , the size |𝜋 | of a proof 𝜋 is Θ(𝜅 log (𝑛 )) where 
+
+𝜅 is the output size of the used cryptographic hash function. Al-ternatively, a polynomial commitment scheme such as the KZG scheme [19] can be used, where commitments and proofs corre-spond to a single group element. As mentioned above, since such commitment schemes operate over large groups, we assume that the commitment and proof sizes are bounded by Θ(log (𝑛 )) . In con-trast to the approach using Merkle trees, this scheme requires a trusted setup and additional cryptographic assumptions. A detailed description of these schemes is considered out of scope, i.e., we simply assume that such a scheme is given. 
+
+## 3 Main Protocol 3.1 Overview 
+
+The proposed AVID protocol, denoted by P, consists of distributed algorithms for dispersal, retrieval, and recovery. At a high level of abstraction, the data item 𝑚 is encoded into a matrix 𝑀 such that 𝑚 can be reconstructed when given sufficiently many row (column) elements for a certain number of rows (columns). For all 
+
+𝑖 ∈ [ 𝑛 ], each node 𝑣 𝑖 is supposed to hold row data 𝑟 𝑖 := 𝑀 [𝑖, 1..𝑛 −𝑡 ]
+
+and column data 𝑐 𝑖 := 𝑀 [1..𝑛 − 𝑡, 𝑖 ], i.e., the first 𝑛 − 𝑡 elements of         
+
+> M1,1. . . M1,k
+> .... . ....Rr
+> Mn→1,1. . . Mk,k
+> RcRrc
+
+ 
+
+> k=n→ttk=n→tt
+
+        
+
+> m1. . . mk
+> .... . ....Rr
+> mk(k→1)+1 . . . mk2
+> RcRrc
+
+ 
+
+> k=n→ttk=n→tt
+
+  
+
+> ARr
+> RcRrc
+
+          
+
+> k=n→ttk=n→tt
+> Figure 1 Encoding of the message min a n→nmatrix of size 92|m|.
+> 217
+
+A =
+
+      
+
+> m1,1. . . m1,k
+> .... . ....
+> mk, 1. . . mk,k
+
+ 
+
+> k=n→tk
+
+A↑ =
+
+
+
+> ARc
+
+
+
+> k=n→tkt
+
+M =
+
+  
+
+> ARr
+> RcRrc
+
+  
+
+> k=n→ttkt
+> Figure 2 Retrieval.
+
+The proposed algorithm, denoted by A, consists of dedicated protocols for dispersal, 218 
+
+retrieval, and recovery. Before introducing the protocols run by the clients and storage nodes, 219 
+
+the data encoding procedure is explained in detail. 220 
+
+3.1.1 Data Encoding 221 
+
+The dispersal protocol requires some helper functions for the encoding at the client, which 222 
+
+are collected in Algorithm 1. The function create_matrix converts the data item m into 223 
+
+a n → n matrix as follows. First, m is split into ( n ↑ t)2 parts, which are placed into a 224 
+
+(n ↑ t) → (n ↑ t) matrix A. Next, the rows and columns of A are expanded into a n → n matrix 225 
+
+M using a two-dimensional erasure coding scheme , [YAP]: how to link to twin code framework? 226 
+
+use self-containment to justify slightly di!erent definition? which is a generalized form of 227 
+
+erasure coding that encodes a message m under two di!erent erasure codes simultaneously. 228 
+
+A two-dimensional erasure coding scheme is a generalized form of erasure coding (cf. §2) that 229 
+
+encodes a message m under two di!erent one-dimensional erasure codes simultaneously. The 230 
+
+encode algorithm takes a message m and outputs a matrix of n2 fragments satisfying the 231 
+
+(a) A =
+
+
+
+m1,1 . . . m1,k 
+
+... . . . ...
+
+mk, 1 . . . mk,k 
+
+ 
+
+> k=n→tk
+
+A↑ =
+
+
+
+ARc
+
+
+
+> k=n→tkt
+
+M =
+
+
+
+A Rr
+
+Rc Rrc 
+
+ 
+
+> k=n→tt
+
+Figure 5 Construction basics. 
+
+C =
+
+
+
+C1,1 C1,2 C1,3
+
+C2,1 C2,2 C2,3
+
+C3,1 C3,2 C3,3
+
+ M =
+
+
+
+A Rr
+
+ijRc Rrc 
+
+i j
+
+ 
+
+> k=n→ttkt
+
+Figure 6 Recovery (b) 
+
+Figure 2: (a) Retrieval: The client receives 𝑛 − 𝑡 row elements from 𝑛 − 𝑡 honest nodes, thus it has enough elements from all columns of 𝐴 ′ to decode them and reconstruct 𝑚 .(b) Recovery: Node 𝑣 𝑗 has an element in its column (row) that is in 𝑣 𝑖 ’s row (column). Sending the common elements to the replacment node 𝑣 ′ 
+
+> 𝑖
+
+enables 𝑣 ′ 
+
+> 𝑖
+
+to decode the first 𝑛 − 𝑡 
+
+elements of both its row and column. 
+
+row 𝑖 and column 𝑖 , respectively. Additionally, 𝑣 𝑖 must store the corresponding membership proofs 𝜋 𝑟 𝑖 ≔ 𝜋 𝑀 [𝑖, 1..𝑛 − 𝑡 ] and 𝜋 𝑐 𝑖 ≔
+
+𝜋 𝑀 [1..𝑛 − 𝑡, 𝑖 ]. The dispersal algorithm disseminates this storage data to all nodes, which constitutes a write operation, whereas the retrieval algorithm is executed to read data by gathering row data from the storage nodes and reconstructing 𝑚 . The challenge is to define algorithms that require a minimal amount of data to be stored and transmitted for the operations defined in §2. 
+
+Encoding : The encoding of 𝑚 into an 𝑛 ×2𝑛 -matrix 𝑀 , illustrated in Figure 1, starts by converting 𝑚 into an (𝑛 − 𝑡 ) × ( 𝑛 − 𝑡 ) matrix. This matrix is first expanded by applying an (𝑛, 𝑛 − 𝑡 )-erasure code column-wise and then by applying an (2𝑛, 𝑛 − 𝑡 )-erasure code row-wise to obtain matrix 𝑀 . Note that no node or client ever explicitly stores the entire matrix, and specific parts of 𝑀 are only required for certain operations. 
+
+Dispersal : The dispersal algorithm ensures that every honest node 𝑣 𝑖 stores its row and column data (including membership proofs). To this end, the client sends the storage data to each node individually and, subsequently, transfers additional information to all nodes, which engage in a multi-round protocol to achieve a full dispersal despite Byzantine storage nodes or a Byzantine client 𝑐 . Every element of 𝑀 may be transferred during dispersal, in particular elements in 𝑆 𝑟 and 𝑆 𝑟𝑐 are only used for this operation. 
+
+Retrieval : When a client requests to read data item 𝑚 , all honest nodes send their row data. The collection of this data enables the client to obtain 𝑚 by decoding the columns of 𝐴 ′ as illustrated in Figure 2(a), i.e., only elements in 𝐴 and 𝑅 𝑐 are used. 
+
+Recovery : If node 𝑣 ′ 
+
+> 𝑖
+
+is meant to replace (failed) node 𝑣 𝑖 , every honest node 𝑣 𝑗 sends the 𝑖 th element of its row and column data AVID with Low Space and Communication Complexity SPAA ’26, July 06–10, 2026, London, United Kingdom 
+
+Algorithm 1 Client helper functions.                                                                                            
+
+> 1: function create_matrix (𝑚 )
+> 2: Split 𝑚 into (𝑛 −𝑡 )2elements 𝑚 𝑖,𝑗 for 𝑖, 𝑗 ∈ [ 𝑛 −𝑡 ]
+> 3: Place elements into (𝑛 −𝑡, 𝑛 −𝑡 )-matrix 𝐴 , with 𝑎 𝑖,𝑗 :=𝑚 𝑖,𝑗
+> 4: // Add 𝑡 recovery elements to every column to create 𝐴 ′
+> 5: 𝐴 ′:=(encode (𝐴 [· ,1]𝑇 , 𝑛 )𝑇 | | . . . | | encode (𝐴 [· , 𝑛 −𝑡 ]𝑇 , 𝑛 )𝑇 )
+> 6: // Add 𝑛 +𝑡 recovery elements to every row to create 𝑀
+> 7: 𝑀 :=(encode (𝐴 ′[1,·] ,2𝑛 ), . . . , encode (𝐴 ′[𝑛, ·] ,2𝑛 ) )
+> 8: return 𝑀
+> 9: function extract (𝐴 )
+> 10: 𝑚 :=⊥
+> 11: for 𝑖 ∈ [ 𝑛 −𝑡 ]do
+> 12: for 𝑗 ∈ [ 𝑛 −𝑡 ]do
+> 13: 𝑚 :=𝑚 | | 𝐴 [𝑖, 𝑗 ]
+> 14: return 𝑚
+
+after an encoding step. When enough nodes reply with these pairs of elements, 𝑣 ′ 
+
+> 𝑖
+
+can reconstruct its row and column data as depicted in Figure 2(b), making use of elements in 𝐴 , 𝑅 𝑟 , 𝑅 𝑐 , and 𝑅 𝑟𝑐 .The exchanged information is augmented with commitments to cope with Byzantine behavior. Before describing the algorithms executed by the clients and storage nodes in more detail, the data encoding procedure is explained more formally. 
+
+## 3.2 Data Encoding and Integrity 
+
+The dispersal and retrieval algorithms require some helper func-tions for the encoding and decoding at the client and to ensure data integrity, which are collected in Algorithm 1. The function 
+
+create_matrix converts the data item 𝑚 into an 𝑛 × 2𝑛 -matrix as follows. First, 𝑚 is split into (𝑛 − 𝑡 )2 data elements 𝑚 𝑖,𝑗 for 
+
+𝑖, 𝑗 ∈ [ 𝑛 −𝑡 ]. These elements are then placed into an (𝑛 −𝑡 ) × ( 𝑛 −𝑡 )-matrix 𝐴 . Next, matrix 𝐴 is expanded in both dimensions by first adding 𝑡 recovery elements to every column and then extending every row with 𝑛 + 𝑡 recovery elements as discussed in the previ-ous section. The operator || in the pseudocode of create_matrix 
+
+concatenates the columns. Note that the input, i.e., the columns, as well as the output of encode are transposed because the input and output of encode are both defined as row data. This encoding results in a matrix with 2 𝑛 2 elements satisfying the property that any set of elements that contains at least 𝑛 − 𝑡 
+
+rows with at least 𝑛 −𝑡 elements each, can be used to recover 𝑚 with row-wise decoding. Analogously, any set of at least 𝑛 − 𝑡 columns with at least 𝑛 − 𝑡 elements each can be used to recover 𝑚 with column-wise decoding, respectively. Row-wise decoding consists of calling the decode function over rows first, followed by a call of the decode function over the outputs. Analogously, column-wise decoding first decodes the columns and then the outputs. By using a suitable generator matrix, we ensure that if we encode row data into 𝑛 elements instead of 2 𝑛 , the 𝑖 th element is the same in both encodings for any 𝑖 ∈ [ 𝑛 ].The function extract reads the entries of 𝑀 at indices 𝑖, 𝑗 ∈ [ 𝑛 −
+
+𝑡 ] and concatenates them to reconstruct 𝑚 . Note that 𝑀 contains the parts of 𝑚 itself at these indices because the encoding is assumed to be systematic as defined in §2.   
+
+> 𝑐 𝑣 1
+> 𝑣 2
+> ...
+> 𝑣 𝑛 −1
+> 𝑣 𝑛
+> disperse ack RB spread row _info info _sent col _info ready
+
+Figure 3: Dispersal algorithm to disseminate row and column data. Black, solid arrows and gray, dashed arrows represent data and control messages, respectively. When nodes obtain enough ready messages, they are guaranteed to have their storage data or receive it eventually. The reliable broadcast (RB) step requires multiple communication rounds, and all steps may be interleaved due to asynchrony. 
+
+## 3.3 Dispersal 
+
+The dispersal algorithm is initiated by a client with the aim to write data item 𝑚 . First, the client computes the encoding matrix 𝑀 and a commitment and proofs for it. Then, the following high-level steps, depicted in Figure 3, ensure that every honest node 𝑣 𝑖 stores its storage data (𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) at the end. (1) The client sends row and column data of 𝑀 to each node. (2) Nodes validate the data and return ack messages. (3) The client initiates a reliable broadcast of the set 𝑆 of received 
+
+ack messages. Let ¯ 𝑉 be the set of nodes from which no ack 
+
+message was received. The client further distributes spread 
+
+messages containing elements of the rows for nodes in ¯ 𝑉 .(4) Nodes forward row elements to nodes in ¯ 𝑉 in row_info mes-sages and broadcast info_sent messages afterwards. (5) Nodes in ¯ 𝑉 decode their row data if necessary. All nodes send column_info messages containing column elements to the nodes in ¯ 𝑉 so they can decode their column data. Lastly, 
+
+ready messages are used to trigger the termination of disper-sal. After step (2), the nodes in 𝑉 \ ¯𝑉 , i.e., the nodes from which the client has received an ack message, possess or can derive one ele-ment each of the row and column of every other node, in particular of the nodes in ¯ 𝑉 . Concretely, node 𝑣 𝑘 ∈ 𝑉 \ ¯𝑉 can extract 𝑀 [ 𝑗, 𝑘 ]
+
+(the 𝑘 𝑡ℎ element of 𝑣 𝑗 ’s row) from its own column data and 𝑀 [𝑘, 𝑗 ]
+
+(the 𝑘 𝑡ℎ element of 𝑣 𝑗 ’s column) from its own row data. This is the key insight behind the improved communication complexity: because each node in 𝑉 \ ¯𝑉 already carries one element of every other node’s row and one element of every other node’s column, the client does not need to retransmit that data. It only needs to supply the second half of the row (the recovery elements beyond position 𝑛 ) for each of the 𝑡 nodes in ¯ 𝑉 . The nodes in 𝑉 \ ¯𝑉 can use this data to help the nodes in ¯ 𝑉 obtain their row and column data. However, only 𝑛 − 2𝑡 of the nodes in 𝑉 \ ¯𝑉 may be honest, so this data is not sufficient to ensure that all honest nodes can reconstruct their storage data. Therefore, the client sends additional row ele-ments to the nodes, which they then forward to the nodes in ¯ 𝑉 . A Bracha-style broadcast is used with info_sent and ready messages in steps (3-5) to successfully conclude the dispersal. Note that all steps require one communication round except for the reliable broadcast SPAA ’26, July 06–10, 2026, London, United Kingdom Thomas Locher and Yvonne-Anne Pignolet 
+
+Algorithm 2 Dispersal at client 𝑐 of data item 𝑚 with identifier 𝑖𝑑 . 
+
+> 1:
+
+𝑀 := create_matrix (𝑚 ) 
+
+> 2:
+
+( C 𝑀 , 𝜋 𝑀 ) := commitment_proofs (𝑀 ) 
+
+> 3:
+
+𝑖𝑑 := C𝑀  
+
+> 4:
+
+for 𝑖 ∈ [ 𝑛 ] do  
+
+> 5:
+
+// Information to be stored by node 𝑣 𝑖  
+
+> 6:
+
+(𝑟 𝑖 , 𝑐 𝑖 ) := (𝑀 [𝑖, 1..𝑛 − 𝑡 ], 𝑀 [1..𝑛 − 𝑡, 𝑖 ] )  
+
+> 7:
+
+(𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) := (𝜋 𝑀 [𝑖, 1..𝑛 − 𝑡 ], 𝜋 𝑀 [1..𝑛 − 𝑡, 𝑖 ] )  
+
+> 8:
+
+send disperse (𝑖𝑑, 𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) to 𝑣 𝑖  
+
+> 9:
+
+upon received set 𝑆 of 𝑛 − 𝑡 valid ack messages for 𝑖𝑑 do  
+
+> 10:
+
+reliable-broadcast stored (𝑖𝑑, 𝑆 ) 
+
+> 11:
+
+for 𝑖 ∈ [ 𝑛 ] do  
+
+> 12:
+
+𝑝𝑎𝑦𝑙𝑜𝑎𝑑 𝑖 := { ( 𝑗, 𝑀 [ 𝑗, 𝑖 + 𝑛 ], 𝜋 𝑀 [ 𝑗, 𝑖 + 𝑛 ] ) | 𝑗 : (𝑣 𝑗 , _) ∉ 𝑆 } 
+
+> 13:
+
+send spread (𝑖𝑑, 𝑝𝑎𝑦𝑙𝑜𝑎𝑑 𝑖 ) to 𝑣 𝑖 
+
+of set 𝑆 , which needs two or more rounds. The concrete steps at the client and the storage nodes are discussed next. 
+
+3.3.1 Dispersal at Clients. The actions of client 𝑐 for dispersals are shown in Algorithm 2. When dispersing data item 𝑚 , the first step is to construct the 𝑛 ×2𝑛 -matrix 𝑀 using the function create_matrix .Next, the client creates a commitment C𝑀 for the matrix and proofs 
+
+𝜋 𝑀 for all rows and columns. The identifier for 𝑚 is defined as 
+
+𝑖𝑑 := C𝑀 , i.e., the commitment to 𝑀 . This identifier is added as a parameter to all messages so that each message can be uniquely associated with a specific execution of the algorithm. Furthermore, we assume that every node always signs its messages of any type. The client sends (𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) directly to each node 𝑣 𝑖 in a dis-perse message and waits for the corresponding ack messages con-firming the receipt of the tuple with a signature. As there may be up to 𝑡 Byzantine failures, client 𝑐 merely waits for 𝑛 − 𝑡 valid 
+
+ack messages. Each such message contains a pair (𝑣 𝑖 , 𝜎 𝑖 ), where 𝜎 𝑖 
+
+denotes 𝑣 𝑖 ’s signature over its own identifier and 𝑖𝑑 , confirming that 𝑣 𝑖 indeed sent this ack message. In the following, 𝑆 denotes the set containing the received (𝑣 𝑖 , 𝜎 𝑖 ) pairs from 𝑛 − 𝑡 distinct nodes. Since client 𝑐 must ensure that all honest nodes receive their data, additional steps are needed, which are executed as soon as 𝑛 − 𝑡 
+
+signed ack messages have been received. Note that the upon clause in Algorithm 2 and the upon clauses in all subsequent algorithms are always executed once for every execution of the algorithm as soon as the required conditions are met. First, client 𝑐 uses a reliable-broadcast protocol to disseminate the set 𝑆 in a stored mes-sage, which ensures that all honest nodes eventually learn which 
+
+𝑛 −𝑡 nodes claim to have received their data. Next, client 𝑐 generates the payload of a dedicated spread message per node. Specifically, the 
+
+spread message for node 𝑣 𝑖 contains 𝑀 [ 𝑗, 𝑖 +𝑛 ], and the correspond-ing proofs 𝜋 𝑀 [ 𝑗, 𝑖 +𝑛 ] for all 𝑗 where (𝑣 𝑗 , _) ∉ 𝑆 . The dissemination of these messages concludes the dispersal algorithm for the client. 
+
+3.3.2 Dispersal at Storage Nodes. The storage nodes participate in the dispersal operation as summarized in Algorithm 3. When a node 
+
+𝑣 𝑘 receives a disperse message containing a tuple (𝑟 𝑘 , 𝑐 𝑘 , 𝜋 𝑟 𝑘 , 𝜋 𝑐 𝑘 ), it verifies its validity, i.e., the row and column data are consistent with the proofs under commitment C𝑀 . If this is the case, the tuple is stored and an ack (𝑖𝑑 ) message is sent to the client. 
+
+Algorithm 3 Dispersal at node 𝑣 𝑘 for 𝑖𝑑 =ID( 𝑚 ). Initially, 𝑆 = ⊥. 
+
+> 1:
+
+upon received valid disperse (𝑖𝑑, 𝑟 𝑘 , 𝑐 𝑘 , 𝜋 𝑟 𝑘 , 𝜋 𝑐 𝑘 ) do  
+
+> 2:
+
+set_storage_data (𝑖𝑑, 𝑟 𝑘 , 𝑐 𝑘 , 𝜋 𝑟 𝑘 , 𝜋 𝑐 𝑘 ) 
+
+> 3:
+
+send ack (𝑖𝑑 ) to client  
+
+> 4:
+
+upon received valid stored (𝑖𝑑, 𝑆 ′ ) do  
+
+> 5:
+
+𝑆 := 𝑆 ′ 
+
+> 6:
+
+upon received valid spread (𝑖𝑑, 𝑝𝑎𝑦𝑙𝑜𝑎𝑑 𝑘 ) and 𝑆 ≠ ⊥ and 
+
+(𝑐 𝑘 , 𝜋 𝑐 𝑘 ) ≔ get_column_data (𝑖𝑑 ) ≠ ⊥ do  
+
+> 7:
+
+𝑐 ′ 
+
+> 𝑘
+
+:= encode (𝑐 𝑘 , 𝑛 ) 
+
+> 8:
+
+𝜋 𝑐 𝑘  
+
+> ′
+
+:=gen_proofs (𝑐 𝑘 , 𝜋 𝑐 𝑘 ) 
+
+> 9:
+
+for ( 𝑗, 𝑀 [ 𝑗, 𝑘 + 𝑛 ], 𝜋 𝑀 [ 𝑗, 𝑘 + 𝑛 ] ) ∈ 𝑝𝑎𝑦𝑙𝑜𝑎𝑑 𝑘 and (𝑣 𝑗 , _) ∉ 𝑆 do  
+
+> 10:
+
+𝑟𝑜𝑤 _𝑝𝑎𝑦𝑙𝑜𝑎𝑑 𝑗 = (𝑐 𝑘 ′ [ 𝑗 ], 𝑀 [ 𝑗, 𝑘 + 𝑛 ], 𝜋 𝑐 𝑘  
+
+> ′
+
+[ 𝑗 ], 𝜋 𝑀 [ 𝑗, 𝑘 + 𝑛 ] )  
+
+> 11:
+
+send row_info (𝑖𝑑, 𝑟𝑜𝑤 _𝑝𝑎𝑦𝑙𝑜𝑎𝑑 𝑗 ) to 𝑣 𝑗  
+
+> 12:
+
+broadcast info_sent (𝑖𝑑 ) 
+
+> 13:
+
+upon received 𝑛 − 2𝑡 valid row_info messages and 
+
+get_row_data (𝑖𝑑 ) = ⊥ do  
+
+> 14:
+
+𝑟 𝑘 := decode (𝐹 ), for set 𝐹 of row elements in row_info messages  
+
+> 15:
+
+𝜋 𝑟 𝑘  
+
+> ′
+
+:= gen_proofs (𝑟 𝑘 , Π), for set Π of proofs in row_info messages  
+
+> 16:
+
+set_row_data (𝑖𝑑, 𝑟 𝑘 , 𝜋 𝑟 𝑘  
+
+> ′
+
+[1..𝑛 − 𝑡 ] )  
+
+> 17:
+
+upon (𝑟 𝑘 , 𝜋 𝑟 𝑘 ) := get_row_data (𝑖𝑑 ) ≠ ⊥ and 𝑆 ≠ ⊥ do  
+
+> 18:
+
+𝑟 ′ 
+
+> 𝑘
+
+:= encode (𝑟 𝑘 , 𝑛 ) 
+
+> 19:
+
+𝜋 𝑟 𝑘  
+
+> ′
+
+:= gen_proofs (𝑟 𝑘 , 𝜋 𝑟 𝑘 ) 
+
+> 20:
+
+for 𝑗 ∈ [ 𝑛 ] where (𝑣 𝑗 , _) ∉ 𝑆 do  
+
+> 21:
+
+send column_info (𝑖𝑑, 𝑟 ′ 
+
+> 𝑘
+
+[ 𝑗 ], 𝜋 𝑟 𝑘  
+
+> ′
+
+[ 𝑗 ] ) to 𝑣 𝑗  
+
+> 22:
+
+upon received set 𝐶, Π of matrix elements and their proofs from 𝑛 − 𝑡 
+
+valid column_info messages and get_column_data (𝑖𝑑 ) = ⊥ do  
+
+> 23:
+
+𝑐 𝑘 := decode (𝐶 ), for set 𝐶  
+
+> 24:
+
+𝜋 𝑐 𝑘  
+
+> ′
+
+:= gen_proofs (𝑐 𝑘 , Π), for set Π 
+
+> 25:
+
+set_column_data (𝑖𝑑, 𝑐 𝑘 , 𝜋 𝑐 𝑘  
+
+> ′
+
+[1..𝑛 − 𝑡 ] )  
+
+> 26:
+
+upon received 𝑛 − 𝑡 info_sent or 𝑡 + 1 ready messages do  
+
+> 27:
+
+broadcast ready (𝑖𝑑 ) 
+
+> 28:
+
+upon received 𝑛 − 𝑡 ready messages and get_storage_data (𝑖𝑑 ) ≠ ⊥
+
+and column_info sent do  
+
+> 29:
+
+terminate dispersal 
+
+Recall that an honest client reliably broadcasts a set 𝑆 containing node identifiers and signatures after collecting 𝑛 − 𝑡 valid ack mes-sages. When node 𝑣 𝑘 receives 𝑆 , 𝑣 𝑘 determines its validity by verify-ing all contained signatures and then stores it locally. Note that if an honest node stores 𝑆 , all other honest nodes will eventually store ex-actly the same set due to the properties of reliable broadcast. When node 𝑣 𝑘 receives a spread message, the message is first validated: It is considered valid if it contains 𝑡 tuples ( 𝑗, 𝑀 [ 𝑗, 𝑘 +𝑛 ], 𝜋 𝑀 [ 𝑗, 𝑘 +𝑛 ]) 
+
+for distinct indices 𝑗 , where each element 𝑀 [ 𝑗, 𝑘 + 𝑛 ] is consistent with the proof 𝜋 𝑀 [ 𝑗, 𝑘 + 𝑛 ]) . Moreover, for each index 𝑗 it holds that (𝑣 𝑗 , _) ∉ 𝑆 . The spread message is only evaluated when 𝑆 ≠ ⊥
+
+and get_column_data (𝑖𝑑 ) ≠ ⊥, i.e., the reliable-broadcast message and the column data have been received. Next, node 𝑣 𝑘 encodes its stored column data into a vector 𝑐 ′ 
+
+> 𝑘
+
+of length 𝑛 and then sends 𝑐 ′ 
+
+> 𝑘
+
+[ 𝑗 ]
+
+(which corresponds to 𝑀 [ 𝑗, 𝑘 ]), 𝑀 [ 𝑗, 𝑘 + 𝑛 ] from the spread mes-sage, and the proofs for both elements to 𝑣 𝑗 in a row_info message. Node 𝑣 𝑘 then broadcasts info_sent (𝑖𝑑 ) to inform all nodes about the fact that it sent row information to the 𝑡 nodes that may not have received their data yet. AVID with Low Space and Communication Complexity SPAA ’26, July 06–10, 2026, London, United Kingdom 
+
+If 𝑣 𝑘 does not have its row data (𝑟 𝑘 , 𝜋 𝑟 𝑘 ), i.e., get_row_data( 𝑖𝑑 )
+
+= ⊥, 𝑣 𝑘 can construct it after receiving 𝑛 − 2𝑡 valid row_info mes-sages, where a row_info message is valid when the contained ele-ments and proofs are consistent. The decode function is used to obtain the vector 𝑟 𝑘 and the gen_proofs function is used to con-struct the vector 𝜋 𝑟 𝑘  
+
+> ′
+
+:= 𝜋 𝑀 [𝑘, 1..𝑛 ] of 𝑛 proofs. The derived pair 
+
+(𝑟 𝑘 , 𝜋 𝑟 𝑘  
+
+> ′
+
+[1..𝑛 − 𝑡 ]) is then stored using the function set_row_data .Once the row data and the set 𝑆 are available, 𝑣 𝑘 can encode 𝑟 𝑘 
+
+using an (𝑛, 𝑛 − 𝑡 )-erasure code to obtain the extended vector 𝑟 ′ 
+
+> 𝑘
+
+of 
+
+𝑛 elements, corresponding to 𝑀 [𝑘, 1..𝑛 ]. Node 𝑣 𝑘 then sends 𝑟 ′ 
+
+> 𝑘
+
+[ 𝑗 ]
+
+together with the corresponding proof 𝜋 𝑟 𝑘 [ 𝑗 ] to 𝑣 𝑗 in a column_info 
+
+message for each 𝑣 𝑗 that does not occur in the set 𝑆 . As the name suggests, the purpose of this message is to provide elements that can be used to recover a column of matrix 𝑀 : Once 𝑛 − 𝑡 valid 
+
+column_info messages have been received, node 𝑣 𝑘 can derive col-umn 𝑐 𝑘 by applying the decode function to the set 𝐶 of received column elements. The proofs 𝜋 𝑐 𝑘  
+
+> ′
+
+for all 𝑛 column elements are then obtained by applying the function gen_proofs . The column data 
+
+𝑐 𝑘 and the corresponding proofs 𝜋 𝑐 𝑘  
+
+> ′
+
+[1..𝑛 − 𝑡 ] are then stored using the function set_column_data .Node 𝑣 𝑘 waits for the confirmation that all honest nodes will eventually receive their storage data. To this end, 𝑣 𝑘 collects 
+
+info_sent messages. Once it receives at least 𝑛 − 𝑡 such messages and validates their signatures successfully, it broadcasts a ready 
+
+message. Alternatively, node 𝑣 𝑘 also broadcasts a ready message if it receives at least 𝑡 + 1 ready messages itself. When 𝑣 𝑘 has received 
+
+𝑛 − 𝑡 valid ready messages, its storage data (𝑟 𝑘 , 𝑐 𝑘 , 𝜋 𝑟 𝑘 , 𝜋 𝑐 𝑘 ) is avail-able, and it has sent its column_info messages, then 𝑣 𝑘 terminates the dispersal. 
+
+## 3.4 Retrieval 
+
+3.4.1 Retrieval at Clients. When retrieving a data item for identifier 
+
+𝑖𝑑 , the client sends a retrieve message containing 𝑖𝑑 to all nodes and waits for 𝑛 − 𝑡 valid response messages for 𝑖𝑑 from distinct nodes. A response is valid if it is signed correctly, it contains a row of 𝑛 − 𝑡 
+
+elements, and also valid proofs for each of these elements. As depicted in Figure 2(a), the client can decode column 𝑖 of matrix 𝐴 for every 𝑖 ∈ [ 𝑛 − 𝑡 ], containing all parts of data item 𝑚 .Applying the (𝑛, 𝑛 − 𝑡 )-erasure-encoding function to matrix 𝐴 first column-wise and then row-wise as in the create_matrix function yields matrix 𝑀 , which is used to verify the integrity of all data by computing the commitment C𝑀 and verifying that C𝑀 = 𝑖𝑑 . If this is the case, the data item 𝑚 is extracted from 𝐴 and returned. Otherwise, ⊥ is delivered to indicate that invalid data is stored under the identifier 𝑖𝑑 .Constructing the entire matrix 𝑀 to recompute the commitment for each retrieval may be a burden on lightweight clients. It is possible to circumvent this computation by making the dispersal operation robust [5], which means that the storage nodes them-selves verify that the reconstruction of the data item will succeed. In this case, when retrieving row data from 𝑛 − 𝑡 distinct nodes, it suffices to generate 𝐴 and extract 𝑚 as the client must have received row data from 𝑛 − 2𝑡 > 𝑡 honest nodes, which implicitly vouch for the validity of the encoding by returning their row data. This veri-fication can be implemented using fast Reed-Solomon interactive oracle proofs of proximity (FRI) [6] or inner-product arguments 
+
+Algorithm 4 Retrieval at client 𝑐 for identifier 𝑖𝑑 .                                                                                     
+
+> 1: for 𝑖 ∈ [ 𝑛 ]do
+> 2: send retrieve (𝑖𝑑 ) to 𝑣 𝑖
+> 3: wait until received 𝑛 −𝑡 valid responses ≠⊥for 𝑖𝑑
+> 4: Create (𝑛 −𝑡 ) × ( 𝑛 −𝑡 )matrix 𝑅 out of the received rows
+> 5: 𝐴 :=(decode (𝑅 [· ,1]𝑇 )𝑇 | | . . . | | decode (𝑅 [· , 𝑛 −𝑡 ]𝑇 )𝑇 )
+> 6: 𝐴 ′:=(encode (𝐴 [· ,1]𝑇 , 𝑛 )𝑇 | | . . . | | encode (𝐴 [· , 𝑛 −𝑡 ]𝑇 , 𝑛 )𝑇 )
+> 7: 𝑀 :=(encode (𝐴 ′[1,·] ,2𝑛 ), . . . , encode (𝐴 ′[𝑛 −𝑡, ·] ,2𝑛 ) )
+> 8: ( C 𝑀 , 𝜋 𝑀 ):=generate (𝑀 )
+> 9: if C𝑀 =𝑖𝑑 then
+> 10: 𝑚 :=extract (𝐴 )
+> 11: deliver (𝑚 )
+> 12: else
+> 13: deliver (⊥)
+
+Algorithm 5 Retrieval at node 𝑣 𝑘 from client 𝑐 for identifier 𝑖𝑑 .                    
+
+> 1: if (𝑟 𝑘 , 𝜋 𝑟 𝑘 ):=get_row_data (𝑖𝑑 )≠⊥then
+> 2: send response (𝑖𝑑, 𝑟 𝑘 , 𝜋 𝑟 𝑘 ) to 𝑐
+> 3: else
+> 4: send response (𝑖𝑑, ⊥) to 𝑐
+
+(IPA) [7, 8] to prove that each row and column of 𝑀 corresponds to a polynomial of degree 𝑛 − 𝑡 − 1 (or less), ensuring that 𝑚 can be uniquely decoded. However, these proofs are much more involved and it has yet to be demonstrated that such an approach can reduce the computational overhead in practice. For this reason and also because the addition of robustness would distract from the contri-butions of this work, we merely state the possibility of introducing such an optimization and omit further details. 
+
+3.4.2 Retrieval at Storage Nodes. When 𝑣 𝑘 receives a retrieve mes-sage from a client, 𝑣 𝑘 checks whether storage data is available for the requested 𝑖𝑑 . If this is the case, the row data and the correspond-ing proof data is returned to the client, otherwise ⊥ is returned. A client may request the data item before it has been (fully) dispersed. If fewer than 𝑛 − 𝑡 honest nodes have obtained their row data, it is possible that the client will not receive sufficiently many rows to reconstruct the corresponding data item 𝑚 . This is an acceptable outcome as the availability condition of AVID (see Definition 2.1) states that a data item must be received if at least ℓ,in our case ℓ = 𝑛 − 𝑡 , honest nodes have terminated the dispersal, but not before. In other words, it is the client’s responsibility to drop the retrieval request or resubmit it after a timeout. 
+
+## 3.5 Recovery 
+
+If a node 𝑣 𝑖 crashes or leaves the storage network for other reasons, a replacement node 𝑣 ′ 
+
+> 𝑖
+
+must be instantiated with node 𝑣 𝑖 ’s state. In other words, for each data item 𝑚 , it must obtain the 𝑖 th row and column data derived from the corresponding matrix 𝑀 . Note that, due to Lemma 3.3, once any honest node terminates the dispersal, all honest nodes will eventually do so; recovery may therefore simply be delayed until the required 𝑛 − 𝑡 nodes have their storage data. We assume that a mechanism to detect failures and setting up replacement nodes is in place, which triggers the execution of the 
+
+recovery algorithm in Algorithm 6. SPAA ’26, July 06–10, 2026, London, United Kingdom Thomas Locher and Yvonne-Anne Pignolet 
+
+Algorithm 6 Recovery at node 𝑣 𝑘 for 𝑖𝑑 from 𝑣 𝑖 to 𝑣 ′ 
+
+> 𝑖
+
+.                                                                                                              
+
+> 1: if 𝑣 ′
+> 𝑖 ≠𝑣 𝑘 then
+> 2: wait until (𝑟 𝑘 , 𝑐 𝑘 , 𝜋 𝑟 𝑘 , 𝜋 𝑐 𝑘 ):=get_storage_data (𝑖𝑑 )≠⊥
+> 3: 𝑟 ′
+> 𝑘 :=encode (𝑟 𝑘 , 𝑛 ),𝑐 ′
+> 𝑘 :=encode (𝑐 𝑘 , 𝑛 )
+> 4: 𝜋 𝑟 𝑘
+> ′:=gen_proofs (𝑟 𝑘 , 𝜋 𝑟 𝑘 ),𝜋 𝑐 𝑘
+> ′:=gen_proofs (𝑐 𝑘 , 𝜋 𝑐 𝑘 )
+> 5: // Extract the elements for 𝑖 with rows/columns swapped
+> 6: send recover (𝑖𝑑, 𝑐 ′
+> 𝑘 [𝑖 ], 𝑟 ′
+> 𝑘 [𝑖 ], 𝜋 𝑐 𝑘
+> ′[𝑖 ], 𝜋 𝑟 𝑘
+> ′[𝑖 ]) to 𝑣 ′
+> 𝑖
+> 7: else
+> 8: upon received set 𝐸 of 𝑛 −𝑡 valid recover messages do
+> 9: 𝑟 𝑖 :=decode (𝑅 ), for set 𝑅 of 1 𝑠𝑡 items of messages in 𝐸
+> 10: 𝑐 𝑖 :=decode (𝐶 ), for set 𝐶 of 2 𝑛𝑑 items of messages in 𝐸
+> 11: 𝜋 𝑟 𝑖 ′:=gen_proofs (𝑟, Π𝑟 ), for set Π𝑟 of 3 𝑟𝑑 items of messages in 𝐸
+> 12: 𝜋 𝑐 𝑖 ′:=gen_proofs (𝑐, Π𝑐 ), for set Π𝑐 of 4 𝑡ℎ items of messages in 𝐸
+> 13: set_storage_data (𝑖𝑑, 𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 ′[1..𝑛 −𝑡 ], 𝜋 𝑐 𝑖 ′[1..𝑛 −𝑡 ] )
+
+Since the steps are identical for each data item 𝑚 , we focus on a particular 𝑚 with identifier 𝑖𝑑 and the corresponding storage data 
+
+(𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) that 𝑣 ′ 
+
+> 𝑖
+
+is supposed to store. If node 𝑣 𝑘 is invoked to help the replacement node 𝑣 ′ 
+
+> 𝑖
+
+obtain the required state, it loads its storage data (𝑟 𝑘 , 𝑐 𝑘 , 𝜋 𝑟 𝑘 , 𝜋 𝑐 𝑘 ). As stated before, 𝑣 𝑘 will eventually get this data if there is another honest node that receives it as well. Next, 
+
+𝑣 𝑘 encodes 𝑟 𝑘 into a row 𝑟 ′ 
+
+> 𝑘
+
+of 𝑛 elements. This procedure is repeated for 𝑐 𝑘 to obtain 𝑐 ′ 
+
+> 𝑘
+
+. Node 𝑣 𝑘 then sends a recover message with the 
+
+𝑖 th element of the extended row and column to 𝑣 ′ 
+
+> 𝑖
+
+, together with the corresponding commitment proofs. Note the order of elements as the row (column) element of 𝑣 𝑘 corresponds to a column (row) element of 𝑣 𝑖 .Node 𝑣 ′ 
+
+> 𝑖
+
+eventually receives such a message from at least 𝑛 − 𝑡 
+
+honest nodes and, after validating the message signatures and com-mitment proofs, it has 𝑛 − 𝑡 elements of the 𝑖 th row and column. This is sufficient to decode them, resulting in the first 𝑛 −𝑡 elements of the 𝑖 th row and column, i.e., 𝑟 𝑖 and 𝑐 𝑖 . As far as the commit-ment proofs are concerned, 𝑣 ′ 
+
+> 𝑖
+
+only receives 𝑛 − 𝑡 proofs instead of 𝑛 . However, having both 𝑟 𝑖 and 𝑐 𝑖 , plus 𝑛 − 𝑡 proofs each for elements in its row and column, the function gen_proofs can be used again to generate the missing commitment proofs. Thus, 𝑣 ′
+
+> 𝑖
+
+obtains (𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) as desired. It is worth noting that if there are 𝑡 ′ ≤ 𝑡 failures at the same time, 
+
+𝑣 ′ 
+
+> 𝑖
+
+will still receive at least 𝑛 − 𝑡 recover messages due to the fact that we assume that at least 𝑛 − 𝑡 nodes neither crash nor deviate from the protocol as defined in §2. 
+
+## 3.6 Analysis 
+
+3.6.1 Correctness. First, the correctness of protocol P is proven in the sense that it has all AVID properties specified in Definition 2.1. Lemma 3.1 (Termination). If an honest client disperses 𝑚 , then all honest nodes successfully terminate the dispersal of 𝑚 .
+
+Proof. Assume that honest client 𝑐 disperses data item 𝑚 . Since 
+
+𝑐 is honest, all commitments and proofs that it provides are correct and therefore all messages that 𝑐 and honest nodes send are valid. According to Algorithm 2, 𝑣 𝑘 sends a disperse message to each node. Thus, every honest node receives its row and column data eventu-ally and returns an ack message. As the client gets at least 𝑛 − 𝑡 ack 
+
+messages, it reliably broadcasts the set 𝑆 containing information about the 𝑛 −𝑡 nodes from which these messages have been received and further sends spread messages to all nodes, causing all honest nodes to send row_info , column_info , and info_sent messages. Hence, all honest nodes eventually receive at least 𝑛 − 𝑡 info_sent messages and broadcast ready messages. Since every honest node eventu-ally receives 𝑛 − 𝑡 ready messages as well as its storage data (i.e., 
+
+get_storage_data (𝑖𝑑 ) ≠ ⊥), and sends column_info messages, every honest node terminates the dispersal. □
+
+If the client is Byzantine, it is possible that not all honest nodes obtain a disperse message containing their row data. As the follow-ing lemma shows, an honest node terminating the dispersal implies that there must be an honest node that learns that at least 𝑛 − 𝑡 
+
+nodes claim to have sent their spread messages. Lemma 3.2. If an honest node terminates the dispersal, there is an honest node that has received at least 𝑛 − 𝑡 valid info_sent messages. 
+
+Proof. Let 𝑣 be an honest node that terminates the dispersal, which means that 𝑣 must have received 𝑛 − 𝑡 valid ready messages. Let 𝑣 ′ be the first honest node to send a ready message. If 𝑣 ′ broad-cast a ready message because it received 𝑡 + 1 ready messages, it must have received such a message from at least 1 honest node, contradicting the assumption that 𝑣 ′ is the first node to send a 
+
+ready message. It follows that 𝑣 ′ has received 𝑛 − 𝑡 valid info_sent 
+
+messages. □
+
+Protocol P further satisfies the agreement condition as the fol-lowing lemma shows. Lemma 3.3 (Agreement). If an honest node terminates a dispersal, then all honest nodes eventually terminate the dispersal. 
+
+Proof. Assume that honest node 𝑣 terminated a dispersal for some data item 𝑚 . It must have received 𝑛 − 𝑡 ready messages, at least 𝑛 − 2𝑡 of these messages must have been broadcast by honest nodes. Hence it follows that every honest node eventually receives at least 𝑛 −2𝑡 ≥ 𝑡 +1 ready messages and broadcasts a ready message itself. As a result, all honest nodes eventually receive at least 𝑛 − 𝑡 
+
+ready messages. Since 𝑣 terminated the dispersal, Lemma 3.2 implies that there must be an honest node 𝑣 ′ that has received at least 𝑛 − 𝑡 
+
+valid info_sent messages. At least 𝑛 − 2𝑡 info_sent messages must have been broadcast by honest nodes, which implies that there is a set 𝑆 that is broadcast reliably and will therefore reach all honest nodes eventually. Moreover, it further entails that every node 𝑣 𝑘 ,
+
+(𝑣 𝑘 , _) ∉ 𝑆 , will eventually get at least 2 (𝑛 − 2𝑡 ) > 𝑛 − 𝑡 elements of its row 𝑟 𝑘 and therefore be able to decode 𝑟 𝑘 . As all honest nodes eventually have their row data and set 𝑆 , every honest node sends a column_info message to each node that does not occur in 𝑆 . Thus, every honest node receives at least 𝑛 − 𝑡 elements of its column and can decode it. Since every honest node receives 𝑛 − 𝑡 ready messages, obtains its row and column data, and sends column_info 
+
+messages, it terminates the dispersal. □
+
+Next, we show that data items can be retrieved when dispersed to ℓ = 𝑛 − 𝑡 honest nodes and that the correctness property holds. Lemma 3.4 (Availability). If ℓ honest nodes terminate the dis-persal of 𝑚 , then any client can eventually retrieve some data item. 
+
+Proof. If ℓ = 𝑛 − 𝑡 honest nodes terminate the dispersal, they all store their row data. Thus, after a client broadcasts a retrieve AVID with Low Space and Communication Complexity SPAA ’26, July 06–10, 2026, London, United Kingdom 
+
+request for the corresponding identifier, it will eventually receive at least 𝑛 − 𝑡 responses containing valid row data and return some data, which may be the empty data item ⊥. □
+
+Lemma 3.5 (Correctness). If ℓ honest nodes terminate the dis-persal of 𝑚 and clients 𝑐 ′ and 𝑐 ′′ retrieve 𝑚 ′ and 𝑚 ′′ , then 𝑚 ′ = 𝑚 ′′ .If the writing client was honest, then 𝑚 = 𝑚 ′ = 𝑚 ′′ .
+
+Proof. Let 𝑚 be any data item for which ℓ = 𝑛 − 𝑡 honest nodes have their storage data. Due to Lemma 3.4, any client 𝑐 retrieves some data item eventually. More specifically, it obtains 𝑛 − 𝑡 rows that can be utilized to construct matrix 𝐴 containing (𝑛 − 𝑡 )2 data parts. According to Algorithm 4, client 𝑐 reconstructs the entire matrix 𝑀 and the commitment C𝑀 .If the writing client is honest, matrix 𝑀 and the commitment C𝑀 
+
+are constructed correctly for data item 𝑚 , implying that C𝑀 = 𝑖𝑑 at all clients, which proceed to return the same data item 𝑚 extracted from 𝐴 . On the other hand, if the writing client is Byzantine, it is possible that the identifier 𝑖𝑑 does not match the commitment C𝑀 .However, in this case, C𝑀 ≠ 𝑖𝑑 must hold for every client under the assumption that it is infeasible for a Byzantine client to violate the binding property of the commitment scheme, resulting in ⊥ being returned at all clients, which proves the claim. □
+
+It remains to show that the recovery mechanism works correctly. When replacing a (failed) node 𝑣 𝑖 with some replacement node 𝑣 ′ 
+
+> 𝑖
+
+,the storage nodes must ensure that 𝑣 ′ 
+
+> 𝑖
+
+eventually receives its storage data for any data item 𝑚 that has been dispersed to 𝑛 − 𝑡 honest nodes (regardless of whether 𝑣 𝑖 obtained this data). Lemma 3.6 (Recovery). When running the recovery algorithm of 
+
+P for any data item 𝑚 dispersed to 𝑛 −𝑡 honest nodes, the replacement node 𝑣 ′ 
+
+> 𝑖
+
+eventually stores (𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ).
+
+Proof. Consider any node 𝑣 𝑘 among the 𝑛 − 𝑡 honest nodes that have their storage data for data item 𝑚 . When Algorithm 6 is executed at 𝑣 𝑘 for message 𝑚 with identifier 𝑖𝑑 , it encodes 𝑟 𝑘 
+
+and 𝑐 𝑘 into a row 𝑟 ′ 
+
+> 𝑘
+
+and column 𝑐 ′ 
+
+> 𝑘
+
+of 𝑛 elements, respectively, and generates the corresponding proofs 𝜋 𝑟 𝑘  
+
+> ′
+
+and 𝜋 𝑐 𝑘 
+
+> ′
+
+. Subsequently, 
+
+𝑣 𝑘 sends a recover message to 𝑣 ′ 
+
+> 𝑖
+
+containing 𝑐 ′ 
+
+> 𝑘
+
+[𝑖 ], 𝑟 ′ 
+
+> 𝑘
+
+[𝑖 ], and the corresponding proofs 𝜋 𝑟 𝑘  
+
+> ′
+
+[𝑖 ] and 𝜋 𝑐 𝑘  
+
+> ′
+
+[𝑖 ].Thus, node 𝑣 ′ 
+
+> 𝑖
+
+eventually receives at least 𝑛 − 𝑡 valid recover 
+
+messages from distinct nodes. By decoding the row and the column elements, 𝑣 ′ 
+
+> 𝑖
+
+obtains 𝑟 𝑖 and 𝑐 𝑖 . If 𝑣 ′ 
+
+> 𝑖
+
+did not receive a message from some node 𝑣 𝑗 , 𝑗 ∈ [ 𝑛 − 𝑡 ], the proofs 𝜋 𝑀 [𝑖, 𝑗 ] and 𝜋 𝑀 [ 𝑗, 𝑖 ] will be missing. However, since 𝑣 ′ 
+
+> 𝑖
+
+has row 𝑟 𝑖 , column 𝑐 𝑖 , and 𝑛 − 𝑡 proofs for both its row and column, it can create all proofs for 𝑟 𝑖 and 𝑐 𝑖 
+
+using the function gen_proofs as discussed in §2. Hence, 𝑣 ′ 
+
+> 𝑖
+
+can reconstruct and store (𝑟 𝑖 , 𝑐 𝑖 , 𝜋 𝑟 𝑖 , 𝜋 𝑐 𝑖 ) as required. □
+
+3.6.2 Complexity. The space complexity of Protocol P is the sum of all bytes that the nodes store for any data item 𝑚 of size |𝑚 |.Theorem 3.7 (Space complexity). The space complexity of Pro-tocol P for storing 𝑚 is 3|𝑚 | + 𝑂 (𝑛 2 |𝜋 |) , where |𝜋 | denotes the size of a commitment proof 𝜋 .
+
+Proof. The matrix 𝑀 contains 𝑚 in (𝑛 − 𝑡 )( 𝑛 − 𝑡 ) elements, i.e., the size of a single element is |𝑚 |/( 𝑛 − 𝑡 )2. Each node 𝑣 𝑖 stores 𝑟 𝑖 
+
+and 𝑐 𝑖 containing 𝑛 − 𝑡 elements each. Thus, all 𝑛 nodes together store 2 · 𝑛 · ( 𝑛 − 𝑡 ) · |𝑚 |(𝑛 − 𝑡 )2 < 3|𝑚 |,
+
+where the inequality follows from the bound 𝑡 < 𝑛 /3. Since each node stores the proof of commitment for its 2 (𝑛 − 𝑡 ) elements of 
+
+𝑀 , all nodes together store 𝑂 (𝑛 2) proofs of size |𝜋 |. □
+
+As far as the communication complexity is concerned, Protocol 
+
+P guarantees the following bounds for the different operations. Theorem 3.8 (Communication complexity). The communica-tion complexity of Protocol P for 𝑚 is 6|𝑚 | + 𝑂 (𝑛 2 |𝜋 |) for dispersal,  
+
+> 32
+
+|𝑚 | + 𝑂 (𝑛 2 |𝜋 |) for retrieval, and 92  
+
+> |𝑚 |
+> 𝑛
+
++ 𝑂 (𝑛 |𝜋 |) for recovery. 
+
+Proof. Dispersal . The client first sends the row and column data to all nodes directly in disperse messages, which together require 3|𝑚 | + 𝑂 (𝑛 2 |𝜋 |) bits to be sent due to Theorem 3.7. The reliable broadcast of 𝑆 of size |𝑆 | ∈ 𝑂 (𝑛 |𝜅 |) , where 𝜅 denotes the size of a signature, has a communication complexity of 𝑂 (𝑛 2 |𝜅 |) assuming the use of an efficient reliable broadcast protocol. We further assume that |𝜅 | ∈ 𝑂 (| 𝜋 |) .Due to 𝑡 < 𝑛 /3, every element 𝑀 [𝑖, 𝑗 ] has a size of 
+
+|𝑚 |(𝑛 − 𝑡 )2 < 94
+
+|𝑚 |
+
+𝑛 2 .
+
+The client sends a spread message containing 𝑡 elements, including a proof, to each node. When a node receives a spread message, it sends two elements and the corresponding proofs, plus the commitment, to each of the 𝑡 nodes that do not occur in 𝑆 . These two rounds together incur a communication complexity of 
+
+(1 + 2) · 𝑛 · 𝑡 ·
+
+ 94
+
+|𝑚 |
+
+𝑛 2 + 𝑂 (| 𝜋 |) 
+
+
+
+< 94 |𝑚 | + 𝑂 (𝑛 2 |𝜋 |) .
+
+Moreover, each node sends a row element of size |𝑚 |(𝑛 −𝑡 )2 < 94 
+
+> |𝑚 |
+> 𝑛 2
+
+to the 𝑡 nodes that do not occur in 𝑆 in a column_info message, which adds 
+
+𝑛 · 𝑡 ·
+
+ 94
+
+|𝑚 |
+
+𝑛 2 + 𝑂 (| 𝜋 |) 
+
+
+
+< 34 |𝑚 | + 𝑂 (𝑛 2 |𝜋 |) 
+
+to the communication complexity. Lastly, the constant-sized ack 
+
+and info_sent messages require 𝑂 (𝑛 ) and 𝑂 (𝑛 2) bits to be sent, respectively. Thus, the communication complexity of the entire dispersal process is upper bounded by 6 |𝑚 | + 𝑂 (𝑛 2 |𝜋 |) .
+
+Retrieval . Each node sends its stored row data to the client, together with 𝑛 − 𝑡 proofs and the commitment, therefore the information sent around amounts to 
+
+𝑛 
+
+ |𝑚 |(𝑛 − 𝑡 )2 (𝑛 − 𝑡 ) + 𝑂 (𝑛 |𝜋 |) 
+
+
+
+= 𝑛 |𝑚 |(𝑛 − 𝑡 ) + 𝑂 (𝑛 2 |𝜋 |) 
+
+< 32 |𝑚 | + 𝑂 (𝑛 2 |𝜋 |) ,
+
+again using that 𝑡 < 𝑛 /3. 
+
+Recovery . Every node sends two elements of 𝑀 together with the corresponding proofs and the commitment to the replacement node for a total size of 
+
+𝑛 · 2 ·
+
+ |𝑚 |(𝑛 − 𝑡 )2 + 𝑂 (| 𝜋 |) 
+
+
+
+< 92
+
+|𝑚 |
+
+𝑛 + 𝑂 (𝑛 |𝜋 |) .
+
+□SPAA ’26, July 06–10, 2026, London, United Kingdom Thomas Locher and Yvonne-Anne Pignolet 
+
+Note that the additive term for the commitments and their proofs for the space complexity and the communication complexity of dispersal and retrieval can be reduced by a factor of 𝑛 using batching techniques (see e.g., [5]). In this case, the additive term becomes 
+
+𝑂 (𝑛 |𝜋 | + 𝑛 2 log (𝑛 )) , where the term independent of |𝜋 | is due to the fact that 𝑂 (𝑛 2) elements of size at least ⌈log (𝑛 )⌉ bits—the minimum element size as discussed in §2—are both stored and transmitted. We conclude this section with a round complexity analysis. Theorem 3.9 (Round complexity). For data item 𝑚 , Protocol P
+
+requires 7 communication rounds for dispersal, 2 rounds for retrieval, and 1 round for recovery. 
+
+Proof. It is easy to see that the retrieval of a confirmed data item requires 2 rounds of communication: The client sends a retrieve mes-sage to all nodes and waits for the corresponding response messages. The recovery algorithm consists of a single recover message sent to the replacement node. The dispersal algorithm, on the other hand, is more complex. We focus on the complexity when the client is hon-est because the dispersal may not terminate when the writing client is Byzantine. As shown in Figure 3, there are 5 steps; however, a reliable broadcast requires more than one round of communication. Efficient reliable broadcast is possible in 3 rounds [9, 20] without additional cryptographic assumptions. Therefore, the nodes receive set 𝑆 after 5 rounds and then send row_info and info_sent messages in the sixth round, followed by the col_info and ready messages in the seventh round. □
+
+If latency is a concern, the number of rounds can be reduced through a few modifications: The set 𝑆 can be added to the spread 
+
+payload, which enables the nodes to send row_info and info_sent 
+
+messages already in the fourth round, resulting in a total of 6 rounds without affecting the communication complexity. It is easy to see that a malicious client sending different sets 𝑆 does not affect cor-rectness. The number of rounds can further be reduced to 5 in two ways. First, set 𝑆 can be added to the row_info messages too, which obviates the use of reliable broadcast but introduces a cost of 
+
+𝑂 (𝑛 3 |𝜋 |) as every node broadcasts set 𝑆 of size 𝑂 (𝑛 |𝜋 |) . Second, this cubic term can be avoided by using a two-round reliable broadcast algorithm [1, 20]. However, this algorithm relies on threshold cryp-tography, introducing another security assumption and requiring a secure setup of threshold key shares. 
+
+## 4 Protocol Variant 
+
+The protocol of the previous section can be modified to reduce the storage overhead at the expense of retrieval and recovery per-formance. We parameterize this trade-off by a storage overhead factor 𝛾 := 𝑛 /ℓ, where ℓ is the number of nodes that must provide their data for the retrieval of 𝑚 . As discussed below, our protocol variant covers the range 𝛾 ∈ [ 32 , 𝑛 ], with smaller 𝛾 requiring higher retrieval and recovery costs. For reference, the main protocol of §3 achieves a storage overhead factor of 3. The main idea is to use a simplified version of our dispersal algorithm introduced in §3.3 together with a minimum storage regenerating (MSR) code [14], which inherently supports efficient recovery. As the MSR structure itself encodes sufficient redundancy for repair, nodes only need to store row data and the corresponding proofs. For the sake of brevity, we provide a high-level description without a formal specification and analysis. Since this protocol variant is based on the same techniques, its correctness can be verified using similar arguments. We further restrict the discussion to the complexity with respect to the message size |𝑚 |, without considering the total size of all proof data and control messages, which are again bounded by 𝑂 (𝑛 2 |𝜋 |) .While an MSR code also requires a threshold ℓ of elements suffi-cient for reconstruction, it further has a parameter 𝑑 , which spec-ifies the number of nodes from which data needs to be obtained to recover the state of a node. In a Byzantine setting, it must hold that ℓ ≤ 𝑛 − 𝑡 and 𝑑 ≤ 𝑛 − 𝑡 because 𝑡 nodes may not respond. For 𝑡 := ⌊( 𝑛 − 1)/ 3⌋, we have that ℓ ≤ 23 𝑛 as 𝑛 → ∞ , which to-gether with the trivial lower bound ℓ ≥ 1 implies the claimed range 
+
+𝛾 = 𝑛 /ℓ ∈ [ 32 , 𝑛 ]. For node recovery, a replacement node needs to obtain |𝑚 |/( ℓ (𝑑 − ℓ + 1)) bits from 𝑑 distinct nodes. Since our protocol is based on a matrix embedding, we apply the same concept with an MSR code, placing 𝑚 into an ℓ × ℓ-matrix, which results in an element size of |𝑚 |/ ℓ2. Each node stores row data consisting of ℓ elements for a total of |𝑚 |/ ℓ bits. As all nodes store the same amount of data, we get that the space complexity is 
+
+𝑛 |𝑚 |/ ℓ. Recall that 𝛾 := 𝑛 /ℓ, so the space complexity is 𝛾 |𝑚 |, which shows that 𝛾 indeed corresponds to the overhead factor. The modified dispersal algorithm works as follows. The client 
+
+𝑐 first sends only the row data to the nodes and collects 𝑛 − 𝑡 ack 
+
+messages. As in Protocol P, 𝑐 then reliably broadcasts the set 𝑆 
+
+containing 𝑛 − 𝑡 valid node-signature pairs but, unlike Protocol P,
+
+𝑐 sends 2 𝑡 elements, namely 𝑀 [ 𝑗, 𝑖 ] and 𝑀 [ 𝑗, 𝑖 + 𝑛 ] together with the corresponding proofs for all 𝑣 𝑗 that do not occur in 𝑆 , to each node 𝑣 𝑖 in a spread message. For each such index 𝑗 , 𝑣 𝑖 forwards 
+
+𝑀 [ 𝑗, 𝑖 ] and 𝑀 [ 𝑗, 𝑖 + 𝑛 ] to node 𝑣 𝑗 in a row_info message. Every node still broadcasts an info_sent message after disseminating the 
+
+spread messages as before. In fact, the rest of the algorithm remains the same, except that column_info messages are not required. The retrieval algorithm remains effectively unchanged, with the only difference that rows are requested from ℓ + 𝑡 ≤ 𝑛 nodes, taking into account that up to 𝑡 nodes may not respond. Similarly, recovery data must be requested from 𝑑 + 𝑡 ≤ 𝑛 nodes as mentioned before. It remains to derive the communication complexity of the dif-ferent operations with respect to parameter 𝛾 . As far as dispersal is concerned, the client first transmits all data to be stored, i.e., 
+
+𝛾 |𝑚 | bits. The 2 𝑡 elements in each spread message are first sent from the client to all nodes, followed by every node sending 2 of these elements to each of the 𝑡 nodes that do not occur in 𝑆 , which amounts to 
+
+(2𝑡 · 𝑛 + 𝑛 · 2𝑡 ) |𝑚 |
+
+ℓ2 = 4𝑡 𝑛 𝛾 2 |𝑚 | < 43𝛾 2 |𝑚 |
+
+since 𝑡 < 𝑛 /3. Thus, the communication complexity of dispersal is 
+
+ 1 + 43𝛾  𝛾 |𝑚 |.
+
+As far as retrieval is concerned, since row data is requested from 
+
+ℓ + 𝑡 nodes, the communication complexity is 
+
+|𝑚 |
+
+ℓ (ℓ + 𝑡 ) =
+
+
+
+1 + 𝑡 ℓ
+
+
+
+|𝑚 | <
+
+
+
+1 + 𝛾 
+
+3
+
+
+
+|𝑚 |,
+
+again due to the fact that 𝑡 < 𝑛 /3. AVID with Low Space and Communication Complexity SPAA ’26, July 06–10, 2026, London, United Kingdom 
+
+Lastly, the communication complexity for recovery is 
+
+|𝑚 |( 𝑑 + 𝑡 )
+
+ℓ (𝑑 − ℓ + 1) ,
+
+which is minimized when 𝑑 ≤ 𝑛 − 𝑡 is maximized, i.e., 𝑑 = 𝑛 − 𝑡 . If further 𝑑 = ℓ, then we have that 
+
+|𝑚 |( 𝑑 + 𝑡 )
+
+ℓ (𝑑 − ℓ + 1) = |𝑚 |𝑛 ℓ = 𝛾 |𝑚 |,
+
+i.e., the communication complexity of recovery matches the com-munication complexity of retrieval in this extreme case, which corresponds to 𝛾 = 32 because ℓ = 23 𝑛 for 𝑡 := ⌊( 𝑛 − 1)/ 3⌋ and 
+
+𝑛 → ∞ .For ℓ < 𝑑 = 𝑛 − 𝑡 , the communication complexity is bounded by 
+
+|𝑚 |( 𝑑 + 𝑡 )
+
+ℓ (𝑑 − ℓ + 1) < |𝑚 |𝑛 ℓ (𝑛 − 𝑡 − ℓ) 
+
+> 𝑡 <𝑛 /3
+
+< 𝛾 223𝛾 − 1
+
+|𝑚 |
+
+𝑛 .
+
+Table 1 shows concrete space and communication complexities for 𝛾 = 1.8 and 𝛾 = 1.5. As efficient recovery is not possible for 
+
+𝛾 = 1.5, it is worth pointing out that any erasure code with the properties specified in §2 can be used instead of an MSR code. In this case, the only difference to protocol P in §3 is that the nodes neither store nor distribute any column data. As stated before, the numbers in the table reveal that this protocol variant may be preferable when a low space complexity and communication complexity of dispersal is prioritized for the considered use case. 
+
+## 5 Related Work 
+
+Rabin [23] established the foundation of verifiable information dispersal, providing a primitive for distributing data with verifi-able consistency. Cachin and Tessaro [9] subsequently generalized this concept to asynchronous networks, achieving optimal stor-age and retrieval complexity. Since then, AVID has become a core component in various systems, including state-machine replica-tion [13, 17], secure multiparty computation [21], decentralized mass storage [11, 15, 16, 18] and distributed ledgers [10, 22, 26]. 
+
+Storage and Dispersal Efficiency. The original AVID protocol [9] achieves optimal storage complexity but suffers from a communica-tion complexity for dispersal of 𝑂 (𝑛 |𝑚 |) because each storage node obtains the entire message but retains only its fragment to support later retrievals. Subsequent work [4, 13, 17, 26] proposed protocols that offer varying trade-offs between fault tolerance and resource consumption, particularly storage and communication overhead. Most of these protocols follow the same pattern: First, the data is erasure-coded into multiple fragments, then a fragment is sent to each node, followed by reliably broadcasting a commitment to the set of all fragments so each node can verify that its own fragment is consistent with the commitment. This approach guarantees that each node stores data proportional to the size of its own fragment and achieves near-optimal storage, dispersal, and retrieval costs. Some of these works have focused on reducing the dispersal cost to 𝑂 (| 𝑚 |) . Alhaddad et al. [3] achieve a dispersal, storage, and retrieval cost of 3 |𝑚 | using only collision-resistant hash functions. In follow-up work, Alhaddad et al. [5] attained optimal cost for storage and retrieval but at an increased communication complex-ity of 9 |𝑚 | for dispersal by utilizing a two-dimensional encoding scheme. In their construction, the message is mapped into a matrix where rows and columns are individually encoded with maximum distance separable (MDS) codes [24]. To recover a column, 𝑛 − 𝑡 
+
+elements are necessary, while 𝑛 − 2𝑡 elements suffice to recover a row. During the dispersal algorithm, the client sends data from an encoded column to each node, and each node then forwards an element to the other nodes and reconstructs its row data from the received elements. Together with a two-dimensional commitment scheme, this ensures that consistency can be verified. Only the row data is stored by the nodes, whereas the column data is merely used during the dispersal algorithm and deleted afterwards. They also study how to cope with fail-stop nodes (in addition to the Byzan-tine nodes) and support batching and partial data retrieval for the scenario where a reader is only interested in parts of the data. Some of their constructions are robust in the sense that, upon successful dispersal, the fragments are consistent with the encoding of the message that can be subsequently retrieved. All these properties can be supported by our protocols as well. However, like most clas-sic AVID protocols, they lack efficient node recovery mechanisms; replacing a failed node requires downloading the entire data item, and the constant in the dispersal communication complexity is larger than in our protocols. 
+
+Repair and Node Recovery. The problem of efficient node repair in distributed storage was popularized by Dimakis et al. [14] through the introduction of regenerating codes . These codes, particularly minimum storage regenerating (MSR) codes, enable the reconstruc-tion of a missing node’s data share by downloading significantly less than the original data size at the expense of a slightly higher storage and retrieval complexity. The Red Stuff protocol, introduced by Danezis et al. [12], achieves a recovery bandwidth that is inversely proportional to the num-ber of nodes. At a high level, Red Stuff uses an asymmetric two-dimensional encoding: the data is placed in an 𝑛 × 𝑛 matrix whose rows require 𝑛 − 𝑡 elements to decode and whose columns require 
+
+𝑛 −2𝑡 elements to decode. Each node 𝑣 𝑖 stores the first 𝑛 −𝑡 elements of row 𝑖 and the first 𝑛 − 2𝑡 elements of column 𝑖 . Each matrix ele-ment has size |𝑚 |/(( 𝑛 −𝑡 )( 𝑛 −2𝑡 )) < 4.5|𝑚 |/ 𝑛 2 for 𝑡 < 𝑛 /3, resulting in a storage complexity of 𝑛 (𝑛 − 𝑡 + 𝑛 − 2𝑡 ) · 4.5|𝑚 |/ 𝑛 2 ≈ 4.5|𝑚 |,ignoring commitment proofs. This scheme provides the redundancy necessary for efficient recovery, but the storage overhead factor is rather large. During recovery of node 𝑣 𝑖 , up to 2 𝑡 + 1 nodes send the 𝑖 𝑡ℎ element of their row and up to 𝑛 nodes send their 𝑖 𝑡ℎ col-umn element, for a total of (𝑛 + 2𝑡 + 1) · 4.5|𝑚 |/ 𝑛 2 ≈ 7.5|𝑚 |/ 𝑛 for 
+
+𝑡 ≈ 𝑛 /3. A dispersal requires 4 .5|𝑚 | bits, but up to 𝑡 honest nodes may not have received their data at the time of the first retrieval and must run recovery first, rendering the effective dispersal complexity 
+
+≈ 4.5|𝑚 | + 𝑡 · 7.5|𝑚 |/ 𝑛 ≈ 7|𝑚 | for 𝑡 ≈ 𝑛 /3. Our work bridges the gap between storage-optimal but repair-heavy protocols such as the protocol by Alhaddad et al. [5] and repair-optimal but storage-heavy protocols like Red Stuff [12]. The performance gains stem from two co-designed mechanisms. 
+
+Encoding. Red Stuff uses an 𝑛 × 𝑛 matrix with an asymmetric encoding ( (𝑛, 𝑛 −𝑡 )-row-wise, (𝑛, 𝑛 −2𝑡 )-column-wise), storing 𝑛 −𝑡 
+
+row elements and 𝑛 − 2𝑡 column elements per node, each of size 4.5|𝑚 |/ 𝑛 2 for 𝑡 < 𝑛 /3, resulting in 4 .5|𝑚 |/ 𝑛 bits per node. We use an 𝑛 × 2𝑛 matrix with a symmetric (𝑛, 𝑛 − 𝑡 )-column-wise encoding followed by a (2𝑛, 𝑛 − 𝑡 )-row-wise encoding; the element size is SPAA ’26, July 06–10, 2026, London, United Kingdom Thomas Locher and Yvonne-Anne Pignolet 
+
+2.25 |𝑚 |/ 𝑛 2 and each node stores 2 (𝑛 − 𝑡 ) ≈ 4𝑛 /3 elements, yielding 3|𝑚 |/ 𝑛 bits per node. 
+
+Dispersal. Naively disseminating the 𝑛 ×2𝑛 matrix would absorb the encoding gains. The savings arise because after the client sends row and column data and collects 𝑛 − 𝑡 signed acknowledgments in the set 𝑆 , every node that has contributed an acknowledgment to 𝑆 already holds one element of every other node’s row (from its own column) and one element of every other node’s column (from its own row). Therefore, the client only needs to send the second half of the rows for the 𝑡 nodes that do not occur in 𝑆 , reducing the dispersal cost to 6 |𝑚 | versus 7 |𝑚 | for Red Stuff and 9 |𝑚 | for the protocol by Alhaddad et al. [5]. 
+
+## 6 Conclusion 
+
+There is a growing demand for distributed information dispersal and retrieval solutions for a broad range of use cases with different requirements. In systems with high churn rates or large system states, it is of paramount importance to bound the cost of dispersals and state recovery, not just storage overhead. Previous work showed that the state of nodes can be recovered efficiently—at the cost of a noticeably larger space complexity and communication complexity for other operations. In this work, we showed that it is possible to improve dispersal and recovery operations, while achieving optimal communication complexity for retrieval. Determining the lower bounds for the trade-offs across all operations simultaneously is an intriguing open problem that may be addressed in future research. 
+
+## References 
+
+[1] Ittai Abraham, Kartik Nayak, Ling Ren, and Zhuolun Xiang. 2021. Good-case Latency of Byzantine Broadcast: A Complete Categorization. In In Proc. 40th ACM Symposium on Principles of Distributed Computing (PODC) . 331–341. [2] Active Archive Alliance. 2025. Preparing for Tomorrow’s Expanding Storage Challenge with Active Archive: The Impact of AI and Data Growth . Special Report. Active Archive Alliance. [3] Nicolas Alhaddad, Sourav Das, Sisi Duan, Ling Ren, Mayank Varia, Zhuolun Xiang, and Haibin Zhang. 2022. Asynchronous Verifiable Information Dispersal With Near-Optimal Communication. Cryptology ePrint Archive (2022). [4] Nicolas Alhaddad, Sisi Duan, Mayank Varia, and Haibin Zhang. 2021. Succinct Erasure Coding Proof Systems. Cryptology ePrint Archive (2021). [5] Nicolas Alhaddad, Leonid Reyzin, and Mayank Varia. 2024. Committing AVID with Partial Retrieval and Optimal Storage. Cryptology ePrint Archive (2024). [6] Eli Ben-Sasson, Iddo Bentov, Yinon Horesh, and Michael Riabzev. 2018. Fast Reed-Solomon Interactive Oracle Proofs of Proximity. In 45th International Colloquium on Automata, Languages, and Programming (ICALP) . Schloss Dagstuhl–Leibniz-Zentrum fuer Informatik, 14:1–14:17. [7] Jonathan Bootle, Andrea Cerulli, Pyrros Chaidos, Jens Groth, and Christophe Petit. 2016. Efficient Zero-Knowledge Arguments for Arithmetic Circuits in the Discrete Log Setting. In Annual International Conference on the Theory and Applications of Cryptographic Techniques (EUROCRYPT) . 327–357. [8] Benedikt Bünz, Jonathan Bootle, Dan Boneh, Andrew Poelstra, Pieter Wuille, and Greg Maxwell. 2018. Bulletproofs: Short Proofs for Confidential Transactions and More. In Proc. IEEE Symposium on Security and Privacy (S&P) . 315–334. [9] Christian Cachin and Stefano Tessaro. 2005. Asynchronous Verifiable Information Dispersal. In Proc. 24th IEEE Symposium on Reliable Distributed Systems (SRDS) .191–201. [10] Ethan Cecchetti, Ben Fisch, Ian Miers, and Ari Juels. 2019. PIEs: Public Incom-pressible Encodings for Decentralized Storage. In Proc. ACM SIGSAC Conference on Computer and Communications Security (CCS) . 1351–1367. [11] Ivan Damgård, Chaya Ganesh, and Claudio Orlandi. 2019. Proofs of Replicated Storage Without Timing Assumptions. In Proc. 39th Annual International Cryp-tology Conference (CRYPTO) . 355–380. [12] George Danezis, Giacomo Giuliari, Eleftherios Kokoris Kogias, Markus Legner, Jean-Pierre Smith, Alberto Sonnino, and Karl Wüst. 2025. Walrus: An Efficient Decentralized Storage Network. arXiv preprint arXiv:2505.05370 (2025). [13] Sourav Das, Zhuolun Xiang, and Ling Ren. 2021. Asynchronous Data Dissemi-nation and its Applications. In Proc. ACM SIGSAC Conference on Computer and Communications Security (CCS) .[14] Alexandros G Dimakis, P Brighten Godfrey, Yunnan Wu, Martin J Wainwright, and Kannan Ramchandran. 2010. Network Coding for Distributed Storage Sys-tems. IEEE Transactions on Information Theory 56, 9 (2010), 4539–4551. [15] Ben Fisch. 2019. Tight Proofs of Space and Replication. In Proc. 38th Annual Inter-national Conference on the Theory and Applications of Cryptographic Techniques (EUROCRYPT) . 324–348. [16] Guy Goren, Andrew Hariri, Timothy D. R. Hartley, Ravi Kappiyoor, Alexander Spiegelman, and David Zmick. 2025. Shelby: Decentralized Storage Designed to Serve. arXiv:2506.19233 [17] James Hendricks, Gregory R. Ganger, and Michael K. Reiter. 2007. Verifying Dis-tributed Erasure-Coded Data. In Proc. 26th Annual ACM Symposium on Principles of Distributed Computing (PODC) .[18] Ari Juels and Burton S Kaliski Jr. 2007. PORs: Proofs of Retrievability for Large Files. In Proc. 14th ACM Conference on Computer and Communications Security (CCS) . 584–597. [19] Aniket Kate, Gregory M Zaverucha, and Ian Goldberg. 2010. Constant-Size Commitments to Polynomials and Their Applications. In Proc. 16th International Conference on the Theory and Application of Cryptology and Information Security (Asiacrypt) . 177–194. [20] Thomas Locher. 2025. Byzantine Reliable Broadcast with Low Communication and Time Complexity. In Proc. 28th International Conference on Principles of Distributed Systems (OPODIS) , Vol. 324. 16:1–16:17. [21] Donghang Lu, Thomas Yurek, Samarth Kulshreshtha, Rahul Govind, Aniket Kate, and Andrew Miller. 2019. HoneyBadgerMPC and AsynchroMix: Practical Asynchronous MPC and its Application to Anonymous Communication. In Proc. ACM SIGSAC Conference on Computer and Communications Security (CCS) . 887– 903. [22] Kamilla Nazirkhanova, Joachim Neu, and David Tse. 2022. Information Dispersal With Provable Retrievability for Rollups. In Proc. 4th ACM Conference on Advances in Financial Technologies (AFT) . 180–197. [23] Michael O Rabin. 1990. The Information Dispersal Algorithm and its Applications. In Sequences: Combinatorics, Compression, Security, and Transmission . 406–419. [24] Richard Singleton. 1964. Maximum Distance q-nary Codes. IEEE Transactions on Information Theory 10, 2 (1964), 116–118. [25] Splunk Inc. 2019. The State of Dark Data: How Business Leaders are Using Their Most Valuable, Untapped Resource . Industry Report. Splunk Inc. [26] Lei Yang, Seo Jin Park, Mohammad Alizadeh, Sreeram Kannan, and David Tse. 2022. DispersedLedger: High-Throughput Byzantine Consensus on Variable Bandwidth Networks. In Proc. 19th USENIX Symposium on Networked Systems Design and Implementation (NSDI) . 493–512.

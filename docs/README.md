@@ -44,14 +44,14 @@
       <span class="dpr-home-dashboard-kicker">2026-08-28</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 16 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 21 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
-    <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>6</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>10</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>2 次</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>10</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-28 02:59:22 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-28 22:18:59 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日推荐聚焦边缘AI与去中心化网络，精读两篇高分论文：LLM边缘推理的吞吐量最大化方案与分层随机线性网络编码的弹性组网策略。最值得关注的是两阶段Maskable PPO方法，能有效提升边缘推理性能；若关注网络鲁棒性，可重点看自适应对等聚类方案。建议后续可结合多集群API网关部署，探索边缘AI与网络优化的联合实践。</p>
+<p>今日精读10篇，重点聚焦LLM边缘推理与去中心化无线网络两大方向。</p>
+<p>最值得关注：Goodput最大化方法用两阶段掩蔽PPO提升边缘推理效率，自适应聚类结合层次随机线性网络编码增强网络韧性。</p>
+<p>建议下一步可深入速读中的多云API网关优化与异步可验证信息分散，拓展工程与安全视野。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">6 篇</strong>
+    <strong class="dpr-home-dashboard-count">10 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
 <ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Goodput Maximization for Large Language Model Edge Inference: A Two-Phase Maskable PPO Approach">Goodput Maximization for Large Language Model Edge Inference: A Two-Phase Maskable PPO Approach</span></li><li><span class="dpr-home-dashboard-paper-title" title="Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks">Adaptive Peer Clustering with Hierarchical Random Linear Network Coding for Resilient Decentralized Wireless Networks</span></li><li><span class="dpr-home-dashboard-paper-title" title="SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs">SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>6</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>10</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">10 篇</strong>
+    <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Optimizing API Gateway Placement in Multi-Cloud Kubernetes">Optimizing API Gateway Placement in Multi-Cloud Kubernetes</span></li><li><span class="dpr-home-dashboard-paper-title" title="Thermo-FL: Thermal-Aware Robust Federated Fine-Tuning of Large Language Models for Edge AI">Thermo-FL: Thermal-Aware Robust Federated Fine-Tuning of Large Language Models for Edge AI</span></li><li><span class="dpr-home-dashboard-paper-title" title="Centrality-Based Deployment of Queue Policies in Acyclic Multipath Routing Networks">Centrality-Based Deployment of Queue Policies in Acyclic Multipath Routing Networks</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Optimizing API Gateway Placement in Multi-Cloud Kubernetes">Optimizing API Gateway Placement in Multi-Cloud Kubernetes</span></li><li><span class="dpr-home-dashboard-paper-title" title="Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity">Asynchronous Verifiable Information Dispersal with Low Space and Communication Complexity</span></li><li><span class="dpr-home-dashboard-paper-title" title="Systematization of Knowledge: Formal Verification of Consensus Protocols">Systematization of Knowledge: Formal Verification of Consensus Protocols</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>10</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>11</strong></span></div>
 </section>
 </div>
 
