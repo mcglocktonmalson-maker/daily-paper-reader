@@ -1,0 +1,281 @@
+Title: Resilience in Trustworthy Wireless Systems
+
+URL Source: https://arxiv.org/pdf/2608.19850v1
+
+Published Time: Fri, 21 Aug 2026 00:41:31 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+> 1
+
+# Resilience in Trustworthy Wireless Systems 
+
+Shixiong Wang, Yumeng Zhang, and Hongyu Li 
+
+Abstract —Resilience has emerged as a fundamental capability for future wireless systems operating in dynamic and uncertain environments. Although resilience has attracted growing atten-tion across academia, industry, and standardization, its concep-tual scope, enabling mechanisms, and realization techniques re-main fragmented. This paper presents a systematic framework of resilience in wireless systems from a trustworthiness perspective. We first formalize the concept of resilience and distinguish it from related uncertainty-aware terminologies, including relia-bility, robustness, adaptability, survivability, and recoverability. We then establish a hierarchical framework that organizes resilience into capability dimensions and enabling mechanisms, and that quantifies resilience through different technical aspects. We further use physical links and unmanned aerial vehicle networks as representative wireless scenarios to demonstrate how resilience can be systematically realized through the joint design of architectures, operations, and algorithms. Finally, we examine the fundamental trade-offs in resilience engineering: Improving resilience generally incurs costs in resource efficiency, nominal performance, information acquisition, implementation complexity, and latency. 
+
+I. I NTRODUCTION 
+
+Future wireless systems, such as cellular, sensor, industrial ad-hoc, and internet-of-things (IoT) networks, are anticipated to possess diverse capabilities that are reasoning-aware of the inference mechanisms behind their decisions, uncertainty-aware of dynamic and uncertain operating environments, and impact-aware of the environmental and societal implications of their deployment. To be specific, reasoning awareness primar-ily encompasses explainability, interpretability, transparency, causality, and accountability [1]–[3]. Uncertainty awareness mainly entails resilience, reliability, robustness, adaptability, survivability, and recoverability [4]–[6]. Impact awareness mostly involves sustainability (e.g., greenness), privacy, secu-rity, and fairness [7]–[11]. Collectively, these complementary capabilities constitute the blueprint of trustworthy wireless systems; see Fig. 1. This article focuses on the principles and methodologies of resilience in wireless systems. In November 2023, the International Mobile Telecommu-nications towards 2030 and beyond (IMT-2030) identified “resilience” as one of the fundamental capabilities for future networks, where “resilience refers to the capabilities of net-works and systems to continue operating correctly during and after a natural or man-made disturbance, such as the loss of a primary source of power” [12, p. 16]. To be specific, in 
+
+S. Wang is with the School of Mathematics and Statistics, Xi’an Jiaotong University, Xi’an 710049, China (E-mail: s.wang@xjtu.edu.cn; s.wang@u.nus.edu). Y. Zhang is with the Department of Electronic and Computer Engineering, Hong Kong University of Science and Technology, Hong Kong (E-mail: eeyzhang@ust.hk). H. Li is with the Internet of Things Thrust, Hong Kong University of Science and Technology (Guangzhou), Guangzhou, China (E-mail: hongyuli@hkust-gz.edu.cn). ( S. Wang and Y. Zhang contribute equally; Corresponding Author: H. Li. )Trustworthiness         
+
+> Reasoning Awareness Uncertainty Awareness Impact Awareness
+> Explainability Interpretability
+> Causality Transparency
+> Accountability
+> Resilience Reliability
+> Robustness Adaptability
+> Survivability Recoverability
+> Sustainability
+> Security Fairness
+> Privacy
+
+Fig. 1. Overarching aspects of trustworthy wireless systems. 
+
+the newly introduced IMT-2030 usage scenario of “ubiquitous connectivity”, supporting systems are required to be resilient to, e.g., external disturbances and internal faults. In addition to resilience, closely related terminologies with respect to uncertainty awareness, as frequently discussed in academia (e.g., [4]) and industry (e.g., [6]), also include reliability, robustness, adaptability, survivability, recoverability, etc. How-ever, the conceptual boundaries and relationships among these terminologies remain fragmented and lack a unified study. Moreover, despite growing research interest since the IMT-2030 initiatives, the principles and methods of resilience in wireless systems are to be systematically investigated. To bridge the two gaps above, this overview article explores the basic connotations, enabling mechanisms, and concrete techniques of resilience in wireless systems, and establishes a unified perspective on its relationships with other intrinsically coupled concepts under the uncertainty-awareness paradigm. II. F UNDAMENTALS OF RESILIENCE 
+
+In this section, we introduce the fundamentals of resilience, including the definition, its relationships to other uncertainty-aware terminologies, enabling mechanisms, and quantification metrics. We start with the concept of uncertainty and the necessity of uncertainty awareness, as illustrated in Fig. 2. The key information in this section is summarized in Fig. 3. 
+
+A. Uncertainties and Uncertainty-Awareness 
+
+Uncertainties reflect the discrepancies between human knowledge and underlying realities, such as model mis-matches, channel disturbances, parameter estimation errors, link blockages, interference, antenna faults, backhaul failures, power outages, cell congestion, jamming, attacks, and network topological variations [4]. Some uncertainties are aleatoric (e.g., inherent stochasticity in varying environments), whereas others are epistemic (e.g., limited knowledge due to inadequate data collection); some uncertainties are natural, while others are artificial, regardless of whether they are adversarial, be-nign, or neutral. These uncertainties widely exist in diverse arXiv:2608.19850v1 [cs.IT] 20 Aug 2026 2Internal Faults 
+
+Systems     
+
+> Abnormal Operational Status/
+> Dropped Performance Indicator
+> Inputs/
+> Configurations
+> Algorithmic Procedures
+> Physical Entities
+> Feedback
+> External
+> Disturbances
+
+Fig. 2. The building diagram of a system subject to uncertainties, including both external disturbances and internal faults. Uncertainties lead to abnormal operations and dropped performance. Robustness                  
+
+> Adaptability
+> Survivability
+> Recoverability
+> Capability Dimensions
+> Slight -to -Moderate
+> Uncertainties
+> Strong Uncertainties
+> Observability Predictability Evolvability
+> Supporting Capabilities
+> Enabling Mechanisms
+> Objective Mechanisms
+> Tolerance (Withstanding) of
+> Uncertainties
+> Adaptation to Changing
+> Environments
+> Survival from Degradations
+> Recovery from Interruptions
+> Means Mechanisms
+> Prediction Observation
+> Redundancy Diversity
+> Margin Modularization
+> Decentralization Isolation
+> Countermeasure Estimation
+> Avoidance
+> Scaling
+> Reconfiguration
+> Replacement
+> Coordination
+> Resilience
+> Support
+> Enable
+> Enable
+> Realize
+> Entail
+> Entail
+> Applicable Objects
+> PHY
+> Link
+> Single -
+> Station Cell
+> Optimization
+> Method
+> Terrestrial
+> Network
+> Statistical
+> Inference
+> Learning
+> Scheme
+> Computing
+> Paradigm
+> Physical Entities
+> Non -Terrestrial
+> Network
+> Algorithmic Procedures
+> Quantification Metrics
+> Degradation Depth Interruption Depth Survival Time Collapse Time Recovery Time Restoration Time
+
+Fig. 3. Fundamentals of resilience, including its applicable objects, relation-ships to other terminologies, enabling mechanisms, and quantification metrics. 
+
+wireless systems of different scales, ranging from point-to-point physical-layer (PHY) links, to single-station cells, and to cellular, sensor, and non-terrestrial networks (NTNs). If not properly handled, these uncertainties can cause performance perturbations and degradations or even operational interrup-tions and failures in the system of interest [4], [6], [12]. To this end, uncertainty awareness in wireless systems design and operation warrants thorough investigation, which specifically involves equipping wireless systems with pivotal capabilities such as resilience, reliability, robustness, adaptability, surviv-ability, and recoverability. Here, as per the research scales and focuses, the connotation of the word “system” broadly includes both physical entities (e.g., a PHY link, a cell, or a network) and algorithmic procedures (e.g., a routing strategy, a beamforming scheme, an optimization or statistical method, or a computing paradigm) in wireless engineering; cf., e.g., [13, p. 3]. The former corresponds to systems design (e.g., architec-tures), while the latter corresponds to systems operation (e.g., orchestrations). The functional boundary between the two aspects, however, is not typically sharp because the uncertainty awareness of an algorithmic framework can directly lead to that of a physical system: For example, resilient packet routing and user handover algorithms that can perceive and respond to uncertainties contribute to the resilience of wireless networks. In different contexts and literature, uncertainties are di-versely referred to as disturbances, errors, adversities, faults, attacks, threats, interference, unknowns, among many others. As consequences of uncertainties, disruptions denote devia-tions of a system from its intended operation (a discrete-valued status) or performance (a continuous-valued indicator), in either a degraded, interrupted, or failed manner, corresponding to degradations, interruptions, and failures [4], [13]. Note, however, that the conceptual boundaries between these causes and consequences are usually blurred because in cascaded systems, caused statuses (i.e., disruptions) of the preceding modules serve as the causing factors (e.g., adversities) of the succeeding ones. This relationship also extends to surrounded systems, where environmental disruptions act as adversities. 
+
+B. Concepts of Resilience and Reliability 
+
+According to [13, p. 2], [12, p. 16], and [6, p. 8], re-silience is the system-level capability to maintain and restore service performance (i.e., continue functioning) in dynamic and uncertain environments throughout the system’s lifecycle. Depending on contexts, its specific connotations (or objectives) include preventing the system from encountering uncertain-ties, adapting the system to changing conditions, maintaining performance during disturbances (e.g., slight uncertainties), restoring performance from disruptions (e.g., after strong uncertainties), among others. In some literature, the narrow-sense definition of resilience, i.e., restorability, due to its dictionary meaning, also applies [13, p. 1], [4, p. 32]. In future wireless engineering, as IMT-2030 does, resilience is suggested to be interpreted in the broad sense by default. Similar to green communications and artificial intelligence (AI)-native networks, resilience emerges as a new design paradigm for future wireless systems. Reliability is another system-level capability: In general systems engineering, it is defined as the probability that a system maintains its intended function, operation, or perfor-mance for a given period of time. In wireless communication systems, however, the notion of reliability is often used in a narrow sense at the physical-link level, i.e., “the capability of transmitting a predefined amount of data successfully within a predetermined time duration with a given probability” [12, p. 16], [6, p. 7], which is associated with the usage scenario of “hyper reliable and low-latency communication (HRLLC)” in IMT-2030. Here, the probability is induced by the randomness of the underlying uncertainties, such as channel disturbances. In future wireless engineering, examining the reliability issues of various systems, beyond packet transmission, is expected. For a conceptual comparison of reliability and resilience, see Fig. 4. In the upper two panels, most performance tra-jectories remain above the intended level; thus, the system has a high reliability. In contrast, in the lower two panels, most trajectories drop below the intended level; therefore, the system has a low reliability. In the left two panels, all disrupted trajectories can be restored to above the intended level, indicating that the system is resilient, whereas the system associated with the right two panels is not resilient. Taking packet transmission as an example, the successful probability of 1 − 10 −5 within the allowed maximum latency can be seen as reliable [6, p. 7], while equipping with feedback 3
+
+and retransmission mechanisms can be regarded as resilient. Resilience does not imply reliability, and vice versa. p(t)           
+
+> t
+> Reliable But Non -Resilient
+> Non -Reliable But Resilient Non -Reliable And Non -Resilient
+> p(t)
+> Intended ba
+> Reliable And Resilient
+> t
+> ba
+> Intended ba
+> p(t)
+> ba
+> tt
+> p(t)
+> Fig. 4. The conceptual comparison of reliability and resilience, leveraging the performance indicator p(t)of the system over time t. The uncertainties occur at the point band cause stochasticity in performance trajectories. Reliability is a statistical metric quantifying the likelihood that the system’s performance trajectory will drop below the intended level. Resilience, however, is a trajectory-wise notion, describing whether a trajectory can be maintained above the intended level or restored to above the intended level if the trajectory drops below it.
+
+C. Capability Dimensions of Resilience 
+
+Resilience includes four key capability dimensions (i.e., par-ticularizations) in different contexts and scenarios: robustness, adaptability, survivability, and recoverability. Robustness and adaptability represent the system’s capa-bilities to maintain normal operation and intended perfor-mance under slight-to-moderate uncertainties. The difference is that robustness enables the system to tolerate or with-stand uncertainties without changing its decisions, behaviors, or configurations, whereas adaptability allows the system to adjust its decisions, behaviors, or configurations in response to changing environments or operating conditions [4, p. 32]; see also [14] and [5], respectively, for technical discussions. For example, robust people can maintain their health under diverse viral challenges through inherent immune capacities without changing their lifestyle or taking medicines. In contrast, adap-tive individuals actively monitor their health conditions and adopt appropriate interventions, such as lifestyle changes or medicines, to respond to evolving viral threats. When strong uncertainties happen, maintaining normal op-eration and intended performance may be challenging. In this case, we can instead pursue degraded performance, that is, maintaining the performance above the minimum-required level, rather than the intended level. If the system can restore its performance to above the intended level from the degraded range, it is referred to as survivable. In contrast, if the system can restore its performance to above the intended level from below the minimum-required level, it is referred to as recoverable. For the conceptual comparison, see Fig. 5. Both survivability and recoverability are called restorability, but they are differentiated in different contexts. Continuing with the previous human health example, restorability reflects a person’s recuperation after hospitalization. p(t)                         
+
+> t
+> Interrupted
+> Degraded
+> Normal
+> Intended
+> Minimum
+> Required
+> cde
+> fg
+> hbaij
+> a-b: Stable b-c: Perturbed c-d: Degraded d-e: Survived
+> e-f: Degraded f-g: Interrupted g-h: Recovered h-i: Survived
+> p(t)
+> t
+> cdba
+> p(t)
+> t
+> ceba
+> d
+> Non -Survivable Non -Recoverable
+> Resilient
+> Fig. 5. The conceptual comparison of survivability and recoverability. According to the performance indicator p(t)at time t, the system has three operating statuses: Normal, Degraded, and Interrupted. In the perturbed phase (e.g., from Point b to Point c), despite uncertainties, the system maintains its intended performance using robust and adaptive strategies. The system associated with the lower two panels is non-resilient because it is either non-survivable or non-recoverable.
+
+Unlike robustness, which primarily supports the retention of operation and performance during disturbances, adaptability can also be a key enabler of restorability after disruptions. A motivating instance is as follows. A robust wireless network may maintain users’ services during a base station (BS) failure through redundant links (e.g., coordinated multi-point trans-mission), whereas an adaptable network may adjust routing and reallocate resources after the failure to restore the lost coverage and capacity. Hence, adaptation can be conducted before, during, and after an encounter with an uncertainty or disruption. 
+
+D. Supporting Capabilities for Resilience 
+
+To enable adaptability facing uncertainties, sufficient ob-servability of the uncertainties or their effects, such as faults, unknowns, or degraded system states and performance, is es-sential. Otherwise, systems cannot establish effective feedback or feedforward loops to support informed decisions, behaviors, and configurations [4, p. 33]. In addition to observability, predictability is another system-level perceiving capability to enable proactive protection and adaptation, that is, to forecast upcoming uncertainties (e.g., demands and workloads) and prepare for them in advance. For smarter functions, operations, and responses in the future, systems are anticipated to learn from uncertainties and histories. This capability, called evolvability, particularly includes more accurate prediction and observability, more efficient fault-tolerance, adaptation (e.g., scaling and recon-figuration), and faster survival and recovery. In modern prac-tice, evolvability of systems is largely supported by AI- and machine learning (ML)-driven approaches, although specific 4
+
+evolving strategies in different contexts remain open to be explored. 
+
+E. Enabling Mechanisms of Resilience 
+
+As discussed earlier, achieving resilience in a system re-quires equipping the system with a combination of particular-ized capabilities, including robustness, adaptability, survivabil-ity, and recoverability, which are to be activated under different scenarios and conditions. Moreover, supporting capabilities, such as observability, predictability, and evolvability, are also essential for realizing resilience. In this subsection, we dis-cuss typical mechanisms that enable these capabilities. Here, mechanisms broadly refer to diverse principles of systems design and operation: that is, architecture, module, and com-ponent designing, as well as their operational management. Note, however, that the relationships between mechanisms and capabilities are not one-to-one but many-to-many: To enable one capability may involve a batch of mechanisms, and one mechanism can be utilized for assisting multiple capabilities. By definition, tolerance (also known as withstanding ) of uncertainties, adaptation to changing conditions, survival from degradations, and recovery from interruptions and failures are naturally the enabling mechanisms of resilience, corresponding to robustness, adaptability, survivability, and recoverability, respectively. We refer to these four mechanisms as objective mechanisms, whereas any other mechanisms that facilitate or realize them are called means mechanisms. In this sense, pre-diction and observation fall into means mechanisms. Below, we investigate other typical means mechanisms in general systems engineering that are also implementable in wireless systems; for extensive reading, see, e.g., [4, pp. 33-34], [13, Section 6], [15, Section 1]. However, the list is only repre-sentative and not necessarily exhaustive. Practitioners should identify additional mechanisms in their applications. 
+
+Redundancy : Providing more than one way to perform a required function, such as backup components or parallel resources. Redundancy can mitigate single-point failures by maintaining functionality when one element fails. In wireless engineering, coordinated multi-point (CoMP) transmission is guided by the redundancy mechanism. 
+
+Diversity : Achieving redundancy through heterogeneous ways. Diversity can mitigate common-mode failures and shared vulnerabilities that cannot be addressed by homoge-neous redundancy. In wireless engineering, interleaving after channel coding and multi-antenna transmission are guided by the diversity mechanism. 
+
+Margin : Providing more capacity than expected to buffer adverse impacts from uncertainties and mitigate performance degradation. Margin is also known as buffering or absorption ,which enhances robustness against uncertainties, such as aging effects. In wireless engineering, inserting guard times or guard bands is guided by the margin mechanism. 
+
+Modularization : Disaggregating and segmenting a system into loosely coupled functional elements such that changes or failures in one element have limited impacts on others. Modu-larization establishes functional boundaries, reduces damage propagation, and facilitates fault localization and isolation. For example, conventional modularized wireless architectures built upon functional blocks can be more maintainable and resilient than tightly coupled (i.e., monolithic or end-to-end) AI architectures. 
+
+Decentralization : Distributing system functionality across multiple nodes, locations, or entities such that the loss or degradation of individual elements does not compromise over-all operation. Decentralization reduces dependence on single nodes and improves resilience through distributed communi-cation, cooperation, and decision-making. In this sense, mesh networks can be more resilient to access-point (AP) failures than cellular networks. 
+
+Isolation : Limiting the propagation of failures, faults, or attacks among system components through physical or logical separation. Isolation, also called separation , reduces harmful interactions among elements that have different protection requirements. Modularized and decentralized system architec-tures inherently support the isolation mechanism, justifying their widespread deployment in wireless practice. In wireless engineering, beamforming provides spatial isolation by steer-ing beams toward intended users and nulls toward interferers. 
+
+Countermeasure : Applying defensive actions to confuse, deceive, or impede adversaries and reduce the effectiveness of intentional threats. Countermeasure may also be known as 
+
+suppression or compensation in different contexts. In wireless engineering, anti-jamming null steering and interference can-cellation are guided by the countermeasure mechanism. 
+
+Estimation : Acquiring information about unknown system states, parameters, or uncertainties from measurements. It can also be called detection , testing , or monitoring , among many others, in different technical contexts. In wireless com-munications, channel estimation, interference estimation, and state estimation are representative examples. Estimation is a particularization of the observation mechanism (which can also broadly include anomaly detection and fault diagnosis) and serves as an enabling mechanism for resilience, e.g., by facilitating adaptation. 
+
+Avoidance : Preventing or reducing exposure to predicted disturbances, threats, or adverse conditions by proactively changing system operation, configuration, or behavior. In wireless communications, for instance, a mobile user can walk around large buildings to avoid link blockages. Avoidance is a proactive particularization of adaptation before adverse impacts happen. 
+
+Scaling : Accommodating changes in system size, workload, or resource demand (e.g., burst joining and exiting of users). Scaling is a reactive particularization of adaptation. In wireless communications, a scalable base station can support varying user densities and loads. 
+
+Reconfiguration : Modifying the system’s configuration, e.g., network topologies, operating modes, input parameters, func-tional relationships, and organizational structures. Reconfig-uration is also a reactive particularization of adaptation and may be referred to as restructuring , realignment , realloca-tion , or reorganization in different contexts. The conceptual boundary between scaling and reconfiguration is not sharp: Reconfiguration can serve as one of the enabling mechanisms 5
+
+of scalability, for example, through resource scheduling in decentralized networks as new nodes join. 
+
+Replacement : Substituting failed, degraded, or unavailable elements with new ones to restore expected operation and per-formance. Replacement is also a reactive particularization of adaptation, but it happens after system interruptions or failures. In wireless systems, vehicle-mounted BSs can temporarily replace damaged terrestrial ones after disruptions due to, e.g., sabotage and natural disasters. 
+
+Coordination : Integrating multiple complementary mech-anisms across modules, layers, and algorithms to achieve resilience. For example, a resilient wireless network always coordinates physical-layer adaptation, access-layer routing de-cisions, and application-layer resource management to mitigate the impact of dynamic disruptions. Note again that these generic mechanisms apply to a wide range of systems at different scales, including both physical entities and algorithmic procedures. Taking the modularization mechanism as an example, both a virtual software system and a physical communication system can be modularized into interconnected functional blocks to improve resilience. 
+
+F. Quantification of Resilience 
+
+The key quantification metrics of resilience include degra-dation depth, interruption depth, survival time, collapse time, recovery time, and restoration time, wherever they are applica-ble; see Fig. 6. For better resilience, the collapse time should be as large as possible, while the other values should be as small as possible. p(t)                    
+
+> t
+> Intended
+> Minimum
+> Required
+> cde
+> fg
+> hbaij
+> a-b: Stable b-c: Perturbed c-d: Degraded d-e: Survived
+> e-f: Degraded f-g: Interrupted g-h: Recovered h-i: Survived
+> Degradation
+> Depth
+> Collapse Time
+> Interruption
+> Depth
+> Restoration Time
+> Recovery Time Survival Time
+> Fig. 6. Representative metrics of resilience, including Degradation Depth, Interruption Depth, Survival Time, Collapse Time, Recovery Time, and Restoration Time. Except for collapse time, the smaller the values of the other quantities, the more resilient the system is.
+
+III. R ESILIENCE OF SPECIFIC WIRELESS SYSTEMS 
+
+Depending on the research and development focus, re-silience can be realized at different scales of wireless systems, including PHY links, single-station systems, terrestrial (e.g., cellular, cell-free, and sensor) networks, and non-terrestrial networks (e.g., unmanned aerial vehicle (UAV)- and satellite-involved), by particularizing the previously discussed objective and means mechanisms in different technical contexts. Note that resilience can also be realized in the algorithmic pro-cedures that underpin these physical entities. In this section, as illustrating examples, we discuss the specific connotations and enabling techniques of resilience in two representative types of wireless systems: PHY links and UAV networks. Here, “techniques” refer to the concrete solutions that realize, implement, or particularize the generic objective and means mechanisms of resilience in specific systems and technical contexts. 
+
+A. Resilience of PHY Links 
+
+A PHY link comprises a transmitter, a radio propagation channel, a receiver, and the associated signal-processing proce-dures required to convey information between the transmitter and receiver. Sources of uncertainty at the PHY-link level include im-perfect or outdated channel state information (CSI) due to channel estimation errors or pilot contamination and deep or rapidly varying fading, sudden link blockage or path birth and death, excessive interference or intentional jamming, mobility-induced Doppler shifts, synchronization errors, oscil-lator phase noise, carrier-frequency offset, and radio-frequency (RF) hardware impairments. The link status or utility is typically assessed using service-oriented metrics such as block error rate, effective throughput (goodput), latency, outage probability and duration, and, when confidentiality is required, secrecy rate or secrecy outage probability. Signal-to-noise ratio, signal-to-interference-plus-noise ratio (SINR), and achievable rate provide useful and an-alytically tractable PHY-layer indicators, although they alone do not determine whether the required communication service remains available. Resilience in this context refers to the capability of a PHY link to sustain a required or minimally acceptable level of information delivery under uncertainties, adapt its trans-mission and reception configurations (e.g., time, frequency, space, power resources) as conditions change, and restore decodable communication after an interruption. At the PHY-link level, controllable degrees of freedom include waveform, pilot design, channel coding, beamforming, transmit power, bandwidth, blocklength, carrier frequency, modulation and coding scheme (MCS), CSI acquisition and tracking, receiver processing, and propagation configuration. These degrees of freedom provide the entry points for implementing concrete re-silience mechanisms and techniques. To be specific, robustness limits immediate performance degradation caused by channel uncertainty and RF impairments through channel coding (e.g., low-density parity-check (LDPC) code, polar code) and equal-ization, uncertainty-aware or quality-of-service (QoS)/SINR-constrained beamforming, robust waveform design, robust power or spectrum allocation, and diversity transmission (e.g., space-time block coding (STBC)). Adaptability enables the transmitter and receiver to adjust MCS, blocklength, trans-mit power, bandwidth, beam direction, beam-tracking policy, receiver combining and equalization strategies, or propaga-tion configuration as channel conditions and service require-ments change. Survivability preserves a minimum information-delivery capability during severe degradation and can be enhanced through MCS fallback, packet repetition, or hybrid automatic repeat request (HARQ). Recoverability restores a decodable and synchronized link after an outage through 6
+
+channel reacquisition or re-estimation, beam-failure recovery, resynchronization, initial access or link re-establishment, car-rier switching, retransmission, or the activation of alternative propagation paths assisted by either active devices (e.g., relays) or passive ones (e.g., reconfigurable intelligent surfaces (RISs), beyond-diagonal RIS (BD-RIS), and backscatter devices). For concrete techniques that correspond to the means mech-anisms for PHY links, see Table I. 
+
+TABLE I SPECIFIC TECHNIQUES THAT CORRESPOND TO MEANS MECHANISMS IN 
+
+PHY LINKS AND UAV NETWORKS              
+
+> Means Mechanism Specific Techniques PHY Links UAV Networks
+> Prediction Blockage prediction Traffic-demand/coverage-hole prediction Observation & Estimation Channel estimation, MIMO detection, beam tracking Link-visibility, node health monitoring, localization Redundancy LDPC/polar coding, HARQ, preamble/control repetition, antenna selection Backup UAVs Diversity STBC, interleaving Heterogeneous air-ground access/backhaul paths Margin Power/beam/blocklength allocation, conservative MCS Battery and coverage-overlap reserves Modularization Group-connected BD-RIS Cluster-based swarm organization Decentralization N/A Leaderless distributed UAV topology control Isolation N/A Compromised UAV quarantine, control–data plane isolation Countermeasure Anti-jamming/null-steering beam design, Doppler-resilient modulation Cooperative anti-jamming UAV deployment Avoidance Interference-aware channel/beam selection Hazard/obstacle-aware trajectory planning, no-fly-zone avoidance Scaling Limited feedback, resource-block allocation, hybrid beamforming Autonomous on-demand fleet deployment Reconfiguration MCS fallback, RIS, bandwidth/blocklength adjustment Failure-triggered topology/route reconfiguration Replacement Carrier/beam/propagation switching Standby-UAV takeover Coordination Synchronization Joint multi-UAV placement and resource scheduling
+
+B. Resilience of UAV Networks 
+
+UAV networks represent a typical example of NTNs. A UAV network comprises multiple aerial nodes operating as airborne BSs, relays, wireless-fronthaul nodes, or edge-computing plat-forms interconnected through air-to-air and air-to-ground links. UAV networks operate under uncertainties arising from time-varying communication environments and sensing work-loads, dynamic topology, and imperfect knowledge of position, attitude, and mobility. Their air-to-air and air-to-ground links may also be disrupted by extreme weather, obstacles, and inter-mittent connectivity. UAV-specific challenges further include uncertain battery levels and component health, incomplete or delayed local information, and security threats such as jam-ming, global navigation satellite system spoofing, malicious control messages, and compromised nodes. Utilities for UAV networks should capture network-wide service continuity, mission effectiveness, and operational sus-tainability, using metrics including mission-completion proba-bility, end-to-end latency, service outage probability, and net-work lifetime. Coverage, graph connectivity, backhaul capac-ity, UAV availability, and energy consumption are informative network-state indicators, although they do not individually establish service continuity. UAV-network resilience is the ability to sustain essential coordination functions (e.g., communication, sensing, comput-ing), adapt aerial resources (e.g., node availability, trajectories, onboard energy) to changing conditions, survive severe disrup-tions, and restore lost service or mission capabilities. Unlike PHY-link resilience, it exploits network-level degrees of free-dom in node association, inter-UAV coordination, aerial fron-thaul, trajectories, topology, relay roles, and task allocation. These degrees of freedom support four capability dimensions through specific resilience mechanisms and enabling tech-niques. Robustness limits initial degradation through backup UAVs, redundant topologies, diverse fronthaul paths, energy and coverage margins, and risk- or no-fly-zone-aware trajec-tory planning. Adaptability responds to evolving conditions and threats through state estimation, traffic prediction, re-source reallocation, fronthaul switching, and cooperative anti-jamming. Survivability maintains minimum critical services after severe node or link losses through decentralized opera-tion, failure-triggered topology reconfiguration, compromised-node isolation, priority-aware task allocation, and multi-hop relaying. Recoverability restores the target service through standby-UAV takeover, UAV replacement or redeployment, route and fronthaul restoration, and reassignment of users, relay roles, and tasks. For concrete techniques that correspond to the means mech-anisms for UAV networks, see Table I. IV. T RADE -O FFS IN RESILIENT WIRELESS SYSTEMS 
+
+Although resilience is a fundamental capability requirement for future wireless systems, it is not achieved without cost: Im-proving resilience requires balancing it against other desirable system objectives or properties. Some representative examples are as follows.  
+
+> •
+
+Resource Overhead : Achieving resilience incurs resource overhead since mechanisms such as redundancy, di-versity, and margin consume additional spectrum, en-ergy, hardware, communication, and computational re-sources. For example, resilience of wireless systems en-tails information-acquisition overhead because observing, estimating, or predicting unknown system states, param-eters, and environmental conditions requires additional pilots, feedback, signaling, and computation (e.g., com-puting times).  
+
+> •
+
+Nominal Performance Sacrifice : Resilience may compro-mise nominal performance. For example, robust solutions are inherently conservative, which may underperform 7
+
+nominal solutions when anticipated uncertainties do not materialize as they are random. Note that robust solu-tions are usually optimized for worst-case conditions, whereas nominal solutions are for nominal conditions. For another example, modular architectures can facilitate fault localization, isolation, replacement, maintenance, and reconfiguration, but interfaces between modules can constrain joint performance optimization. Hence, highly integrated or end-to-end designs may achieve better nom-inal performance, whereas modular designs can offer better maintainability and resilience.  
+
+> •
+
+Complexity Growth : Resilience often increases imple-mentation complexity and coordination difficulty, as re-configuration, heterogeneous operation, and distributed cooperation require more complex decision-making, in-formation exchange, and synchronization. For example, decentralization removes single points of failure and distributes functionality, but distributed nodes must ex-change information and coordinate decisions. This intro-duces signaling overhead, synchronization issues, consen-sus latency, and potentially suboptimal decisions com-pared with perfectly informed centralized control.  
+
+> •
+
+Unprofitable Intervention : Proactive resilience introduces a trade-off between timely intervention and unnecessary intervention: Acting sufficiently early can prevent or mit-igate anticipated disruptions, whereas actions triggered by inaccurate predictions or false alarms may waste resources or even degrade nominal performance.  
+
+> •
+
+Delayed Response : Resilience requires prompt actions after a disruption. However, waiting for more measure-ments or performing more sophisticated optimization can improve decision quality. Hence, systems face a trade-off between reaction latency and solution quality.  
+
+> •
+
+Global Consideration : A node or module acting to protect itself can shift the burden elsewhere. For example, in-creasing transmit power can restore one link but increase interference to neighboring users; rerouting traffic around one congested link can overload another. Therefore, re-silience actions should be considered at the global level rather than only locally. As indicated, resilience more often than not trades off against resource efficiency, information acquisition, nominal perfor-mance, implementation and coordination complexity, latency, energy consumption, and risks arising from unnecessary or overly conservative resilience actions. Therefore, resilience engineering is fundamentally a problem of managing these competing objectives, rather than pursuing resilience alone. V. C ONCLUSIONS 
+
+This paper presents a systematic framework for resilience in wireless systems from a trustworthiness perspective. We clarified the concept of resilience, established a hierarchical framework that organizes its capability dimensions, enabling mechanisms, and implementation techniques, identified its key quantification metrics, illustrated its realization in representa-tive wireless systems, and discussed its associated engineering trade-offs. Through the proposed framework, we aim to pro-vide a useful conceptual foundation for the analysis, design, and evaluation of resilient wireless systems. Despite this progress, resilience remains at an early stage of research and development in wireless engineering. Future study should focus on establishing rigorous mathematical foundations for resilience, including formal definitions, per-formance metrics, and analytical models that quantitatively characterize resilience under specific scenarios and diverse uncertainties. Another important direction is the development of resilience-oriented statistical, optimization, learning, and control algorithms that jointly optimize resilience with com-peting objectives such as resource efficiency, latency, and implementation complexity. Finally, standardized resilience benchmarks, evaluation methodologies, and practical design principles are needed to enable fair comparison and systematic deployment of resilient wireless systems in future networks. REFERENCES [1] W. Guo, “Explainable artificial intelligence for 6G: Improving trust between human and machine,” IEEE Commun. Mag. , vol. 58, no. 6, pp. 39–45, 2020. [2] C. K. Thomas, C. Chaccour, W. Saad, M. Debbah, and C. S. Hong, “Causal reasoning: Charting a revolutionary course for next-generation ai-native wireless networks,” IEEE Veh. Technol. Mag. , vol. 19, no. 1, pp. 16–31, 2024. [3] Y. Xiao, “Accountability for wireless LANs, ad hoc networks, and wireless mesh networks,” IEEE Commun. Mag. , vol. 46, no. 4, pp. 116– 126, 2008. [4] S. Wang, W. Dai, J. Sun, Z. Xu, and G. Y. Li, “Uncertainty awareness in wireless communications and sensing,” IEEE Commun. Mag. , vol. 64, no. 2, pp. 30–38, 2026. [5] O. Wang, H. He, S. Zhou, Z. Ding, S. Jin, K. B. Letaief, and G. Y. Li, “Fast adaptation for deep learning-based wireless communications,”

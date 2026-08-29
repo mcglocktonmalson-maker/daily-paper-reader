@@ -1,0 +1,964 @@
+Title: SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs
+
+URL Source: https://arxiv.org/pdf/2608.26559v1
+
+Published Time: Fri, 28 Aug 2026 00:26:37 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+> IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 1
+
+# SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs 
+
+Ziyang Guo and Bing Du, Member, IEEE 
+
+Abstract —Civil aviation space-air-ground integrated networks (SAGINs) are expected to support heterogeneous cockpit and cabin services over dynamic air-to-air (A2A), air-to-ground (A2G), and air-to-satellite (A2S) data links. Existing static data-link binding schemes cannot fully exploit such heterogeneous communication opportunities, while repeatedly solving mixed-integer orchestration models is difficult for fine-grained online control. This paper studies service function chain (SFC)-aware online access-side aggregated data-link orchestration for civil aviation SAGINs enabled by software-defined networking and network function virtualization (SDN/NFV). The key idea is to jointly orchestrate spatial bearer resources provided by heterogeneous A2A/A2G/A2S data links and temporal elasticity enabled by temporal elastic mapping and parking (TEMP). A rolling-slot optimization model is developed with four request-level actions: NOW, TEMP, REJECT, and DROP. The model follows a lexicographic objective that prioritizes service suc-cess under quality-of-service (QoS) deadlines, then normalized access-orchestration delay, and finally residual TEMP-related risk. To avoid exhaustive search over the full binary action space, we propose Model-Induced Risk and Scarcity-Aware Refinement (MRSAR), a model-induced online approximation algorithm. MRSAR derives deferred-realization risk from the success-prioritized objective and extracts resource scarcity signals from data-link and TEMP buffer constraints. These model-induced signals are used for valuation-based feasible solution construction and bounded neighborhood refinement, thereby deciding whether each request should be served immediately, preserved for future realization, rejected, or dropped. Simulation results show that MRSAR remains close to the Gurobi-mixed-integer linear programming (MILP) reference in service success, outperforms arrival-order and delay-myopic greedy baselines, controls REJECT and DROP failures, and achieves a favorable quality-complexity tradeoff for rolling online orchestration. 
+
+Index Terms —Civil aviation SAGIN, SDN/NFV, aggregated data-link orchestration, temporal elastic mapping and parking (TEMP), SFC-aware access orchestration. 
+
+I. I NTRODUCTION 
+
+The rapid growth of civil aviation services is reshaping the role of aeronautical communication networks. Modern aircraft are expected to support cockpit safety services, airline oper-ation services, bandwidth-intensive cabin services, and delay-sensitive interactive applications with heterogeneous traffic volumes, delay budgets, and reliability requirements. Space-air-ground integrated networks (SAGINs) provide a promising architecture for extending communication coverage and im-proving service continuity by integrating satellite, aerial, and 
+
+> Ziyang Guo and Bing Du are with the Department of Computer and Communication Engineering, University of Science and Technology Beijing, Beijing, China (e-mail: m202420965@xs.ustb.edu.cn; dubing@ustb.edu.cn). This work was supported by the National Natural Science Foundation of China under Grant 62471031. Corresponding author: Bing Du (e-mail: dubing@ustb.edu.cn).
+
+terrestrial segments [1]–[4]. In civil aviation scenarios, such integration naturally involves heterogeneous air-to-air (A2A), air-to-ground (A2G), and air-to-satellite (A2S) data links, whose capacity, propagation delay, availability, and service suitability may vary rapidly with aircraft mobility and network load [5]. Request-level online orchestration over these links is therefore a nontrivial problem. In civil aviation SAGINs, aircraft should not be regarded only as traffic sources. They can also serve as a programmable intermediate layer that connects heterogeneous spatial commu-nication opportunities. From this perspective, A2A, A2G, and A2S data links can be abstracted as aggregated data-link bearer resources and jointly managed by a network control plane. Software-defined networking (SDN) and network function virtualization (NFV) provide the architectural basis for such abstraction, since SDN separates control logic from forward-ing behavior and NFV decouples network functions from dedicated hardware [6], [7]. Network slicing and softwariza-tion further support flexible resource sharing in virtualized networks [8]. This abstraction is also consistent with recent SAGIN resource-management studies that emphasize unified control over heterogeneous space, air, and ground resources [9]–[11]. With these capabilities, an aircraft service request can be dynamically assigned to a suitable access anchor and bearer mode before entering a service-function-chain-capable domain. Service function chain (SFC) steers traffic through an or-dered set of service functions and has been widely studied in SDN/NFV-enabled networks [12]–[14]. Recent works have further investigated SFC mapping, embedding, and scheduling in SAGINs and satellite-ground integrated networks [15]–[18]. In large-scale and dynamic aeronautical scenarios, however, recomputing the complete service chain for every request in every short decision slot may introduce excessive online over-head. The more urgent decision is often located at the access side: the controller must jointly select a SAGIN access anchor and an aggregated data-link bearer mode, and determine whether the request should be served immediately, temporarily preserved, or released under strict quality-of-service (QoS) and capacity constraints. Here, the access anchor is a selectable SAGIN-side admission entity, such as an aircraft, satellite node, or ground gateway, while the bearer mode specifies the associated A2A/A2G/A2S data-link technology. Therefore, this paper focuses on SFC-aware access orchestration rather than full end-to-end SFC remapping. This scope retains service awareness while keeping the online decision process suitable for fine-grained rolling control. A key difficulty in this problem is that service success depends on both spatial and temporal resources. Spatially, arXiv:2608.26559v1 [cs.NI] 27 Aug 2026 IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 2
+
+multiple heterogeneous data-link opportunities may be avail-able in a given slot. Temporally, a request that cannot be efficiently served immediately may still be valuable if future link opportunities can realize it within its access-orchestration delay budget. Similar time-varying opportunities have been ob-served in delay-tolerant, minimum-delay, and multi-objective aeronautical networking studies [19]–[21]. Motivated by this observation, this paper introduces temporal elastic mapping and parking (TEMP). TEMP is not treated as a passive waiting queue, but as a schedulable temporal resource supported by onboard storage or storage-type virtualized functions. A request should enter TEMP only when the finite look-ahead window indicates sufficient realization opportunities and when its residence time and buffer occupation remain feasible. The orchestration problem is thus not simply whether to use TEMP, but how to select, preserve, and realize TEMP requests without turning deferred service into delayed failure. Several existing decision principles are insufficient for this coupled spatial-temporal orchestration problem. Static data-link binding cannot adapt to rapid changes in traffic demand and link availability. Arrival-order scheduling, represented by first-come-first-served service disciplines, is simple to imple-ment [22], [23], but it does not distinguish requests with different delay budgets, future realization probabilities, or re-source impacts. Delay-oriented selection, related to minimum-delay routing and shortest-delay decision principles [20], [21], [24], can reduce instantaneous delay, but it is myopic with respect to future TEMP realization and heterogeneous resource scarcity. General-purpose mixed-integer linear programming solvers can provide high-quality references, but repeatedly solving a large binary decision problem in short online slots is computationally expensive [25]. Learning-based resource management has also attracted attention in network slicing and aeronautical routing [26], [27]. Although such methods can reduce post-training decision latency, their black-box nature and indirect constraint handling are less desirable for safety-sensitive aeronautical communication systems, where the controller should be able to explain why a request is served, deferred, rejected, or dropped. To address these issues, this paper studies SFC-aware online aggregated data-link orchestration for SDN/NFV-enabled civil aviation SAGINs. In each rolling decision slot, the active requests include both newly arrived requests and requests preserved in TEMP from previous slots. For each request, the controller chooses one action from NOW, TEMP, REJECT, and DROP. NOW assigns the request to an immediate feasible access anchor and aggregated bearer mode. TEMP keeps the request for possible future realization under a finite look-ahead window. REJECT handles newly arrived requests that cannot be admitted, while DROP handles carried-over TEMP requests that can no longer be legally preserved. The finite-horizon information used by TEMP is treated as an input to orchestration; in the simulations, recorded future slots are used as look-ahead information to isolate the value of TEMP-aware decision making, while dedicated traffic or link-state prediction is left outside the main focus of this paper. Based on this action structure, we formulate a success-prioritized rolling optimization model. The model captures immediate data-link capacity, TEMP buffer capacity, TEMP residence limits, future realization probability, and QoS delay constraints. Its objective is organized lexicographically: the first layer maximizes service success, the second layer min-imizes normalized access-orchestration delay after protecting success, and the third layer controls residual TEMP-related risk, including DROP, residence urgency, and buffer pressure. This structure avoids collapsing heterogeneous operational priorities into a single weighted-sum objective, and reflects that service success should be protected first, delay should be optimized second, and residual TEMP risk should be reduced only without damaging the preceding objectives. The resulting mixed-integer model is useful for clarifying the orchestration logic, but it is too expensive for repeated online execution at large request scales. We therefore propose Model-Induced Risk and Scarcity-Aware Refinement (MR-SAR), a model-induced online approximation algorithm. MR-SAR is not designed as an independent greedy rule; it derives deferred-realization risk from the success-prioritized objective, extracts scarcity-aware signals from current data-link and TEMP buffer constraints, and refines feasible actions within constrained NOW/TEMP/REJECT/DROP neighborhoods. In this way, MRSAR preserves the interpretability of the original model while avoiding exhaustive search over the full binary action space. The main contributions of this paper are as follows.  
+
+> •
+
+We formulate an SFC-aware online aggregated data-link orchestration problem for SDN/NFV-enabled civil aviation SAGINs, where A2A, A2G, and A2S data links are treated as heterogeneous aggregated data-link bearer resources for request-level access anchor and bearer-mode selection.  
+
+> •
+
+We introduce TEMP as a temporal elastic mapping and parking mechanism. TEMP transforms onboard storage from passive buffering into a schedulable temporal re-source whose value depends on future realization proba-bility, delay feasibility, residence state, and buffer pres-sure.  
+
+> •
+
+We develop a rolling-slot lexicographic optimization model over NOW, TEMP, REJECT, and DROP actions. The model prioritizes QoS success, then normalized access-orchestration delay, and finally residual TEMP-related risk, thereby reflecting service-oriented decision priorities more explicitly than conventional weighted-sum formulations.  
+
+> •
+
+We propose MRSAR, a model-induced risk and scarcity-aware refinement algorithm. MRSAR uses risk values and resource scarcity signals derived from the optimization model to obtain interpretable online decisions with much lower computational cost than direct MILP solving.  
+
+> •
+
+We conduct extensive simulations under heterogeneous civil aviation SAGIN settings. The results show that MRSAR remains close to the Gurobi-MILP reference in QoS success, outperforms arrival-order and delay-myopic greedy baselines, controls REJECT and DROP failures, and achieves better runtime scalability for rolling online orchestration. IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 3
+
+The remainder of this paper is organized as follows. Sec-tion II reviews related work. Section III presents the system architecture and problem overview. Section IV formulates the mathematical model. Section V introduces the MRSAR algorithm and analyzes its complexity. Section VI reports the simulation results. Section VII concludes the paper. II. R ELATED WORK 
+
+A. Resource Orchestration in SAGIN and Aeronautical Net-works 
+
+Space-air-ground integrated networks have been widely studied for extending network coverage and supporting hetero-geneous services through the integration of satellite, aerial, and terrestrial segments [1]–[4]. Existing studies have considered resource allocation, network slicing, service coverage, and cross-domain coordination in SAGINs [9]–[11]. Aeronautical network studies further show that aircraft networks face highly dynamic topology, heterogeneous data-link characteristics, and stringent service requirements [5], [28]. These works provide an important basis for resource management in dynamic space-air-ground and aeronautical communication environments. However, most existing SAGIN orchestration studies focus on general satellite-aerial-terrestrial integration, UAV-assisted networking, routing, or segment-level resource management. The civil aircraft layer is usually treated as a traffic source or a mobile access node, rather than as a programmable intermediate layer that can aggregate heterogeneous A2A, A2G, and A2S data-link opportunities. Delay-aware and multi-objective aeronautical routing studies optimize path selection under dynamic connectivity [20], [21], but they do not directly address request-level access anchor selection, bearer-mode selection, and TEMP-based temporal preservation under a unified rolling orchestration model. In contrast, this paper treats A2A, A2G, and A2S links as aggregated data-link bearer resources and studies request-level online orchestration over these resources. 
+
+B. SDN/NFV-Enabled SFC Orchestration 
+
+SDN and NFV provide key support for flexible network control and virtualized service deployment [6], [7]. Based on these techniques, SFC steers traffic through an ordered set of service functions, and existing studies have investigated virtual network function (VNF) placement, chain embedding, and end-to-end service path construction [12]–[14]. Recent works have further extended SFC orchestration to SAGINs and satellite-ground integrated networks, including cost-aware SFC mapping, SFC-based resource allocation, federated-learning-assisted SFC embedding, and dynamic SFC scheduling under time-varying resources [15]–[18]. Nevertheless, directly applying full SFC remapping to fine-grained civil aviation online control is difficult. In a large-scale rolling scenario, recomputing the complete service chain for every active request may introduce excessive decision over-head. Moreover, the immediate bottleneck considered in this paper is not the internal processing order of the service chain, but the access-side decision before a request enters an SFC-capable service domain. Therefore, this paper focuses on SFC-aware access orchestration, where the controller selects the access anchor, aggregated data-link bearer mode, and request-level action while avoiding unnecessary full-chain remapping at every decision slot. 
+
+C. Online Solvers, Greedy Policies, and Learning-Based Methods 
+
+Online orchestration problems are commonly addressed by optimization-based methods, low-complexity greedy policies, or learning-based approaches. Mixed-integer linear program-ming (MILP) can naturally model binary action choices, capacity constraints, and QoS constraints, and commercial solvers such as Gurobi can provide high-quality reference solutions [25]. However, repeatedly solving a large mixed-integer model in short rolling slots is computationally ex-pensive, especially when the number of active requests and candidate data-link actions increases. Thus, direct solver-based optimization is more suitable as a performance reference than as an online controller-side mechanism. Greedy policies are attractive because of their low im-plementation complexity. Arrival-order service disciplines, such as first-come-first-served scheduling, are widely used in queueing and online service systems [22]. Similar admission-oriented and myopic baselines are also common in dynamic wireless resource optimization and network slicing studies [23]. In the considered problem, arrival-order processing as-signs feasible actions according to request order, while delay-myopic selection greedily chooses the currently shortest fea-sible service opportunity, following minimum-delay decision principles [20], [24]. These policies represent service-order simplicity and instantaneous delay minimization, but neither explicitly evaluates TEMP realization opportunities nor prices the scarcity of heterogeneous data-link and buffer resources. Learning-based resource management has also attracted attention in network slicing and aeronautical networking [26], [27]. However, such methods usually require sufficient train-ing data and careful reward design. Their decision logic is less transparent than model-based methods, and hard con-straints are often handled indirectly through penalties or post-processing. In safety-sensitive aeronautical networking, an online orchestration mechanism should preferably remain interpretable and constraint-aware. Motivated by these ob-servations, this paper develops MRSAR as a model-induced online approximation algorithm. It is designed to be faster than repeated MILP solving, more orchestration-aware than arrival-order and delay-myopic greedy policies, and more interpretable than black-box learning-based methods. III. S YSTEM ARCHITECTURE AND PROBLEM OVERVIEW 
+
+A. SDN/NFV-Enabled Civil Aviation SAGIN 
+
+We consider an SDN/NFV-enabled civil aviation SAGIN where aircraft, ground gateways, and satellite nodes jointly provide heterogeneous communication opportunities for cock-pit and cabin services. As shown in Fig. 1, the aircraft layer is not treated merely as a set of traffic sources. Instead, IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 4User-Originated SFC-Aware Access Requests            
+
+> SDN/NFV-Enabled SAGIN Control Plane
+> SFC-Aware Access Data-Link Orchestrator
+> NOW
+> (Immediate Service)
+> TEMP
+> (Deferred
+> Realization)
+> REJECT
+> (Deny New Request)
+> DROP
+> (Carried-over TEMP Release)
+> Northbound Interface
+> SDN Controller Core
+> Topology
+> Discovery
+> Resource State
+> Collection
+> Request/TEMP State Management
+> SAGIN Physical Infrastructure
+> Space Layer
+> Air Layer
+> Ground Layer
+> LEO Satellite
+> Civil Aircraft
+> Ground Stations
+> A2S
+> A2G
+> Request Processing
+> SFC-Aware
+> Access Check
+> Request-Level Orchestration Actions
+> Southbound
+> Interface
+> Topology &
+> Resource
+> States
+> Control &
+> Configuration
+> Data-Link Resource Abstraction
+> A2A Anchor-Bearer Candidates (j,k)
+> A2G Anchor-Bearer Candidates (j,k)
+> A2S Anchor-Bearer
+> Candidates (j,k)
+> Attributes for Each (j,k)
+> •Capacity
+> •Delay
+> •Availability
+> •Service Suitability
+> •Bearer Mode k
+> Current & Look-ahead Candidate States A2G A2G A2G
+> A2A A2A
+> A2A
+> A2S A2S A2S
+
+Fig. 1. Access-side architecture for SFC-aware data-link aggregation in an SDN/NFV-enabled SAGIN. The SDN controller collects topology and resource states from the space, air, and ground segments, abstracts A2A/A2G/A2S links into anchor–bearer candidates, and supports request-level NOW, TEMP, REJECT, and DROP decisions within the access-orchestration stage. 
+
+aircraft are regarded as programmable airborne nodes that can access and relay service requests through A2A, A2G, and A2S data links. The ground segment provides gateways and terrestrial service access, while the satellite segment extends wide-area coverage when terrestrial connectivity is unavailable or congested. SFC-aware access requests enter the control plane through the northbound interface, while topology, link availability, bearer capacity, delay attributes, and TEMP-related states are collected from the SAGIN infrastructure through the southbound interface. Based on these states, the SDN/NFV controller determines request-level orchestration actions in a rolling-slot manner and translates the decisions into control and configuration commands for selected access anchors, bearer modes, and TEMP storage functions. NFV enables service functions such as storage, protocol conversion, gateway access, traffic filtering, and security processing to be deployed as virtualized components, forming an SFC-capable service domain into which aircraft service requests are admitted through selected access anchors. This framework differs from conventional static data-link access, where a service class is usually associated with a preferred communication technology or a fixed access mode. Here, heterogeneous A2A, A2G, and A2S data links are abstracted as aggregated data-link bearer resources and jointly orchestrated by the SDN/NFV control plane. 
+
+B. Aggregated Data-Link Bearer Resources and Access-Anchor Abstraction 
+
+In the considered civil aviation SAGIN, a request may be carried by different types of data links. A2A links provide airborne cooperation opportunities among aircraft, A2G links connect aircraft to ground stations or gateways, and A2S links provide satellite-based access when ground coverage is limited or satellite connectivity better matches the service require-ments. These links differ in transmission rate, propagation delay, resource availability, and supported service types. Rather than modeling each physical technology as an iso-lated resource, this paper abstracts heterogeneous data-link opportunities into aggregated data-link bearer resources. Let 
+
+j ∈ V denote a candidate SFC access anchor, namely a selectable SAGIN-side admission entity such as an aircraft, satellite node, or ground gateway. Let k ∈ K denote an aggregated data-link bearer mode, which represents the se-lected A2A/A2G/A2S access category or a concrete bearer technology, including VDL-Mode-2, HFDL, legacy SATCOM, SBB-Safety, ATG, 5G-ATG, and LEO broadband. The ordered pair (j, k ) represents an anchor–bearer candidate, meaning that request r is admitted through access anchor j using bearer mode k.For each anchor–bearer candidate, the controller maintains attributes such as available capacity, transmission rate, delay, availability, and service suitability. These attributes are used to screen current and look-ahead candidate states according to reachability, service compatibility, capacity, and access-delay feasibility. The resulting candidates are later represented by the NOW candidate set and the predicted future candidate sets in the mathematical model. This abstraction avoids statically binding a service class to a single data-link technology and allows heterogeneous communication opportunities to be han-dled through a unified orchestration view. The proposed framework is SFC-aware, but it does not recompute a complete service chain for every request at every decision slot. In a large-scale rolling scenario, the sequence of service functions can be maintained by service templates or preconfigured service domains according to the request type. The online bottleneck is the access-side decision, namely how to select an appropriate access anchor and data-link bearer so IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 5
+
+that the request can enter a suitable SFC-capable service do-main under access-delay and capacity constraints. Therefore, an access anchor is not merely a conventional next-hop node, but an entry point toward an SFC-capable service domain. Once a request is admitted through an anchor, subsequent service processing can be handled by the corresponding SFC domain. Under this abstraction, the candidate pair (j, k ) jointly captures the selected access anchor and the selected bearer mode. Because service categories differ in access-orchestration delay budgets, reliability requirements, and data sizes, the controller must evaluate whether each anchor–bearer candidate can admit the request within its access-orchestration delay budget. A successful orchestration outcome means that the request is realized through a feasible anchor–bearer candidate within the access-orchestration stage, after which the cor-responding SFC-capable service domain handles subsequent service processing. This definition keeps the model close to SFC orchestration while avoiding the excessive complexity of full-chain remapping in every short slot. 
+
+C. TEMP-Assisted Rolling Access Orchestration 
+
+TEMP denotes temporal elastic mapping and parking. It is introduced to represent a controlled temporal action for re-quests that are not served immediately but may still be realized in a future slot. Physically, TEMP can be supported by onboard storage, an aircraft-side storage-type VNF, or a lightweight buffering function managed by the SDN/NFV controller. Con-ceptually, TEMP is not a passive queue, but a schedulable temporal resource whose value depends on whether the request can be realized within its access-orchestration delay budget. The TEMP mechanism is motivated by the time-varying nature of civil aviation SAGINs. A request that has no suit-able immediate bearer may become feasible in a later slot because of changes in aircraft positions, satellite visibility, ground gateway availability, or resource contention. Therefore, discarding all currently infeasible requests may waste future communication opportunities. At the same time, admitting requests into TEMP without considering future realization may only postpone failures and increase buffer pressure. The controller therefore needs to determine which requests are worth preserving in TEMP according to realization probability, residence feasibility, and buffer pressure. The TEMP man-agement state records carried-over requests, residence time, and buffer occupancy, which are used to determine whether a request can be further preserved or must be released through DROP. At the beginning of each slot t, the controller observes the newly arrived requests and the carried-over TEMP requests. These requests form the active request set to be orchestrated in the current slot. For each active request, the controller selects exactly one action from NOW, TEMP, REJECT, and DROP. NOW consumes current aggregated data-link bearer capacity and realizes the request in the current access-orchestration slot if the access-orchestration delay budget is satisfied. TEMP consumes onboard temporal storage and preserves the request for possible future realization. REJECT applies to newly ar-rived requests that cannot be admitted, whereas DROP applies to carried-over TEMP requests that can no longer be legally preserved. The resulting problem couples spatial bearer allocation and temporal preservation. Spatially, the controller allocates heterogeneous A2A, A2G, and A2S bearer resources to com-peting requests through feasible anchor–bearer candidates. Temporally, it determines whether currently unserved requests should be parked in TEMP according to look-ahead opportu-nities, residence limits, and buffer pressure. The finite-horizon future information used by TEMP is treated as an input to orchestration. In each rolling decision slot, the controller uses finite-horizon look-ahead information on future link oppor-tunities; simulations use recorded future slots as look-ahead inputs to isolate the value of TEMP-aware orchestration, while dedicated traffic or link-state prediction is outside the scope of this paper. The following section formulates this rolling online orches-tration problem as a success-prioritized mathematical model. The model explicitly represents NOW realization, TEMP admission, request rejection, carried-over request dropping, data-link capacity, TEMP feasibility, buffer capacity, and lex-icographic service objectives. IV. M ATHEMATICAL MODEL 
+
+This section formulates the rolling-slot orchestration prob-lem. At each decision slot, the controller assigns one action to every pending request. NOW, REJECT, and DROP take effect in the current slot, whereas TEMP preserves a request for possible future realization. The formulation therefore captures both current data-link bearer-resource allocation and deferred TEMP realization. 
+
+A. Rolling Request State and Four-Action Semantics 
+
+Let t denote the current decision slot. The pending orches-tration set consists of newly arrived requests and carried-over TEMP requests: 
+
+U(t) = N (t) ∪ B (t), (1) where N (t) is the set of newly arrived requests, B(t) is the set of carried-over TEMP requests, and N (t) ∩ B (t) = ∅.Each active request r ∈ U (t) is characterized by 
+
+r = ⟨i(r), κ (r), s r , D acc  
+
+> r
+
+, w r (t)⟩ , (2) where i(r) is the associated aircraft, κ(r) is the service category, sr is the data size, Dacc  
+
+> r
+
+is the access-orchestration delay budget from request arrival to admission into an SFC-capable service domain, and wr (t) records the number of TEMP residence slots. For a newly arrived request r ∈ N (t),
+
+wr (t) = 0 . (3) Let I be the set of aircraft, V the set of candidate SFC access anchors, and K the set of aggregated data-link bearer modes. Following Section III, the ordered pair (j, k ) ∈ V × K 
+
+represents an anchor–bearer candidate, where j indexes an SFC access anchor and k indexes an aggregated data-link bearer mode. IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 6
+
+For each request r ∈ U (t), the controller selects one action from NOW, TEMP, REJECT, and DROP. NOW assigns the request to immediate service, TEMP retains it for possible future realization, REJECT denotes non-admission of a newly arrived request, and DROP releases a carried-over TEMP request. Requests assigned NOW, REJECT, or DROP leave the pending set after the current decision, whereas requests assigned TEMP constitute B(t + 1) with updated residence state wr (t + 1) = wr (t) + 1 .For each request r ∈ U (t), let Γr (t) ⊆ V × K denote the set of anchor–bearer pairs that are currently reachable and service-compatible. Shared bearer-capacity competition is enforced later by the capacity constraints. If request r is served through 
+
+(j, k ) ∈ Γr (t) at slot t, its access-orchestration completion delay is 
+
+dnow  
+
+> rjk
+
+(t) = wr (t)Tslot + dq
+
+> jk
+
+(t) + sr
+
+μjk (t) + dp 
+
+> i(r)j
+
+(t), (4) where wr (t)Tslot is the accumulated TEMP residence delay, 
+
+dq
+
+> jk
+
+(t) is the queueing delay, μjk (t) is the available transmis-sion rate, and dp 
+
+> i(r)j
+
+(t) is the propagation delay from aircraft 
+
+i(r) to access anchor j.The delay-feasible NOW candidate set is 
+
+Anow  
+
+> r
+
+(t) = (j, k ) ∈ Γr (t) dnow  
+
+> rjk
+
+(t) ≤ Dacc  
+
+> r
+
+. (5) Thus, NOW candidates satisfy reachability, service compat-ibility, and access-orchestration delay feasibility. REJECT is available only to newly arrived requests, whereas DROP is available only to carried-over TEMP requests; the correspond-ing request-type restrictions are imposed in Section IV-D. Unlike REJECT, DROP releases a previously preserved TEMP request and represents an unsuccessful deferred-service out-come after temporal resources have already been occupied. 
+
+B. Deferred-Realization Action: TEMP 
+
+TEMP is the deferred-realization action. A request assigned TEMP is retained at slot t and may be realized in a future slot if a suitable anchor–bearer opportunity is predicted within its access-orchestration delay budget. Let Wpred be the finite look-ahead window: 
+
+T pred (t) = {t + 1 , t + 2 , . . . , t + Wpred } . (6) For each τ ∈ T pred (t), let 
+
+Afut  
+
+> r
+
+(τ | t) ⊆ V × K (7) denote the set of anchor–bearer pairs predicted at slot t to be reachable and service-compatible for request r at slot τ .If request r is retained in TEMP at slot t and served at slot 
+
+τ through (j, k ), its predicted access-orchestration completion delay is 
+
+dfut 
+
+> rjk
+
+(τ | t) = wr (t)Tslot + ( τ − t)Tslot + dq
+
+> jk
+
+(τ | t)+ sr
+
+μjk (τ | t) + dp 
+
+> i(r)j
+
+(τ | t). (8) The first two terms represent accumulated residence and additional waiting delay, while the remaining terms are the predicted queueing, transmission, and propagation delays. For each future candidate pair, let 
+
+ϕrjk (τ | t) ∈ [0 , 1] , (j, k ) ∈ A fut  
+
+> r
+
+(τ | t), (9) denote the predicted conditional probability that request r is served through (j, k ) at slot τ , given that it has not been realized earlier. It is set to zero if the access-orchestration delay or residual-capacity condition is violated: 
+
+ϕrjk (τ | t) = 0 , if dfut 
+
+> rjk
+
+(τ | t) > D acc  
+
+> r
+
+or sr > ¯Cjk (τ | t),
+
+(10) where ¯Cjk (τ | t) is the residual capacity of data-link bearer resource (j, k ) at slot τ predicted at slot t. This parameter ex-cludes individually infeasible future actions without reserving future capacity deterministically. The single-slot realization probability, first-realization prob-ability, and overall TEMP realization probability are respec-tively given by 
+
+pr (τ | t) = max   
+
+> (j,k )∈A fut
+> r(τ|t)
+
+ϕrjk (τ | t), (11) 
+
+πr (τ | t) = pr (τ | t) 
+
+> τ−1
+
+Y
+
+> ℓ=t+1
+
+(1 − pr (ℓ | t)) , (12) 
+
+P temp  
+
+> r
+
+(t) = X  
+
+> τ∈T pred (t)
+
+πr (τ | t), (13) with pr (τ | t) = 0 if Afut  
+
+> r
+
+(τ | t) = ∅.Define the positive-probability future action set and the feasible future-slot set as 
+
+Afut ,feas  
+
+> r
+
+(τ | t) = (j, k ) ∈ A fut  
+
+> r
+
+(τ | t) ϕrjk (τ | t) > 0 ,
+
+(14) 
+
+T feas  
+
+> r
+
+(t) = τ ∈ T pred (t) Afut ,feas  
+
+> r
+
+(τ | t)̸ = ∅ .
+
+(15) For each τ ∈ T feas  
+
+> r
+
+(t), the predicted delay associated with the maximum-probability pair, with minimum delay used to break ties, is 
+
+¯dfut  
+
+> r
+
+(τ | t) = min       
+
+> (j,k )∈A fut ,feas
+> r(τ|t)
+> ϕrjk (τ|t)= pr(τ|t)
+
+dfut 
+
+> rjk
+
+(τ | t). (16) For P temp  
+
+> r
+
+(t) > 0, the conditional expected TEMP comple-tion delay is 
+
+¯dtemp  
+
+> r
+
+(t) = 
+
+X   
+
+> τ∈T feas
+> r(t)
+
+πr (τ | t) ¯dfut  
+
+> r
+
+(τ | t)
+
+P temp  
+
+> r
+
+(t) . (17) This quantity is conditioned on successful realization within the finite look-ahead window. If P temp  
+
+> r
+
+(t) = 0 , TEMP is infeasible and the expected delay need not be evaluated. All look-ahead quantities above are precomputed inputs at slot t,rather than optimization variables. 
+
+C. Decision Variables 
+
+For each request r ∈ U (t), the four request-level actions are encoded by the following binary variables: 
+
+xrjk (t) ∈ { 0, 1}, (j, k ) ∈ A now  
+
+> r
+
+(t),zr (t), e r (t), b drop  
+
+> r
+
+(t) ∈ { 0, 1}. (18) IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 7
+
+Here, xrjk (t) indicates NOW assignment through (j, k ), zr (t)
+
+indicates TEMP preservation, er (t) indicates REJECT, and 
+
+bdrop  
+
+> r
+
+(t) indicates DROP. The auxiliary NOW-assignment indicator is 
+
+yr (t) = X 
+
+> (j,k )∈A now
+> r(t)
+
+xrjk (t). (19) Under the action-uniqueness and feasibility constraints, 
+
+yr (t) = 1 represents deterministic NOW realization, while TEMP contributes through P temp  
+
+> r
+
+(t).
+
+D. Feasibility Constraints 
+
+For each request r ∈ U (t), exactly one action must be selected: 
+
+X 
+
+> (j,k )∈A now
+> r(t)
+
+xrjk (t) + zr (t) + er (t) + bdrop  
+
+> r
+
+(t) = 1 . (20) REJECT and DROP follow request-type semantics: 
+
+bdrop  
+
+> r
+
+(t) = 0 , ∀r ∈ N (t), (21) 
+
+er (t) = 0 , ∀r ∈ B (t). (22) Thus, newly arrived requests cannot be dropped, and carried-over TEMP requests cannot be rejected. For each anchor–bearer resource (j, k ), the current-slot NOW capacity constraint is 
+
+X 
+
+> r∈U (t): (j,k )∈A now
+> r(t)
+
+sr xrjk (t) ≤ Cjk (t), ∀(j, k ) ∈ V × K . (23) REJECT and DROP consume no current data-link bearer capacity, while TEMP consumes buffer space and relies on future bearer opportunities. TEMP is permitted only when the predicted realization probability and residence-time requirement are satisfied: 
+
+Itemp  
+
+> r
+
+(t) = 
+
+(
+
+1, P temp  
+
+> r
+
+(t) ≥ P temp min and wr (t) + 1 ≤ W max  
+
+> r
+
+,
+
+0, otherwise ,
+
+(24) where P temp min is the minimum acceptable TEMP realization probability and W max  
+
+> r
+
+is the maximum number of TEMP residence slots allowed for request r. The TEMP feasibility constraint is 
+
+zr (t) ≤ Itemp  
+
+> r
+
+(t), ∀r ∈ U (t). (25) For each aircraft i, the post-decision TEMP occupancy cannot exceed its TEMP buffer capacity: 
+
+X
+
+> r∈U (t):
+> i(r)= i
+
+sr zr (t) ≤ Mi, ∀i ∈ I , (26) where Mi is the TEMP buffer capacity of aircraft i.
+
+E. Lexicographic Service Objective 
+
+The objective follows the operational priority of the rolling service process: expected service realization is optimized first, normalized access-orchestration delay second, and TEMP-related risk third: 
+
+lex max ( J1(t), −J2(t), −J3(t)) . (27) The problem first maximizes J1(t), then minimizes J2(t)
+
+among the solutions attaining the optimal J1(t), and finally minimizes J3(t) without degrading the preceding objectives. The first-layer objective maximizes expected service real-ization: 
+
+J1(t) = X
+
+> r∈U (t)
+
+yr (t) + X
+
+> r∈U (t)
+
+P temp  
+
+> r
+
+(t)zr (t). (28) The first term is deterministic NOW realization, whereas the second term is the probability-weighted TEMP realization benefit. The second-layer objective minimizes expected normalized access-orchestration delay: 
+
+J2(t) = X
+
+> r∈U (t)
+
+X 
+
+> (j,k )∈A now
+> r(t)
+
+dnow  
+
+> rjk
+
+(t)
+
+Dacc 
+
+> r
+
+xrjk (t)+ X
+
+> r∈U (t)
+
+P temp  
+
+> r
+
+(t) ¯dtemp  
+
+> r
+
+(t)
+
+Dacc 
+
+> r
+
+zr (t).
+
+(29) Normalization makes requests with different access-orchestration delay budgets comparable. Since this layer is optimized only after J1(t) is fixed, delay reduction cannot sacrifice expected service realization. The third-layer objective controls DROP and residual TEMP-related risk: 
+
+J3(t) = χdrop 
+
+X
+
+> r∈B (t)
+
+bdrop  
+
+> r
+
+(t) + ωw
+
+X
+
+> r∈U (t)
+
+zr (t) wr (t) + 1 
+
+W max 
+
+> r
+
++ ωM
+
+X
+
+> i∈I
+
+X
+
+> r∈U (t)
+> i(r)= i
+
+sr zr (t)
+
+Mi
+
+.
+
+(30) The three terms penalize DROP, residence urgency, and post-decision TEMP buffer utilization, respectively. Low-realization-probability TEMP choices are already discouraged by J1(t) and the TEMP eligibility constraint, so J3(t) focuses on residual risks from DROP, prolonged residence, and buffer pressure. The model jointly captures spatial data-link bearer opportu-nities provided by heterogeneous A2A, A2G, and A2S links and temporal elasticity provided by TEMP. Since all look-ahead quantities are precomputed parameters, the objective layers and constraints are linear in the binary decision vari-ables, yielding a lexicographic MILP. Repeatedly solving this model over the full binary action space remains computation-ally expensive for rolling online control, which motivates the MRSAR algorithm developed next. IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 8
+
+V. MRSAR A LGORITHM 
+
+The lexicographic MILP in Section IV defines the request-level action structure, feasibility conditions, and optimization priorities of the rolling orchestration problem. Directly solving the MILP at every slot becomes computationally expensive as the number of active requests and feasible anchor–bearer candidates increases. We therefore develop MRSAR (Model-Induced Risk and Scarcity-Aware Refinement), which con-structs a feasible rolling-slot solution while reflecting the ob-jective hierarchy and feasibility structure of the original model. MRSAR first ranks feasible NOW and TEMP candidates using model-induced risk and scarcity signals, and then improves the constructed solution through a bounded, feasibility-preserving neighborhood search. The signals and moves used by MRSAR are derived from the objective and constraint structure of the MILP. The difference between deterministic NOW realization and probability-weighted TEMP realization in J1(t) induces deferred-realization risk, while the residence term in J3(t)
+
+provides the TEMP residence-urgency signal. The shared data-link bearer-capacity and TEMP buffer constraints pro-vide resource-scarcity indicators, and the mutually exclu-sive request actions coupled through shared resources define the neighborhood moves. The TEMP realization probability 
+
+P temp  
+
+> r
+
+(t) and conditional expected delay ¯dtemp  
+
+> r
+
+(t) are precom-puted inputs to MRSAR. 
+
+A. Model-Induced Request Risk and Resource Scarcity 
+
+According to the first-layer objective in (28), NOW con-tributes a deterministic realization benefit of one, whereas TEMP contributes the probability-weighted benefit P temp  
+
+> r
+
+(t).The deferred-realization risk of request r is therefore defined as 
+
+gr (t) = 1 − P temp  
+
+> r
+
+(t). (31) A larger gr (t) indicates a greater potential loss in the first-layer objective if the request is deferred instead of being served through NOW. The residence urgency after preserving request r for one additional slot is 
+
+hr (t) = wr (t) + 1 
+
+W max 
+
+> r
+
+. (32) Combining deferred-realization risk and residence urgency gives 
+
+ξr (t) = gr (t) + αhhr (t), (33) where αh ≥ 0 controls the influence of residence urgency. A larger ξr (t) indicates that further postponement is less desirable. For an anchor–bearer resource (j, k ) with Cjk (t) > 0, its current-slot scarcity indicator is 
+
+λnow  
+
+> jk
+
+(t) = 1 + αC
+
+X
+
+> r∈U (t)
+
+sr 1 {(j, k ) ∈ A now  
+
+> r
+
+(t)}
+
+Cjk (t) , (34) where αC ≥ 0 controls the sensitivity to data-link bearer-resource pressure. The indicator increases when a resource is shared by more candidate requests or provides less available capacity. The TEMP buffer scarcity of aircraft i is defined as 
+
+λtemp  
+
+> i
+
+(t) = 1 + αM
+
+X
+
+> r∈U (t)
+> i(r)= i
+
+sr Itemp  
+
+> r
+
+(t)
+
+Mi
+
+, (35) where αM ≥ 0 controls the sensitivity to TEMP buffer pressure. Both scarcity indicators are computed once at the be-ginning of slot t; residual data-link bearer and buffer capacities are then updated during construction and refinement. Request risk determines service urgency, whereas resource scarcity reflects the opportunity cost of NOW or TEMP actions. 
+
+B. Candidate Action Valuation and Feasible Solution Con-struction 
+
+The request-risk and resource-scarcity measures are trans-lated into valuation criteria for candidate NOW and TEMP actions. For each feasible NOW candidate (r, j, k ), define 
+
+Val now  
+
+> rjk
+
+(t) = ξr (t)
+
+λnow  
+
+> jk
+
+(t)sr
+
+− αd
+
+dnow  
+
+> rjk
+
+(t)
+
+Dacc 
+
+> r
+
+, (36) where αd ≥ 0 is the NOW delay coefficient. The first term measures the postponement risk reduced per unit of scarce data-link bearer resource, whereas the second term accounts for normalized access-orchestration delay. For each TEMP-feasible request, define 
+
+Val temp  
+
+> r
+
+(t) = P temp  
+
+> r
+
+(t)
+
+λtemp  
+
+> i(r)
+
+(t)sr
+
+− βd
+
+¯dtemp  
+
+> r
+
+(t)
+
+Dacc 
+
+> r
+
+− βhhr (t),
+
+(37) where βd, β h ≥ 0 are the TEMP delay and residence-urgency coefficients. A high TEMP valuation corresponds to promis-ing future realization, limited buffer occupation, moderate expected delay, and sufficient remaining residence time. The candidate valuations do not replace the lexicographic objective or feasibility constraints. They provide efficient estimates of the relative merits of candidate assignments by accounting for request urgency and resource-induced opportu-nity cost. Every assignment is still accepted only after delay, capacity, residence, buffer, and request-type constraints have been verified. MRSAR first initializes the residual data-link bearer capaci-ties and TEMP buffer capacities. Feasible NOW candidates are ranked in descending order of Val now  
+
+> rjk
+
+(t), with smaller sr used to break ties. A candidate is accepted if the request has not been assigned and the corresponding residual bearer capacity is sufficient; then the residual capacity of (j, k ) is updated and the remaining NOW candidates of request r are removed. The remaining TEMP-feasible requests are ranked accord-ing to Val temp  
+
+> r
+
+(t), again with smaller sr used to break ties. A request is retained in TEMP if the corresponding aircraft has sufficient residual buffer capacity. Any remaining request in 
+
+N (t) is assigned REJECT, whereas any remaining request in 
+
+B(t) is assigned DROP. IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 9
+
+NOW is considered before TEMP during initialization be-cause it provides deterministic realization, whereas TEMP provides probability-weighted future realization. This NOW-first rule is only an initialization strategy; later refinement may replace a NOW assignment if the resulting local modification improves the hierarchy-weighted objective gain. The con-struction therefore yields a complete feasible solution S(0) (t)
+
+without enumerating the full binary action space. 
+
+C. Model-Structured Neighborhood Refinement 
+
+The refinement neighborhood is constructed according to the block structure of the decision variables and their coupling through shared resource constraints. For each request, the NOW variables and the TEMP, REJECT, and DROP variables form a mutually exclusive action block. The data-link bearer-capacity and TEMP buffer constraints further couple different request blocks, motivating coordinated adjustments. Let S(iter) (t) denote the solution after refinement it-eration iter . MRSAR constructs a bounded neighborhood 
+
+M(S(iter) (t)) using three move types.  
+
+> •
+
+Rescue : change a request currently assigned TEMP, RE-JECT, or DROP to a feasible NOW action, or change a request currently assigned REJECT or DROP to a feasible TEMP action.  
+
+> •
+
+Rebind : replace the current anchor–bearer pair of a NOW request with another pair in Anow  
+
+> r
+
+(t). 
+
+> •
+
+Exchange : jointly modify two request assignments to resolve bearer or TEMP resource competition that cannot be improved by a single-request move. Only moves satisfying all model constraints are retained in the feasible neighborhood Mfeas (S(iter) (t)) . For a feasible move m, let 
+
+S′(t) = Apply 
+
+
+
+S(iter) (t), m 
+
+
+
+(38) be the solution obtained after applying m. The change in objective layer ℓ is 
+
+∆Jℓ(m; t) = Jℓ
+
+ S′(t) − Jℓ
+
+ S(iter) (t), ℓ = 1 , 2, 3. (39) To preserve the intended objective hierarchy during local search, the move gain is 
+
+Ψ( m; t) = Ω 1∆J1(m; t) − Ω2∆J2(m; t) − ∆J3(m; t), (40) where Ω1 ≫ Ω2 ≫ 1 are fixed hierarchy weights chosen to approximate the lexicographic priority. The first term re-wards service-realization improvement, whereas the second and third terms penalize increases in normalized delay and DROP/TEMP-related risk, respectively. At iteration iter , MRSAR selects 
+
+m⋆ = arg max 
+
+> m∈M feas (S(iter) (t))
+
+Ψ( m; t). (41) If Ψ( m⋆; t) > 0, the solution is updated as 
+
+S(iter+1) (t) = Apply 
+
+
+
+S(iter) (t), m ⋆
+
+; (42) otherwise, the refinement process terminates. The construction checks the original feasibility conditions before each assignment, and refinement evaluates only feasible 
+
+Algorithm 1 MRSAR for Online Aggregated Data-Link Or-chestration 
+
+Require: Active request set U(t), NOW candidate sets 
+
+Anow  
+
+> r
+
+(t), precomputed TEMP quantities P temp  
+
+> r
+
+(t) and 
+
+¯dtemp  
+
+> r
+
+(t), capacities Cjk (t) and Mi, model and algorithm parameters, and iteration limit Qmax 
+
+Ensure: Decisions xrjk (t), zr (t), er (t), and bdrop  
+
+> r
+
+(t) 
+
+> 1:
+
+Compute Itemp  
+
+> r
+
+(t), request-risk measures, resource-scarcity indicators, and candidate valuations  
+
+> 2:
+
+Construct the initial feasible solution S(0) (t) using the NOW-first valuation rule  
+
+> 3:
+
+for iter = 0 to Qmax − 1 do  
+
+> 4:
+
+Generate feasible Rescue, Rebind, and Exchange moves Mfeas (S(iter) (t))  
+
+> 5:
+
+if Mfeas (S(iter) (t)) = ∅ then  
+
+> 6:
+
+break  
+
+> 7:
+
+end if  
+
+> 8:
+
+m⋆ ← arg max m∈M feas (S(iter) (t)) Ψ( m; t) 
+
+> 9:
+
+if Ψ( m⋆; t) ≤ 0 then  
+
+> 10:
+
+break  
+
+> 11:
+
+end if  
+
+> 12:
+
+S(iter+1) (t) ← Apply( S(iter) (t), m ⋆) 
+
+> 13:
+
+end for  
+
+> 14:
+
+Extract xrjk (t), zr (t), er (t), and bdrop  
+
+> r
+
+(t) from the final solution Rescue, Rebind, and Exchange moves. Hence every accepted solution remains feasible. Since each accepted move has a strictly positive hierarchy-weighted gain and the number of iterations is bounded by Qmax , the algorithm terminates with a locally improved feasible solution within the examined bounded neighborhood. 
+
+D. Overall MRSAR Procedure 
+
+The complete online procedure is summarized in Algo-rithm 1. The TEMP realization quantities are provided as precomputed inputs, while request risk, static resource scarcity, candidate valuations, feasible construction, and neighborhood refinement are performed online. The initial feasible solution follows the valuation-based construction in Section V-B, in-cluding the NOW-first rule, smaller-data-volume tie breaker, and explicit feasibility checking. 
+
+E. Online Complexity Analysis 
+
+Let 
+
+nact (t) = |U (t)| (43) be the number of active requests at slot t. Let amax now be the maximum number of NOW candidates retained for each request, amax mv the maximum number of neighborhood moves evaluated in each refinement iteration, and cloc the incremental cost of checking the feasibility and objective change of one local move. The request-risk measures, static scarcity indicators, and candidate valuations require at most 
+
+O(nact (t)amax now ) (44) IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 10 
+
+operations. Sorting the NOW candidates dominates the initial construction cost and requires 
+
+O(nact (t)amax now log ( nact (t)amax now )) . (45) The TEMP candidate sorting cost is at most 
+
+O(nact (t) log nact (t)) and is covered by the preceding term. Each refinement iteration evaluates at most amax mv feasible moves. By maintaining residual capacities, buffer occupancies, current actions, and objective components, the feasibility and gain of a move can be evaluated incrementally. The refinement cost is therefore 
+
+O(Qmax amax mv cloc ) . (46) Accordingly, the overall online complexity of MRSAR is 
+
+O
+
+
+
+nact (t)amax now log  nact (t)amax now 
+
+
+
++ Qmax amax mv cloc 
+
+
+
+.
+
+(47) This analysis excludes the computation of TEMP look-ahead quantities, which are precomputed inputs. MRSAR therefore replaces repeated full MILP solving in online control with candidate valuation, feasibility-preserving construction, and bounded local refinement. VI. S IMULATION EVALUATION 
+
+This section evaluates the proposed MRSAR algorithm in a rolling online orchestration scenario. The evaluation follows the primary logic of the proposed formulation: The evalua-tion first examines service success and delay, then analyzes failure composition and TEMP utilization, followed by near-optimality, runtime scalability, ablation results, and look-ahead window sensitivity. 
+
+A. Simulation Setup 
+
+We develop a trace-driven discrete-event simulation for a high-density trans-Atlantic civil-aviation SAGIN. The air seg-ment is instantiated using real OAG flight schedules involving 513 active commercial aircraft, while the space segment uses AGI STK ephemerides for 66 Iridium satellites. In addition, 20 ground gateways are deployed on both sides of the Atlantic. At each slot, the A2A, A2G, and A2S adjacency matrices are regenerated from the time-varying node states according to geometric visibility, line-of-sight (LoS), coverage, and link-budget constraints. The resulting slot-wise adjacency matrices determine the reachable anchor–bearer candidates and their current and look-ahead availability states. Therefore, the eval-uated dynamic topology is driven by real flight-schedule data and physical connectivity conditions, rather than by indepen-dently generated random links. The considered data-link technologies include low-rate safety-oriented cockpit links, such as VDL-Mode-2, HFDL, legacy SATCOM, and SBB-Safety, as well as broadband cabin-oriented links, such as ATG, 5G-ATG, and LEO broad-band. The traffic contains both delay-sensitive cockpit services and bandwidth-intensive cabin services, including VoIP-Safety, CPDLC, ADS-B/C, AOC-Legacy, passenger VoIP, Web, and video sessions. The simulation lasts for 500 slots. The slot duration is set to 0.2 s to emulate the fine-grained evolution of traffic arrivals, link availability, and TEMP residence states. The first 20 slots are used as the warm-up period and are excluded from the statistics. Since TEMP requests may be realized in later slots, all success, delay, and failure metrics are evaluated by arrival windows with a window length of 10 slots. A request is counted as successful only if it is eventually delivered within its QoS deadline. The traffic load factor is varied in 
+
+0.6, 0.8, 1.0, 1.2, 1.4 by scaling the request data-rate demands while keeping the network configuration unchanged. All runtime results are measured on the same general-purpose personal computer using an unoptimized research prototype, and are used for relative computational comparison among different solvers. 
+
+B. Baselines and Metrics 
+
+MRSAR is compared with one MILP-based reference and two greedy baselines. Gurobi-MILP directly solves the orig-inal mixed-integer formulation and serves as the optimal or near-optimal reference. When the MILP solver reaches the prescribed time limit in large-scale cases, the best feasible so-lution returned by Gurobi is recorded. First-Come-First-Served Greedy (FCFS-Greedy) processes requests according to their arrival order and selects a feasible immediate action whenever possible. Minimum-Delay Greedy (MinDelay-Greedy) ranks feasible NOW actions according to their normalized immedi-ate delay and greedily occupies the currently shortest-delay resources. Both greedy baselines admit requests into TEMP only when the TEMP feasibility condition is satisfied. The main metrics include the actual QoS success ratio, aver-age normalized delay, total failure ratio with REJECT/DROP decomposition, QoS success-rate gap to the Gurobi-MILP reference, online solver time, and speedup over Gurobi-MILP. The success ratio is computed over arrival windows and counts only requests eventually delivered within their deadlines. The normalized delay is averaged over successful requests and measures the fraction of the delay budget consumed by service completion. The runtime is measured under the same single-machine research prototype for all compared methods. 
+
+C. Overall QoS Success and Delay Performance 
+
+Fig. 2 reports the actual QoS success ratio under different traffic loads. As the load increases from 0.6 to 1.4, the success ratio of all algorithms decreases because more requests com-pete for limited A2A, A2G, and A2S data-link opportunities. MRSAR remains close to the Gurobi-MILP reference over the whole load range and consistently outperforms FCFS-Greedy and MinDelay-Greedy. The advantage becomes more evident under medium and high loads, where purely arrival-order-driven or delay-myopic decisions are more likely to consume scarce resources inefficiently. This confirms that the model-induced risk and scarcity signals in MRSAR are beneficial for the success-prioritized orchestration objective. IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 11   
+
+> Fig. 2. Actual QoS success ratio under different traffic loads.
+> Fig. 3. Average normalized delay under different traffic loads.
+
+Fig. 3 compares the average normalized service delay under different traffic loads. As the traffic load increases, FCFS-Greedy exhibits the most obvious delay growth, rising from about 0.009 at ρ = 0 .6 to nearly 0.019 at ρ = 1 .4. This is be-cause arrival-order admission ignores delay-budget efficiency and may occupy favorable bearer resources with requests that are not delay-efficient. In contrast, MRSAR keeps the normalized delay within a low range, increasing moderately from about 0.007 to about 0.011 as the load becomes heavier. Its delay curve remains close to the Gurobi-MILP reference over the whole load range, which indicates that the proposed refinement mechanism improves the QoS success ratio without causing a significant delay penalty. MinDelay-Greedy achieves competitive or even lower delay under some medium and high load settings. However, this does not imply better overall orchestration performance, since the delay metric is averaged only over successfully completed requests. A delay-myopic policy tends to favor requests with short immediate service delay and may reject or postpone requests that are more valuable for the success-prioritized objective. Therefore, its lower delay is partly obtained by serving an easier successful request set. Overall, Fig. 3 shows that MRSAR maintains delay performance comparable to Gurobi-MILP while preserving the primary advantage in QoS success under increasing traffic loads.  
+
+> Fig. 4. Failure ratio with REJECT/DROP decomposition under different traffic loads. In each load group, the algorithms are ordered as MRSAR, Gurobi-MILP, FCFS-Greedy, and MinDelay-Greedy.
+> Fig. 5. Average TEMP buffer utilization under different traffic loads.
+
+D. Failure Decomposition and TEMP-Assisted Orchestration 
+
+Fig. 4 decomposes the total failure ratio into direct REJECT and forced DROP components. The total failure ratio increases with the traffic load for all algorithms, which is consistent with the intensified data-link contention observed in Fig. 2. MRSAR maintains a failure level close to the Gurobi-MILP reference and lower than the two greedy baselines. FCFS-Greedy mainly suffers from direct rejection because early arrival-order decisions may consume resources before later valuable requests are considered. MinDelay-Greedy may gen-erate a more visible DROP component, indicating that short-delay admission does not necessarily guarantee reliable future realization. MRSAR keeps the DROP component controlled while reducing the overall failure ratio, which shows that TEMP in MRSAR is used as a managed temporal resource rather than a mechanism that merely postpones failures. After the failure behavior is examined in Fig. 4, Fig. 5 further reveals the underlying TEMP-assisted mechanism. As the traffic load increases from ρ = 0.6 to ρ = 1.4, the TEMP buffer utilization of all algorithms increases, indicating that heavier traffic makes temporal parking more necessary. However, the utilization levels are clearly different. FCFS-Greedy maintains the lowest TEMP utilization over the whole load range, increasing only from about 0.008 to about 0.015. MinDelay-Greedy uses TEMP slightly more, but its utiliza-IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 12  
+
+> Fig. 6. QoS success-rate gap to the Gurobi-MILP reference under different request scales.
+
+tion remains much lower than that of MRSAR and Gurobi-MILP. In contrast, MRSAR keeps a consistently high TEMP utilization and follows a trend close to the Gurobi-MILP reference, rising from about 0.011 at ρ = 0 .6 to nearly 0.027 at ρ = 1 .4. This shows that MRSAR can actively exploit temporal service opportunities instead of relying mainly on immediate admission. This observation should be interpreted together with the failure decomposition in Fig. 4. A higher TEMP utilization is beneficial only when the preserved requests can be effec-tively realized later; otherwise, TEMP would merely postpone failures and increase the forced DROP ratio. As shown in Fig. 4, MRSAR maintains a failure level close to Gurobi-MILP and keeps the DROP component controlled under increasing traffic loads. Therefore, the high TEMP utilization of MRSAR does not come from uncontrolled buffering. Instead, it reflects effective deferred realization: requests are preserved only when they have sufficient future realization opportunities and acceptable resource impact. This explains an important source of the success-ratio improvement of MRSAR. Although all compared algorithms are allowed to use TEMP, MRSAR uses it more effectively by combining model-induced request risk values with scarcity-aware resource signals, thereby selecting which requests should consume immediate resources, which should be temporally parked, and which should be released. 
+
+E. Near-Optimality and Runtime Scalability 
+
+Fig. 6 reports the QoS success-rate gap to the Gurobi-MILP reference under different request scales. The Gurobi-MILP curve is zero by definition, while the gap of each heuristic method measures how many percentage points of QoS success ratio are lost compared with the MILP reference. As the average number of active requests per slot increases, the gaps of the two greedy baselines grow rapidly. FCFS-Greedy increases from nearly zero at the light-load case to about 6.8 percentage points at large request scales, and MinDelay-Greedy rises even more sharply, reaching more than 8 percentage points. This indicates that arrival-order admission and delay-myopic selection become increasingly insufficient when the competition among data-link resources becomes stronger.  
+
+> Fig. 7. Runtime scalability and speedup over Gurobi-MILP under different request scales.
+
+In contrast, MRSAR keeps the gap consistently small over the whole request-scale range. Its gap remains below about 2 percentage points, with a moderate peak around the medium-scale region and then decreases to nearly 1–1.3 percentage points in larger cases. This non-monotonic behavior is reason-able because the success gap is affected not only by the num-ber of requests, but also by the feasible-action structure, TEMP realization opportunities, and resource contention pattern in each scale setting. The bounded gap confirms that MRSAR preserves most of the success-rate advantage of Gurobi-MILP while avoiding full MILP search. Together with the runtime results, this shows that MRSAR provides a more effective tradeoff between solution quality and online computational cost than the two greedy baselines. Fig. 7 evaluates runtime scalability under different request scales. As shown in the upper panel, the runtime of Gurobi-MILP increases from approximately 2.6 s to 10.6 s as the average number of active requests per slot grows. In compari-son, the runtime of MRSAR increases more moderately from about 0.7 s to 3.2 s. The two greedy baselines incur slightly lower runtime than MRSAR, while remaining in the same computational order. This indicates that the additional risk- and scarcity-aware refinement introduces limited overhead relative to simple greedy construction. Combined with the preceding success and failure results, MRSAR provides a more favorable tradeoff between computational cost and orchestration quality. The lower panel shows that MRSAR achieves an approxi-mately 3.5–4.0× speedup over Gurobi-MILP across the eval-uated request scales. The speedup varies moderately because MILP runtime depends not only on the request scale, but also on the feasible-action structure, resource contention, and the resulting branch-and-bound process. Although the greedy baselines achieve somewhat higher speedups, their lower com-putational cost is accompanied by larger QoS-success gaps. All runtime results are measured using an unoptimized single-machine research prototype and are therefore intended as a relative computational comparison rather than the latency of an engineering-grade controller. Overall, MRSAR scales more effectively than directly solving the full MILP while IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 13   
+
+> Fig. 8. Ablation study of MRSAR.
+> Fig. 9. Sensitivity of MRSAR to the TEMP look-ahead window length.
+
+retaining substantially better orchestration quality than the greedy baselines. 
+
+F. Ablation Study and TEMP Sensitivity 
+
+Fig. 8 evaluates the contribution of the main components in MRSAR. Removing TEMP causes the most significant degradation, which is consistent with the TEMP utilization behavior in Fig. 5. Without TEMP, requests that cannot be served immediately lose the opportunity to exploit future data-link availability, leading to a clear success-ratio loss. Remov-ing Rescue, Rebind, or Exchange operations also degrades performance, but the degradation is generally smaller than that caused by disabling TEMP. This indicates that TEMP provides the main temporal elasticity, while action refinement improves how these delayed opportunities are converted into successful deliveries. Fig. 9 examines the sensitivity of MRSAR to the TEMP look-ahead window length. A short window limits the visi-bility of future data-link opportunities and reduces the value of TEMP admission. As the window length increases, MR-SAR can identify more future realization opportunities and improve the success-oriented objective. The gain gradually saturates when the window becomes sufficiently long, because additional future slots provide less marginal information while increasing computational overhead. This trend supports the use of a finite rolling prediction window: limited future informa-tion is useful for online orchestration, but an excessively long window is unnecessary. Overall, the simulation results show that MRSAR achieves a favorable balance among QoS success, delay control, failure reduction, near-optimality, and runtime scalability. Its main performance gain comes from treating TEMP as a schedulable temporal resource. The model-induced risk value and scarcity-aware resource signals further determine how these temporal opportunities should be selected, preserved, and realized dur-ing rolling online orchestration. VII. C ONCLUSION 
+
+This paper investigated SFC-aware online access-side ag-gregated data-link orchestration for SDN/NFV-enabled civil aviation SAGINs. To support heterogeneous cockpit and cabin services under highly dynamic communication conditions, het-erogeneous A2A, A2G, and A2S data links were abstracted as aggregated bearer resources, and request-level access orches-tration was formulated over joint access-anchor and bearer-mode selection. In addition to immediate service through current bearer resources, TEMP was introduced as a temporal elastic mapping and parking mechanism to preserve selected requests for future realization within a finite look-ahead win-dow. Based on this spatial-temporal decision structure, four request-level actions, namely NOW, TEMP, REJECT, and DROP, were used to describe the rolling online orchestration process. A lexicographic rolling-slot MILP was developed to capture the main operational priorities of the considered access orches-tration problem. The model first maximizes service success under QoS constraints, then minimizes normalized access-orchestration delay, and finally controls residual TEMP-related risk, including DROP, residence urgency, and TEMP buffer pressure. Since repeatedly solving the full binary model is costly for fine-grained online control, MRSAR was proposed as a model-induced risk and scarcity-aware refinement al-gorithm. MRSAR derives deferred- realization risk from the success-prioritized objective and resource scarcity signals from bearer-capacity and TEMP-buffer constraints. These signals are used for valuation-based feasible solution construction and bounded, feasibility-preserving neighborhood refinement, allowing the algorithm to preserve the main decision logic of the MILP while reducing online computational cost. Simulation results showed that MRSAR remains close to the Gurobi-MILP reference in service success and consistently outperforms arrival-order and delay-myopic greedy baselines. The results also showed that MRSAR maintains normalized delay close to the MILP reference, controls REJECT and DROP failures, and uses TEMP as a managed temporal resource rather than a passive buffer. Runtime and optimality-gap evaluations further confirmed that MRSAR provides a favorable quality-complexity tradeoff for rolling online orches-tration. The ablation and window- sensitivity results indicated that both TEMP-aware preservation and model-induced risk-scarcity refinement contribute to the observed performance gains. Future work will integrate practical traffic and link-state IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY 14 
+
+prediction modules into the proposed framework and evaluate the robustness of TEMP-aware orchestration under prediction uncertainty. REFERENCES [1] J. Liu, Y. Shi, Z. M. Fadlullah, and N. Kato, “Space-air-ground integrated network: A survey,” IEEE Communications Surveys & Tutorials , vol. 20, no. 4, pp. 2714–2741, 2018. [2] N. Cheng, J. He, Z. Yin, C. Zhou, H. Wu, F. Lyu, H. Zhou, and X. Shen, “6g service-oriented space-air-ground integrated network: A survey,” 
+
+Chinese Journal of Aeronautics , vol. 35, no. 9, pp. 1–18, 2022. [3] D. Zhou, M. Sheng, J. Li, and Z. Han, “Aerospace integrated networks innovation for empowering 6g: A survey and future challenges,” IEEE Communications Surveys & Tutorials , vol. 25, no. 2, pp. 975–1019, 2023. [4] M. M. Azari, S. Solanki, S. Chatzinotas, O. Kodheli, H. Sallouha, A. Colpaert, J. F. M. Montoya, S. Pollin, A. Haqiqatnejad, A. Mostaani, E. Lagunas, and B. Ottersten, “Evolution of non-terrestrial networks from 5g to 6g: A survey,” IEEE Communications Surveys & Tutorials ,vol. 24, no. 4, pp. 2633–2672, 2022. [5] T. Bilen, H. Ahmadi, B. Canberk, and T. Q. Duong, “Aeronautical networks for in-flight connectivity: A tutorial of the state-of-the-art and survey of research challenges,” IEEE Access , vol. 10, pp. 20 053–20 079, 2022. [6] D. Kreutz, F. M. V. Ramos, P. E. Verissimo, C. E. Rothenberg, S. Azodolmolky, and S. Uhlig, “Software-defined networking: A com-prehensive survey,” Proceedings of the IEEE , vol. 103, no. 1, pp. 14–76, 2015. [7] R. Mijumbi, J. Serrat, J.-L. Gorricho, N. Bouten, F. D. Turck, and R. Boutaba, “Network function virtualization: State-of-the-art and re-search challenges,” IEEE Communications Surveys & Tutorials , vol. 18, no. 1, pp. 236–262, 2016. [8] I. Afolabi, T. Taleb, K. Samdanis, A. Ksentini, and H. Flinck, “Network slicing and softwarization: A survey on principles, enabling technolo-gies, and solutions,” IEEE Communications Surveys & Tutorials , vol. 20, no. 3, pp. 2429–2453, 2018. [9] H. Liang, Z. Yang, G. Zhang, and H. Hou, “Resource allocation for space-air-ground integrated networks: A comprehensive review,” Journal of Communications and Information Networks , vol. 9, no. 1, pp. 1–23, 2024. [10] P. Zhang, C. Wang, N. Kumar, and L. Liu, “Space-air-ground integrated multi-domain network resource orchestration based on virtual network architecture: A drl method,” IEEE Transactions on Intelligent Trans-portation Systems , vol. 23, no. 3, pp. 2798–2808, 2022. [11] P. Zhang, N. Chen, S. Shen, S. Yu, N. Kumar, and C.-H. Hsu, “Ai-enabled space-air-ground integrated networks: Management and opti-mization,” IEEE Network , vol. 38, no. 2, pp. 186–192, 2024. [12] J. Halpern and C. Pignataro, “Service function chaining (sfc) architec-ture,” IETF RFC 7665, 2015. [13] D. Bhamare, R. Jain, M. Samaka, and A. Erbad, “A survey on service function chaining,” Journal of Network and Computer Applications ,vol. 75, pp. 138–155, 2016. [14] H. Hantouti, N. Benamar, and T. Taleb, “Service function chaining in 5g & beyond networks: Challenges and open research issues,” IEEE Network , vol. 34, no. 4, pp. 320–327, 2020. [15] J. Li, W. Shi, H. Wu, S. Zhang, and X. Shen, “Cost-aware dynamic sfc mapping and scheduling in sdn/nfv-enabled space-air-ground-integrated networks for internet of vehicles,” IEEE Internet of Things Journal ,vol. 9, no. 8, pp. 5824–5838, 2022. [16] P. Zhang, P. Yang, N. Kumar, and M. Guizani, “Space-air-ground integrated network resource allocation based on service function chain,” 
+
+IEEE Transactions on Vehicular Technology , vol. 71, no. 7, pp. 7730– 7738, 2022. [17] P. Zhang, Y. Zhang, N. Kumar, and M. Guizani, “Dynamic sfc em-bedding algorithm assisted by federated learning in space-air-ground-integrated network resource allocation scenario,” IEEE Internet of Things Journal , vol. 10, no. 11, pp. 9308–9318, 2023. [18] Z. Jia, Y. Cao, L. He, Q. Wu, Q. Zhu, D. Niyato, and Z. Han, “Service function chain dynamic scheduling in space-air-ground integrated net-works,” IEEE Transactions on Vehicular Technology , vol. 74, no. 7, pp. 11 235–11 249, 2025. [19] B. Du, X. Di, D. Liu, and H. Zhang, “Dynamic graph optimization and performance evaluation for delay-tolerant aeronautical ad hoc network,” 
+
+IEEE Transactions on Communications , vol. 69, no. 9, pp. 6018–6036, 2021. [20] J. Cui, D. Liu, J. Zhang, H. Yetgin, S. X. Ng, R. G. Maunder, and L. Hanzo, “Minimum-delay routing for integrated aeronautical ad hoc networks relying on real flight data in the north-atlantic region,” IEEE Open Journal of Vehicular Technology , vol. 2, pp. 310–320, 2021. [21] J. Zhang, D. Liu, S. Chen, S. X. Ng, R. G. Maunder, and L. Hanzo, “Multiple-objective packet routing optimization for aeronautical ad-hoc networks,” IEEE Transactions on Vehicular Technology , vol. 72, no. 1, pp. 1002–1016, 2023. [22] L. Kleinrock, Queueing Systems, Volume 1: Theory . New York, NY, USA: Wiley, 1975. [23] M. O. Ojijo and O. E. Falowo, “A survey on slice admission control strategies and optimization schemes in 5g network,” IEEE Access , vol. 8, pp. 14 977–14 990, 2020. [24] R. G. Gallager, “A minimum delay routing algorithm using distributed computation,” IEEE Transactions on Communications , vol. 25, no. 1, pp. 73–85, 1977. [25] Gurobi Optimization, LLC, “Gurobi optimizer reference manual,” 2026, version 13.0. [26] R. Li, Z. Zhao, Q. Sun, C. I, C. Yang, X. Chen, M. Zhao, and H. Zhang, “Deep reinforcement learning for resource management in network slicing,” IEEE Access , vol. 6, pp. 74 429–74 441, 2018. [27] D. Liu, J. Cui, J. Zhang, C. Yang, and L. Hanzo, “Deep reinforcement learning aided packet-routing for aeronautical ad-hoc networks formed by passenger planes,” IEEE Transactions on Vehicular Technology ,vol. 70, no. 5, pp. 5166–5171, 2021. [28] A. Baltaci, E. Dinc, M. Ozger, A. Alabbasi, C. Cavdar, and D. Schupke, “A survey of wireless networks for future aerial communications,” IEEE Communications Surveys & Tutorials , vol. 23, no. 4, pp. 2833–2884, 2021.

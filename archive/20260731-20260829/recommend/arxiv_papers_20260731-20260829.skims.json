@@ -1,0 +1,491 @@
+{
+  "mode": "skims",
+  "generated_at": "2026-08-29T09:20:18.754820+00:00",
+  "stats": {
+    "mode": "skims",
+    "forced_all_quick": true,
+    "min_score": 8.0,
+    "deep_divecandidates": 12,
+    "deep_cap": null,
+    "deep_selected": 0,
+    "quick_candidates": 12,
+    "quick_skim_target": null,
+    "quick_selected": 12
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.13212v1",
+      "source": "arxiv",
+      "title": "TANGCO: Learning Topology-Aware Capacity Allocation for Overload-driven Cascading Failures",
+      "abstract": "Networked systems, from power grids to traffic networks and cloud clusters, carry loads across nodes with limited capacity. A node whose load exceeds its capacity fails and sheds its load onto its neighbors, which can trigger a system-wide cascade. We study how to allocate a fixed capacity budget across nodes to resist these cascades under local load redistribution. The problem is difficult because no optimal allocation is known, and the fail-or-survive objective is non-differentiable and piecewise constant, so exact and gradient-based optimization methods do not directly apply. We introduce TANGCO (Topology-Aware Neural Graph-Guided Capacity Optimization), which uses a graph neural network policy trained through the cascade simulator with policy-gradient learning and a heuristic anchor. We evaluate TANGCO on five synthetic graph families and five real networks spanning power, road, air, and Internet topologies. The learned policy improves on the best of four hand-designed heuristics in all 450 synthetic instances and in 40 of 45 real-network conditions, with robustness gains ranging from 1.6% to 246%. The learned policies transfer to unseen graphs within a family and partially across related topologies, and TANGCO$^{pre}$, pre-trained on synthetic graphs, matches per-network training on unseen real networks. Training scales near-linearly with graph size, and TANGCO$^{pre}$ allocates on a new network with no per-target training, matching the deployment cost of a hand-designed heuristic. Free-vector variants without the GNN, stay close to the heuristics, so the graph representation carries the gain beyond numerical search. Finally, analysis of the learned allocations identifies when local risk is sufficient, leads to an improved closed-form heuristic, and reveals the regimes where a topology-aware learned policy remains necessary.",
+      "authors": [
+        "Orkun Irsoy",
+        "Leman Akoglu",
+        "Osman Yagan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.SI"
+      ],
+      "published": "2026-08-13T13:16:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.13212v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "capacity allocation to resist overload-driven cascading failures",
+      "llm_evidence_cn": "通过容量分配抵御过载驱动的级联故障",
+      "llm_evidence": "通过容量分配抵御过载驱动的级联故障",
+      "canonical_evidence": "通过容量分配抵御过载驱动的级联故障",
+      "llm_tldr_en": "Introduces TANGCO, a graph neural network policy trained via cascade simulation to allocate capacity budgets across nodes, mitigating cascading failures under local load redistribution.",
+      "llm_tldr_cn": "网络系统节点负载超过容量会触发级联失效，但最优容量分配未知且目标函数不可导。提出TANGCO，用图神经网络策略在级联模拟器中学习拓扑感知的容量分配，从而在给定总容量预算下最小化故障影响。实验表明该方法能显著抑制级联传播，增强网络鲁棒性。",
+      "llm_tldr": "网络系统节点负载超过容量会触发级联失效，但最优容量分配未知且目标函数不可导。提出TANGCO，用图神经网络策略在级联模拟器中学习拓扑感知的容量分配，从而在给定总容量预算下最小化故障影响。实验表明该方法能显著抑制级联传播，增强网络鲁棒性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "ability of a system to continue operating correctly in the presence of component failures",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.14427v1",
+      "source": "arxiv",
+      "title": "Large-scale workflow placement in serverless computing using integer nonlinear programming",
+      "abstract": "Serverless edge computing has become a powerful cloud framework that enables the execution of large workflows without the need for the user to manage the underlying servers and edge devices. In this work, we address the challenge of deploying these workflows on a large number of different existing servers and edge devices such that monetary costs for the users and workflow evaluation times are minimized. To this end, the workflow and cloud node attributes are modeled in a mathematical framework. As a result, we present a novel model of the optimal placement problem as a nonlinear integer program. To solve both the issues of scaling towards a larger number of cloud/edge nodes as well as decomposed knowledge of node attributes, we propose a novel decomposition strategy. In a case study, we show the beneficial scaling properties of the decomposition approach and a mean improvement of 10% against a simple deployment heuristic.",
+      "authors": [
+        "Joshua Adamek",
+        "Natalie Carl",
+        "Trever Schirmer",
+        "Moritz Heinlein",
+        "David Bermbach",
+        "Sergio Lucia"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-14T16:08:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.14427v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "workflow placement on edge nodes under cost and time constraints",
+      "llm_evidence_cn": "在边缘节点上进行工作流放置以优化成本和执行时间",
+      "llm_evidence": "在边缘节点上进行工作流放置以优化成本和执行时间",
+      "canonical_evidence": "在边缘节点上进行工作流放置以优化成本和执行时间",
+      "llm_tldr_en": "Proposes a nonlinear integer programming model to place large serverless workflows on heterogeneous cloud/edge nodes, minimizing monetary cost and evaluation time.",
+      "llm_tldr_cn": "在大规模无服务器边缘计算场景下，工作流数量大、节点属性异构，直接部署会导致高开销和长时延。论文将工作流与节点属性形式化为非线性整数规划，并针对大规模节点和知识分解提出高效求解策略，在保持最优性的同时提升可扩展性。实验结果显示该方法显著降低云/边缘部署成本并缩短流程完成时间，从而支持边缘环境下的资源调度与服务编排。",
+      "llm_tldr": "在大规模无服务器边缘计算场景下，工作流数量大、节点属性异构，直接部署会导致高开销和长时延。论文将工作流与节点属性形式化为非线性整数规划，并针对大规模节点和知识分解提出高效求解策略，在保持最优性的同时提升可扩展性。实验结果显示该方法显著降低云/边缘部署成本并缩短流程完成时间，从而支持边缘环境下的资源调度与服务编排。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.19850v1",
+      "source": "arxiv",
+      "title": "Resilience in Trustworthy Wireless Systems",
+      "abstract": "Resilience has emerged as a fundamental capability for future wireless systems operating in dynamic and uncertain environments. Although resilience has attracted growing attention across academia, industry, and standardization, its conceptual scope, enabling mechanisms, and realization techniques remain fragmented. This paper presents a systematic framework of resilience in wireless systems from a trustworthiness perspective. We first formalize the concept of resilience and distinguish it from related uncertainty-aware terminologies, including reliability, robustness, adaptability, survivability, and recoverability. We then establish a hierarchical framework that organizes resilience into capability dimensions and enabling mechanisms, and that quantifies resilience through different technical aspects. We further use physical links and unmanned aerial vehicle networks as representative wireless scenarios to demonstrate how resilience can be systematically realized through the joint design of architectures, operations, and algorithms. Finally, we examine the fundamental trade-offs in resilience engineering: Improving resilience generally incurs costs in resource efficiency, nominal performance, information acquisition, implementation complexity, and latency.",
+      "authors": [
+        "Shixiong Wang",
+        "Yumeng Zhang",
+        "Hongyu Li"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT",
+        "eess.SP"
+      ],
+      "published": "2026-08-20T09:56:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.19850v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "systematic framework for resilience in wireless systems, distinguishing it from reliability and robustness",
+      "llm_evidence_cn": "系统化无线系统韧性框架，区分韧性与可靠性、鲁棒性等概念",
+      "llm_evidence": "系统化无线系统韧性框架，区分韧性与可靠性、鲁棒性等概念",
+      "canonical_evidence": "系统化无线系统韧性框架，区分韧性与可靠性、鲁棒性等概念",
+      "llm_tldr_en": "This paper formalizes resilience in wireless systems, distinguishing it from reliability, robustness, and survivability, and introduces a hierarchical framework of capability dimensions and enabling mechanisms.",
+      "llm_tldr_cn": "无线系统在动态不确定环境下的韧性概念与实现机制仍缺乏统一框架。该文从可信性视角系统化地定义韧性，将其与可靠性、鲁棒性、可生存性等概念区分，并建立涵盖能力维度和使能机制的层次化韧性框架，同时提出量化韧性的方法，为设计高韧性无线系统提供了理论支撑。",
+      "llm_tldr": "无线系统在动态不确定环境下的韧性概念与实现机制仍缺乏统一框架。该文从可信性视角系统化地定义韧性，将其与可靠性、鲁棒性、可生存性等概念区分，并建立涵盖能力维度和使能机制的层次化韧性框架，同时提出量化韧性的方法，为设计高韧性无线系统提供了理论支撑。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.21910v1",
+      "source": "arxiv",
+      "title": "PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices",
+      "abstract": "Latency-sensitive edge AI services must balance strict deadlines, output quality, and limited compute and energy budgets. However, static CPU provisioning wastes resources because inference cost varies substantially across inputs, model variants, and runtime conditions. We present PRISM, a prediction-guided runtime framework that jointly selects model variants and CPU allocations for containerized edge microservices. Using container-level energy monitoring and lightweight regression models, PRISM adapts each pipeline stage in place and minimizes predicted CPU-package energy under deadline, resource, and offline model-level Quality of Result (QoR) constraints. We evaluate PRISM on more than 52,000 requests in an Automatic License Plate Recognition (ALPR) pipeline with detection and recognition stages. For detection, PRISM reduces energy consumption by 36 % compared to the strongest static configuration while preserving a comparable success rate and using less than half of the average CPU allocation. For recognition, it reaches near-static-best performance with lower average CPU allocation. These results show that predictive in-place adaptation is a practical mechanism for making time-sensitive AI microservice pipelines more energy-efficient at the edge.",
+      "authors": [
+        "Uwe Gropengießer",
+        "Thomas Reuter",
+        "Dominik Schön",
+        "Osama Abboud",
+        "Xun Xiao",
+        "Max Mühlhäuser"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-22T10:45:59+00:00",
+      "link": "https://arxiv.org/pdf/2608.21910v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "predictive runtime scaling and model selection for containerized edge microservices",
+      "llm_evidence_cn": "面向容器化边缘微服务的预测式运行时缩放与模型选择",
+      "llm_evidence": "面向容器化边缘微服务的预测式运行时缩放与模型选择",
+      "canonical_evidence": "面向容器化边缘微服务的预测式运行时缩放与模型选择",
+      "llm_tldr_en": "PRISM jointly selects model variants and CPU allocations for containerized edge microservices, minimizing predicted CPU-package energy under deadline and resource constraints, evaluated on over 52,000 requests.",
+      "llm_tldr_cn": "边缘AI服务需在严格时延、输出质量和有限资源间权衡，静态CPU配置造成浪费。PRISM基于预测的运行时框架，联合选择模型变体和CPU分配，在满足截止时间与资源约束下最小化CPU能耗。在自动车牌识别等任务超过5.2万次请求上验证了有效性。",
+      "llm_tldr": "边缘AI服务需在严格时延、输出质量和有限资源间权衡，静态CPU配置造成浪费。PRISM基于预测的运行时框架，联合选择模型变体和CPU分配，在满足截止时间与资源约束下最小化CPU能耗。在自动车牌识别等任务超过5.2万次请求上验证了有效性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.26559v1",
+      "source": "arxiv",
+      "title": "SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs",
+      "abstract": "Civil aviation space-air-ground integrated networks (SAGINs) are expected to support heterogeneous cockpit and cabin services over dynamic air-to-air (A2A), air-to-ground (A2G), and air-to-satellite (A2S) data links. This paper studies service function chain (SFC)-aware online access-side aggregated data-link orchestration for civil aviation SAGINs enabled by software-defined networking and network function virtualization (SDN/NFV). We jointly orchestrate spatial bearer resources and temporal elasticity enabled by temporal elastic mapping and parking (TEMP). A rolling-slot model is developed with four request-level actions: NOW, TEMP, REJECT, and DROP, under a lexicographic objective that prioritizes service success, then normalized access-orchestration delay, and finally residual TEMP-related risk. To avoid exhaustive search over the full binary action space, we propose Model-Induced Risk and Scarcity-Aware Refinement (MRSAR), which derives deferred-realization risk from the success-prioritized objective and resource-scarcity signals from data-link and TEMP buffer constraints. These signals guide valuation-based feasible construction and bounded neighborhood refinement. Simulation results show that MRSAR remains close to the Gurobi-MILP reference in service success, outperforms arrival-order and delay-myopic greedy baselines, controls REJECT and DROP failures, and achieves a favorable quality-complexity tradeoff for rolling online orchestration.",
+      "authors": [
+        "Ziyang Guo",
+        "Bing Du"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-27T03:00:40+00:00",
+      "link": "https://arxiv.org/pdf/2608.26559v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "SFC-aware online data-link orchestration under time-varying resources in SDN/NFV-enabled SAGINs",
+      "llm_evidence_cn": "在SDN/NFV使能的天地一体化网络中，面向SFC的在线数据链路编排，处理时变资源约束",
+      "llm_evidence": "在SDN/NFV使能的天地一体化网络中，面向SFC的在线数据链路编排，处理时变资源约束",
+      "canonical_evidence": "在SDN/NFV使能的天地一体化网络中，面向SFC的在线数据链路编排，处理时变资源约束",
+      "llm_tldr_en": "Studies SFC-aware online aggregated data-link orchestration for civil aviation SAGINs, jointly scheduling spatial bearer resources and temporal elasticity via a rolling-slot model with NOW, TEMP, REJECT, DROP actions.",
+      "llm_tldr_cn": "该文针对民航天地一体化网络中的服务功能链部署问题，提出SFC感知的在线聚合数据链路编排方法。通过滚动时隙模型和TEMP机制联合协调空间承载资源与时间弹性，对请求采取NOW、TEMP、REJECT、DROP四种动作，按字典序优化服务成功率和归一化接入编排开销。该方法在动态链路资源约束下提升了服务链路的接受率与资源利用效率。",
+      "llm_tldr": "该文针对民航天地一体化网络中的服务功能链部署问题，提出SFC感知的在线聚合数据链路编排方法。通过滚动时隙模型和TEMP机制联合协调空间承载资源与时间弹性，对请求采取NOW、TEMP、REJECT、DROP四种动作，按字典序优化服务成功率和归一化接入编排开销。该方法在动态链路资源约束下提升了服务链路的接受率与资源利用效率。",
+      "llm_tags": [
+        "query:sfc-edge"
+      ],
+      "matched_query_tag": "query:sfc-edge",
+      "matched_query_text": "dynamic service function chain deployment under resource constraints",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.00487v1",
+      "source": "arxiv",
+      "title": "Collaborative Orbital Edge Intelligence: A Decentralized Paradigm for Energy-Efficient Computing in Space",
+      "abstract": "In recent years, Low Earth Orbit (LEO) satellites have been increasingly deployed to enable connectivity in remote and disaster-prone areas. Researchers have proposed Orbital Edge Computing, which adds computational intelligence to LEO satellites to process data on orbit, providing edge intelligence close to space data sources. Existing work on Orbital Edge Computing typically assumes centralized control without collaboration among satellites from different providers, leading to limited connectivity, higher latency, and increased satellite battery depletion. They have not fully explored decentralized inter-satellite collaboration for energy-efficient intelligence under heterogeneous LEO constellations. This paper introduces a novel paradigm, Collaborative Orbital Edge Intelligence (COEI), that leverages decentralized collaboration among LEO satellites to enable energy-efficient on-orbit processing of space data. We describe the overall system architecture of COEI, including the issues related to networking, computing, and power management. COEI can help create a multi-party, multi-orbit megaconstellation of satellites that delivers better service quality by providing benefits, including global resilient connectivity, real-time intelligence, and energy-efficient services. To demonstrate the COEI benefits, we conduct a case study on decentralized energy-aware satellite task offloading to maximize the task success rate while minimizing the sum of the maximum battery depth-of-discharge across all satellites. Finally, we outline future directions for COEI that offer opportunities for further investigation.",
+      "authors": [
+        "Yuvraj Sahni",
+        "Jiannong Cao",
+        "Fu Xiao"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-01T07:24:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.00487v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "orbital edge computing brings computation close to space data sources",
+      "llm_evidence_cn": "轨道边缘计算在卫星端接近数据源处理数据，体现边缘计算范式",
+      "llm_evidence": "轨道边缘计算在卫星端接近数据源处理数据，体现边缘计算范式",
+      "canonical_evidence": "轨道边缘计算在卫星端接近数据源处理数据，体现边缘计算范式",
+      "llm_tldr_en": "Introduces a decentralized orbital edge intelligence paradigm for energy-efficient computing on LEO satellites, enabling edge intelligence close to space data sources.",
+      "llm_tldr_cn": "面向LEO卫星在偏远与灾害区域的连接与计算需求，该文提出协作式轨道边缘智能：将计算智能部署到卫星端在轨处理数据，并针对异构星座提出去中心化星间协作机制，以解决集中控制导致连接受限、时延高、电池消耗大的问题，实现接近空间数据源的节能边缘智能。",
+      "llm_tldr": "面向LEO卫星在偏远与灾害区域的连接与计算需求，该文提出协作式轨道边缘智能：将计算智能部署到卫星端在轨处理数据，并针对异构星座提出去中心化星间协作机制，以解决集中控制导致连接受限、时延高、电池消耗大的问题，实现接近空间数据源的节能边缘智能。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.00892v1",
+      "source": "arxiv",
+      "title": "Execution Timing Control for Deterministic Task Offloading in the IoT-Edge-Cloud Continuum",
+      "abstract": "Latency-critical IoT applications, such as autonomous mobility and industrial automation, require deterministic guarantees to ensure that tasks are completed within strict deadlines. The 6G-enabled IoT-edge-cloud continuum can support such requirements by leveraging communication, computation and intelligence resources across devices, edge, and cloud infrastructures. However, existing task offloading strategies mainly focus on selecting where tasks are executed and typically assume immediate processing upon task arrival. This leads to transient congestion when multiple tasks coincide in time and results in inefficient resource utilization under dynamic workloads. This paper addresses these limitations by introducing an execution timing control strategy for deterministic task offloading that jointly determines where tasks are executed and when their execution starts, while guaranteeing deadline compliance. The key idea is to exploit the latency budget of tasks to control their execution timing, enabling a more balanced distribution of workload over time and reducing peak congestion across the continuum. Evaluation results show that, compared to existing benchmarks, the proposed approach achieves up to 70% higher satisfaction ratio, reduces the communication resources usage by 40%, lowers peak computing resource utilization by 15%, and decreases average execution time by up to 77%.",
+      "authors": [
+        "Keyvan Aghababaiyan",
+        "Baldomero Coll-Perales",
+        "Javier Gozalvez"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.DC"
+      ],
+      "published": "2026-08-01T23:11:59+00:00",
+      "link": "https://arxiv.org/pdf/2608.00892v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "edge-cloud task offloading with execution timing control for resource efficiency",
+      "llm_evidence_cn": "边缘-云任务卸载中的执行时序控制，提高资源效率",
+      "llm_evidence": "边缘-云任务卸载中的执行时序控制，提高资源效率",
+      "canonical_evidence": "边缘-云任务卸载中的执行时序控制，提高资源效率",
+      "llm_tldr_en": "Proposes execution timing control for deterministic task offloading in the IoT-edge-cloud continuum to reduce congestion and improve resource utilization under dynamic workloads.",
+      "llm_tldr_cn": "现有任务卸载策略仅关注卸载位置，假设任务到达即处理，导致瞬时拥塞和资源利用率低下。本文提出执行时序控制机制，动态调度任务在边缘或云端的执行时刻，避免任务并发冲突。实验表明该方法能减少瞬时拥塞，提升资源利用率并满足时延确定性要求。",
+      "llm_tldr": "现有任务卸载策略仅关注卸载位置，假设任务到达即处理，导致瞬时拥塞和资源利用率低下。本文提出执行时序控制机制，动态调度任务在边缘或云端的执行时刻，避免任务并发冲突。实验表明该方法能减少瞬时拥塞，提升资源利用率并满足时延确定性要求。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.06033v1",
+      "source": "arxiv",
+      "title": "ASGE-RR: Agentic Service Graph Embedding with Revisable Reservations for Dynamic AI-Agent Calls",
+      "abstract": "AI-agent workflows often involve remote calls to models, memory stores, and tools distributed across a network. As execution progresses, these dependency calls collectively form an agentic service graph (ASG). Unlike traditional service requests, many dependency calls are revealed only at runtime. Consequently, allocating resources to a currently visible call may consume capacity later needed by a call from a higher-value workflow. We formulate this challenge as Agentic Service Graph Embedding (ASGE), an online network-control problem that maps runtime-revealed workflow calls to service replicas and network paths under capacity, cost and deadline constraints. We present ASGE-RR, an online ASGE controller with revisable reservations. ASGE-RR protects capacity for likely future calls while enforcing the constraints. ASGE-RR evaluates candidate replica-and-path mappings against predicted workflow continuations and updates reservations as new execution information becomes available.   We evaluate ASGE-RR using OpenHands and GPT Researcher workflows executed with gpt-5.6-luna and replayed over in two complementary experimental environments, a controlled Docker testbed and a WAN testbed. The investigation shows that all the evaluated AI-agent tasks expose at least one runtime-revealed dependency call that can be steered before connection establishment. Exploiting this control point, even though the experimental environments are small-scale, ASGE-RR already demonstrates noticeable potential: It completes (up to) 10% more workflow value than a same-information rolling-horizon controller and a current-call steering controller on the WAN testbed. The results suggest that runtime-revealed workflow structure creates a new network control opportunity: protecting resources for likely future calls allows more AI-agent workflows to finish in time.",
+      "authors": [
+        "Trond Vatten",
+        "Yuming Jiang"
+      ],
+      "primary_category": "cs.MA",
+      "categories": [
+        "cs.MA",
+        "cs.PF"
+      ],
+      "published": "2026-08-06T13:43:28+00:00",
+      "link": "https://arxiv.org/pdf/2608.06033v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "online embedding of dynamic service graphs under capacity, cost and deadline constraints",
+      "llm_evidence_cn": "在容量、成本与截止日期约束下在线嵌入动态服务图",
+      "llm_evidence": "在容量、成本与截止日期约束下在线嵌入动态服务图",
+      "canonical_evidence": "在容量、成本与截止日期约束下在线嵌入动态服务图",
+      "llm_tldr_en": "Formulates Agentic Service Graph Embedding (ASGE) as an online network-control problem and presents ASGE-RR, an online controller with revisable reservations for dynamic AI-agent calls.",
+      "llm_tldr_cn": "AI智能体工作流在运行中动态暴露依赖调用，需要在线映射到服务和路径。将该问题建模为含容量、成本和截止日期约束的智能体服务图嵌入，并提出带可修正预留的在线控制器ASGE-RR。该方法在动态工作流下提高高价值调用资源保障，减少低效占用，提升整体服务质量。",
+      "llm_tldr": "AI智能体工作流在运行中动态暴露依赖调用，需要在线映射到服务和路径。将该问题建模为含容量、成本和截止日期约束的智能体服务图嵌入，并提出带可修正预留的在线控制器ASGE-RR。该方法在动态工作流下提高高价值调用资源保障，减少低效占用，提升整体服务质量。",
+      "llm_tags": [
+        "query:sfc-edge"
+      ],
+      "matched_query_tag": "query:sfc-edge",
+      "matched_query_text": "dynamic service function chain deployment under resource constraints",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.07392v1",
+      "source": "arxiv",
+      "title": "LYRA: Label-Free Structural Synchronization and Resource Allocation for UAV Edge Networks",
+      "abstract": "While deploying hierarchical vision models to process mission-critical tasks, UAV edge systems must adaptively update the models to sustain inference reliability under low-level environmental corruption. However, existing work has overlooked the optimal timing for model updates, the impracticality of relying on real-time expert labels, and the significant bandwidth and energy constraints of UAVs. This paper proposes a joint model update scheduling and resource allocation framework, aiming to maximize long-term semantic fidelity and resource efficiency of UAV edge intelligence systems. To address the challenge of label-free semantic evaluation, we formulate the Online Semantic Disagreement Rate (OSDR) as a proxy for timely update triggering, thereby enabling fine-grained Sensitivity-Aware Structural Synchronization (SASS). Furthermore, to overcome the curse of dimensionality in hybrid action spaces and effectively bound long-term energy budgets, we propose a Lyapunov-guided discrete reinforcement learning algorithm that performs action space dimensionality reduction and transforms constraints into virtual queue stability problems. The reported experimental results, based on real traffic traces, demonstrate that the proposed framework consistently outperforms representative baselines in semantic recovery efficiency and update triggering precision, by satisfying long-term energy budget and by reducing average risk backlog by up to 33.3\\% in the dynamic environmental corruption scenario.",
+      "authors": [
+        "Feng He",
+        "Alireza Furutanpey",
+        "Paolo Bellavista",
+        "Yu Qiu",
+        "Jiangchuan Liu",
+        "Jiannong Cao",
+        "Schahram Dustdar"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-07T16:37:03+00:00",
+      "link": "https://arxiv.org/pdf/2608.07392v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "joint model update scheduling and resource allocation in UAV edge networks, maximizing semantic fidelity",
+      "llm_evidence_cn": "无人机边缘网络中的联合模型更新调度与资源分配，最大化语义保真度",
+      "llm_evidence": "无人机边缘网络中的联合模型更新调度与资源分配，最大化语义保真度",
+      "canonical_evidence": "无人机边缘网络中的联合模型更新调度与资源分配，最大化语义保真度",
+      "llm_tldr_en": "LYRA proposes joint model update scheduling and resource allocation for UAV edge networks, using a label-free semantic disagreement rate to sustain inference reliability under environmental corruption and resource constraints.",
+      "llm_tldr_cn": "无人机边缘系统在执行关键任务时需自适应更新视觉模型以应对环境损坏，但现有工作忽视了更新时机、无标签评估和资源限制。LYRA联合模型更新调度与资源分配，提出在线语义分歧率作为无标签代理度量，从而在带宽和能量约束下最大化长期语义保真度，为无人机边缘智能的资源高效运行提供新方法。",
+      "llm_tldr": "无人机边缘系统在执行关键任务时需自适应更新视觉模型以应对环境损坏，但现有工作忽视了更新时机、无标签评估和资源限制。LYRA联合模型更新调度与资源分配，提出在线语义分歧率作为无标签代理度量，从而在带宽和能量约束下最大化长期语义保真度，为无人机边缘智能的资源高效运行提供新方法。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.10611v1",
+      "source": "arxiv",
+      "title": "Measuring the End-to-End Resilience of Application Deployments in Real-World Communication Networks with DRACO",
+      "abstract": "Billions of users take Internet connectivity for granted and use it daily to access applications deployed anywhere around the globe. What users perceive as a seamless connection between their end device and the application server involves a complex system of systems operated by various actors. Failures in any of these systems disrupt user-to-application connectivity if the communication network is not resilient. Since communication networks are a critical infrastructure as part of ICT, real-world operators rarely disclose information about them. This makes it difficult to measure the end-to-end resilience of deployments, because it requires guessing topologies and the availability of the involved systems.   This paper presents DRACO, a framework for modeling communication networks and measuring end-to-end resilience of application deployments. It enables configuring application deployments across arbitrary communication networks and evaluating their availability, robustness, and resilience. We demonstrate the functional scope of DRACO by modeling nationwide application deployments in Germany and France, highlighting its compatibility with a wide variety of public data sources and synthetic data.",
+      "authors": [
+        "Leon Janzen",
+        "Matthias Hollick"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-11T07:53:30+00:00",
+      "link": "https://arxiv.org/pdf/2608.10611v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Measuring end-to-end resilience of application deployments in communication networks",
+      "llm_evidence_cn": "测量通信网络中应用部署的端到端网络韧性",
+      "llm_evidence": "测量通信网络中应用部署的端到端网络韧性",
+      "canonical_evidence": "测量通信网络中应用部署的端到端网络韧性",
+      "llm_tldr_en": "DRACO measures end-to-end resilience of application deployments in real-world communication networks by inferring topology and availability. It provides a practical tool for quantifying resilience of deployments, addressing lack of operator transparency.",
+      "llm_tldr_cn": "针对通信网络运营商很少披露信息、导致难以评估应用部署端到端韧性这一问题，该文提出DRACO工具。它通过推断网络拓扑和系统可用性，计算应用部署在故障下的韧性指标。在真实网络数据上的应用结果展示了该工具的有效性。DRACO为网络韧性的量化测量提供了一种方法，帮助监测和提升应用部署的抗故障能力，对网络韧性研究有重要支撑作用。",
+      "llm_tldr": "针对通信网络运营商很少披露信息、导致难以评估应用部署端到端韧性这一问题，该文提出DRACO工具。它通过推断网络拓扑和系统可用性，计算应用部署在故障下的韧性指标。在真实网络数据上的应用结果展示了该工具的有效性。DRACO为网络韧性的量化测量提供了一种方法，帮助监测和提升应用部署的抗故障能力，对网络韧性研究有重要支撑作用。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.14086v1",
+      "source": "arxiv",
+      "title": "Integrated Sensing, Communication, and Computing in Multi-Tier Systems: Joint Hybrid Beamforming Design and Computation Resource Allocation",
+      "abstract": "This paper proposes a novel integrated sensing, communication, and computing (ISCC) framework over a cloud-edge-device collaborative architecture, where passive sensing is enabled by reusing uplink offloading signals to extract sensing information directly at the edge without incurring additional transmission overhead. Nevertheless, such signal reuse introduces an inherent tradeoff between communication efficiency and sensing coverage. To address this challenge, we adopt a hybrid beamforming architecture under practical hardware constraints. In addition, the integration of sensing tasks creates significant resource contention at the mobile edge computing (MEC) server, where latency-sensitive device tasks and computation-intensive sensing inference tasks compete for limited processing capacity. To alleviate this computation burden, we introduce a split inference mechanism that strategically partitions intelligent sensing tasks between the edge and the cloud. Building upon this framework, we formulate a joint optimization problem to minimize the average computation latency of all device tasks subject to strict sensing performance constraints. To tackle the high non-convexity of the formulated problem, we develop an efficient alternating optimization algorithm. In particular, we design a two-layer framework to jointly determine the optimal DNN splitting point and computation resource allocation and employ a weighted minimum mean square error (WMMSE)-based approach with manifold optimization for hybrid beamforming design. Numerical results demonstrate that the proposed framework achieves a superior tradeoff between sensing accuracy and computation latency compared to the benchmark schemes.",
+      "authors": [
+        "Peng Liu",
+        "Zesong Fei",
+        "Xinyi Wang",
+        "Qiao Qi",
+        "Zhaohui Yang",
+        "Meng Hua",
+        "Arumugam Nallanathan"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-08-14T08:48:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.14086v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "jointly designs hybrid beamforming and computation resource allocation in cloud-edge-device system, addressing edge resource contention",
+      "llm_evidence_cn": "在云边端系统中联合设计混合波束成形与计算资源分配，应对边缘资源竞争",
+      "llm_evidence": "在云边端系统中联合设计混合波束成形与计算资源分配，应对边缘资源竞争",
+      "canonical_evidence": "在云边端系统中联合设计混合波束成形与计算资源分配，应对边缘资源竞争",
+      "llm_tldr_en": "Proposes an integrated sensing, communication, and computing framework over cloud-edge-device architecture, reusing uplink signals for passive edge sensing and jointly optimizing hybrid beamforming and computation resource allocation under contention.",
+      "llm_tldr_cn": "针对云边端协作架构中感知、通信与计算的集成问题，本文提出ISCC框架，通过复用上行卸载信号在边缘实现被动感知，避免额外传输开销。同时考虑混合波束成形硬件约束和MEC服务器上的资源竞争，联合优化波束成形与计算资源分配。该框架在保障通信效率与感知覆盖之间取得了平衡，为多层级系统资源分配提供了综合方案。",
+      "llm_tldr": "针对云边端协作架构中感知、通信与计算的集成问题，本文提出ISCC框架，通过复用上行卸载信号在边缘实现被动感知，避免额外传输开销。同时考虑混合波束成形硬件约束和MEC服务器上的资源竞争，联合优化波束成形与计算资源分配。该框架在保障通信效率与感知覆盖之间取得了平衡，为多层级系统资源分配提供了综合方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.24841v1",
+      "source": "arxiv",
+      "title": "Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions",
+      "abstract": "The transition toward Open Radio Access Networks (O-RANs) is reshaping how cellular infrastructure is deployed, managed, and optimized. This paper investigates the energy-aware joint placement and migration of cloud-native functions (CNFs) in an O-RAN edge cloud. We consider both a Single-CU-UP association model and a slice-aware Multi-CU-UP relaxation, in which distinct slice-flow groups of the same distributed unit (DU) may be assigned to different Centralized Unit User Plane (CU-UP) processing targets under one Centralized Unit Control Plane (CU-CP). For brevity, these scenarios are referred to as Single-CU and Multi-CU, respectively; Multi-CU never denotes multiple CU-CP associations. We formulate the problem as a Mixed-Integer Linear Program (MILP) that minimizes server, transmission, wake-up, and migration energy while satisfying server-resource capacities and one-way delay requirements over the F1 user-plane interface (F1-U) between each DU and its selected CU-UP in a fat-tree edge data center. To improve computational scalability, we also develop a deterministic k-means-based heuristic that approximates the MILP decisions without requiring repeated exact optimization.   Over the evaluated 24-hour workload, the theoretical Multi-CU relaxation reduces modeled energy consumption by 5.7% relative to the Single-CU baseline. For the Multi-CU case, the proposed heuristic remains within approximately 9.7% of the proposed MILP, demonstrating a favorable trade-off between energy efficiency and computational tractability.",
+      "authors": [
+        "Nguyen Phuc Tran",
+        "Brigitte Jaumard",
+        "Oscar Delgado"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT",
+        "cs.DC",
+        "cs.ET",
+        "cs.PF",
+        "eess.SY"
+      ],
+      "published": "2026-08-25T17:30:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.24841v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "energy-aware joint placement and migration of cloud-native network functions in O-RAN edge",
+      "llm_evidence_cn": "O-RAN边缘中云原生网络功能的能量感知联合部署与迁移",
+      "llm_evidence": "O-RAN边缘中云原生网络功能的能量感知联合部署与迁移",
+      "canonical_evidence": "O-RAN边缘中云原生网络功能的能量感知联合部署与迁移",
+      "llm_tldr_en": "This paper formulates energy-aware joint placement and migration of cloud-native network functions in O-RAN edge clouds, considering single and slice-aware multi-CU-UP models.",
+      "llm_tldr_cn": "O-RAN边缘云中云原生网络功能（CNF）的部署与迁移对能耗和服务质量至关重要。该文针对单CU-UP和切片感知的多CU-UP关联模型，将能量感知的CNF联合部署与迁移问题形式化为混合整数规划，并通过求解来优化资源分配和能耗，为网络功能在边缘云中的动态编排提供了优化方案。",
+      "llm_tldr": "O-RAN边缘云中云原生网络功能（CNF）的部署与迁移对能耗和服务质量至关重要。该文针对单CU-UP和切片感知的多CU-UP关联模型，将能量感知的CNF联合部署与迁移问题形式化为混合整数规划，并通过求解来优化资源分配和能耗，为网络功能在边缘云中的动态编排提供了优化方案。",
+      "llm_tags": [
+        "query:sfc-edge"
+      ],
+      "matched_query_tag": "query:sfc-edge",
+      "matched_query_text": "resource orchestration for service function chains in edge computing",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    }
+  ]
+}

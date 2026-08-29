@@ -1,0 +1,1535 @@
+Title: Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions
+
+URL Source: https://arxiv.org/pdf/2608.24841v1
+
+Published Time: Wed, 26 Aug 2026 01:32:12 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Highlights 
+
+## Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions 
+
+Nguyen Phuc Tran, Brigitte Jaumard, Oscar Delgado • A MILP jointly optimizes CNF placement, migration, and energy use. • Flexible DU-to-CU-UP associations are evaluated under a fixed CU-CP. • Single-CU-UP and slice-aware Multi-CU-UP operation are compared. • Multi-CU-UP lowers modeled MILP energy by 5.7% over 24 hours. • The proposed heuristic’s 24-hour Multi-CU energy is 9.7% above the MILP; it is also compared with common cloud-placement heuristics. arXiv:2608.24841v1 [cs.IT] 25 Aug 2026 Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions 
+
+## Nguyen Phuc Tran a, Brigitte Jaumard a,∗ and Oscar Delgado b
+
+> a
+
+Department of Computer Science and Software Engineering, Concordia University, Montréal, Québec, Canada 
+
+> b
+
+Ericsson, Montréal, Québec, Canada 
+
+A R T I C L E I N F O 
+
+Keywords :Open Radio Access Network (O-RAN) Cloud-native function placement and migration Energy efficiency DU–CU-UP connectivity Edge computing Network slicing Green networking O-Cloud workload management 
+
+A B S T R A C T 
+
+The transition toward Open Radio Access Networks (O-RANs) is reshaping how cellular infrastructure is deployed, managed, and optimized. This paper investigates the energy-aware joint placement and migration of cloud-native functions (CNFs) in an O-RAN edge cloud. We consider both a Single-CU-UP association model and a slice-aware Multi-CU-UP relaxation, in which distinct slice-flow groups of the same distributed unit (DU) may be assigned to different Centralized Unit User Plane (CU-UP) processing targets under one Centralized Unit Control Plane (CU-CP). For brevity, these scenarios are referred to as Single-CU and Multi-CU, respectively; Multi-CU never denotes multiple CU-CP associations. We formulate the problem as a Mixed-Integer Linear Program (MILP) that minimizes server, transmission, wake-up, and migration energy while satisfying server-resource capacities and one-way delay requirements over the F1 user-plane interface (F1-U) between each DU and its selected CU-UP in a fat-tree edge data center. To improve computational scalability, we also develop a deterministic 𝑘 -means-based heuristic that approximates the MILP decisions without requiring repeated exact optimization. Over the evaluated 24-hour workload, the theoretical Multi-CU relaxation reduces modeled energy consumption by 5.7% relative to the Single-CU baseline. For the Multi-CU case, the proposed heuristic remains within approximately 9.7% of the proposed MILP, demonstrating a favorable trade-off between energy efficiency and computational tractability. 
+
+## 1. Introduction 
+
+The transition to the O-RAN architecture is reshaping modern telecom networks and supporting the evolution from Fourth-Generation/Long-Term Evolution (4G/LTE) systems to 5G and B5G deployments. Traditionally, Radio Access Networks (RANs) were implemented using proprietary, tightly integrated hardware stacks, where the radio, base-band processing, and control logic were co-located within a single cell-site enclosure, limiting deployment flexibility and scalability. This monolithic RAN architecture, although stable, constrained innovation, enforced vendor lock-in, and restricted resource scaling capabilities. The O-RAN Al-liance defines a disaggregated architecture that splits the traditional RAN into three distinct functional entities [1]. This functional split (typically Split 7.2x) enables the DU and CU to be virtualized as Virtualized Network Functions (VNFs) or containerized as CNFs and deployed on Com-mercial Off-The-Shelf (COTS) servers within edge clouds or regional data centers. The F1 interface comprises the F1 user-plane interface (F1-U) between a DU and a CU-UP and the F1 control-plane interface (F1-C) between a DU and its CU-CP [2]. In this paper, we consider O-RAN because it provides the open, disaggregated deployment and management context in which DU and CU functions can run 
+
+> ∗
+
+Corresponding author  
+
+> brigitte.jaumard@concordia.ca
+
+(B. Jaumard) 
+
+> ORCID
+
+(s): 0000-0002-9792-7907 (N.P. Tran); 0000-0003-3443-4918 (B. Jaumard) 
+
+Figure 1: Scope of the proposed optimization. The model starts at the edge-cloud ingress and optimizes DU/CU-UP CNF placement and migration within one edge cloud. 
+
+as cloud-native workloads on an O-Cloud and be orches-trated by open management mechanisms. The DU-CU func-tional split considered here remains rooted in 3GPP NR; O-RAN motivates the corresponding cloud-native placement, migration, and service-management problem. This disag-gregation gives operators greater flexibility in associating and placing DU and CU functions across available edge-cloud resources [3]. Consequently, these functions are not tied to fixed servers and can be relocated in response to changes in traffic demand, resource availability, or reliability requirements [4]. This flexibility, however, introduces the challenge of jointly determining placement and migration decisions while satisfying operational constraints. Edge computing further accelerates this transition by placing compute and storage resources closer to end users, thereby reducing delay and enhancing quality of service. 
+
+Tran et al.: Preprint submitted to Elsevier Page 1 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+However, deciding where to place DUs and CU-UPs within a single edge cloud and when to migrate them requires careful planning. Migration is needed because edge-cloud demand is time varying: low-demand periods create opportunities to consolidate CNFs and switch lightly loaded servers to idle or sleep states, whereas traffic hotspots can make a previ-ously feasible placement violate resource-capacity or DU-to-CU-UP/F1-U-delay constraints. By relocating selected DU/CU-UP CNFs only when beneficial or necessary, the orchestrator can preserve feasibility under load fluctuations while reducing the number of active servers over time. As illustrated in Fig. 1, the model begins at the ingress of one selected edge cloud and optimizes DU/CU-UP placement and migration only within that cloud. RU location, RU-DU transport and latency, and inter-edge-cloud relocation are external deployment and admission concerns; within the selected cloud, the model enforces resource and DU-to-CU-UP/F1-U delay constraints. Energy consumption is also becoming a major concern in 5G and beyond. Data centers, including edge clouds, consume nearly 1.7% of global electricity, and their en-ergy demand is projected to rise [5]. Edge environments add complexity because resources are geographically dis-tributed, traffic patterns fluctuate continuously, and energy-aware placement becomes more challenging [6, 7]. In this work, energy-aware placement jointly determines the loca-tions of DU and CU-UP instances within one edge cloud and whether they should be migrated from their previous locations. The objective is to minimize active and idle server energy, intra-cloud transmission energy, wake-up energy, and migration overhead while satisfying server-resource capacities and one-way DU-to-CU-UP/F1-U delay bounds. Most existing approaches prioritize load balancing or de-lay and do not jointly combine strict DU-to-CU-UP delay constraints [8], changing resource demand, and migration-aware placement. Thus, when placement and migration are handled in isolation, the system misses opportunities to op-timize energy consumption, delay, and overall performance. A key architectural decision in next-generation RAN design is how DUs and CUs connect, since this choice determines how computation, fronthaul capacity, and delay constraints interact across the network [9]. In particular, the choice between forcing all slice-flow groups of a DU through one CU-UP processing target and allowing slice-specific groups to select different CU-UP processing targets fundamentally alters the feasible placement space. The 3GPP CU-CP/CU-UP separation permits one DU to connect to multiple CU-UPs under one CU-CP, while a DU is normally connected to only one CU-CP [2]. Accordingly, Multi-CU is shorthand for Multi-CU-UP: the model may assign distinct slice-flow groups of a DU to different CU-UP processing targets, but each group has exactly one target and the DU’s CU-CP association remains fixed. This forward-looking relaxation abstracts implementation-specific user-plane steering and state-coordination mechanisms. The purpose of this relax-ation is not to claim immediate deployability, but to assess whether its potential energy savings are substantial enough to justify further architectural investigation. To address these challenges, we propose an energy-aware framework for jointly optimizing CNF placement and migration under time-varying traffic demand. The frame-work accounts for load-dependent incremental server power, fixed idle power, one-time server wake-up energy, trans-mission energy, physically calibrated migration energy, and DU-to-CU-UP/F1-U delay requirements. To improve com-putational scalability, we further develop a deterministic 
+
+𝑘 -means-based heuristic and evaluate it against the MILP model. Our main contributions are as follows: • We formulate a MILP in which all power terms are converted to energy over each control interval, server wake-ups are represented by explicit off-to-on transi-tion variables, and migration-energy coefficients are precomputed from the transferred state volume, path bandwidth, network energy intensity, and source and destination endpoint overheads. • We introduce an explicit slice-flow-to-CU-UP assign-ment variable and a route variable indexed by the selected CU-UP, making Single-CU and Multi-CU transparent restrictions of the same formulation while retaining one fixed CU-CP association per DU. • We specify an implementable four-phase heuristic with deterministic initialization, explicit candidate ordering, sequential migration acceptance, bounded feasibility repair, and no global completeness claim. • We evaluate the formulation and heuristic under a time-varying 24-hour O-RAN workload and compare energy, delay feasibility, active servers, and migration behaviour with common placement baselines. 
+
+## 2. Literature Review 
+
+Generic VNF-placement studies established exact, meta-heuristic, and hybrid methods for resource- and delay-constrained orchestration [10–13]. Optimization over time subsequently incorporated network-function relocation and reliability in 5G-RAN settings [4], while live-migration studies quantified the state-transfer and endpoint overheads that a physical migration-energy model must represent [14]. These foundations motivate the rolling placement-and-migration structure used here, but they do not by themselves specify O-RAN DU–CU association. Recent O-RAN research is more directly related to our work. Murti et al. [15] use deep reinforcement learning to re-configure functional splits, vCU/vDU locations, resource as-signments, and routing under time-varying conditions while accounting for reconfiguration costs. Hojeij et al. [3, 16] study flexible O-DU/O-CU association and placement under changing resource bottlenecks. Pires et al. [17] formulate energy-minimizing vRAN placement with flexible func-tional splits and transport-network energy. Another study   
+
+> Tran et al.: Preprint submitted to Elsevier Page 2 of 17
+
+Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+Table 1 
+
+Comparison with related O-RAN orchestration studies.                                          
+
+> Work Primary focus Energy Migration/move Slice-flow CU assign Solution approach
+> [4] Reliable 5G-RAN optimization over time Partial Yes No ILP + local search [15] Joint vRAN split, placement, and routing reconfiguration No Yes No Action-branching D3QN [3, 16] Flexible O-DU/O-CU association and placement Partial Partial No ILP + RNN/heuristic [17] vRAN placement, splits, and transport energy Yes No No MILP + heuristic [18] Energy-efficient O-RAN placement and association Yes No No ILP + GNN [19] Slice-aware function splitting and placement Yes No Partial MILP + heuristic RFD-R [21] AI-driven CNF repacking Partial Yes No PPO-based DRL
+> This work Rolling DU/CU-UP placement and migration Yes Yes Yes MILP + heuristic
+> Abbreviations: D3QN: dueling double deep Q-network; DRL: deep reinforcement learning; GNN: graph neural network; ILP: integer linear programming; MILP: mixed-integer linear programming; PPO: proximal policy optimization; RNN: recurrent neural network.
+
+directly addresses energy-efficient placement and associa-tion in disaggregated O-RAN [18]. Sen et al. [19] and Mushtaq et al. [20] examine slice-aware functional splitting, placement, and routing. Collectively, these studies estab-lish energy-aware O-RAN placement as an active research area; accordingly, we do not claim energy minimization or DU/CU placement alone as novel. Learning-based methods for O-RAN orchestration are also advancing rapidly. The RFD-R framework dynamically repacks cloud-native RAN functions through merge, split, and move actions [21]. CROWN applies cross-attention reinforcement learning to O-RAN control [22]. These ap-proaches target adaptation and scalability, but their learned policies and cost definitions differ from a solver-verifiable linear energy formulation. By contrast, our MILP provides a transparent optimization reference, and the proposed de-terministic heuristic approximates the decisions of the same formulation without acting as a learned controller. Table 1 positions this work against studies that address relevant subsets of the problem. Its distinguishing combina-tion is rolling placement and migration, explicit per-slice-flow CU-UP assignment, a common-unit physical energy model, and a deterministic heuristic that approximates the same MILP decisions. 
+
+## 3. System Model and Assumptions 
+
+The selected edge cloud is assumed to satisfy the fron-thaul feasibility of its serving RUs before optimization. The model therefore starts from requests that have reached the edge-cloud ingress; RU-DU transport engineering and latency enforcement are outside its scope. Traffic demand varies across optimization intervals but is deterministic within each interval. At the beginning of interval 𝑡 , the pre-processed demand for that interval is available as a known, fixed input that determines DU/CU-UP requirements for Central Processing Unit (CPU), Random Access Memory (RAM), and Input/Output (I/O) across heterogeneous slices such as enhanced Mobile Broadband (eMBB) and ultra-Reliable Low-Latency Communications (uRLLC). Future demand, probability distributions, and stochastic scenarios are not used in the current-interval decision. The edge cloud is homogeneous and adopts a fat-tree topology, where all interconnects use optical fiber links with a propagation speed of approximately 2 ⋅ 10 8 m/s; accordingly, propagation delay is modelled using fixed intra-pod values and negligible intra-server latency. Although real-world congestion can intro-duce jitter, the current model treats link delays as static and additive. All latency quantities constrained by the model are one-way delays. The model considers only the intra-edge-cloud F1-U path between each DU and its selected CU-UP, comprising server-to-server delay within the fat-tree and user-plane processing delay at the DU and CU-UP end-points. RU-DU fronthaul propagation and jitter, User Equip-ment (UE) radio-access delay, CU-to-core transport delay, F1-C control-plane delay, and non-F1 application/core pro-cessing delay are outside the present scope and are left for future extensions. Server power is modelled as fixed idle power plus a load-dependent piecewise-linear incremental component. Power in watts is converted to energy over the control interval, and every off-to-on transition incurs one fixed wake-up energy charge. This charge is an input parameter that must be calibrated for the deployed server platform or varied in sensitivity analysis [23]. To maintain carrier-grade stability and provide a buffer for instantaneous traffic bursts, particularly for delay-critical uRLLC slices, we define the maximum operational capacity of each server at 70%. During preprocessing, traffic demand exceeding this threshold causes the assumed external scaling engine to generate additional CNF instances. The proposed MILP and heuristic do not decide when or how to scale; they only place and migrate the resulting instances while respecting the 70% operational-capacity limit. 
+
+## 4. Energy-aware Joint Placement and Migration (EJPM) Problem Statement 
+
+Given these assumptions, the joint CNF placement-and-migration problem minimizes edge-cloud energy consump-tion. The constraints enforce (i) server-resource capacity, 
+
+(ii) the scenario-specific one-way DU-to-CU-UP/F1-U de-lay budgets defined in Section 7.1, and (iii) the logical connectivity rules of the Single-CU and Multi-CU scenarios. 
+
+Tran et al.: Preprint submitted to Elsevier Page 3 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+For each interval, traffic is represented by flows that may contain multiple slice-specific components; a flow adopts the most stringent delay requirement among its components. We assume that traffic can be logically differentiated into per-slice flows at the DU level. Fine-grained assignment of these groups among CU-UP targets is treated as an ab-stract forward-looking relaxation, consistent with research on slice-aware splitting and placement [19, 20]. Throughout the formulation, the set 𝐶 and the term CU target refer to candidate CU-UP processing instances on the F1-U user-plane path. The DU’s single logical CU-CP/F1-C association is assumed to be established beforehand and remains fixed; CU-CP placement, migration, replication, and resiliency are outside the scope of the optimization. This is a logical control-plane restriction, not a requirement that the CU-CP use dedicated physical hardware. Each server may host mul-tiple DU and CU-UP instances subject to resource and delay constraints; the model abstracts their container implementa-tion and represents only their processing requirements. Accordingly, the optimization selects DU and CU-UP placements for each slice flow so that all resource, delay, and connectivity constraints are satisfied. The legacy traffic, denoted by 𝑆 SLI _LEG , consists of slice flows carried over from a previous time interval and already provisioned on a set of DU-to-CU-UP pairs. When provisioning new traffic slices, the optimizer may also migrate selected legacy slice flows if doing so reduces overall energy consumption. Migration can consolidate or redistribute slice flows across servers, thereby reducing active-server energy when its overhead is justified. Eligibility and delay constraints restrict which DU and CU-UP instances can process each slice. 
+
+4.1. Parameters and Variables 
+
+Let 𝑆 denote the set of servers (indexed by 𝑠 ) in the edge cloud. Each server 𝑠 has finite resource capacities, specifi-cally CPU cores ( CAP CPU  
+
+> 𝑠
+
+), memory ( CAP RAM  
+
+> 𝑠
+
+), and NIC I/O bandwidth ( CAP IO  
+
+> 𝑠
+
+). The internal links are provisioned to support the servers’ NIC capacities. The workload consists of RU-side requests that have reached the edge-cloud ingress and are routed through the internal switching fabric to eligible DU and CU-UP in-stances. The switch abstraction in Figs. 2 and 3 therefore represents only the internal data-center fabric. To repre-sent heterogeneous slice requirements, we decompose each aggregate traffic-flow request into slice-specific requests at the DU level. This abstraction is consistent with slice-aware NG-RAN formulations that model distinct through-put, latency, functional-split, placement, and routing require-ments for individual network slices [19, 20]. Each request 
+
+𝑘 ∈ 𝐾 is characterized by a compute resource vector 
+
+𝑟 𝑘 = ( 𝑟 CPU  
+
+> 𝑘
+
+, 𝑟 RAM  
+
+> 𝑘
+
+, 𝑟 IO  
+
+> 𝑘
+
+) which defines the resources needed to provision the corresponding DU and CU-UP functions. An external preprocessing stage determines the number and sizes of DU/CU-UP CNF instances from predicted demand, consistent with predictive VNF autoscaling approaches [24– 27]. The resulting instance sets and resource vectors are fixed inputs; scaling is not represented by decision variables, constraints, or objective terms in the MILP or heuristic. We next describe two DU/CU-UP interconnection sce-narios: (i) a baseline aligned with current standard ca-pabilities and (ii) an anticipated setting enabled by more advanced traffic-steering and splitting mechanisms. In the current Third Generation Partnership Project (3GPP) frame-work, user traffic can be differentiated by slice identifiers and associated policies, e.g., Network Slice Selection Assis-tance Information (NSSAI), Single NSSAI (S-NSSAI), and slice/service profiles. 
+
+4.2. Scenario 1: Each DU connects to a single CU-UP (Single-CU)  
+
+> Figure 2: Scenario 1: each DU connects to one CU-UP while retaining one fixed CU-CP association.
+
+In this scenario, each DU instance uses exactly one CU-UP processing instance, whereas a single CU-UP can concurrently serve multiple DUs (see Fig. 2). Its fixed CU-CP association over F1-C is not a placement or migration decision. Each DU (𝑑 ∈ 𝐷 ) and its selected CU-UP (𝑐 ∈ 𝐶 )
+
+may be placed on the same or different servers, provided that resource and slice-specific F1-U delay requirements are satisfied. 
+
+4.3. Scenario 2: Slice-aware DU-to-CU-UP connectivity (Multi-CU)    
+
+> Figure 3: Scenario 2: slice-aware assignment from one DU to multiple possible CU-UP targets under one fixed CU-CP. Tran et al.: Preprint submitted to Elsevier Page 4 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds
+
+This scenario uses the standardized architectural possi-bility that one DU can connect to multiple CU-UPs con-trolled by the same CU-CP [2]. The mathematical relaxation lies in allowing the optimizer to steer distinct slice-flow groups of that DU to different CU-UP processing targets according to their delay and resource requirements. Multi-CU therefore means multiple CU-UP targets only: the DU retains one logical CU-CP association, and the model does not place, migrate, or replicate the CU-CP. Each slice-flow group is assigned to exactly one CU-UP target; therefore, the same traffic is not duplicated, replicated, or broadcast to every CU-UP connected to the DU. Conversely, each CU-UP target can process slice-flow groups from multiple DUs. Connectivity in this scenario is defined by a set of slice-specific DU-to-CU-UP pairings ( 𝑑, 𝑐 ). For every active slice-specific connection, the joint placement and migration algorithm must ensure that the assigned locations of DU 𝑑 
+
+and CU-UP 𝑐 satisfy both delay and resource constraints while reducing energy consumption. Compared with Scenario 1, this scenario expands the feasible set by allowing the slice-flow groups of one DU to use CU-UP targets on different servers or data-center pods. The larger feasible set may lower total energy by enabling better server consolidation and load distribution, but it can also increase transmission distance; therefore, the net effect is determined by the common-unit objective rather than assumed in advance. 
+
+## 5. Minimizing the Overall Energy: MILP Model 
+
+We formulate the Energy-Aware Joint Placement and Migration (EJPM) problem as a mixed-integer linear pro-gram (MILP). The model is solved once per control interval 
+
+𝑡 using the traffic demand observed for that interval. The corresponding sets, parameters, decision variables, objective function, and constraints are defined below. 
+
+5.1. Notations 
+
+The sets, parameters, and decision variables used in the formulation are summarized as follows. 
+
+Sets and Indices 
+
+𝑆, 𝐷, 𝐶 Sets of servers, DUs, and candidate CU-UP processing instances; CU-CP is fixed and omitted. 
+
+𝐾 Set of traffic-flow requests, indexed by 
+
+𝑘 .
+
+𝐾 𝑑 Set of flows pre-assigned to DU 𝑑 , with ⋃ 
+
+> 𝑑
+
+𝐾 𝑑 = 𝐾 .
+
+𝑆 SLI  
+
+> 𝑘
+
+Set of slice-flow groups belonging to flow 𝑘 .
+
+𝑅 Set of resource types ( CPU , RAM , and 
+
+> IO
+
+), indexed by 𝑟 .
+
+ Set of load-dependent incremental-power zones. 
+
+Parameters 
+
+𝑑 (𝑘 ) Pre-assigned DU for flow 𝑘 . 
+
+> CAP 𝑟 𝑠
+
+Capacity of resource 𝑟 on server 𝑠 .
+
+𝑟 DU  
+
+> 𝑘𝑟
+
+, 𝑟 CU  
+
+> 𝑘𝜎𝑟
+
+DU-side and CU-UP-side resource requirements. 
+
+𝑇 𝑘𝜎 Data volume of slice-flow group (𝑘, 𝜎 )
+
+during one control interval (GB). 
+
+𝛿 crit  
+
+> 𝑘𝜎
+
+One-way DU-to-CU-UP/F1-U delay limit of slice-flow group (𝑘, 𝜎 ).
+
+𝛿 𝑠𝑠 ′ One-way network delay between servers 
+
+𝑠 and 𝑠 ′.
+
+𝜒 𝜎𝑐 CU-UP eligibility parameter; 1 if CU-UP 𝑐 can process slice 𝜎 .
+
+𝜏 max  
+
+> DU
+
+Maximum number of distinct CU-UP targets allowed for one DU; the CU-CP count remains one. 
+
+Δ𝑡 Duration of one optimization interval in hours. 
+
+𝑃 IDLE  
+
+> 𝑠
+
+, 𝑃 inc ,max  
+
+> 𝑠
+
+Fixed idle power and maximum incremental power of server 𝑠 (W). 
+
+𝐸 wake  
+
+> 𝑠
+
+Fixed energy charged when server 𝑠 
+
+changes from inactive to active (kWh). 
+
+𝜖 TX  
+
+> 𝑠𝑠 ′
+
+Transmission-energy coefficient between servers (kWh/GB). 
+
+𝐵 mig  
+
+> 𝑗
+
+Effective state volume transferred when instance 𝑗 migrates, including retransmitted dirty pages (GB). 
+
+𝛽 mig  
+
+> 𝑠𝑠 ′
+
+Effective migration bandwidth from 𝑠 to 
+
+𝑠 ′ (GB/s). 
+
+𝑃 src  
+
+> 𝑠
+
+, 𝑃 dst  
+
+> 𝑠 ′
+
+Source and destination migration-overhead power (W). 
+
+𝜖 net  
+
+> 𝑠𝑠 ′
+
+Network energy per transferred GB on the migration path (kWh/GB). 
+
+𝜅 𝑗𝑠𝑠 ′ Precomputed migration energy of instance 𝑗 from 𝑠 to 𝑠 ′ (kWh). 
+
+𝑝 DU  
+
+> 𝑑𝑠
+
+, 𝑝 CU  
+
+> 𝑐𝑠
+
+Previous-interval DU and CU-UP placement parameters. ̄𝑎 𝑠 Previous-interval server-active parameter. 
+
+𝑤 𝑟 Weight of resource 𝑟 in aggregate server utilization. 
+
+𝑢 𝑖 , 𝑢 𝑖 Utilization bounds of incremental-power zone 𝑖 .  
+
+> Tran et al.: Preprint submitted to Elsevier Page 5 of 17
+
+Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+𝑎 𝑖 (𝜃 𝑠 ), 𝑏 𝑖 (𝜃 𝑠 ) Incremental-power slope and intercept in zone 𝑖 (W). 
+
+𝑀 𝑃 𝑠𝑖 Valid big-𝑀 bound for the incremental-power equality in zone 𝑖 .
+
+Decision Variables 
+
+𝑥 DU  
+
+> 𝑑𝑠
+
+,𝑥 CU 
+
+> 𝑐𝑠
+
+Binary placement variables; equal to 1 if DU 𝑑 (resp. CU-UP 𝑐 ) is placed on server 𝑠 .
+
+𝑞 𝑘𝜎𝑐 Binary assignment variable; equal to 1 if slice-flow group (𝑘, 𝜎 ) is processed by CU-UP 𝑐 .
+
+𝑦 𝑘𝜎𝑐𝑠𝑠 ′ Binary route variable; equal to 1 if (𝑘, 𝜎 )
+
+is transported from its DU on 𝑠 to CU-UP 𝑐 on 𝑠 ′.
+
+𝑧 𝑑𝑐 Binary logical-connection variable; equal to 1 if there is an active user-plane connection between DU 𝑑 and CU-UP 
+
+𝑐 .
+
+𝑚 DU  
+
+> 𝑑𝑠𝑠 ′
+
+,𝑚 CU 
+
+> 𝑐𝑠𝑠 ′
+
+Binary migration indicators; equal to 1 if DU 𝑑 (resp. CU-UP 𝑐 ) migrates from server 𝑠 to 𝑠 ′.
+
+𝑎 𝑠 Binary server-activation variable; equal to 1 if server 𝑠 is active. 
+
+𝑤 𝑠 Binary wake-up variable; equal to 1 only when server 𝑠 changes from inactive to active. 
+
+𝑢 𝑠 Nonnegative continuous variable representing the weighted aggregate utilization of server 𝑠 .
+
+𝑃 inc  
+
+> 𝑠
+
+Nonnegative continuous variable representing load-dependent incremental server power (W). 
+
+𝛾 𝑠𝑖 Binary zone-selection variable; equal to 1 if server 𝑠 operates in zone 𝑖 .
+
+5.2. Objective Function 
+
+All objective terms are expressed in kWh. The MILP minimizes total interval energy without an arbitrary weight-ing parameter: 
+
+min 𝐸 total = 𝐸 PLA + 𝐸 MIGR . (1) The operational term 𝐸 PLA includes fixed idle power, load-dependent incremental power, fixed wake-up energy, and traffic-transmission energy: 
+
+𝐸 PLA = Δ𝑡 
+
+1000 
+
+∑
+
+> 𝑠 ∈𝑆
+
+(𝑃 IDLE  
+
+> 𝑠
+
+𝑎 𝑠 + 𝑃 inc 
+
+> 𝑠
+
+) + ∑
+
+> 𝑠 ∈𝑆
+
+𝐸 wake  
+
+> 𝑠
+
+𝑤 𝑠 
+
++ ∑
+
+> 𝑘 ∈𝐾
+
+∑
+
+> 𝜎 ∈𝑆 SLI
+> 𝑘
+
+∑
+
+> 𝑐 ∈𝐶
+
+∑
+
+> 𝑠,𝑠 ′∈𝑆
+
+𝑇 𝑘𝜎 𝜖 TX  
+
+> 𝑠𝑠 ′
+
+𝑦 𝑘𝜎𝑐𝑠𝑠 ′ . (2) Here, Δ𝑡 is measured in hours, server power is measured in watts, and division by 1000 converts Wh to kWh. The wake-up term is a fixed input cost incurred once for each off-to-on transition; it is not multiplied by the interval duration. 
+
+Load-dependent incremental server power We separate fixed idle power from the load-dependent incremental com-ponent. Thus, 𝑃 inc  
+
+> 𝑠
+
+is zero when server 𝑠 is inactive and contains no idle/base-power contribution. For each 𝑠 ∈ 𝑆 ,the weighted utilization is 
+
+𝑢 𝑠 = ∑
+
+> 𝑟 ∈𝑅
+
+𝑤 𝑟 
+
+∑𝑘 ∈𝐾 𝑟 DU  
+
+> 𝑘𝑟
+
+𝑥 DU 
+
+> 𝑑 (𝑘 )𝑠
+> CAP 𝑟 𝑠
+
++ ∑
+
+> 𝑟 ∈𝑅
+
+𝑤 𝑟 
+
+∑𝑘 ∈𝐾 
+
+∑𝜎 ∈𝑆 SLI 
+
+> 𝑘
+
+∑𝑐 ∈𝐶 
+
+∑𝑠 ′∈𝑆 𝑟 CU 
+
+> 𝑘𝜎𝑟
+
+𝑦 𝑘𝜎𝑐𝑠 ′𝑠 
+
+> CAP 𝑟 𝑠
+
+.
+
+(3) The following explicit inactive-server bounds force uti-lization and incremental power to zero whenever 𝑎 𝑠 = 0 :
+
+0 ≤ 𝑢 𝑠 ≤ 𝜌 max 𝑎 𝑠 ∀𝑠 ∈ 𝑆, (4) 
+
+0 ≤ 𝑃 inc  
+
+> 𝑠
+
+≤ 𝑃 inc ,max  
+
+> 𝑠
+
+𝑎 𝑠 ∀𝑠 ∈ 𝑆. (5) Exactly one incremental-power zone is selected for an active server: 
+
+∑
+
+> 𝑖 ∈
+
+𝛾 𝑠𝑖 = 𝑎 𝑠 ∀𝑠 ∈ 𝑆, (6) 
+
+𝑢 𝑠 ≥ 𝑢 𝑖 𝛾 𝑠𝑖 ∀𝑠, 𝑖, (7) 
+
+𝑢 𝑠 ≤ 𝑢 𝑖 𝛾 𝑠𝑖 + 𝜌 max (1 − 𝛾 𝑠𝑖 ) ∀𝑠, 𝑖. (8) For the selected zone, the incremental power is equal to its affine expression. Both inequalities are required; objec-tive minimization alone is not used as a substitute for the upper equality: 
+
+𝑃 inc  
+
+> 𝑠
+
+≥ 𝑎 𝑖 (𝜃 𝑠 )𝑢 𝑠 + 𝑏 𝑖 (𝜃 𝑠 ) − 𝑀 𝑃 𝑠𝑖 (1 − 𝛾 𝑠𝑖 ), (9) 
+
+𝑃 inc  
+
+> 𝑠
+
+≤ 𝑎 𝑖 (𝜃 𝑠 )𝑢 𝑠 + 𝑏 𝑖 (𝜃 𝑠 ) + 𝑀 𝑃 𝑠𝑖 (1 − 𝛾 𝑠𝑖 ) (10) for all 𝑠 ∈ 𝑆 and 𝑖 ∈ . Temperature is observed before each control interval and is therefore a fixed input to the MILP; no product of decision variables is introduced. 
+
+Physically calibrated migration energy For any DU or CU instance 𝑗 migrating from 𝑠 to 𝑠 ′, the effective migration duration and energy coefficient are precomputed as 
+
+𝜏 mig  
+
+> 𝑗𝑠𝑠 ′
+
+= 𝐵 mig 
+
+> 𝑗
+
+𝛽 mig 
+
+> 𝑠𝑠 ′
+
+, (11) 
+
+𝜅 𝑗𝑠𝑠 ′ = 𝐵 mig  
+
+> 𝑗
+
+𝜖 net  
+
+> 𝑠𝑠 ′
+
++
+
+(
+
+𝑃 src  
+
+> 𝑠
+
++ 𝑃 dst 
+
+> 𝑠 ′
+
+)
+
+𝜏 mig 
+
+> 𝑗𝑠𝑠 ′
+
+3.6 × 10 6 . (12) 
+
+𝐵 mig  
+
+> 𝑗
+
+includes retransmitted dirty pages, 𝛽 mig is in GB/s, and the second term converts watt-seconds to kWh. Because every 𝜅 𝑗𝑠𝑠 ′ is computed from observed or calibrated inputs before optimization, the migration objective remains linear: 
+
+Tran et al.: Preprint submitted to Elsevier Page 6 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+𝐸 MIGR = ∑
+
+> 𝑑 ∈𝐷
+
+∑
+
+> 𝑠,𝑠 ′∈𝑆 𝑠 ≠𝑠 ′
+
+𝜅 DU  
+
+> 𝑑𝑠𝑠 ′
+
+𝑚 DU 
+
+> 𝑑𝑠𝑠 ′
+
++ ∑
+
+> 𝑐 ∈𝐶
+
+∑
+
+> 𝑠,𝑠 ′∈𝑆 𝑠 ≠𝑠 ′
+
+𝜅 CU  
+
+> 𝑐𝑠𝑠 ′
+
+𝑚 CU  
+
+> 𝑐𝑠𝑠 ′
+
+. (13) To ensure migration variables cannot take value 1 unless a move occurs, the following inequalities hold for every instance and every 𝑠, 𝑠 ′ ∈ 𝑆 with 𝑠 ≠ 𝑠 ′:
+
+𝑚 DU  
+
+> 𝑑𝑠𝑠 ′
+
+≤ 𝑝 DU  
+
+> 𝑑𝑠
+
+, ∀𝑑 ∈ 𝐷, (14) 
+
+𝑚 DU  
+
+> 𝑑𝑠𝑠 ′
+
+≤ 𝑥 DU  
+
+> 𝑑𝑠 ′
+
+, ∀𝑑 ∈ 𝐷, (15) 
+
+𝑚 CU  
+
+> 𝑐𝑠𝑠 ′
+
+≤ 𝑝 CU  
+
+> 𝑐𝑠
+
+, ∀𝑐 ∈ 𝐶, (16) 
+
+𝑚 CU  
+
+> 𝑐𝑠𝑠 ′
+
+≤ 𝑥 CU  
+
+> 𝑐𝑠 ′
+
+, ∀𝑐 ∈ 𝐶. (17) 
+
+5.3. Constraints 
+
+To strengthen the formulation and explicitly link the main decision variables, we include the following standard constraints. 
+
+Placement, activation, and wake-up constraints. A server is active exactly when it hosts at least one DU or CU: 
+
+𝑎 𝑠 ≥ 𝑥 DU  
+
+> 𝑑𝑠
+
+∀𝑑, 𝑠 (18) 
+
+𝑎 𝑠 ≥ 𝑥 CU  
+
+> 𝑐𝑠
+
+∀𝑐, 𝑠 (19) 
+
+𝑎 𝑠 ≤ ∑
+
+> 𝑑
+
+𝑥 DU  
+
+> 𝑑𝑠
+
++ ∑
+
+> 𝑐
+
+𝑥 CU  
+
+> 𝑐𝑠
+
+(20) The binary wake-up variable is one exactly when a previously inactive server becomes active: 
+
+𝑤 𝑠 ≥ 𝑎 𝑠 −̄𝑎 𝑠 ∀𝑠 ∈ 𝑆, (21) 
+
+𝑤 𝑠 ≤ 𝑎 𝑠 , 𝑤 𝑠 ≤ 1 − ̄𝑎 𝑠 ∀𝑠 ∈ 𝑆. (22) Every DU and CU must be assigned to exactly one server: 
+
+∑
+
+> 𝑠 ∈𝑆
+
+𝑥 DU  
+
+> 𝑑𝑠
+
+= 1 ∀𝑑 ∈ 𝐷 (23) 
+
+∑
+
+> 𝑠 ∈𝑆
+
+𝑥 CU  
+
+> 𝑐𝑠
+
+= 1 ∀𝑐 ∈ 𝐶 (24) The total DU-side and CU-side resource consumption on any server must not exceed its capacity: 
+
+∑
+
+> 𝑘 ∈𝐾
+
+𝑟 DU  
+
+> 𝑘𝑟
+
+𝑥 DU 
+
+> 𝑑 (𝑘 )𝑠
+
++ ∑
+
+> 𝑘 ∈𝐾
+
+∑
+
+> 𝜎 ∈𝑆 SLI
+> 𝑘
+
+∑
+
+> 𝑐 ∈𝐶
+
+∑
+
+> 𝑠 ′∈𝑆
+
+𝑟 CU 
+
+> 𝑘𝜎𝑟
+
+𝑦 𝑘𝜎𝑐𝑠 ′𝑠 ≤ CAP 𝑟 𝑠 𝑎 𝑠 
+
+∀𝑠 ∈ 𝑆, ∀𝑟 ∈ 𝑅. (25) 
+
+Slice-flow assignment and placement coupling. Every slice-flow group is assigned to exactly one eligible CU: 
+
+∑
+
+> 𝑐 ∈𝐶
+
+𝑞 𝑘𝜎𝑐 = 1 ∀𝑘 ∈ 𝐾, 𝜎 ∈ 𝑆 SLI  
+
+> 𝑘
+
+, (26) 
+
+𝑞 𝑘𝜎𝑐 ≤ 𝜒 𝜎𝑐 ∀𝑘, 𝜎, 𝑐. (27) The CU-indexed route variable is equal to the selected assignment and is linked to both endpoint placements: 
+
+∑
+
+> 𝑠,𝑠 ′∈𝑆
+
+𝑦 𝑘𝜎𝑐𝑠𝑠 ′ = 𝑞 𝑘𝜎𝑐 ∀𝑘, 𝜎, 𝑐, (28) 
+
+𝑦 𝑘𝜎𝑐𝑠𝑠 ′ ≤ 𝑥 DU  
+
+> 𝑑 (𝑘 )𝑠
+
+∀𝑘, 𝜎, 𝑐, 𝑠, 𝑠 ′, (29) 
+
+𝑦 𝑘𝜎𝑐𝑠𝑠 ′ ≤ 𝑥 CU  
+
+> 𝑐𝑠 ′
+
+∀𝑘, 𝜎, 𝑐, 𝑠, 𝑠 ′. (30) The logical DU–CU variable is linked bidirectionally to the slice-flow assignments: 
+
+𝑧 𝑑 (𝑘 )𝑐 ≥ 𝑞 𝑘𝜎𝑐 ∀𝑘, 𝜎, 𝑐, (31) 
+
+𝑧 𝑑𝑐 ≤ ∑
+
+> 𝑘 ∈𝐾 𝑑
+
+∑
+
+> 𝜎 ∈𝑆 SLI
+> 𝑘
+
+𝑞 𝑘𝜎𝑐 ∀𝑑, 𝑐. (32) Both scenarios use the same formulation. Setting 𝜏 max  
+
+> DU
+
+=1 yields Single-CU-UP (Single-CU), whereas 𝜏 max  
+
+> DU
+
+> 1
+
+yields the Multi-CU-UP relaxation (Multi-CU). In both cases, the DU retains one fixed CU-CP association: 
+
+∑
+
+> 𝑐 ∈𝐶
+
+𝑧 𝑑𝑐 ≤ 𝜏 max  
+
+> DU
+
+∀𝑑 ∈ 𝐷 (33) 
+
+Latency Requirements For every 𝑘 ∈ 𝐾 and 𝜎 ∈ 𝑆 SLI  
+
+> 𝑘
+
+, the modelled one-way DU-to-CU-UP/F1-U latency must satisfy 
+
+∑
+
+> 𝑐 ∈𝐶
+
+∑
+
+> 𝑠,𝑠 ′∈𝑆
+
+(
+
+𝛿 𝑠𝑠 ′ + 𝛿 proc ,DU  
+
+> 𝑠
+
++ 𝛿 proc ,CU 
+
+> 𝑠 ′
+
+)
+
+⋅ 𝑦 𝑘𝜎𝑐𝑠𝑠 ′ ≤ 𝛿 crit  
+
+> 𝑘𝜎
+
+. (34) Here, 𝛿 𝑠𝑠 ′ denotes the one-way intra-edge-cloud network delay between the servers hosting the DU and CU-UP in-stances. The endpoint terms include only DU-to-CU-UP/F1-U processing; they do not include F1-C control signaling, RU-DU fronthaul, CU-to-core transport, or application/core processing latency. 
+
+Migration Logic Migration is detected by comparing the cur-rent placement ( 𝑥 ) with the previous placement parameters (𝑝 DU  
+
+> 𝑑𝑠
+
+and 𝑝 CU  
+
+> 𝑐𝑠
+
+). If a DU or CU is placed on a server different from its placement at time 𝑡 −1 , the corresponding migration variable is set to 1: 
+
+𝑚 DU  
+
+> 𝑑𝑠𝑠 ′
+
+≥ 𝑝 DU  
+
+> 𝑑𝑠
+
++ 𝑥 DU  
+
+> 𝑑𝑠 ′
+
+− 1 𝑑 ∈ 𝐷, 𝑠 ≠ 𝑠 ′ ∈ 𝑆 (35) 
+
+𝑚 CU  
+
+> 𝑐𝑠𝑠 ′
+
+≥ 𝑝 CU  
+
+> 𝑐𝑠
+
++ 𝑥 CU  
+
+> 𝑐𝑠 ′
+
+− 1 𝑐 ∈ 𝐶, 𝑠 ≠ 𝑠 ′ ∈ 𝑆 (36) 
+
+## 6. 𝑘 -means-Based Heuristic for Joint DU/CU-UP Placement and Migration 
+
+We now present a deterministic energy-aware heuristic (H_EJPM) for repeated DU/CU-UP placement and migra-tion decisions. It avoids solving the NP-hard placement prob-lem to proven optimality at every interval by decomposing each decision into four phases: 
+
+Tran et al.: Preprint submitted to Elsevier Page 7 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds                          
+
+> Table 2
+> Heuristic-specific notation and hyperparameters
+> Notation Definition
+> 𝑁 sf Number of active slice-flow groups,
+> 𝑁 sf =∑𝑘 ∈𝐾 |𝑆 sli
+> 𝑘 |.
+> 𝜂 cu ∕du Slice-flow grouping ratio used to derive the Phase-1 cluster count.
+> 𝑅 𝑘 , 𝐼 𝑘 Fixed number of 𝑘 -means restarts and maximum iterations per restart.
+> 𝜉 Fixed pseudo-random seed used by every clustering call.
+> 𝐼 rep Maximum number of repair iterations in Phase 4; integer hyperparameter (𝐼 rep ∈ℤ≥0).
+> |pods |Number of server clusters used in Phase 2.
+> 𝜖 Minimum strict energy improvement required to accept a move (kWh).
+> 𝑢 cons Server-utilization threshold below which a server is considered a consolidation candidate in Phase 3.
+> Δ𝐸 (𝑗, 𝑠 ′)Total-energy change in kWh when instance 𝑗 is moved to server 𝑠 ′.
+> 𝜈 Phase-4 violation report tuple
+> (𝑟 pre , 𝑟 post ,̄𝑣 post , 𝑣 max post , 𝑛 rep ).
+
+1. Slice-flow-to-CU-UP assignment using normalized 𝑘 -means++ and deterministic CU-UP matching. 2. Delay-aware physical mapping using ordered server clusters and explicit incremental-energy costs. 3. Sequential migration validation and consolidation. 4. Post-processing feasibility repair and violation report-ing. All randomization is controlled by a fixed seed and a fixed number of 𝑘 -means restarts. The repair phase attempts to remove residual violations, but it does not provide a global completeness guarantee; any remaining violation is reported explicitly. 
+
+6.1. Four-Phase Heuristic Algorithm 
+
+The heuristic uses the same slice-flow assignment, place-ment, wake-up, transmission, and migration-energy defini-tions as the MILP in Section 5. Time indices are omitted because the procedure is executed once per control interval using the previous interval as input state. 
+
+6.1.1. Heuristic-specific notation 
+
+Table 2 defines the additional heuristic-specific symbols and hyperparameters used by the main procedure and its four phase-specific algorithms. In Phase 1, Algorithm 2 clusters slice-flow groups rather than whole DUs, because the assignment variable 𝑞 𝑘𝜎𝑐 is slice specific. Fixed restarts, iteration limits, and seeds make the output reproducible. As illustrated in Fig. 4, clustering provides a reproducible grouping aid; it does not replace 
+
+Algorithm H_EJPM Joint Placement and Migration Heuristic 
+
+Input: 𝑆 , 𝐾 , 𝐶 , delay matrix 𝛿 , previous placement 𝑝 ,migration coefficients 𝜅 , wake-up costs 𝐸 wake ,
+
+𝑅 𝑘 , 𝐼 𝑘 , seed 𝜉 , ratio 𝜂 CU ∕DU ,limit 𝜏 max  
+
+> DU
+
+, pod count |pods |, 𝐼 rep , 𝜖 , 𝑢 cons 
+
+Output: Placement 𝑥 , assignment 𝑞 , pairings 𝑧 , migra-tions 𝑚 , report 𝜈  
+
+> 1:
+
+Build slice-flow set  ← {( 𝑘, 𝜎 ) ∶ 𝑘 ∈ 𝐾, 𝜎 ∈ 𝑆 SLI  
+
+> 𝑘
+
+} 
+
+> 2:
+
+𝑘 pair ← min{ |𝐶 |, max{1 , ⌈|  |∕𝜂 CU ∕DU ⌉}}  
+
+> 3:
+
+// Phase 1: Logical Pairing  
+
+> 4:
+
+𝑞, 𝑧 ← PairFlowCUUP ( , 𝐶, 𝑘 pair , 𝑅 𝑘 , 𝐼 𝑘 , 𝜉, 𝜏 max  
+
+> DU
+
+) 
+
+> 5:
+
+// Phase 2: Delay-Aware Physical Mapping  
+
+> 6:
+
+𝑥 ∗,  ← MapToPhysical (𝑞, 𝑧, 𝑆, 𝛿, |pods |, 𝑝, 𝜅, 𝐸 wake ) 
+
+> 7:
+
+// Phase 3: Energy-Efficient Migration & Consolidation  
+
+> 8:
+
+𝑥, 𝑚 ← MigrateSequential (𝑥 ∗, 𝑝, 𝑞, 𝑧, 𝜅, 𝐸 wake , 𝜖, 𝑢 cons ) 
+
+> 9:
+
+// Phase 4: Post-Processing Feasibility Repair  
+
+> 10:
+
+𝑥, 𝑞, 𝑧, 𝑚, 𝜈 ← RepairFeasibility (𝑥, 𝑞, 𝑧, 𝑚,  , 𝐼 rep )
+
+return (𝑥, 𝑞, 𝑧, 𝑚, 𝜈 )
+
+eligibility, connectivity, or capacity checks. Each slice-flow feature combines its delay limit and CU-UP-side CPU, RAM, and I/O demands. For each feature 𝑥 , min–max nor-malization is 
+
+𝑥 ′ =
+
+⎧⎪⎨⎪⎩
+
+𝑥 − min( 𝑥 )max( 𝑥 ) − min( 𝑥 ) , max( 𝑥 ) > min( 𝑥 ),
+
+0, max( 𝑥 ) = min( 𝑥 ).
+
+(37) The Hungarian cost 𝐻 𝓁 𝑐 combines normalized CU-UP-capacity mismatch with a prohibitive penalty for an ineli-gible slice–CU-UP pair. Single-CU and Multi-CU use the same assignment procedure; only 𝜏 max  
+
+> DU
+
+changes. No reliabil-ity requirement is introduced unless it is explicitly present in the optimization inputs. Phase 2 transforms the logical assignment (𝑞, 𝑧 ) into a physical placement. To guide this process, server clustering determines the search order but does not determine place-ment feasibility. For each instance, a candidate placement is accepted only if it satisfies the residual CPU , RAM , and IO 
+
+capacities and the static one-way delay constraints. Among the feasible candidates, the algorithm evaluates the same kWh components as Eq. (1), including the fixed wake-up charge for activating an inactive server and the precomputed migration cost when an instance leaves its previous server. If no feasible candidate exists, the instance is added to 
+
+and deferred to the Phase 4 repair procedure. After the initial mapping, Phase 3 attempts to consolidate the placement. Because fixed idle-power savings are realized only after the final instance leaves a source server, the algorithm evaluates     
+
+> Tran et al.: Preprint submitted to Elsevier Page 8 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds
+> Figure 4: Illustration of the Phase-1 logical pairing procedure. Slice-flow groups are represented by normalized F1-U-delay and CU-UP resource-demand features, deterministically clustered, and matched to eligible CU-UPs using the Hungarian algorithm. The resulting assignments are adjusted, when necessary, to satisfy the maximum number of CU-UP associations per DU.
+> Figure 5: Illustration of the Phase-2 delay-aware physical mapping procedure. Server clustering determines the search order only. For each DU or CU-UP instance, servers satisfying the residual-resource and currently determined F1-U-delay constraints form the candidate set; the minimum incremental-energy candidate is selected, or the instance is added to the unresolved set for Phase-4 repair.
+
+complete server-evacuation plans rather than isolated moves. A plan is accepted only after its wake-up and migration costs have been included in the total-energy change. Phase 3 evaluates candidate moves sequentially using the same total-energy objective as the MILP. The working placement is initialized from the placement obtained in the previous control interval. An accepted move updates only the selected instance and is carried forward to subsequent evaluations, whereas a rejected move leaves the working placement unchanged. Migration energy is represented by the precomputed kWh coefficient in Eq. (12); no dimension-less weighting factor is used. Finally, in Phase 4, Algorithm 5 attempts to repair resid-ual feasibility violations after migration and computes the violation statistics reported in the experimental evaluation. 
+
+6.2. Feasibility Repair: Termination and Limitations 
+
+The state space defined by (𝑥, 𝑞, 𝑧, 𝑚 ) is finite. At each re-pair step, Phase 4 accepts only a move that strictly decreases the violation vector Φ in lexicographic order; therefore, it cannot cycle among previously visited violation states. Moreover, the search is limited to at most 𝐼 rep iterations. Thus, the repair procedure always terminates. However, ter-mination does not guarantee feasibility. Phase 4 is a bounded greedy local search and may stop when no candidate move reduces Φ, even though a different sequence of moves could reach a feasible MILP solution. We therefore claim neither global optimality nor completeness with respect to the con-sidered neighborhood. If Φ ≠ 𝟎 at termination, the interval is classified as infeasible by the heuristic and excluded from feasible-energy comparisons. Accordingly, for each time interval, we report the violation rate before and after repair,   
+
+> Tran et al.: Preprint submitted to Elsevier Page 9 of 17
+
+Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+Algorithm 2 Phase 1: PairFlowCU-UP (Deterministic Slice-Flow Assignment) 
+
+Input: Slice-flow set  , CU-UP pool 𝐶 , 𝑘 pair , 𝑅 𝑘 , 𝐼 𝑘 , seed 𝜉 ,limit 𝜏 max 
+
+> DU
+
+Output: Assignment 𝑞 and logical pairing matrix 𝑧  
+
+> 1:
+
+for each (𝑘, 𝜎 ) ∈  do  
+
+> 2:
+
+𝑓 𝑘𝜎 ← [𝛿 crit  
+
+> 𝑘𝜎
+
+, 𝑟 CU  
+
+> 𝑘𝜎 CPU
+
+, 𝑟 CU  
+
+> 𝑘𝜎 RAM
+
+, 𝑟 CU  
+
+> 𝑘𝜎 IO
+
+] 
+
+> 3:
+
+end for  
+
+> 4:
+
+Min–max normalize each feature; set a constant feature to zero  
+
+> 5:
+
+for 𝑟 = 0 to 𝑅 𝑘 − 1 do  
+
+> 6:
+
+Run 𝑘 -means++ with 𝑘 pair clusters, seed 𝜉 + 𝑟 , and at most 
+
+𝐼 𝑘 iterations  
+
+> 7:
+
+end for  
+
+> 8:
+
+Keep the clustering with minimum within-cluster sum of squares  
+
+> 9:
+
+Build 𝐻 𝓁 𝑐 from normalized capacity mismatch and eligibility penalties  
+
+> 10:
+
+Match clusters to distinct CU-UPs using the Hungarian algo-rithm  
+
+> 11:
+
+Initialize 𝑞 ← 0 
+
+> 12:
+
+if 𝜏 max  
+
+> DU
+
+= 1 then  
+
+> 13:
+
+for each DU 𝑑 do  
+
+> 14:
+
+Assign all (𝑘, 𝜎 ) with 𝑘 ∈ 𝐾 𝑑 to the eligible CU-UP of minimum aggregate 𝐻 cost  
+
+> 15:
+
+end for  
+
+> 16:
+
+else  
+
+> 17:
+
+Assign each slice-flow group to its matched eligible CU-UP  
+
+> 18:
+
+for each DU using more than 𝜏 max  
+
+> DU
+
+distinct CU-UPs do  
+
+> 19:
+
+Keep the 𝜏 max  
+
+> DU
+
+CU-UPs of minimum aggregate cost and reassign the remaining groups to their lowest-cost retained CU-UP  
+
+> 20:
+
+end for  
+
+> 21:
+
+end if  
+
+> 22:
+
+Set 𝑧 𝑑𝑐 = 1 iff some assigned group of DU 𝑑 uses CU-UP 𝑐 
+
+Return (𝑞, 𝑧 )
+
+the mean and maximum post-repair violation magnitudes, the number of repaired instances, and the final feasibility status. 
+
+6.3. Complexity Analysis 
+
+Let 𝑁 sf = ∑𝑘 |𝑆 SLI  
+
+> 𝑘
+
+|, 𝐽 = |𝐷 | + |𝐶 |, and let 𝑀 rep and 
+
+𝐶 check denote the number of repair candidates and the cost of one full feasibility check. With fixed clustering restarts and iteration limits, a conservative bound is 
+
+(𝑅 𝑘 𝐼 𝑘 𝑁 sf 𝑘 pair + |𝐶 |3 + 𝐼 𝑘 |𝑆 || pods |
+
++ ( 𝐽 + 𝑁 sf |𝐶 |)|𝑆 |2 + 𝐼 rep 𝑀 rep 𝐶 check 
+
+).
+
+Each term corresponds to one phase of our heuristic algorithm: • Phase 1: 𝑅 𝑘 restarts of at most 𝐼 𝑘 𝑘 -means iterations cost 𝑂 (𝑅 𝑘 𝐼 𝑘 𝑁 sf 𝑘 pair ) for a fixed feature dimension. Hungarian matching contributes 𝑂 (|𝐶 |3) and is re-tained explicitly in the bound. 
+
+Algorithm 3 Phase 2: MapToPhysical (Deterministic Delay-Aware Placement) 
+
+Input: Assignment 𝑞 , pairing 𝑧 , servers 𝑆 , delay matrix 𝛿 ,cluster count 𝑘 𝑠 , previous placement 𝑝 ,migration coefficients 𝜅 , wake-up costs 𝐸 wake , and the MILP server/transmission-energy parameters 
+
+Output: Candidate placement 𝑥 ∗ and unassigned-instance set 
+
+ 
+
+> 1:
+
+Cluster servers using fixed features 
+
+[pod( 𝑠 ), mean 𝑠 ′ 𝛿 𝑠𝑠 ′ , max 𝑠 ′ 𝛿 𝑠𝑠 ′ ] 
+
+> 2:
+
+Order 𝑗 ∈ 𝐷 ∪ 𝐶 by decreasing normalized resource demand, then increasing strictest incident delay, then instance ID  
+
+> 3:
+
+Initialize 𝑥 ∗ ← 0, residual capacities, and  ← ∅ 
+
+> 4:
+
+for each ordered instance 𝑗 do  
+
+> 5:
+
+Visit server clusters in increasing distance from the previ-ous cluster of 𝑗  
+
+> 6:
+
+Build candidate set 𝑗 satisfying residual capacity and every currently determined DU-to-CU-UP delay constraint  
+
+> 7:
+
+for each 𝑠 ∈ 𝑗 do  
+
+> 8:
+
+Compute 𝐶 (𝑗, 𝑠 ) ← Δ𝐸 server + Δ 𝐸 tx + Δ 𝐸 wake + Δ 𝐸 mig  
+
+> 9:
+
+end for  
+
+> 10:
+
+if 𝑗 ≠ ∅ then  
+
+> 11:
+
+Place 𝑗 on the minimum-cost server; break ties by server ID; update residual capacity  
+
+> 12:
+
+else  
+
+> 13:
+
+ ←  ∪ { 𝑗 } 
+
+> 14:
+
+end if  
+
+> 15:
+
+end for Return (𝑥 ∗,  )
+
+• Phase 2: Server clustering costs 𝑂 (𝐼 𝑘 |𝑆 || pods |). Or-dered placement and CU-UP-indexed delay checks contribute at most 𝑂 (( 𝐽 + 𝑁 sf |𝐶 |)|𝑆 |2).• Phase 3: At most 𝐽 changed instances and at most |𝑆 |
+
+evacuation plans are evaluated. Incremental caches reduce practical cost, while the displayed bound con-servatively permits full affected-route checks. • Phase 4: The explicit term 𝐼 rep 𝑀 rep 𝐶 check avoids as-suming that candidate generation or feasibility check-ing is negligible. Regarding space complexity, the algorithm’s memory footprint scales as follows: 
+
+𝑂 (𝑁 sf |𝐶 | + |𝑆 |2 + 𝐽 |𝑆 | + |𝐷 || 𝐶 |)
+
+Memory is dominated by the assignment matrix 𝑞 , the DU-to-CU-UP pairing matrix 𝑧 , the inter-server delay ma-trix, placement/residual-capacity arrays, and the bounded Phase-4 candidate list. This asymptotic analysis establishes polynomial growth for fixed 𝑅 𝑘 , 𝐼 𝑘 , and 𝐼 rep , but does not by itself quantify the runtime advantage over the MILP. 
+
+## 7. Experiments 
+
+We use a 24-hour traffic trace that is time varying across hours but deterministic for each hourly optimization. At 
+
+Tran et al.: Preprint submitted to Elsevier Page 10 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+Algorithm 4 Phase 3: MigrateSequential (Common-Unit Validation) 
+
+Input: Candidate placement 𝑥 ∗, previous placement 𝑝 , assign-ment 𝑞 , pairing 𝑧 ,migration coefficients 𝜅 , wake costs 𝐸 wake , 𝜖 , 𝑢 cons 
+
+Output: Final placement 𝑥 , migration set 𝑚  
+
+> 1:
+
+𝑥 ← 𝑝 and 𝑚 ← ∅ 
+
+> 2:
+
+Build changed-instance list  ← {𝑗 ∶ 𝑥 ∗ 
+
+> 𝑗
+
+≠ 𝑝 𝑗 } 
+
+> 3:
+
+Order  by increasing estimated Δ𝐸 (𝑗, 𝑥 ∗ 
+
+> 𝑗
+
+), then instance ID  
+
+> 4:
+
+for each 𝑗 ∈  do  
+
+> 5:
+
+Construct 𝑥 ′ by moving only 𝑗 from its current server in 𝑥 
+
+to its target in 𝑥 ∗ 
+
+> 6:
+
+Recompute affected server, transmission, wake-up, and migration energy terms  
+
+> 7:
+
+Δ𝐸 ← 𝐸 total (𝑥 ′, 𝑞, 𝑧 ) − 𝐸 total (𝑥, 𝑞, 𝑧 ) 
+
+> 8:
+
+if 𝑥 ′ satisfies assignment, capacity, and delay constraints 
+
+and Δ𝐸 ≤ −𝜖 then  
+
+> 9:
+
+𝑥 ← 𝑥 ′ and 𝑚 ← 𝑚 ∪ { 𝑗 } 
+
+> 10:
+
+end if  
+
+> 11:
+
+end for  
+
+> 12:
+
+for each active server 𝑠 with 𝑢 𝑠 ≤ 𝑢 cons do  
+
+> 13:
+
+Build a deterministic feasible evacuation plan 𝑥 ′ for all instances on 𝑠  
+
+> 14:
+
+if the plan exists and 𝐸 total (𝑥 ′, 𝑞, 𝑧 ) ≤ 𝐸 total (𝑥, 𝑞, 𝑧 )− 𝜖 then  
+
+> 15:
+
+Accept the complete plan and update 𝑚  
+
+> 16:
+
+end if  
+
+> 17:
+
+end for Return (𝑥, 𝑚 )
+
+the beginning of hour 𝑡 , each method receives the exact preprocessed demand for hour 𝑡 and the placement inherited from hour 𝑡 − 1 ; demand is held fixed during that hourly solve, and the demand values for hours 𝑡 + 1 , 𝑡 + 2 , … are unavailable. Thus, time varying refers to the observed hour-to-hour change in traffic, whereas deterministic means that no demand uncertainty, probability distribution, or stochas-tic scenario is included in an individual optimization run. 
+
+7.1. 5G traffic and edge cloud setup 
+
+To evaluate the MILP and heuristic under realistic oper-ating conditions, we generate hourly demand profiles from Montreal traffic traces following [28] and simulate the edge-cloud environment using CloudSim [29]. As shown in Fig. 6, the dataset captures hourly variations across representative 5G slice types: eMBB, uRLLC, mMTC, and VoIP, which is treated as a uRLLC-type service with minor flexibility depending on network conditions. These profiles drive the hourly placement and migration decisions. The slice traffic properties and baseline resource profiles are adapted from the 5G network-simulation setup in our previous work [24], with the scope restricted to the DU-to-CU-UP segment considered here. Table 3 summarizes these characteristics and the experimental F1-U delay bud-gets. In this table, one demand unit denotes one active slice-flow demand item of the indicated slice generated by 
+
+Algorithm 5 Phase 4: RepairFeasibility (Post-Processing Constraint Repair) 
+
+Input: Placement 𝑥 , assignment 𝑞 , pairings 𝑧 , migrations 𝑚 ,unassigned set  , budget 𝐼 rep 
+
+Output: Repaired (𝑥, 𝑞, 𝑧, 𝑚 ) and violation report 𝜈  
+
+> 1:
+
+Compute Φ( 𝑥, 𝑞, 𝑧 ) = ( | |, 𝑣 assign , 𝑣 cap , 𝑣 delay , 𝑣 conn ) 
+
+> 2:
+
+Store pre-repair statistics (𝑟 pre ,̄𝑣 pre , 𝑣 max pre ) 
+
+> 3:
+
+for 𝑡 = 1 to 𝐼 rep do  
+
+> 4:
+
+if Φ( 𝑥, 𝑞, 𝑧 ) = 𝟎 then  
+
+> 5:
+
+break  
+
+> 6:
+
+end if  
+
+> 7:
+
+Build deterministic candidates: place one unassigned in-stance, reassign one slice-flow CU-UP, move one instance, or roll back one migration  
+
+> 8:
+
+Keep only moves that strictly decrease Φ in lexicographic order  
+
+> 9:
+
+if no improving move exists then  
+
+> 10:
+
+break  
+
+> 11:
+
+end if  
+
+> 12:
+
+Apply the improving move with minimum energy increase  
+
+> 13:
+
+Recompute Φ( 𝑥, 𝑞, 𝑧 ) 
+
+> 14:
+
+end for  
+
+> 15:
+
+Store post-repair statistics (𝑟 post ,̄𝑣 post , 𝑣 max post ) and repaired-instance count 𝑛 rep  
+
+> 16:
+
+𝜈 ← (𝑟 pre , 𝑟 post ,̄𝑣 post , 𝑣 max post , 𝑛 rep )
+
+Return (𝑥, 𝑞, 𝑧, 𝑚, 𝜈 )
+
+Figure 6: Twenty-four-hour traffic demand by slice type in one edge cloud. 
+
+preprocessing for one control interval; it is a workload-accounting item, not one UE, packet, Mbps, or CNF in-stance. Each demand unit contributes the listed baseline reservation to the resource vector: vCPU, RAM in gigabytes (GB), and server-NIC I/O rate in Mbps. For multiple de-mand units, these resource vectors are summed, after which the external scaling stage maps the aggregate demand to vertically sized or horizontally replicated DU/CU-UP CNF 
+
+Tran et al.: Preprint submitted to Elsevier Page 11 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+Table 3 
+
+Network slice characteristics, per-demand-unit resource profiles, and experimental F1-U delay budgets                             
+
+> Slice Traffic Pattern F1-U delay budget Bandwidth Demand CPU/demand unit RAM/demand unit I/O/demand unit
+> eMBB High with pronounced daily peaks 1.5 ms Very high 0.5 vCPU 1.0 GB 12 Mbps uRLLC Bursty and delay-critical 0.5 ms High 0.8 vCPU 1.2 GB 5 Mbps mMTC Many small packets 8 ms Very low 0.2 vCPU 0.3 GB 1.5 Mbps VoIP Diurnal, small fluctuations 2 ms Low–medium 0.4 vCPU 0.6 GB 2 Mbps
+
+instances. This request-vector abstraction is consistent with resource-aware NFV studies that represent time-varying VNF and service-chain requirements using CPU, memory, and network-bandwidth dimensions [30]. In our study, the network-bandwidth dimension is labelled I/O because it is enforced against the server NIC capacity; the qualitative “Bandwidth Demand” column instead describes the relative traffic intensity of each slice. The budgets in Table 3 apply only to the modelled one-way DU-to-CU-UP/F1-U path and are not standardized end-to-end service requirements. They are conservative internal modelling choices whose scale and ordering are motivated by peer-reviewed RAN-placement and slicing studies reporting sub-millisecond uRLLC lim-its, millisecond-scale functional-split and VoIP bounds, and looser eMBB and mMTC tolerances [31–33]. In the trace, eMBB has high bandwidth demand and moderate compute requirements, uRLLC has the strictest delay budget and higher per-demand-unit CPU/RAM demand, mMTC has low per-demand-unit resource demand, and VoIP has modest resource requirements and limited fluctuations. To generate the optimization inputs under these hour-to-hour traffic variations, an external preprocessing step first applies vertical scaling to each instance based on its current load. Notably, a single DU can serve multiple network-slice traffic types simultaneously. Each instance is scaled vertically up to a predefined threshold (e.g., 30% of a server’s total capacity). Once this limit is reached, horizontal scaling is triggered. When traffic decreases, the scaling direction is reversed accordingly. Thus, the system prioritizes horizontal scale-in to reduce the number of active instances, followed by vertical scale-down to further consolidate resource usage. As a result, at each hour, preprocessing produces sets of DUs and CU-UPs that correspond to the traffic demand, along with the traffic-flow mapping to the associated DUs. The number of active containers followed the traffic demand curve, peaking at 50 instances at hour 11. These sets are then used as fixed inputs to our MILP model and heuristic; the scaling procedure itself is not optimized by either method. We simulate a three-pod edge-cloud topology using 12 homogeneous logical servers (see Table 4); the server-to-server delay matrix is generated from the switch paths de-scribed in Table 6. The power curve is calibrated to one Dell PowerEdge XR8720t-class server profile rather than mixing cloud-instance and physical-server power models. Figure 7 shows total server power; the MILP subtracts the 200 W idle value and models only the remaining load-dependent incremental power in 𝑃 inc  
+
+> 𝑠
+
+. The fitted total-power break-points are (0 , 200) , (0 .30 , 550) , (0 .80 , 1000) , (0 .90 , 1400) ,
+
+Table 4 
+
+Homogeneous edge-cloud server configuration 
+
+Parameter Value 
+
+Number of Pods 3Servers per Pod 4Total Servers 12 CPU Capacity (per server) 64 vCPU RAM Capacity (per server) 256 GB Bandwidth Capacity (per server) 25 Gbps Storage Capacity (per server) 1000 GB 
+
+Figure 7: Four-zone total server-power curve used to derive load-dependent incremental power. 
+
+and (1 .00 , 1400) , where utilization is a fraction and power is in watts. Subtracting 200 W gives the incremental co-efficients in Table 5. RAM and I/O affect the utilization variable through 𝑤 𝑟 . Since the nominal experiments impose 
+
+𝜌 max = 0 .70 , only the portions of Zones 1 and 2 up to that cap are reachable; Zones 3 and 4 are retained for utilization-cap sensitivity experiments. 
+
+Table 5 
+
+Load-dependent incremental-power coefficients                      
+
+> Zone Utilization interval 𝑎 𝑖 (W) 𝑏 𝑖 (W) 1[0 ,0.30] 1166 .70
+> 2(0 .30 ,0.80] 900 80
+> 3(0 .80 ,0.90] 4000 −2400
+> 4(0 .90 ,1.00] 01200
+
+For delay modelling, the one-way intra-edge-cloud net-work delay is obtained from the placement-dependent com-ponents in Table 6. The constrained DU-to-CU-UP/F1-U delay is the sum of this network delay and the fixed F1-U processing component reported in the same table. 
+
+Tran et al.: Preprint submitted to Elsevier Page 12 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+Table 6 
+
+Modelled one-way DU-to-CU-UP/F1-U delay components        
+
+> Parameter Value / Formula
+> Same-server network delay 0.05 ms Base link delay 0.05 ms (per one-way link) ToR switch processing 0.1 ms Aggregation switch processing 0.15 ms Fat-tree core-switch processing 0.2 ms Fixed F1 processing 0.1 ms (CU side) + 0.1 ms (DU side) = 0.2 ms
+
+Table 7 
+
+Fixed experimental inputs and hyperparameters for MILP and heuristic runs                                                   
+
+> Parameter Setting used in experiments
+> 𝑇 Montreal hourly traffic profiles generated following [28]
+> Δ𝑡 1hour
+> 𝑃 idle
+> 𝑠 , 𝑃 inc ,max
+> 𝑠 200 W and 1200 W; coefficients in Table 5
+> 𝐸 wake
+> 𝑠 Fixed 0.01 kWh per off-to-on transition (scenario assumption; sensitivity required)
+> 𝐵 mig
+> 𝑗 1.2times the allocated RAM footprint of instance 𝑗 𝛽 mig
+> 𝑠𝑠 ′Minimum of 10 Gbps and residual migration-path bandwidth
+> 𝑃 src
+> 𝑠 , 𝑃 dst
+> 𝑠 ′0.05 𝑃 inc ,max at each endpoint
+> 𝜖 net
+> 𝑠𝑠 ′Path-specific CloudSim transmission-energy coefficient (kWh/GB) MILP implementation (Gurobi) Relative MIP gap 10 −3
+> 𝜏 max
+> du (Single-CU: one CU-UP) 1
+> 𝜏 max
+> du (Multi-CU: CU-UP bound) 3
+> 𝜂 cu ∕du 2
+> 𝑅 𝑘 , 𝐼 𝑘 , 𝜉 10 restarts, 100 iterations, seed 42
+> 𝐼 rep 15
+> 𝜖 10 −4 kWh
+> 𝑢 cons 0.30 ; consolidation candidates satisfy 𝑢 𝑠 ≤
+> 𝑢 cons
+
+7.2. Experimental parameter settings 
+
+To ensure reproducibility, we fix the MILP and heuristic settings shown in Table 7 across all experiments unless stated otherwise. The proposed MILP is implemented using Gurobi Optimizer, with the relative MIP-gap target set to 
+
+10 −3 . Most instances reached the solver’s optimal status; for the remaining instances, the reported MILP value is the best feasible solution obtained within the time limit. The heuristic uses fixed clustering restarts, iteration limits, and pseudo-random seed. The same parameter set is used for both Single-CU and Multi-CU scenarios, except for the scenario-specific value of 𝜏 max  
+
+> DU
+
+.
+
+7.3. Numerical results 
+
+We compare the Single-CU and Multi-CU configura-tions, which permit one or multiple CU-UP targets per DU, respectively. To isolate the value of jointly optimizing place-ment and migration, we compare the proposed formulation with a migration-unaware per-interval placement baseline. At each hour, this baseline optimizes the current placement without terms for migration energy or placement continuity. It does not force instances to move; an instance may remain on its previous server, and only placement changes selected by the optimizer are subsequently counted as induced migra-tions. For brevity, the figures label this baseline Placement-Only . We also compare the 𝑘 -means-based heuristic with the MILP and common placement baselines. 
+
+7.3.1. MILP performance: Single-CU and Multi-CU scenarios 
+
+Migration energy is computed from Eqs. (11)–(12), and wake-up energy is charged through Eqs. (21)–(22). Conse-quently, all objective components are expressed in kWh. Fig. 8a shows that joint placement-and-migration op-timization consumes less total energy than the migration-unaware baseline in this trace. Over the 24-hour period, joint Multi-CU consumes 5.7% less energy than joint Single-CU and also remains below both migration-unaware configu-rations. During low-traffic hours 0–4, the average hourly energy difference between the two joint configurations is only 0.99 kWh (4.39%), with Multi-CU consuming less energy. During peak traffic, this difference increases to 2.11 kWh (8.3%), indicating that slice-specific CU-UP as-signment is most beneficial when capacity is constrained. By contrast, the energy difference between the migration-unaware Single-CU and Multi-CU configurations narrows during peak traffic because high utilization limits placement flexibility. As shown in Fig. 9, joint Single-CU triggers substantially more migrations than joint Multi-CU, partic-ularly during rapid load fluctuations. The Single-CU con-straint provides fewer feasible placement choices, causing the optimizer to rely more heavily on migration to satisfy instantaneous load and delay requirements. The larger Multi-CU decision space reduces both the number of migrations and the corresponding migration energy, as shown in Fig. 8b. The migration-unaware baseline also produces more induced migrations because it selects target servers without minimiz-ing migration energy or rewarding placement continuity. In contrast, joint optimization discourages a relocation when its energy cost exceeds its placement benefit. As reported in Fig. 10, the migration-unaware Multi-CU configuration consumes less transmission energy dur-ing low-traffic periods, whereas joint Multi-CU consumes slightly more during some peak hours. This increase reflects a trade-off between longer internal paths and lower server en-ergy and is selected only when it reduces total energy. For the two joint configurations, transmission energy is nearly iden-tical during hours 0–4, and the average relative difference over the remaining hours is 3%. Moreover, Fig. 8c shows that Multi-CU consistently achieves lower placement energy because slice-aware mappings provide greater flexibility in distributing slice-flow groups across DU/CU-UP instances and servers. At the highest traffic levels in the migration-unaware setting, the energy difference becomes negligible because resource saturation causes both configurations to converge toward similar feasible placements. Over 24 hours, placement dominates total energy, followed by migration, while transmission contributes only 0.07%. Fig. 11 further shows that both joint configurations ac-tivate the same number of servers during low-traffic hours 
+
+Tran et al.: Preprint submitted to Elsevier Page 13 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds        
+
+> (a) Hourly total energy. (b) Hourly migration energy. (c) Hourly placement energy.
+> Figure 8: Twenty-four-hour MILP energy breakdown for migration-unaware per-interval placement and joint placement and migration. The legend abbreviates the migration-unaware baseline as Placement-Only ; this baseline permits unchanged placements but does not include migration energy or placement continuity in its objective.
+> Figure 9: Hourly number of migrations.
+> Figure 10: Transmission energy for the four MILP configura-tions (logarithmic scale).
+
+0–7. During peak hours 8–16, Multi-CU distributes the load  
+
+> Figure 11: Server load distribution across servers (joint place-ment and migration approach).
+
+more evenly and causes fewer servers to reach the warning-zone utilization threshold. During hours 17–23, it occasion-ally activates an additional server, trading higher fixed server energy for lower load-dependent power on heavily loaded servers. By contrast, Single-CU pushes several servers into the warning zone, for example at hour 21, resulting in higher energy consumption. 
+
+7.3.2. Heuristic performance 
+
+We evaluate the proposed 𝑘 -means-based heuristic (H_EJPM) on the same 24-hour O-RAN workload against two reference groups. First, we compare H_EJPM with the proposed joint placement-and-migration MILP under both the Single-CU and Multi-CU association scenarios. Second, under the more energy-efficient Multi-CU-UP sce-nario, we compare H_EJPM with common cloud-placement baselines: Best Fit (BF) [34], First Fit Decreasing (FFD), Modified Best Fit Decreasing (MBFD) [35], and Worst Fit (WF) [36]. The selected baselines represent distinct placement behaviours: BF and FFD emphasize compact packing and server consolidation, MBFD applies an energy-aware decreasing-order policy, and WF spreads the work-load across available servers. Together, these comparisons assess how closely H_EJPM approaches the MILP’s energy performance and whether it improves on standard placement rules. Fig. 12 summarizes the hourly total energy, 24-hour total energy, and hourly migration energy for all evaluated methods. In the Multi-CU scenario, the proposed heuristic consumes 286.4 kWh, compared with 261.2 kWh for the MILP; in the Single-CU scenario, the corresponding values are 304.6 and 276.9 kWh, respectively. Thus, relative to the MILP, the heuristic has energy gaps of approximately 9.7% in the Multi-CU scenario and 10.0% in the Single-CU scenario. These gaps are attributable almost entirely to placement energy; migration and transmission energy are negligible for both methods. The difference primarily re-flects weaker server consolidation, as the heuristic activates an average of 9 servers compared with 8 for the MILP, rather than excessive remapping. Importantly, the heuristic preserves the relative benefit of Multi-CU operation. Moving from Single-CU to Multi-CU reduces total energy by 5.7% for the MILP (276.9      
+
+> Tran et al.: Preprint submitted to Elsevier Page 14 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds
+> (a) Hourly total energy. (b) Twenty-four-hour total energy. (c) Hourly migration energy.
+> Figure 12: Energy comparison over the 24-hour workload for the MILP, proposed heuristic, and cloud-placement baselines: (a) hourly total energy, (b) 24-hour total energy, and (c) hourly migration energy.
+
+to 261.2 kWh) and by 6.0% for the heuristic (304.6 to 286.4 kWh). Multi-CU operation also lowers peak hourly energy for both methods (MILP: 19.2 to 18.1 kWh; heuristic: 21.1 to 19.9 kWh), indicating more stable energy consump-tion under flexible DU-to-CU-UP association. Thus, the Multi-CU advantage is retained with a comparable magni-tude under the heuristic approximation. The proposed heuristic also outperforms all cloud-placement baselines in total energy. Relative to the 286.4 kWh Multi-CU heuristic result, total energy is 10.4% higher for BF (316.1 kWh), 11.4% higher for FFD (319.0 kWh), 12.4% higher for MBFD (321.8 kWh), and 37.5% higher for WF (393.8 kWh). These differences arise because standard packing rules optimize local placement criteria rather than jointly considering consolidation, delay feasibility, and migration cost over time. In particular, WF distributes the workload across all 12 servers and therefore misses most idle-server shutdown opportunities, whereas FFD and MBFD introduce substantially more migration churn. In addition, Fig. 13 confirms that the heuristic closely follows the MILP’s selective migration behaviour. All meth-ods inherit the previous placement at the beginning of each hour, so the reported migrations are not restart artifacts. However, the static packing baselines do not explicitly penalize relocating an existing DU/CU-UP instance and may therefore repack instances as demand changes. Con-sequently, in the Multi-CU scenario, the heuristic performs only 19 migrations, close to the MILP’s 18, whereas BF, FFD, MBFD, and WF require 47, 93, 93, and 136 migra-tions, respectively. The heuristic therefore retains MILP-like placement continuity while using migration selectively to preserve feasibility and enable consolidation. Transmission energy is omitted from this comparison because it is negligible relative to placement and migration energy and follows the same pattern as the MILP results in Fig. 10. Finally, Fig. 14 shows that the heuristic produces slice-average delay distributions close to those of the MILP. Taken together, these results indicate that the heuristic ap-proaches the MILP’s energy and delay performance while reducing total energy and migration churn relative to the cloud-placement baselines.   
+
+> Figure 13: Total number of migrations over the 24-hour work-load for the MILP, proposed heuristic, and cloud-placement baselines.
+> Figure 14: Comparison of slice-average one-way F1-U delay distributions.
+
+## 8. Conclusion and future work 
+
+We introduced EJPM, a mixed-integer linear formulation for joint DU/CU-UP CNF placement and migration that min-imizes server, transmission, wake-up, and migration energy under resource and one-way F1-U delay constraints while enabling the evaluation of flexible DU-to-CU-UP associa-tion strategies. We also developed H_EJPM, a determinis-tic four-phase 𝑘 -means-based heuristic for logical pairing, physical mapping, consolidation, and feasibility repair. In the evaluated 24-hour trace, Multi-CU reduces MILP energy by 5.7% relative to Single-CU and requires fewer migrations during peak traffic; both scenarios retain one fixed CU-CP association per DU. The heuristic remains within 9.7% of the Multi-CU MILP result and achieves a comparable Multi-CU energy reduction of 6.0%. Its bounded clustering and repair   
+
+> Tran et al.: Preprint submitted to Elsevier Page 15 of 17
+
+Energy-aware Placement and Migration in O-RAN Edge Clouds 
+
+procedures provide a polynomial-time alternative for larger instances, although the asymptotic analysis does not replace empirical runtime evaluation. Future work will evaluate runtime scalability and in-tegrate traffic forecasting to extend the current interval-by-interval model with predictive placement and migration decisions. 
+
+## Acknowledgments 
+
+We would like to thank Adel Larabi of Ericsson Montréal for his helpful discussions and verification efforts. This work was supported by the Natural Sciences and Engineering Re-search Council of Canada (NSERC) and InnovÉÉ (INNOV-R Program) through the partnership with Ericsson and Envi-ronment and Climate Change Canada (ECCC) under Project ALLRP 566589-21 (grant identifier). 
+
+## References 
+
+[1] J. Dai, L. Li, R. Safavinejad, S. Mahboob, H. Chen, V. V. Ratnam, H. Wang, J. Zhang, L. Liu, O-ran-enabled intelligent network slicing to meet service-level agreement (sla), IEEE Transactions on Mobile Computing 24 (2) (2025) 890–906. doi:10.1109/TMC.2024.3476338 .[2] 3GPP, NG-RAN; architecture description, Technical Specification TS 38.401, 3rd Generation Partnership Project (3GPP), version 19.2.0, Release 19 (Apr. 2026). [3] H. Hojeij, G. I. Ricardo, M. Sharara, S. Secci, On flexible association and placement in disaggregated ran designs, Computer Communica-tions 238 (2025) 108166. doi:10.1016/j.comcom.2025.108166 .[4] N. Di Cicco, F. Tonini, V. Cacchiani, C. Raffaelli, Optimization over time of reliable 5g-ran with network function migrations, Computer Networks 215 (2022) 109216. [5] M. T. Takci, M. Qadrdan, J. Summers, J. Gustafsson, Data centres as a source of flexibility for power systems, Energy Reports 13 (2025) 3661–3671. [6] L. Ismail, H. Materwala, Powergen: resources utilization and power consumption data generation framework for energy prediction in edge and cloud computing, Procedia Computer Science 238 (2024) 385– 395. [7] K. Wang, K. Yang, C. S. Magurawalage, Joint energy minimization and resource allocation in c-ran with mobile cloud, IEEE Transactions on Cloud Computing 6 (3) (2018) 760–770. doi:10.1109/TCC.2016. 2522439 .[8] E. Municio, G. Garcia-Aviles, A. Garcia-Saavedra, X. Costa-Pérez, O-ran: Analysis of latency-critical interfaces and overview of time sensitive networking solutions, IEEE Communications Standards Magazine 7 (3) (2023) 82–89. [9] E. Trojer, V. Skogman, A. Olsson, T. Thyni, M. Forsman, J. Österling, D. Cederholm, M. Berg, R. Stake, Packet fronthaul – design choices towards versatile RAN deployments, White paper, Ericsson (2021). URL https://www.ericsson.com/en/reports-and-papers/ white-papers/packet-fronthaul-design-choices 
+
+[10] L. Ruiz, R. J. D. Barroso, I. De Miguel, N. Merayo, J. C. Aguado, R. De La Rosa, P. Fernández, R. M. Lorenzo, E. J. Abril, Genetic algorithm for holistic vnf-mapping and virtual topology design, IEEE Access 8 (2020) 55893–55904. [11] S. Yang, F. Li, S. Trajanovski, X. Chen, Y. Wang, X. Fu, Delay-aware virtual network function placement and routing in edge clouds, IEEE Transactions on Mobile Computing 20 (2) (2021) 445–459. 
+
+> doi:10.1109/TMC.2019.2942306
+
+.[12] S. Agarwal, F. Malandrino, C.-F. Chiasserini, S. De, Joint vnf place-ment and cpu allocation in 5g, in: IEEE INFOCOM 2018-IEEE conference on computer communications, IEEE, 2018, pp. 1943– 1951. [13] M. Golkarifard, C. F. Chiasserini, F. Malandrino, A. Movaghar, Dynamic vnf placement, resource allocation and traffic routing in 5g, Computer Networks 188 (2021) 107830. [14] S. Ramanathan, K. Kondepu, M. Razo, M. Tacca, L. Valcarenghi, A. Fumagalli, Live migration of virtual machine and container based mobile core network components: A comprehensive study, IEEE Access 9 (2021) 105082–105100. [15] F. W. Murti, S. Ali, G. Iosifidis, M. Latva-aho, Deep reinforcement learning for orchestrating cost-aware reconfigurations of vrans, IEEE Transactions on Network and Service Management 21 (1) (2024) 200–216. doi:10.1109/TNSM.2023.3292713 .[16] H. Hojeij, M. Sharara, S. Hoteit, V. Vèque, Dynamic placement of o-cu and o-du functionalities in open-ran architecture, in: 2023 20th Annual IEEE International Conference on Sensing, Communication, and Networking (SECON), IEEE, 2023, pp. 330–338. [17] W. T. Pires Jr., G. M. F. d. Almeida, S. L. Corrêa, C. B. Both, L. d. L. Pinto, K. V. Cardoso, Optimizing energy consumption for vran placement in o-ran systems with flexible transport networks, IEEE Open Journal of the Communications Society 6 (2025) 4279–4294. 
+
+> doi:10.1109/OJCOMS.2025.3568689
+
+.[18] H. Hojeij, S. Hoteit, V. Vèque, A. I. Aravanis, Energy-efficient place-ment and association in disaggregated o-ran, in: 2025 21st Interna-tional Conference on Network and Service Management (CNSM), 2025, pp. 1–5. doi:10.23919/CNSM67658.2025.11297540 .[19] N. Sen, A. F. A., Slice aware baseband function splitting and place-ment in disaggregated 5g radio access network, Computer Networks 257 (2025) 110908. doi:10.1016/j.comnet.2024.110908 .[20] M. Mushtaq, M. Golkarifard, N. Shahriar, R. Boutaba, A. Saleh, Op-timal functional splitting, placement and routing for isolation-aware network slicing in ng-ran, in: 2023 19th International Conference on Network and Service Management (CNSM), IEEE, 2023, pp. 1–5. 
+
+> doi:10.23919/CNSM59352.2023.10327830
+
+.[21] C. Şahin, M. Gün, RFD-R: Ai-driven dynamic repacking framework for cloud-native o-ran functions, Computer Networks 282 (2026) 112265. doi:10.1016/j.comnet.2026.112265 .[22] D. Monaco, A. Sacco, G. Marchetto, CROWN: Cross-attention rein-forcement learning for o-ran wireless networks, Computer Networks 282 (2026) 112276. doi:10.1016/j.comnet.2026.112276 .[23] W. Lin, F. Shi, W. Wu, K. Li, G. Wu, A.-A. Mohammed, A taxonomy and survey of power models and power modeling for cloud servers, ACM Computing Surveys (CSUR) 53 (5) (2020) 1–41. [24] N. P. Tran, O. Delgado, B. Jaumard, Proactive service assurance in 5g and b5g networks: A closed-loop algorithm for end-to-end network slices, IEEE Transactions on Network and Service Management 23 (2025) 668–680. [25] B. Yi, J. Wang, Q. He, X. Wang, M. Huang, S. k. Das, K. Li, Traffic prediction-based vnf auto-scaling and deployment mechanism for flexible and elastic service provision, IEEE Transactions on Services Computing 17 (5) (2024) 2959–2973. [26] T. Subramanya, R. Riggio, Centralized and federated learning for predictive VNF autoscaling in multi-domain 5G networks and be-yond, IEEE Transactions on Network and Service Management 18 (1) (2021) 63–78. doi:10.1109/TNSM.2021.3050955 .[27] R. Verma, K. M. Sivalingam, Design and analysis of VNF scaling mechanisms for 5G-and-beyond networks using federated learning, IEEE Access 12 (2024) 129826–129843. doi:10.1109/ACCESS.2024. 3458437 .[28] O. Delgado, B. Jaumard, Z. Ding, F. Bishay, V. Bissonnette, A network simulator for 5g virtualized networks, in: 2022 IEEE 8th International Conference on Network Softwarization (NetSoft), IEEE, 2022, pp. 237–239. [29] R. N. Calheiros, R. Ranjan, A. Beloglazov, C. A. De Rose, R. Buyya, Cloudsim: a toolkit for modeling and simulation of cloud computing environments and evaluation of resource provisioning algorithms, Software: Practice and experience 41 (1) (2011) 23–50. [30] L. Tang, X. He, P. Zhao, G. Zhao, Y. Zhou, Q. Chen, Virtual network function migration based on dynamic resource requirements predic-tion, IEEE Access 7 (2019) 112348–112362. doi:10.1109/ACCESS. 
+
+Tran et al.: Preprint submitted to Elsevier Page 16 of 17 Energy-aware Placement and Migration in O-RAN Edge Clouds          
+
+> 2019.2935014 .[31] L. M. M. Zorello, L. Bliek, S. Troia, T. Guns, S. Verwer, G. Maier, Baseband-function placement with multi-task traffic prediction for 5G radio access networks, IEEE Transactions on Network and Service Management 19 (4) (2022) 5104–5119. doi:10.1109/TNSM.2022. 3190059 .[32] M. Klinkowski, Optimization of latency-aware flow allocation in NGFI networks, Computer Communications 161 (2020) 344–359.
+> doi:10.1016/j.comcom.2020.07.044 .[33] G. Tseliou, F. Adelantado, C. Verikoukis, NetSliC: Base station ag-nostic framework for network slicing, IEEE Transactions on Vehicular Technology 68 (4) (2019) 3820–3832. doi:10.1109/TVT.2019.2902320 .[34] S. Shirvastava, R. Dubey, M. Shrivastava, Best fit based vm alloca-tion for cloud resource allocation, International Journal of Computer Applications 158 (9) (2017). [35] F. F. Moges, S. L. Abebe, Energy-aware vm placement algorithms for the openstack neat consolidation framework, Journal of Cloud Computing 8 (1) (2019) 2. [36] S. Dhahbi, M. Berrima, F. A. M. Al-Yarimi, Load balancing in cloud computing using worst-fit bin-stretching, Cluster Computing 24 (4) (2021) 2867–2881. doi:10.1007/s10586-021-03302-7 .
+
+Nguyen Phuc Tran: received the M.S. degree in Computer Science from the University of Information Technology, Vietnam National University Ho Chi Minh City, Vietnam, in 2020. He is currently pursuing the Ph.D. degree at Concordia University, Montreal, Quebec, Canada. He has more than five years of industry experience as a senior software engi-neer in systems development and telecommunications, with expertise in system optimization, security, quality assurance, data analytics, technical leadership, and stakeholder engage-ment. His research interests include artificial intelligence, particularly Machine Learning, Reinforcement Learning and large language models, for mobile communication networks, with an emphasis on resource allocation, energy-efficient and sustainable networking, system design, root-cause anal-ysis, and network optimization. 
+
+Brigitte Jaumard: (Senior Member, IEEE) is the scien-tific director of Confiance IA (Intelligence Artificielle), an industrial research consortium on trustworthy AI supported by the Quebec government. She is also a professor in the Computer Science and Software Engineering Department at Concordia University. Her research focuses on mathemat-ical modelling and algorithm design, including large-scale optimization and machine learning, for problems arising in communication, transportation, and logistics networks. Recent studies include efficient optimization and machine-learning algorithms for network design, dimensioning and provisioning, scheduling in edge computing and clouds, and 5G networks. During her 2020–2021 sabbatical year, she was a senior advisor for the Montreal Ericsson Global Artificial Intelligence Accelerator research center and the chief scientist of the Centre de Recherche Informatique de Montréal. She was ranked among the top 2% of scientists in her field according to a 2021 citation-based study and held Tier I Canada and Concordia Research Chairs during 2000– 2019. She has published more than 300 papers in operations research and telecommunications. 
+
+Oscar Delgado: received the Ph.D. degree in electrical engineering from McGill University, Montreal, in 2016. After his Ph.D., he was a postdoctoral researcher at the Telecommunications and Signal Processing Laboratory, De-partment of Electrical and Computer Engineering, McGill University. He is currently a research associate at École de Technologie Supérieure. His research interests include applications of 5G wireless mobile communication tech-nologies, Artificial Intelligence and Machine Learning, net-work virtualization, service assurance, green wireless sys-tems, video-traffic management, resource-allocation strate-gies, and energy-efficient algorithms. 
+
+Tran et al.: Preprint submitted to Elsevier Page 17 of 17

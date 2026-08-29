@@ -1,0 +1,781 @@
+Title: Large-scale workflow placement in serverless computing using integer nonlinear programming
+
+URL Source: https://arxiv.org/pdf/2608.14427v1
+
+Published Time: Mon, 17 Aug 2026 01:00:08 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+> 1
+
+# Large-scale workflow placement in serverless computing using integer nonlinear programming 
+
+Joshua Adamek 1, Natalie Carl 2, Trever Schirmer 2, Moritz Heinlein 1, David Bermbach 2 and Sergio Lucia 1
+
+This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible. 
+
+Abstract —Serverless edge computing has become a powerful cloud framework that enables the execution of large workflows without the need for the user to manage the underlying servers and edge devices. In this work, we address the challenge of deploying these workflows on a large number of different existing servers and edge devices such that monetary costs for the users and workflow evaluation times are minimized. To this end, the workflow and cloud node attributes are modeled in a mathematical framework. As a result, we present a novel model of the optimal placement problem as a nonlinear integer program. To solve both the issues of scaling towards a larger number of cloud/edge nodes as well as decomposed knowledge of node attributes, we propose a novel decomposition strategy. In a case study, we show the beneficial scaling properties of the decomposition approach and a mean improvement of 10% 
+
+against a simple deployment heuristic. 
+
+Index Terms —Cloud computing; Optimal Scheduling; Integer programming 
+
+I. I NTRODUCTION 
+
+Serverless computing has emerged as a promising cloud computing paradigm for Internet of Things (IoT) applications [21]. As the user interaction with the cloud platform is decou-pled from the underlying physical servers, this offers flexibility and easier usage. This general idea motivates a Functions-as-a-Service (FaaS) architecture [34], where deployment requires only functions and their data or software dependencies, while placement on physical devices is managed entirely by the cloud management system [8]. FaaS platforms have gained attention in both research [3] and practice [24], particularly for IoT applications involving large numbers of dependent functions, also referred to as workflows [15]. The decom-position of workflows into functions and their deployment represents one of the primary use cases for FaaS [29]. Past literature distinguishes between the workflow deployment operation, commonly referred to as the placement problem 
+
+[11], and the scheduling operation, where a deployed workflow is selected for each user request. Both workflow placement and scheduling have been extensively studied in the literature [11]. To efficiently utilize cloud resources, placement is typically optimized with respect to objectives such as latency, execution time, monetary cost, resource utilization, and energy efficiency [11, 23, 27]. 
+
+*This work has been funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) - Projektnummer 495343202.  
+
+> 1
+
+Joshua Adamek, Moritz Heinlein and Sergio Lucia are with the Chair of Process Automation Systems at Technische Universit¨ at Dortmund, Emil-Figge-Str. 70, 44227 Dortmund, Germany.  
+
+> 2
+
+Natalie Carl, Trever Schirmer, and David Bermbach are with the Scalable Software Systems Research Group at Technische Universit¨ at Berlin, Einstein-ufer 17, 10587 Berlin. User User Provider n  
+
+> Region 1 Region n Provider 1
+
+Fig. 1: Decentralized serverless architecture considered in this work. We consider a mixture of cloud, fog and edge computation nodes of different providers and locations as well as different attributes of the considered nodes. Cloud nodes are clustered by providers, edge/fog nodes by region of operation. As described in [11], existing placement approaches can be broadly classified into machine learning-based [33, 30, 22], heuristic-based [7, 26], and model-based methods [9, 6, 4, 5, 14, 2, 36]. Heuristic approaches scale well to large workflow and cloud infrastructures but generally produce suboptimal solutions [11]. Consequently, they have been widely adopted in practical serverless platforms such as XFaaS [24] and ECO [1]. Machine learning-based and model-based approaches, on the other hand, can provide optimal or near-optimal place-ments but face scalability challenges. Learning-based methods struggle with representing large workflow and infrastructure states and require substantial training data, typically targeting infrastructures with only 10 –50 nodes [32]. Nevertheless, ma-chine learning has also been successfully applied to large-scale serverless systems for improving placement and scheduling decisions based on runtime observations [7]. Model-based approaches formulate workflow placement as an optimization problem based on mathematical models of workflows and cloud infrastructures. Existing formulations commonly represent workflows as directed acyclic graphs [16] and cloud infrastructures as node-based networks [33]. Two major challenges remain. First, the computational complexity of solving these optimization problems typically grows expo-nentially with the number of workflow functions and cloud nodes, limiting their applicability to large-scale deployments. While previous work has addressed the decomposition of large workflows [35], cloud decomposition has received consider-ably less attention [10], particularly in the context of optimal arXiv:2608.14427v1 [cs.DC] 14 Aug 2026 2
+
+placement. As FaaS infrastructures evolve from centralized cloud deployments toward geographically distributed cloud, fog, and edge environments spanning multiple providers [1, 20], scalable optimization over large numbers of compute nodes becomes increasingly important. Second, the actual placement cost depends on the stochas-tic sequence of user requests and the resulting workflow selection during runtime [19]. Since modeling all possible request scenarios is computationally intractable [19, 11], many optimization-based approaches neglect the scheduling phase and instead optimize surrogate objectives such as latency or execution time [5]. Furthermore, many optimization methods rely on shortest-path formulations for DAG-based workflows [9, 31]. Although recent work has proposed linear optimization models [13], there remains a gap in modeling more complex workflow and infrastructure characteristics, including parallel workflow branches, data dependencies, and communication costs, within a nonlinear optimization framework. Advances in mixed-integer nonlinear optimization solvers, such as Gurobi [12] and BARON [28], now make such formulations compu-tationally tractable while naturally supporting multi-objective optimization [17]. This paper presents a mathematical framework for workflow placement in large-scale serverless architectures. To address the identified research gaps, the main contributions are:  
+
+> •
+
+We propose a mathematical model for the workflow placement problem for which we can provide a hierarchi-cal decomposition strategy that addresses the scalability and privacy challenges arising in large-scale decentralized serverless architectures. The proposed approach exhibits logarithmic growth in computational demand with respect to the number of cloud nodes.  
+
+> •
+
+Into this a mathematical model we explicitly incorporate the workflow selection strategy. To account for waiting times during online execution, we introduce utilization-based costs for both compute nodes and workflow de-ployments.  
+
+> •
+
+Additionally, we incorporate recently proposed improve-ments to the workflow modeling, such as data dependen-cies, parallel branches of workflows and data transmis-sions costs into this framework.  
+
+> •
+
+The placement problem is formulated as a multi-objective optimization problem and we analyze the trade-offs be-tween competing objectives using Pareto analysis.  
+
+> •
+
+The scalability and performance of the proposed ap-proach is evaluated through extensive simulation studies. Additionally, we analyze real world applicability of the approach through robustness analysis against incorrect parameter estimation during deployment. The remainder of this paper is organized as follows: Section II introduces the modeling framework, including attributes for workflows and nodes, Section III formulates the optimal place-ment problem and presents a decomposed solution enabling scalable algorithms for distributed clouds. Section IV provides case studies demonstrating advantages such as scalability to larger problems, adaptability in multi-objective settings, and comparison to heuristic approaches. Section V concludes with final remarks and outlook. II. M ODELING OF PLACEMENT AND SELECTION OF WORKFLOWS 
+
+A. Workflow modeling 
+
+In the following, we establish the modeling framework for the workflows considered in this work. Previous work commonly models workflows as directed acyclic graphs [9, 31]. We follow this general representation, but adapt it to the requirements of the proposed MINLP formulation for workflow placement in decentralized serverless architectures. In particular, the model is designed such that placement decisions, data transfers, dependencies between functions, and parallel workflow branches can be represented explicitly and later decomposed according to the regional structure of the infrastructure. We also include parallel workflow branches, as considered in [31]. The novelty of the modeling step therefore lies not in the graph-based workflow representation itself, but in its integration into a decomposable placement formulation for large-scale FaaS infrastructures. A workflow 
+
+s consists of nfunc functions. Each workflow is deployed to the cloud/edge structure ndeployments times. Each function is stateless [8], meaning that all required data dependencies and inputs are provided externally, and a function is executed only once within a workflow. We assume that every function in a workflow is executed each time the workflow is invoked. The workflow structure is illustrated in Fig. 2. We allow for nbranches 
+
+different branches within each workflow. To define a workflow, we introduce variables bc,m , which equals one if function 
+
+m ∈ { 0, . . . n func −1} belongs to branch c ∈ { 0, n branches − 1}.Furthermore, we set am, ˜m = 1 if function ˜m follows function 
+
+m, indicating that function m must be executed before data can be transferred between these two functions. Each function has an estimated computational demand Rfunc ,m , defined by its computation time tfunc ,m and memory usage RAM m. This demand is assumed to be fixed such that 
+
+Rfunc ,m = RAM mtfunc ,m ,
+
+which is treated as a constant value. 01 2 345 67
+
+Fig. 2: Structure of a workflow with eight functions and three branches. In this example, b0,1 = 1 indicates that function 1 belongs to branch 0, while a1,2 = 1 shows that function 2 succeeds function 1. In addition to computational demand, each function sends data dsend to its successor within the respective branch once execution finishes. The first function of a workflow receives input data din from the user invoking the workflow. Figure 2 3
+
+illustrates these data flows required for completing the work-flow. Furthermore, each function might require dependency data ddata , which are stored physically on nodes within the serverless architecture. 
+
+B. Serverless infrastructure modeling 
+
+We consider a hierarchical serverless edge-fog-cloud archi-tecture rather than a fully peer-to-peer connected infrastruc-ture. The modeled infrastructure contains all compute nodes that may host workflow functions, including edge nodes close to users, optional fog or regional nodes, and cloud nodes oper-ated by one or multiple providers. User devices are modeled as request origins and are considered candidate nodes for function placement as we assume that these leave nodes explicitly provide computational resources. Edge and fog nodes may represent on-premises or regionally deployed resources, while cloud nodes are typically grouped according to their provider. The proposed model is agnostic to the ownership of individual nodes. Differences between providers, regions, and node types are captured through their latency, cost, speedup, and resource attributes. However, with this particular grouping, we ensure that every provider node attributes have to be shared to the overall architecture, providing a realistic real world setting for the serverless architecture. The task addressed by the placement problem is to assign each function m of every workflow n to a physical device within the serverless structure, referred to as a node. We define the serverless structure as a set of nodes i ∈ { 0, . . . , n nodes }. These nodes are divided into edge nodes and cloud nodes. In this modeling framework, cloud nodes provide higher computational power, which can reduce the computation time of a function m. In our approach, we assume that executing functions on cloud nodes incurs monetary cost, whereas computations on edge nodes are con-sidered free, but the modeling approach is not limited to this assumption. Furthermore, we consider multiple participants in the cloud environment. Each cloud node belongs to an entity (e.g. company or provider) that defines its attributes. For each provider, we assume a constant price to execute one megabyte for one second on its devices, denoted by pRAM . This assumes a linear pricing model for the number of CPUs involved in executing a function. Additionally, we define a constant price for sending or receiving one megabyte of data as psend , and a cost for transferring dependency data required for function execution as pdata per megabyte. The resulting topology is represented as a hierarchy of regions and providers. Nodes within the same region or provider can communicate through local links, whereas com-munication between different regions or providers is routed through representative head nodes. These head nodes may correspond to physical gateways, provider endpoints, or logical aggregation points used by the orchestration layer. Conse-quently, the architecture is not assumed to be fully connected at the physical node level. Instead, the hierarchical represen-tation reflects practical decentralized deployments in which detailed information is locally available within regions or providers, while only aggregated information is exchanged between them. Figure 3 illustrates the proposed structure and User    
+
+> Region 1 Provider 1
+> (a) Assumed model of con-nections in the serverless ar-chitecture. User
+> Region 1 Provider 1
+> (b) Non-scalable model of connections in the serverless architecture.
+
+Fig. 3: General connection structure of the serverless archi-tecture. Cloud providers and edge nodes are distinguished. Requests from users originate from edge nodes only. Cloud nodes are clustered by provider or region. Connections be-tween providers or regions exist through single links, as shown on the left. A fully connected topology, as shown on the right, is neither efficient nor realistic when different providers are involved. connectivity of the serverless architecture using a simplified example. The bottom level represents user nodes at the edge from which requests originate during workflow execution. Each connection between node i and node j is characterized by an estimated latency Li,j . As shown in Fig. 3b, an idealized setting would allow all nodes to be fully connected so that data could be transferred freely among them. In practice, especially with many providers and users, a separation occurs as depicted in Fig. 3a. It is reasonable to assume that regions or providers can communicate only through single head node links connecting their respective top-level representatives. This leads naturally to a hierarchical decomposition into regions and providers. In the simple example, there are two levels in the hierarchy: level zero contains two head nodes (region one and provider one), while level one includes three subordinate nodes per region/provider. We now establish notation for indexing these hierarchical levels in general form with levels indexed by l ∈ { 0, . . . , n l − 1}. At each level l, we consider nregions ,l regions/providers indexed by 
+
+r ∈ { 0, . . . , n regions ,l − 1}, each containing nnodes ,l,r individual nodes indexed by i ∈ { 0, . . . , n nodes ,l,r − 1}. The number of regions at level l is therefore the number of nodes at level 
+
+(l − 1) :
+
+nregions ,l =
+
+> nregions ,l −1
+
+X
+
+> s=0
+
+nnodes ,l −1,r .
+
+In this setting, latencies are defined for every connection between two nodes within the same region such that Ll,r,i,j 
+
+denotes the latency between nodes i and j in region s at level r. To navigate within the regional structure we define the 4
+
+Algorithm 1 Latency calculation for regionally structured serverless architectures. 
+
+Require: Indices i and j of the physical devices 
+
+Li,j = 0 and l = nl − 1˜i = curr node (l, i ), and ˜j = curr node (l, j )
+
+si = curr region (l, i ) and sj = curr region (l, j )
+
+while si̸ = sj do 
+
+Li,j = Li,j + Ll,r i,0,˜i + Ll,r j .0,˜j
+
+˜i = succ node (l, r i) and ˜j = succ node (l, r j )
+
+ri = succ region (l, r i) and rj = succ region (l, r j )
+
+Li,j = Li,j + Ll,r i,˜i, ˜j
+
+following four functions: Given a node i in level l (that is the overall node number in the entire level over all regions in this level), we define the function r = curr region (l, i ) that outputs the current region of this node, while ˜i = curr node (l, i )
+
+is the index of the node within this region (that is the local node number in this region starting from the index zero in each region). Likewise, for a region s in level r,we define the successor node ˜i = succ node (l, r ) in level 
+
+l − 1, which is the index of the node in the successor region 
+
+˜r = succ region (l, r ). The latencies between two nodes i and 
+
+j can be calculated according to Algorithm 1. 
+
+C. Operation modeling 
+
+We model the considered architecture as a serverless FaaS environment, where resource management, orchestration, de-ployment, and workflow selection are handled by the serverless platform. We assume that multiple cloud providers and edge or fog regions are jointly organized through a logical orches-tration layer. During placement, a deploying user requests the deployment of one or multiple workflows. The orchestration layer then decides on which nodes the individual functions of each workflow are placed. In a centralized setting, this decision is made by one logical entity with access to the complete infrastructure model. In the decomposed setting, placement decisions are distributed across the hierarchy, such that re-gional or provider head nodes solve local subproblems using local information. For every individual deployed workflow that is for the number of instances of one specific workflow we solve one placement problem, to reduce the complexity of the underlying optimization problem. During runtime, users invoke workflows through requests originating from leaf nodes of the architecture. These leaf nodes may also provide computational resources and can therefore be part of the placement decision. For each re-quest, the orchestration layer applies a selection policy that determines which deployed workflow instance is used. Thus, the user only submits deployment and invocation requests, while placement, selection, and execution are managed by the serverless platform. After the initial placement we assume no rescheduling of the placed workflow instances during the online scheduling phasse. III. S OLUTION STRATEGY 
+
+A. Decision variables and assumed problem structure 
+
+In the following we setup the optimization problem for the placement of the workflows in the proposed serverless archi-tecture. There already exists linear mixed-integer optimization model formulations [13]. However in this work, we consider more complex workflow and infrastructure characteristics, including parallel workflow branches, data dependencies, and communication costs, which require formulating the optimiza-tion as a mixed-integer nonlinear problem. Since mixed-integer nonlinear programs are computationally demanding, we estab-lish a decomposition approach to enable deployment on larger serverless architectures. To set up the placement problem, the optimization variables defining the placement must be established. Since each workflow t is deployed separately, we omit the index t in our problem formulation for brevity. Each function m of workflow n must be placed on a node i within the serverless architecture. Therefore, we define the decision variable Pn,m,i to be one if this function is placed on node i,and zero otherwise. For every function, exactly one node is selected, such that 
+
+X
+
+> i
+
+Pn,m,i = 1 ,
+
+for all functions m in workflow n. The main difficulty in describing the cost function arises from the fact that total cost does not directly result from workflow placement itself but rather from user selection of workflows during execution. Consequently, we aim to minimize the expected selection cost incurred by users invoking workflows. To model user behavior, we define a variable Hk,n indicating which work-flow is selected by user k. In general, this variable is not known in advance. It represents a runtime decision made during operation. Optimal choices may differ depending on request conditions. Modeling such behavior leads to a two-stage stochastic optimization problem [25] , where placement variables Pn,m,i would need to be optimized for all possible realizations of Hk,n . Since integer-based two-stage stochastic problems are computationally demanding [25] , they are unsuitable for large-scale serverless architectures. We therefore assume a deterministic selection policy Hk,n ,which we determine prior to execution and include as decision variables in the placement problem, ensuring that exactly one workflow is selected for each user request: 
+
+X
+
+> n
+
+Hk,n = 1 ,
+
+for every possible user k. In turn, this policy cannot react to the stochastic nature of the user requests, leading to possi-ble blocking of resources or deployed functions, amplifying the need to address this issue in the placement problem as proposed in the next subsection. 
+
+B. Problem definition 
+
+After modeling the workflows and nodes in the serverless architecture, we next define costs and constraints for the place-ment problem. We place each workflow separately, that is, each workflow s is placed by solving the following optimization problem. We consider two competing objectives that influence 5
+
+TABLE I: Overview of the model parameters used in the main optimization problem (1). 
+
+Notation Definition 
+
+k Index used to address leaves 
+
+i,j Indices used to address general nodes in the cloud 
+
+l Index used to address levels in the serverless architecture 
+
+m Index used to address functions within a workflow 
+
+n Index used to address different deployments of the same workflow 
+
+r Index used to address a region in a level in the serverless architecture 
+
+c Index used to address the branches of the workflow 
+
+Hk,n Variable selecting workflow n for a request from leaf kPn,m,i Variable placing function m
+
+from workflow n on the node iCm,i Cost to execute function m on node iDm,i,j Cost to send data generated by function m
+
+from node i to node jTn Maximum time to execute workflow nTm,i Time to execute function m on node iLl,r,i,j Latency between node i and j
+
+in region s in level r of the serverless architecture. If only one region is considered this is shorten to Li,j .
+
+pRAM Cost to execute one MB of RAM for one second 
+
+psend Cost to send 1 MB of output data from a function 
+
+pdata Cost to transfer 1 MB of data needed for the execution of a function 
+
+ddata Amount of data needed for the execution of a function 
+
+dsend Amount of output data send from a function 
+
+tfunc ,m Estimated running time of function 
+
+m on a normal device RAM m Estimated RAM usage of function mRfunc ,m Constant computational demand of function mnfunc Number of functions in a workflow 
+
+nbranches Number of branches of workflow 
+
+ndeployments Number of deployments of workflow sbc,m Indicates if function m is in branch cam, ˜m Indicates if function ˜m is a successor of function mxi,m Estimated speedup of large functions deployed on cloud node mnl Number of levels considered in the serverless architecture 
+
+nregions ,l Number of regions considered in level l
+
+in the serverless architecture 
+
+nnodes ,l,r Number of nodes in region r on level l
+
+in the serverless architecture 
+
+the placement: the time required to evaluate a workflow and the monetary cost incurred by a user when executing it. Using the modeling introduced in the previous section, these costs can be expressed as functions of the placement and selection decision variables, as well as parameters describing nodes and workflows (summarized in Table I). We denote by 
+
+Tn,c the time required to evaluate branch c of workflow n.The overall evaluation time depends on the slowest branch among all nbranches branches of a workflow. To include this dependency in the optimization problem, we introduce an auxiliary variable Tn, constrained by 
+
+Tn ≥ Tn,c ∀c ∈ { 0, n branches } .
+
+Each branch time Tn,c is computed as the sum of function evaluation times for all functions m within that branch and latencies between nodes hosting consecutive functions. Con-sequently, we can formulate 
+
+Tn,c = X
+
+> m
+
+X
+
+> i
+
+(bc,m Pn,m,i tm,i 
+
++ X
+
+> ˜m
+
+X
+
+> j
+
+Pn,m,i Pn, ˜m,j am, ˜mbc,m Li,j ) .
+
+The execution time tm,i of function m on node i is determined by the base execution time tfunc ,m multiplied with a potential speedup xm,i of executing the function on node mtm,i = xm,i tfunc ,m .
+
+Note that latency introduces bilinear terms into this expres-sion, as the placement variables Pn,m,i and Pn, ˜m,j are multi-plied. Analogously, monetary costs consist of two components: User  
+
+> Region 1 Provider 1 Provider 2
+> 306128754
+
+Fig. 4: Overview of the centralized optimization strategy on the example of a workflow consisting of two functions placed two times on an architecture with three edge nodes and two providers with three physical devices. The placement variables 
+
+P show which function of which workflow is placed on which device, while the selection variable H defines which workflow will be selected from a user node. The first two users (node 6 and 7) select the first workflow (variables in red) while the third user (node 8) select the second workflow (variables in blue). a linear part representing direct execution costs Cm,i for running function m on node i, and a bilinear part describing data transfer costs between adjacent functions deployed on different nodes. We denote Cm,i the sum of the execution cost and the potential additional cost for transferring data to node iCm,i = pRAM ,i Rfunc ,m + pdata ,i ddata ,m .
+
+If the transfer data is already available on node i, we formulate 
+
+pdata ,i = 0. Additionally, data is transferred between two functions located on different nodes, represented by 
+
+Dm,i,j = ( psend ,i + psend ,j )dsend ,m .
+
+Therefore, we can introduce the bilinear monetary variable for sending data as 
+
+Sn,m,i = X
+
+> ˜m
+
+X
+
+> j
+
+Pn,m,i Pn, ˜m,j am, ˜mDm,i,j ∀(n, m, i ).
+
+In addition to these two primary cost components, time and monetary, we must also account for communication costs 6
+
+min  
+
+> P,T,H,S
+
+w1
+
+X
+
+> k
+
+X
+
+> n
+
+λkHk,n Pn,m start ,i Din ,i + Pn,m end ,i Dm,i,k + X
+
+> i
+
+X
+
+> m
+
+Pn,m,i Cm,i + Sn,m,i 
+
+!| {z } 
+
+> Monetary costs M
+
++ w2
+
+X
+
+> k
+
+X
+
+> n
+
+λkHk,n Tn + X
+
+> i
+
+(Pn,m start ,i Lk,i + Pn,m end ,i Lk,i )
+
+!| {z } 
+
+> Basic Time cost B
+
++ w3
+
+X
+
+> n
+
+X
+
+> m
+
+(un,m )2 + X
+
+> i
+
+M 2
+
+> i
+
+!| {z } 
+
+> Utilization cost U
+
+subject to: 
+
+X
+
+> i
+
+Pn,m,i = 1 ∀(n, m ) X
+
+> n
+
+Hk,n = 1 ∀(k)
+
+| {z }
+
+> Placement and selection constraint
+
+Sn,m,i = X
+
+> ˜m
+
+X
+
+> j
+
+Pn,m,i Pn, ˜m,j am, ˜mDm,i,j ∀(n, m, i )
+
+| {z }
+
+> Monetary bilinear variable
+
+Tn ≥ X
+
+> m
+
+X
+
+> i
+
+(bc,m Pn,m,i tm,i + X
+
+> ˜m
+
+X
+
+> j
+
+Pn,m,i Pn, ˜m,j am, ˜mbc,m Li,j ) ∀(n, c )
+
+| {z }
+
+> Maximum branch time constraint
+
+Mi =
+
+P
+
+> k
+
+P
+
+> n
+
+P 
+
+> m
+
+λkHk,n Pn,m,i Rfunc ,m 
+
+RAM max ,i 
+
++ M0,i ∀(i)
+
+| {z }
+
+> Node utilization
+
+un,m = X
+
+> k
+
+λkHk,n Pn,m,i tm,i ∀(n, m )
+
+| {z }
+
+> Function utilization
+
+(1) between users and nodes executing either the initial or final function of each workflow. These contributions are added respectively to both time-related and monetary terms. Further-more, all these costs results from invoking these workflows from user requests. We assume that the user randomly requests workflows with a rate of λk for every leaf node k. To get the correct expected cost, we sum over user requests by weighting each monetary cost and evaluation time by the request rate λk
+
+for every user. These two cost factors are exact if every resource and function is always free to use, that is, we do not expect waiting time in the scheduling approach due to resource constraints. As this is not realistic, we introduce an additional cost term addressing resource limitations. Because exact sequences of user requests cannot be anticipated during runtime, imposing strict constraints on workflow or node usage would lead to conservative solutions. Instead, we define a third penalty term that discourages excessive utilization of specific workflows or nodes within the serverless architecture. Additionally, mod-eling the exact waiting time anticipated due to the utiliza-tion of nodes and functions is equally unrealistic. Instead, we penalize the unequal placement of functions upon the serverless architecture, especially edge nodes that are resource constraint by a maximum RAM RAM max ,i , that is, we assume function evaluations on these edge nodes are blocked if the RAM reaches the maximum RAM constraint. We penalize the expected utilization of each node Mi where 
+
+Mi =
+
+P
+
+> k
+
+P
+
+> n
+
+P 
+
+> m
+
+λkHk,n Pn,m,i Rf unc,m 
+
+RAM max ,i 
+
++ M0,i .
+
+The utilization of this resource is dependent on the usage of this node over all s workflows. To mitigate this, we track the utilization by adding the current utilization to Mi, 0,which in turn is the summed utilization of previous placed workflows. Furthermore, blocking of a function happens if a specific function is already used through a different request. We therefore penalize the function utilization given as 
+
+un,m = X
+
+> k
+
+X
+
+> i
+
+λkHk,n Pn,m,i tm,i .
+
+In this work we only assume request blocking because of exceeding the RAM limit and when the specific deployment of a function is currently utilized by another user. Therefore, reducing the utilization of a node automatically reduces the chance of blocking and in return will reduce the waiting time. We will test this hypothesis in the case study and additionally evaluate how this additional cost influence the optimization problem. As illustrated in Figure 4, the total cost is evaluated as the summation over all potential user requests. The three indi-vidual cost components, monetary, temporal, and utilization-related, together form a multi-objective optimization problem. We solve this problem by employing a weighted-sum ap-proach [17], assigning each objective a corresponding weight. The weights dimensions are chosen such that the cost function is dimensionless (w1[$ −1], w 2[s−1], w 3[−]). Consequently, the complete optimization problem can be formulated as in (1). Every cost is nonlinear, due to the multiplication of the selection and placement optimization variables. Additionally, nonlinear terms are added in the constraints as we model time and monetary costs based on the interaction of adjacent functions on possible different nodes. We further introduce continuous variables such as the monetary bilinear term S
+
+and the basic time variable T . The problem we are solving is therefore classified as a mixed-integer nonlinear program. This problem formulation scales exponentially in computation time for an increasing number of nodes and workflow functions, which is especially difficult for a serverless architecture with many nodes. Therefore, and considering the already estab-lished decompositions that are build into the modeling of the 7
+
+serverless architecture, we propose a decomposition approach that scales well for a larger number of nodes in the next subsection. We do not directly model time-out of resources or deadlines, but the heuristic nature of the proposed utilization cost extends to these problems. Future work will address these as additional constraints in the optimization problem formulation. 
+
+C. Decomposition strategy 
+
+There are two main reasons why solving (1) is compu-tationally intractable in practice. First, it requires complete knowledge of all costs, speedups, and latencies across the entire serverless architecture on a single node. This assumption is unrealistic since nodes may belong to different providers that do not share all information, and collecting such statistics would accumulate large amounts of data on one node. Second, computation time scales exponentially with the number of nodes considered. As described in Subsection II-B, direct communication among all nodes as a fully connected network is improbable. Instead, it is more realistic to divide the architecture into smaller regions represented on the higher level as a single node. We extend this idea to the optimization problem itself. On each hierarchical level, placement decisions for functions within a region are performed by the respective head node that possesses local information such as latencies, costs, and speedups for its region. These regions are chosen such that node characteristics (speedup factors, type of node, region) remain homogeneous within each subset, and edge nodes are grouped only with other edge nodes. This approach addresses both challenges: only local information is required, and regions remain small enough for efficient computation. An example of the structure of the decomposition is illustrated in Figure 5. The goal of the decomposition approach is to solve a variant of (1) independently within each region at every level while maintaining proximity to the solution obtained when considering all nodes simultaneously. Therefore, we now reformulate the decision variables to Hl,r,k,n and Pl,r,n,m,i as we consider r ∈ { 0, . . . , n regions ,l −1} optimization problems in level l ∈ { 0, . . . , n l −1}. Figure 5 illustrates the decomposition strategy. We start at level nl − 1, where physical nodes exist. For the next level, groups of edge-node regions and cloud providers are aggregated into single representative nodes. This results in several regions, each having a head node responsible for solving its local subproblem. Analogous to the main problem formulation, user requests must be included for every subproblem. Any node consisting solely of edge devices or representing physical edge hardware remains treated as a leaf node from which requests originate. Therefore, the user request rate is calculated by summing over all rates in the lower level 
+
+λl−1,succ node (l,k ) = X
+
+> k
+
+λl,k . (2) Each region of nodes at level l corresponds to a single representative node at level (l − 1) . Therefore, placements within regions can be tracked by determining whether func-tion m of workflow n was placed on its predecessor node at level (l − 1) . Naturally, we start solving the placement User  
+
+> Region 1 Provider 1 Provider 2
+> 000011222121
+
+Fig. 5: Decomposed approximation based on regions and providers shown for three nodes per provider and three edge-region nodes. The one workflow in this example is placed twice ndeployments =2 . Each region or provider is represented by a single node in the main problem, where placement variables 
+
+P and selection variables H are determined. Functions placed on representing nodes are then resolved within subproblems for their respective subsets. In contrast to the centralized approach, selection can be performed only once per region. Thus, only one workflow can be selected for all three edge nodes collectively in this example. problem at level 0 and proceed through successive levels by providing the upper level placements to the lower level head nodes. Although this introduces an exponential increase in subproblem count across levels, each subproblem operates independently on its own head node and can thus be computed in parallel. Two additional constraints must be introduced to correctly perform decomposition: First, if certain functions or entire workflows have already been placed elsewhere, that is, if these functions were not assigned to their predecessor node at level (l − 1) , they cannot be reconsidered within the cur-rent subproblems. Because communication routes always pass through head nodes, placing such functions virtually on their head node has an equivalent effect as placing them outside their subset entirely (see Figure 5). These virtual placements do not represent functions that are physically executed on the local head node, but only serve as placeholders for workflow parts that are outside the current region and interact with it through the head-node interface. Therefore, we add a function 
+
+m into the set Mn if Pl−1,succ region (l,r ),n,m, succ node (l,r )=0 and add the following constraints 
+
+Pl,r,n,m, 0 = 1 ∀m ∈ M n . (3) As these are virtual placements, they cannot be included in the calculation of the selection cost, especially the function placement penalization Ml,r, 0 on the head node. To account for this number of virtual placements in the selection cost, we 8
+
+have to adapt the function term Ml,r, 0 for all subproblems 
+
+Ml,r, 0 =
+
+P
+
+> k
+
+P
+
+> n
+
+P 
+
+> m⋆
+
+λl,r,k Hl,r,k,n Pl,r,n,m ⋆,0Rf unc,m ⋆
+
+RAM max ,0
+
++ Ml,r, 0,0 ,
+
+(4) where m⋆̸ ∈ M n. If complete workflows have been de-ployed elsewhere, we reduce ndeployments by one accordingly. This pruning strategy reduces computational effort since re-gions without placed functions do not need to perform further calculations. Under the assumed hierarchical communication model, this pruning step does not introduce additional local cost by itself. The situation differs for selection decision vari-ables Hl,r,k,n . Because upper-level representations also aggre-gate multiple edge regions into regional entities, selection deci-sions become coupled among users belonging to those regions (see Figure 5). To obtain correct cost estimation during selec-tion evaluation, we must assume identical workflow choices across all user requests originating from one region. Hence, recomputation of Hl,r,k,n beyond level l > 0 is omitted. Again, we have to distinguish between leaf nodes that stem from real users, where if in the upper level succ node (l,r ) is a leaf node and Hl−1,succ region (l,r ),succ node (l,r ),n = 1 we set 
+
+Hl,r,k,n = 1 , (5) for all leaf nodes k participating in the next-level subproblems. For the head node zero, we have to additionally account for workflows that are possibly invoked through nodes from other regions. As these information exchanges run through this main node, we treat the main node as the leaf for these additional nodes. Therefore, we sum the selections 
+
+Hl−1,succ region (l,r ),k,n = 1 for all leaves that are not the successor of this optimization problem that is 
+
+Hl,r, 0,n = Γ X
+
+> k
+
+Hl−1,succ region (l,r ),k,n 
+
+!
+
+, (6) where Γ( ·) is the step function. This binary aggregation only indicates whether workflow deployment n is relevant for the current subproblem through external requests. The correspond-ing request volume is not represented by Γ( ·), but by the ag-gregated request rates introduced below. This coupling reduces degrees of freedom compared with centralized optimization and typically increases overall cost, particularly regarding selection-related terms, since regional uniformity restricts flex-ibility among users sharing similar locations or providers. Therefore, successful decomposition requires balancing com-putational feasibility against model accuracy, specifically, there exists a trade-off between reduced computational demand achieved via coarse regional aggregation (solving fewer large-scale problems) and finer granularity necessary to represent realistic distributions among edge-node clusters. During the solving process, the user requests have to be adapted as well, depending on the decisions made in the upper level. As the head node serves as a placeholder for requests coming from outside the region, we have to additionally add the user request rate depending on the requests from the other regions, that is Here, succ node (l, 0) denotes the upper-level representative of the current regional subproblem, i.e., the node at level (l − 1) 
+
+that corresponds to the local head node indexed by zero. 
+
+λl, 0 = λl, 0 + X
+
+> k
+
+λl−1,k − λl−1,succ node (l, 0) , (7) where we sum over all other regions in the upper level to gather the requests. With the addition of (2)-(7), the main problem (1) can now be solved for each region r in each level 
+
+l, requiring only communication down the levels during the placement and an update of the current cloud attributes after the placement on the lowest physical node level. 
+
+D. Scalability and Suboptimality 
+
+The theoretical properties of the proposed decomposition can be analyzed mathematically. We first provide a scalability analysis and then discuss the suboptimality introduced by the decomposition. For scalability, we analyze how the overall computation time Tcomp required to solve the decomposed problem grows with the number of nodes Ns. To simplify the analysis, we make the following assumptions: 
+
+Assumption 1. The overall number of Ns nodes is divided into regions of size ns ∈ [ns, min , n s, max ]. Likewise, each region in level l is represented by one node in level l−1, and a number of ns regions are grouped into one region in level l − 1.
+
+Assumption 2. For a given decomposition, we assume that the computational demand of each subproblem depends only on the number of nodes in the corresponding region. Hence, the computation time of the subproblems is bounded by 
+
+T (ns, min ) ≤ T (ns) ≤ T (ns, max ).
+
+Assumption 3. All subproblems within the same level can be solved in parallel, since the algorithm is decentralized and each subproblem is solved by the corresponding regional head node. However, the subproblems in level l require the solution of the corresponding subproblem in level l − 1. Therefore, the levels have to be processed sequentially. 
+
+These assumptions are valid in the case of large cloud sizes with multiple providers as examined in this work. Under these assumptions, the following theorem holds: 
+
+Theorem 1. The computation time of the decomposed ap-proach grows logarithmically with the number of nodes, that is, Tcomp (Ns) ∼ O (⌈log ns, min (Ns)⌉).Proof. From Assumption 1, it follows that L levels are re-quired to represent Ns nodes with subregions of size ns
+
+or smaller. This number can be overapproximated by L ≤⌈log ns, min (Ns)⌉. Under Assumption 3, the time Tl required to solve all subproblems in level l is given by the maximum com-putation time of any subproblem in that level. Therefore, using Assumption 2, it follows that Tl ≤ T (ns, max ). Since the levels have to be processed sequentially according to Assumption 3, the overall computation time Tcomp (Ns) is the sum of all level-9
+
+wise computation times Tl for l ∈ [0 , . . . , L − 1] . Thus, we obtain 
+
+Tcomp (Ns) = 
+
+> L−1
+
+X
+
+> l=0
+
+Tl ≤
+
+> L−1
+
+X
+
+> l=0
+
+T (ns, max )= L · T (ns, max ) ≤ ⌈ log ns, min (Ns)⌉T (ns, max ).
+
+This proves that Tcomp (Ns) ∼ O (⌈log ns, min (Ns)⌉).In addition to scalability, the suboptimality introduced by the decomposition and by the fixed selection policy has to be considered. The decomposed formulation restricts the feasible set of the centralized problem, since placement and selection decisions are made region-wise and information between re-gions is exchanged only through the hierarchical head-node structure. In particular, the selection variables Hk,n are fixed during placement and cannot adapt to the realized stochastic request sequence during runtime. Moreover, in the decom-posed formulation, users aggregated within the same region may be forced to share selection decisions that could be chosen independently in the centralized formulation. Therefore, the decomposed solution is generally suboptimal with respect to the centralized formulation. A tight analytical bound on this suboptimality is difficult to obtain, because the realized cost depends on the stochastic request sequence, the resulting resource contention, and the interaction between placement and selection decisions. Con-sequently, we do not claim an a priori optimality certificate for the decomposed solution. Instead, the practical impact of this suboptimality is quantified empirically in the case study by comparing the decomposed formulation with the centralized formulation on a small example and with a heuristic baseline for larger architectures. IV. C ASE STUDY 
+
+A. Evaluation Methodology 
+
+In the case study, we analyze the benefits of the proposed algorithm using simulated serverless architectures and syn-thetic workflows. For modeling purposes, we define param-eters describing both workflows and the architecture, such as evaluation costs on cloud nodes, the number of nodes within the serverless architecture, and the number of functions contained in each workflow. Modeling parameters are chosen closely to values of real applications, such as in [11]. These TABLE II: Fixed model parameters for the serverless archi-tecture and workflows.                                                       
+
+> Architecture Value Workflow Value
+> pRAM provider 10.0167 $MB −1ndeployments [2 5]
+> psend provider 10.01 $MB −1RAM [1 100]MBs −1
+> pdata provider 10.01 $MB −1tfunc [100 ,1000]s
+> pRAM provider 20.02 $MB −1xfunc [0 .75 ,1]
+> psend provider 25·10 −3$MB −1din [0 ,100]MB
+> pdata provider 21·10 −3$MB −1dsend [100 ,1000]MB
+> Lnodes [0 ,10]s ddata [0 ,1000]MB
+> bdecrease 10 ρdata 0.2
+> nl2nfunc [3 ,6]
+> λk[0 .03 0 .05]
+
+parameters are either uniformly distributed within fixed bounds or remain constant throughout the case study. Table II defines these parameters together with the values used across all experiments. The serverless architecture is modeled with two cloud providers and one type of edge node. Each provider has fixed costs for sending data, executing functions, and transferring dependent data, chosen to approximate realistic values for commercial cloud services [32]. Additional architec-tural parameters include bounds for latencies and speedups on nodes. To achieve a more realistic simulation, latency bounds are reduced in each level to reflect increasingly regional connections according to the following formula 
+
+Ll, upper bound = Lnodes b−l 
+
+> decrease
+
+.
+
+Function attributes are randomly sampled to generate diverse workflows. These attributes include evaluation time require-ments, data sizes exchanged between functions, dependency data sizes, and the probability that a function depends on external data. In addition to these workflow parameters, we define several architectural scaling parameters that influence problem size. The number of nodes per level is uniformly distributed, combined with the total number of levels, these two parameters determine the overall scale of the serverless architecture. Furthermore, we separately specify the number of nodes considered in the highest level. For workflows, scalability is controlled by varying both the total number of workflows deployed on the architecture and the number of functions contained within each workflow. As the actual costs for a placed workflow can only be evaluated in the online selection phase, the case study simulates requests in a simulation time of tsim = 200 s . The requests are randomly sampled with a Poisson distribution using the request rate λk
+
+for each physical user k. These requests are scheduled using a FIFO scheduling, where for each workflow request, the future resources are blocked immediately. In this simulation, we therefore model two blocking mechanisms: A specific function 
+
+m in a workflow t with the deployment number n cannot be used twice in the same time step, and if the RAM resource of node i is fully occupied, no further function can be executed on said node. Instead of the heuristic utilization cost U that is used in the placement problem, we focus, therefore, on the actual waiting time W due to blocking. We can therefore formulate the overall cost C, defined as a weighted sum of the two competing objectives, 
+
+C = w1M + w2(B + W ) .
+
+In this study, we additionally will have to show that the weight 
+
+w3 has an influence on reducing the waiting time. The stochas-tic simulation emulates realistic workflow request scenarios and is therefore essential for evaluating how effectively the proposed placement formulation, including its proxy utiliza-tion cost, performs under stochastic request arrivals. Instead of relying on real workflow traces, this work considers synthetic workflows whose attributes, such as function execution times, data demands, and resource allocations, are initially assumed to match the estimates available during deployment. Similar simulation-based evaluations are widely used in the literature [9, 6, 4, 5, 14, 2], where the required parameters are typically 10 
+
+obtained through an initial profiling or monitoring phase. Extending the evaluation to real traces requires accounting for deviations between estimated and realized parameters and for the resulting suboptimality of the placement. This aspect is investigated in the final subsection of this case study. For comparison reasons, we frequently evaluate the gap between the cost of two different solution strategies 
+
+g = C1 − C2
+
+C1
+
+,
+
+with C1 > C 2. Second, we analyze the computation time required to solve the placement problem. In the centralized for-mulation, this corresponds to solving a single global optimiza-tion problem. In contrast, under decomposition we assume that total computation time equals the sum over maximum subproblem times at each level, 
+
+tc =
+
+> Nlevel −1
+
+X
+
+> l=0
+
+max  
+
+> r
+
+tc,r,l ,
+
+where tc,r,l denotes computation time for subproblem r at level l. Since subproblems within a given level can be solved in parallel, only their maximum runtime contributes per level. The communication time required to pass information between levels is neglected here, as the centralized approach would also need constant communication between the nodes to update the central parameters and because we want to focus on the computational burden of the placement optimization problem in itself. All simulations are performed on an AMD Ryzen 9 16-Core processor equipped with 94 GB RAM. The modeling framework and cost calculations are implemented in Python. Integer decision problems are solved using Gurobi [12]. The code necessary to generate the presented results is openly available 1.
+
+B. Small working example 
+
+First, we reintroduce the small example used in the model-ing section, now with real parameters as described in Table II to illustrate the modeling and solution structure of the pro-posed placement algorithm and highlight its differences com-pared to the centralized approach. For ease of visualization, we reduce the number of deployments to two, the number of functions for each workflow to three, the number of nodes in the second level to three, and the number of edge node regions in the first level to one. Figure 6 shows the full problem, con-sidering all nodes in one optimization problem. In comparison, Figure 7 shows the serverless architecture considered in the decomposed setting, consisting of two hierarchical levels. In the centralized case, three users can send requests in-dependently, whereas in the decomposed approach, only one workflow can be selected per region, resulting in slightly higher overall cost. In total, we solve one optimization problem containing 131 decision variables for the centralized formu-lation and four subproblems for the decomposed approach. The main problem in the decomposition approach includes 49 
+
+decision variables, while the sizes of subordinate problems  
+
+> 1https://github.com/JoshuaAda/IEA LSWPISCUINP User
+> Region 1 Provider 1 Provider 2
+> 306128754
+
+Fig. 6: Placement solution of the centralized approach for two workflows (first workflow placements and selections in red, second in blue) containing three functions. In the centralized approach, the three different users can select different work-flows (user 6 and 8 selecting the second, user 7 the first), giving more freedom to reduce blocking as well as basic time and monetary costs. User  
+
+> Region 1 Provider 1 Provider 2
+> 000021122121
+
+Fig. 7: Placement solution of the decomposed approach for two workflows (first workflow placements and selections in red, second in blue) containing three functions. In the decomposed approach, only one workflow can be selected as the three users are lumped in one region on the first level of optimization. The functions are placed on the regions in the first level and are later distributed onto the nodes of the regions in the second level. depend on decisions made at this top level ( 26 , 0, and 26 
+
+decision variables for the specific subproblems). Figure 6 presents results for the centralized solution, while Figure 7 shows outcomes for the decomposed strategy assuming equal weights for the monetary cost and time cost w1 = w2 = 0 .5,and a utilization cost of w3 = 1 . The primary difference between the centralized and the decomposed approach lies in the selection behavior. This difference can be seen in the small example. In Figure 7, all three users can select the second workflow, whereas the first workflow has no influence on the cost. On the contrary, the centralized approach can select different workflows for different users, such that the second workflow is selected for the second user. The result follows directly from the costs presented in (1). In general, it is beneficial to place the functions on the regional edge nodes as they offer small latencies and free evaluation. As 11 
+
+the first function in the workflow can be completed much faster on the cloud node of the first provider, it is placed there. As the latencies between the regional nodes are very small, the selection cost leads to a more equal distribution of the function onto the edge nodes. The total cost C across all three users in the simulation amounts to 305 .27 for the centralized approach and 427 .07 for the decomposed variant. The main difference stems from the waiting time, which is 137 s in the decomposed case against 79 s in the centralized approach, which is due to the higher degree of freedom to choose the workflows in the centralized approach. Despite the higher cost due to restricted selection flexibility, computation time decreases even within this small-scale scenario substantially from 217 .93 ms for centralized optimization to 47 .57 ms using the decomposition. 
+
+C. Scaling of the decomposition approach 
+
+After demonstrating the main functionalities of the proposed algorithm, we now highlight its principal advantage: the signif-icantly improved scalability of the algorithm compared to the centralized approach. This aspect is crucial for realistic work-flow placement scenarios, as the number of nodes expected in practical serverless architectures is typically significantly larger than those considered in the previous subsection. To scale the architecture, two parameters can be adjusted. First, the number of nodes within each subregion can be increased either as a fixed value or as bounds for a uniform distribution from which these values are sampled, which leads to amoderate increase in total node count. Second, we can increase the number of hierarchical levels used to organize nodes within the architecture. This results in an exponential growth of total nodes and provides a useful setting for evaluating scalability under large system sizes. Due to this exponential growth in decision variables with increasing numbers of nodes, we expect that computation time for the centralized approach will scale poorly. Therefore, we compare both approaches using an architecture with two levels while gradually increasing node counts within subregions. Other workflow and node parameters are sampled uniformly within bounds provided in Table II. Table III shows overall costs and computation times for both approaches. Costs are slightly higher for the decomposed method across all configurations, the maximum gap observed between both approaches is 5.23 % .TABLE III: Overall cost C and computation time tc for a two-level decomposition with an increasing number of nodes 
+
+nnodes ,1,r in the second level for every region in comparison to the centralized approach that solves the full optimization problem.                          
+
+> Value nnodes ,1,r = 2 nnodes ,1,r = 3 nnodes ,1,r = 4
+> C[-] (decomposed) 16510 .59 13799 .34 15379 .66
+> C[-] (centralized) 15690 .41 13545 .68 15024 .66
+> g[%] 5.23 1.87 2.36
+> tc(decomposed) [s] 1.65 1.90 2.03
+> tc(centralized) [s] 12 .74 67 .35 161 .13
+
+For the centralized optimization, the runtime increases ex-ponentially with the number of nodes. For instance, placing two workflows on a serverless architecture containing a total of 16 nodes already requires 161 .13 s .In contrast, computation time for the decomposed approach increases logarithmically with node count (linear with respect to the number of levels) due to parallel evaluation of subprob-lems at each level. These findings confirm that decomposition enables efficient scaling toward large architectures while providing accurate approximations to global optimal solutions. There is no clear increase or decrease of the gap between the centralized and decomposed solution with the rising number of nodes, con-firming that the approximation error is not dependent from the number of nodes. The gap instead depends highly on the chosen scenario. For example, a rising number of deployments can allow for a much bigger gap due to the additional degree of freedom to choose workflows for the centralized approach as discussed in Subsection IV-B. For the computation time, we achieve a favorable scaling using the decomposed approach in contrast to the exponential growth in the centralized approach. To further validate scalability benefits, we next increase architectural depth by varying hierarchical levels, thereby enabling substantially larger physical number of nodes. In this scenario, direct comparison against centralized optimiza-tion becomes infeasible since it fails to produce solutions. Instead, we benchmark against a simple heuristic strategy that places all functions on one cloud provider (provider 1). This cloud-only placement serves as a standard baseline in related work [32]. We further note that other heuristic-based approaches, such as [7, 26], address different variants of the serverless placement problem with different assumptions and objectives. Therefore, they are not directly comparable to the decentralized workflow placement setting considered in this work. In our case, it serves as a good heuristic, as blocking because of RAM constraints is reduced as much as possible with this heuristic. In this experiment, we scale from two up to four levels while assuming two regional edge nodes (and again two cloud nodes) initially. Each subproblem contains ten physical nodes per region or provider, consequently total node counts reach 40 , 400 , and 4000 physical devices at successive levels across three test cases. Table IV shows the TABLE IV: Overall cost C and computation time tc for increased number of levels nl and therefore the total number of nodes in the last level nnodes = P 
+
+> r
+
+nnodes ,n l−1,r in the decomposition in comparison to a cloud only heuristic.                           
+
+> Value nl= 2
+> nnodes = 40
+> nl= 3
+> nnodes = 400
+> nl= 4
+> nnodes = 4000
+> C[-] (decomposed) 13873 .43 11294 .04 13591 .81
+> C[-] (heuristic) 16942 .93 12141 .04 13863 .40
+> g[%] 22 .12 7.50 1.99
+> tc(decomposed) [s] 4.85 10 .59 37 .37
+> tc(heuristic) [s] 0.00 0.00 0.00
+
+cost and computation times for the decomposed approach and a cloud-only heuristic for an increased number of levels. It shows that the proposed decomposed approach consistently outperforms this heuristic regarding overall cost. Computation times reveal negligible runtime requirements for heuristics but linear growth for decomposition. This is an expected 12 
+
+outcome since additional levels introduce more parallelizable subproblems rather than sequential dependencies. Overall findings demonstrate that employing optimal place-ment through integer programming becomes feasible even at large scales when combined with practical decomposition strategies and has significant advantages over simple heuris-tics rules. The proposed method thus compromised between theoretical optimality and computational tractability required for realistic serverless environments. 
+
+D. Sensitivity to weight parameters 
+
+Until this subsection, we have evaluated the solution of the placement problem with fixed weights. As described in (1), we consider two competing costs (monetary and time) with the additional utilization cost that in turn reduces the waiting time and therefore again the overall time to run a workflow. Next, we want to verify that monetary and time costs are competing and that the algorithm can be tuned using w1 and w2 to reduce or increase the monetary and basic time costs. Furthermore, we investigate whether increasing the utilization cost factor 
+
+w3 leads to a reduced waiting time and whether it has any impact on the tuning of the basic time and monetary cost. Understanding how varying the relative importance of each cost factor influences overall performance is essential when deciding which objective should receive greater emphasis. Such analyses are commonly conducted through Pareto front evaluation [18]. The Pareto front represents all points in the multi-dimensional cost space for which improvement in one objective necessarily leads to deterioration in at least one other. As proposed in [17], the optimal solution obtained from a weighted-sum formulation, such as the placement problem defined in (1), corresponds to a point located on this Pareto front. To further investigate trade-offs among monetary cost and evaluation time of the workflow, we perform a simulation involving ten workflows deployed on a serverless architecture with attributes given in Table II. This experiment is conducted 0 5000 10000 15000 20000 Money cost M [$] 9000 10000 11000 12000 Basic Time  B [s] 
+
+(a) w3 = 0 .16000 17000 18000 19000 20000 Money cost M [$] 8700 8800 8900 9000 Basic Time  B [s] (b) w3 = 3 .17000 18000 19000 20000 Money cost M [$] 8700 8750 8800 Basic Time  B [s] 
+
+(c) w3 = 6 .17000 18000 19000 20000 Money cost M [$] 8700 8750 8800 Basic Time  B [s] (d) w3 = 9 .
+
+Fig. 8: Pareto fronts for monetary and basic time costs using a weighted sum approach (increase weight w1 for basic time cost, while decrease weight w2 = 1 − w1 for the monetary cost), exemplary for different values of penalization of uti-lization w3.for different weights between the two competing costs (eleven values between zero and one for w1 and w2 = 1 − w1). Additionally, this process is repeated for eleven additional values of w3 between zero and ten. TABLE V: Overall waiting time in seconds evaluated with increased penalization of utilization w3 for different weight combinations w1/w 2 on the Pareto front.                                    
+
+> w3= 0 w3= 1 w3= 2 w3= 3
+> w1= 0 .0; w2= 1 .02246 1568 1568 1568
+> w1= 0 .3; w2= 0 .7283852 1587 1568 1568
+> w1= 0 .6; w2= 0 .4384092 2252 1742 1582
+> w1= 0 .9; w2= 0 .1232362 16224 1817 1804
+
+Figure 8 shows four exemplary Pareto fronts for basic time cost B against the monetary cost M . Each example is done for a specific value of w3 and is generated by increasing the weight for basic time cost w1, while reducing the weight of the monetary cost w2. The Pareto fronts show that both cost factors are competing and can be tuned with w1 and w2 for all values of w3. Additionally, Table V shows the reduced waiting time with increasing w3 for different combinations of 
+
+w1 and w2 for the lower value experiments of w3. Without considering the utilization cost for all combinations of w1 and 
+
+w2, the waiting time is much longer than the basic time T .Even for small values of w3 the waiting time reduces fast and remains stable, demonstrating that the utilization penalty effectively reduces waiting time due to blocking in simulation. 
+
+E. Sensitivity to incorrect model parameters and real world applicability 
+
+Since the proposed algorithm is evaluated in a high-fidelity simulation and not directly on real workflow deployments, we next discuss the real-world applicability of the approach. The main bottleneck for practical deployment is the uncertainty of essential model parameters, such as request rates, execution times, latencies, and resource demands. Many approaches estimate these values in an initial profiling phase before de-ployment [11]. However, these parameters may change during runtime or may be difficult to estimate accurately from short observation windows. We therefore investigate scenarios in which the parameters used in the simulation differ from the parameters assumed in the placement optimization. The placement remains feasible under such deviations, but the resulting solution may become suboptimal. The investigation is conducted on an architecture with two levels and a total of 100 physical nodes, as used in the comparison against the heuristic in Subsection IV-C, with weights chosen as w1 = 0 .5, w2 = 0 .5, w3 = 1 . To analyze the influence of incorrect parameter estimates, we scale one uncertain parameter at a time in the simulation while keeping the value used in the placement problem fixed. We consider four uncertain parameters: the latencies L, the user request rates λ, the allocated RAM, and the runtime of each function. In a first step, we analyze the sensitivity of the simulated cost with respect to these parameter deviations. Figure 9 shows that the simulated cost increases monotonically with 13 0.8 1.0 1.2     
+
+> scale factor
+> 10000 12500 15000 17500 20000 22500 25000
+> Overall cost  C
+> decomposed
+> demand λ
+> runtime latency L
+> RAM nominal placement adapted placement 0.8 1.0 1.2
+> scale factor Overall cost  C
+> heuristic
+
+Fig. 9: Sensitivity analysis for the simulated placement costs for four uncertain parameters: latencies, allocated RAM, func-tion runtimes, and user request rates. Each parameter is scaled in the simulation relative to the value assumed in the placement problem. The comparison is performed against the heuristic introduced in Subsection IV-C. the scaling factor for all investigated parameters. Thus, if the realized parameters are smaller than assumed, the simulated cost decreases, whereas larger realized values lead to higher costs. This behavior is observed for both the decomposed approach and the heuristic baseline. The monotonic response is important for practical deployment, since it indicates that conservative over-approximations of uncertain parameters can be used to obtain more robust placements against worst-case parameter deviations. In a second step, we compare the nominal placement, which is computed using the original parameter estimates, with an adapted placement that is recomputed using the true scaled pa-rameter values. Figure 10 shows that the benefit of re-planning is comparatively small and does not exhibit a clear monotonic trend with the scaling factor. In some cases, adapting the placement to the true parameter values improves the simulated cost, while in other cases the difference is negligible. This behavior is expected, since the utilization term used in the placement problem is a heuristic proxy for the waiting time observed in the stochastic simulation. While the parameters have a significant influence on the cost, there is little than can be done in the optimization to prevent this from happening. Overall, this study show that cost rises monotone with possible uncertain parameters, allowing for worst-case approximations in real world applications to enable robust solutions against parametric uncertainty. Furthermore, the study shows that the difference between choosing the perfect parameters and a deviated estimate is small, further pointing toward real world applicability of the approach. V. C ONCLUSION 
+
+In this work, we present a modeling framework for the optimal placement of workflows in serverless fog computing architectures. The framework jointly models workflow place-ment and selection within the architecture and formulates a nonlinear optimization problem that minimizes both monetary cost and execution time. To address decomposed information and the exponential growth of computational demand with increasing numbers of nodes, we introduce a decomposition −100 0100 200 300 400 
+
+> Cnominal  − Cadapted
+
+decomposed       
+
+> demand λ
+> runtime latency L
+> RAM
+> 0.8 0.9 1.0 1.1 1.2 scale factor
+> −0.5 0.0 0.5 1.0 1.5 2.0 (Cnom  − Cad ) / C ad  [%]
+
+Regret of keeping the nominal placement vs. re-planning 
+
+Fig. 10: Regret of keeping the nominal placement compared with re-planning using the true scaled parameter values. Pos-itive values indicate that re-planning improves the simulated cost. strategy enabling scalable optimization. We demonstrate the advantages of the proposed method compared to a centralized formulation and heuristic baseline, as well as its adaptability through a Pareto analysis of competing cost objectives. Future work will extend the framework toward advanced proba-bilistic online selection strategies and incorporate additional cost factors relevant to practical deployment scenarios, such as workflow cold-start delays and energy consumption of serverless nodes. Additionally, real world application requires adaption to incorrect parameter estimation. Future work will address this challenge through recourse action in the placement problem as well as robust optimization problem formulations that allows to deal with uncertain parameter settings. DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES IN THE MANUSCRIPT PREPARATION PROCESS 
+
+During the preparation of this work the authors used GPT 5.0-5.5 in order to make adjustments to existing text in this paper, as well as small adaptation to coding sections for data storage and figure creation. After using this tool/service, the author(s) reviewed and edited the content as needed and take(s) full responsibility for the content of the published article. 14 
+
+REFERENCES 
+
+[1] Muhamed Alarbi, Robert Belson, and Hanan Lutfiyya. “ECO: edge continuum orchestrator framework for managing serverless chains across the cloud-edge spec-trum”. In: 2024 33rd International Conference on Com-puter Communications and Networks (ICCCN) . 2024. [2] “An efficient mechanism for function scheduling and placement in function as a service edge environment”. In: Journal of Network and Computer Applications 226 (2024), p. 103890. [3] Daniel Barcelona-Pons et al. “On the FaaS Track: Building Stateful Distributed Applications with Server-less Architectures”. In: Proceedings of the 20th Inter-national Middleware Conference . Davis CA USA, Dec. 2019, pp. 41–54. [4] Luciano Baresi et al. “NEPTUNE: A Comprehensive Framework for Managing Serverless Functions at the Edge”. In: ACM Trans. Auton. Adapt. Syst. 19.1 (2024). [5] David Bermbach et al. “AuctionWhisk: Using an auction-inspired approach for function placement in serverless fog platforms”. In: Software: Practice and Experience 52.5 (2022), pp. 1143–1169. [6] Vincenzo De Maio, David Bermbach, and Ivona Brandic. “TAROT: spatio-temporal function place-ment for serverless smart city applications”. In: 2022 IEEE/ACM 15th International Conference on Utility and Cloud Computing (UCC) . IEEE. 2022, pp. 21–30. [7] Chinmaya Kumar Dehury, Shivananda Poojara, and Satish Narayana Srirama. “Def-DReL: Towards a sus-tainable serverless functions deployment strategy for fog-cloud environments using deep reinforcement learn-ing”. In: Applied Soft Computing 152 (2024), p. 111179. [8] Simon Eismann et al. “The State of Serverless Appli-cations: Collection, Characterization, and Community Consensus”. In: IEEE Transactions on Software Engi-neering 48.10 (Oct. 2022), pp. 4152–4166. [9] Tarek Elgamal et al. “Costless: Optimizing Cost of Serverless Computing through Function Fusion and Placement”. In: 2018 IEEE/ACM Symposium on Edge Computing (SEC) . 2018, pp. 300–312. [10] Adrien Gallego et al. “Machine learning inference on serverless platforms using model decomposition”. In: 
+
+Proceedings of the IEEE/ACM 16th International Con-ference on Utility and Cloud Computing . 2023, pp. 1–6. [11] Mohsen Ghorbian, Mostafa Ghobaei-Arani, and Ro-hollah Asadolahpour-Karimi. “Function Placement Ap-proaches in Serverless Computing: A Survey”. In: Jour-nal of Systems Architecture 157 (2024), p. 103291. [12] Gurobi Optimization, LLC. Gurobi Optimizer Reference Manual . 2024. URL : https://www.gurobi.com. [13] Yunshan Jia et al. “FaaSPR: Latency-Oriented Place-ment and Routing Optimization for Serverless Work-flow Processing”. In: IEEE Transactions on Networking 
+
+33.4 (2025), pp. 2063–2078. [14] Shouxi Luo et al. “Efficient and flexible component placement for serverless computing”. In: IEEE Systems Journal 18.2 (2024), pp. 1104–1114. [15] Ashraf Mahgoub et al. “ {SONIC }: Application-aware data passing for chained serverless applications”. In: 
+
+2021 USeNIX annual technical conference . 2021, pp. 285–301. [16] Marcin Majewski, Maciej Pawlik, and Maciej Malawski. “Algorithms for scheduling scientific workflows on serverless architecture”. In: 2021 IEEE/ACM 21st International Symposium on Cluster, Cloud and Internet Computing (CCGrid) . 2021, pp. 782–789. [17] R. Timothy Marler and Jasbir S. Arora. “The weighted sum method for multi-objective optimization: new in-sights”. In: Structural and Multidisciplinary Optimiza-tion 41.6 (June 2010), pp. 853–862. [18] P. Ngatchou, A. Zarei, and A. El-Sharkawi. “Pareto Multi Objective Optimization”. In: Proceedings of the 13th International Conference on, Intelligent Systems Application to Power Systems . Arlington, Virginia, USA, 2005, pp. 84–91. [19] Andrei Palade et al. “A Swarm-based Approach for Function Placement in Federated Edges”. In: 2020 IEEE International Conference on Services Computing (SCC) .2020, pp. 48–50. [20] Tobias Pfandzelter and David Bermbach. “tinyFaaS: A Lightweight FaaS Platform for Edge Environments”. In: 
+
+2020 IEEE International Conference on Fog Computing (ICFC) . Sydney, Australia, Apr. 2020, pp. 17–24. [21] Arokia Paul Rajan. “A review on serverless architec-tures - function as a service (FaaS) in cloud comput-ing”. In: TELKOMNIKA (Telecommunication Comput-ing Electronics and Control) 18.1 (Feb. 2020), p. 530. [22] Ali Raza et al. “Configuration and placement of server-less applications using statistical learning”. In: IEEE Transactions on Network and Service Management 20.2 (2023), pp. 1065–1077. [23] Sashko Ristov and Philipp Gritsch. “FaaSt: Optimize makespan of serverless workflows in federated commer-cial FaaS”. In: 2022 IEEE International Conference on Cluster Computing (CLUSTER) . 2022, pp. 183–194. [24] Alireza Sahraei et al. “XFaaS: Hyperscale and Low Cost Serverless Functions at Meta”. In: Proceedings of the 29th Symposium on Operating Systems Principles .Koblenz Germany, Oct. 2023, pp. 231–246. [25] R. Schultz, L. Stougie, and M. H. Van Der Vlerk. “Two-stage stochastic integer programming: a survey”. In: 
+
+Statistica Neerlandica 50.3 (Nov. 1996), pp. 404–416. [26] Christopher Peter Smith et al. “FaDO: FaaS Functions and Data Orchestrator for Multiple Serverless Edge-Cloud Clusters”. In: 2022 IEEE 6th International Con-ference on Fog and Edge Computing (ICFEC) . 2022, pp. 17–25. [27] M´ ark Szalay, P´ eter M´ atray, and L´ aszl´ o Toka. “Real-Time FaaS: Towards a Latency Bounded Serverless Cloud”. In: IEEE Transactions on Cloud Computing 
+
+11.2 (Apr. 2023), pp. 1636–1650. [28] Mohit Tawarmalani and Nikolaos V. Sahinidis. Con-vexification and global optimization in continuous and mixed-integer nonlinear programming: theory, algo-15 
+
+rithms, software, and applications . eng. Nonconvex Optimization and its Applications Volume 65. Boston, [Massachusetts], 2002. [29] Kan Wang, Jing Ma, and Edmund M-K Lai. “BriskChain: Decentralized function composition for high-performance serverless computing”. In: IEEE Ac-cess 12 (2024), pp. 131313–131322. [30] Luying Wang et al. “SD-SRF: An Intelligent Service Deployment Scheme for Serverless-operated Cloud-Edge Computing in 6G Networks”. In: Future Genera-tion Computer Systems 151 (2024), pp. 242–259. [31] Zhijie Wang et al. “LPCD: A Parallel Candidate De-ployment Strategy in Stateful Serverless Computing With Low Latency”. In: IEEE Transactions on Network and Service Management 22.6 (2025), pp. 5927–5944. [32] Renchao Xie et al. “Workflow Scheduling in Serverless Edge Computing for the Industrial Internet of Things: A Learning Approach”. In: IEEE Transactions on In-dustrial Informatics 19.7 (July 2023), pp. 8242–8252. [33] Zichuan Xu et al. “Stateful serverless application place-ment in MEC with function and state dependencies”. In: IEEE Transactions on Computers 72.9 (2023), pp. 2701–2716. [34] Murat Yilmaz et al. “A Multivocal Literature Review of Function-as-a-Service (FaaS) Infrastructures and Impli-cations for Software Developers”. In: Systems, Software and Services Process Improvement . 2020, pp. 58–75. [35] Xiaofei Yue et al. “HyFaaS: Accelerating Serverless Workflows by Unleashing Hybrid Resource Elasticity”. In: IEEE Transactions on Parallel and Distributed Sys-tems 37.1 (2026), pp. 272–286. [36] Atiya Zahed, Mostafa Ghobaei-Arani, and Leila Es-maeili. “An efficient function placement approach in serverless edge computing”. In: Computing 107.3 (2025), p. 80.

@@ -1,0 +1,363 @@
+Title: Measuring the End-to-End Resilience of Application Deployments in Real-World Communication Networks with DRACO
+
+URL Source: https://arxiv.org/pdf/2608.10611v1
+
+Published Time: Wed, 12 Aug 2026 00:56:07 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+# Measuring the End-to-End Resilience of Application Deployments in Real-World Communication Networks with DRACO 
+
+## Leon Janzen *, Matthias Hollick *, †
+
+*Secure Mobile Networking Lab 
+
+## Technical University of Darmstadt Darmstadt, Germany {ljanzen,mhollick}@seemoo.tu-darmstadt.de 
+
+†Secure Mobile Systems Group 
+
+## IMDEA Networks Institute Madrid, Spain matthias.hollick@networks.imdea.org August 12, 2026 
+
+Abstract 
+
+Billions of users take Internet connectivity for granted and use it daily to ac-cess applications deployed anywhere around the globe. What users perceive as a seamless connection between their end device and the application server involves a complex system of systems operated by various actors. Failures in any of these systems disrupt user-to-application connectivity if the communication network is not resilient. Since communication networks are a critical infrastructure as part of information and communication technology (ICT), real-world operators rarely disclose information about them. This makes it difficult to measure the end-to-end resilience of deployments, because it requires guessing topologies and the avail-ability of the involved systems. This paper presents DRACO, a framework for modeling communication net-works and measuring end-to-end resilience of application deployments. It enables configuring application deployments across arbitrary communication networks and evaluating their availability, robustness, and resilience. We demonstrate the func-tional scope of DRACO by modeling nationwide application deployments in Ger-many and France, highlighting its compatibility with a wide variety of public data sources and synthetic data. 
+
+# 1 Introduction 
+
+The Internet is a global communication network that enables users to connect to appli-cation servers hosted as far as at the other end of the planet within milliseconds. When 1arXiv:2608.10611v1 [cs.NI] 11 Aug 2026 all systems involved in establishing Internet connections are available, users perceive Internet connectivity as seamless. However, that relies on the availability of a complex system of systems operated by various actors, e. g., the data center hosting the avail-able application server and a sequence of hops from the user to the application server through the global network of terrestrial and submarine Internet transport cables [18, 32]. Failures in any of these systems disrupt user-to-application connectivity if the com-munication network is not resilient. In line with the dimensions of the Internet, there are countless definitions for the resilience of individual aspects of communication net-works, ranging from the fault tolerance of electronic components to the resilience of cellular systems [31]. The aspect we examine in this work is the end-to-end connectiv-ity from users to applications in communication networks. Our first research question aims to define and measure the resilience of application deployments: Research Question 1. How can the end-to-end resilience of application deployments be defined and measured? The deployment strategy of an application affects the number of locations where it is hosted. End-to-end connections from users to an application can terminate at any of these server locations, and modern high-availability deployments feature server replicas in different regions to improve reliability through cloud and edge computing. Section 2 establishes a system model for communication networks with a focus on the user-to-application connectivity. We introduce definitions for the connectivity, availability, util-ity, robustness, and resilience of application deployments. Then, we propose a method for measuring an app’s end-to-end resilience based on these metrics. Modeling realistic application deployments in communication networks is hard because public operator-verified topology and usage information are scarce, as they conflict with the safety and business interests of the involved actors. Data on the physical locations of core Internet infrastructure is generally not public because most parts of the Internet are considered critical infrastructure, making it undesirable to disclose the exact locations of Internet sites and cables. This leaves researchers to assume and simulate information that only real-world operators can verify, making it difficult for researchers to model realistic application deployments. We address this problem with our second research question: Research Question 2. How can application deployments in communication networks be modeled realistically with public data? In Section 3, we present DRACO, a framework for modeling communication net-works and measuring the end-to-end resilience of application deployments within them. DRACO enables the research community to configure application deployments in com-munication networks using public data sources or their own data. It facilitates the eval-uation of our end-to-end resilience metric and is easily extensible to incorporate further metrics that measure other aspects of user-to-application connectivity in communica-tion networks. We conduct two case studies, investigating the resilience of mobile mes-sengers in France (Section 4) and the resilience of cellular connectivity in Germany 2time    
+
+> challenge resilience =robustness over time
+> robustness = utility during a challenge
+> utility =fraction of successful user connections
+
+Figure 1: Utility, Robustness, and Resilience during Challenges. 
+
+(Section 5). These case studies demonstrate how researchers can use DRACO with a combination of public data and synthetic data to model communication networks and evaluate application deployments within them. We will publish the source code of DRACO and the data to reproduce our findings upon the acceptance of this paper. 
+
+# 2 System Model 
+
+Communication networks can be regarded from different perspectives and modelled in many ways [8, 17, 21, 28]. Our own interpretation best aligns with that of Janzen et al. [28], which we adapt to the context of our scenario: A communication network is a multi-actor system of systems that enables connec-tivity between users and applications. Connectivity involves numerous systems under the control of multiple actors who have to cooperate to provide communication as an end-to-end service. A resilient communication network is prepared to face challenges 
+
+that affect systems, withstand them, and prevent most challenges from causing utility 
+
+degradation. Figure 1 visualizes our interpretation of resilience and its relation to utility, chal-lenges, and robustness. The service provided by communication networks is the end-to-end connectivity between users and application servers. The utility of that service is the quota of successful user-to-application connections, i. e., the fraction of users that successfully access their desired application through the communication network. The following definitions of availability, robustness, and resilience align with International Organization for Standardization (ISO) [26], the National Institute of Standards and Technology (NIST) [46], and the International Telecommunication Union Telecommu-nication Standardization Sector (ITU-T) [27]. End-to-end connectivity involves many systems, and the availability of a system is the (theoretical) probability that a system provides its intended service at any given time. The robustness of a system translates its availability into practice, i. e., it determines the level to which a system provides its 3Notation Description 
+
+Topology 
+
+𝑣 ∈  Areas in the communication network 
+
+𝑒 ∈  Links connecting the areas 
+
+ = ( , ) Graph representing the network topology 
+
+𝑟 ∈  Routes between the areas Systems 
+
+𝑠 ∈  Application servers that users connect to 
+
+ℎ ∈  data centers hosting application servers 
+
+𝑧 ∈  =  ∪  ∪  Systems of the communication network Actors 
+
+𝑑 ∈  Application developers operating applications 
+
+𝑜 ∈  Network operators operating connections 
+
+𝑝 ∈  Cloud/Edge providers hosting data centers 
+
+𝑦 ∈  =  ∪  ∪  The set of all actors Traffic 
+
+𝑎 ∈  Applications 
+
+𝑢 ∈  Users 
+
+𝑣 , 𝑎 , 𝑣,𝑎 Users in an area, of an app, and both 
+
+𝑐 ∈ (𝑣, 𝑎 ) Connections of an area to an application Chall 𝑥 ∈  Challenges to the availability of the application 
+
+𝑡 ∈  Timeslots in which challenges occur Metrics 
+
+𝛼 ∶  ∪  → [0 , 1] Availability 
+
+𝜎 ∶  ∪  → [0 , 1] Utility 
+
+𝜔 ∶  ∪  → [0 , 1] Robustness 
+
+𝜌 ∶  ∪  → [0 , 1] Resilience Table 1: System Model. Notation of variables and functions. intended purpose at a specific time under specific circumstances. These circumstances can include challenges that cause failures in the communication network, potentially disrupting connectivity between users and applications. The resilience accounts for a system’s preparedness for arbitrary challenges, measuring its robustness over time. 
+
+## 2.1 Notation 
+
+Table 1 shows the entire system model notation relevant for our work. The graph 
+
+ = ( , ) describes the topology of the communication network. Areas 𝑣 ∈  have geographic locations that we use to calculate link lengths and to visualize the commu-nication network. Each link 𝑒 ∈  connects two areas. Data centers ℎ ∈  are located in an area, and servers 𝑠 ∈  are hosted in data centers. Communication networks are complex systems of systems operated by multiple actors, all of whom play a role in con-necting users to applications. Application developers operate and deploy applications within the communication network. Users access applications via the communication network. Cloud and edge providers operate data centers, where application servers are hosted. Network operators maintain links to connect users across areas. Each applica-4tion is deployed across a set of application servers hosted in a subset of the available data centers. In each area, users access applications. 
+
+## 2.2 Application Deployment Resilience 
+
+Let (𝑣 𝑠 , 𝑣 𝑡 ) denote all inter-area routes that connect source area 𝑣 𝑠 and target area 𝑣 𝑡 .We define routes as loop-free lists of links, where the first link starts from 𝑣 𝑠 and the last link ends in 𝑣 𝑡 . Next, we introduce end-to-end connectivity, which describes the potential routes that user traffic can take to the app. The end-to-end connectivity of the users accessing application 𝑎 from area 𝑣 is the set of routes that connect them to any area where an application server 𝑠 𝑎 is hosted: 
+
+(𝑣, 𝑎 ) = ⋃
+
+> 𝑣 𝑎 ∈𝑎
+
+(𝑣, 𝑣 𝑎 ), (1) where 𝑎 ⊆  models the areas where a server of application 𝑎 is hosted. A system’s utility 𝜎 (𝑧 ) is the degree to which the system 𝑧 accomplishes its desig-nated functions [26]. For instance, the function of an inter-area link is to connect users and applications across two areas, the function of a data center is to provide access to application servers, and the function of an application server is to provide users with access to an app. Let 𝜎 (𝑣, 𝑎 ) model whether the users in area 𝑣 can access application 
+
+𝑎 . This allows us to model the end-to-end utility of applications based on the fraction of users who can access them. The end-to-end utility of an application 𝑎 is the quota of successful user connections: 
+
+𝜎 (𝑎 ) = 1
+
+𝑎 
+
+⋅ ∑
+
+> 𝑣 ∈
+
+𝑣,𝑎 ⋅ 𝜎 (𝑣, 𝑎 ), (2) where 𝜎 (𝑣, 𝑎 ) models whether users in area 𝑣 can access application 𝑎 .A system’s availability is the probability that it accomplishes its designated func-tions at any given time [26]. The availability of link 𝑒 is the chance that it connects users across areas at an arbitrary point in time. Let 𝛼 (𝑧 ) denote the availability of sys-tems 𝑧 ∈  in the communication network, e. g., 𝛼 (𝑒 ) for links, 𝛼 (ℎ) for data center, and 𝛼 (𝑠 ) for application servers. Let 𝛼 (𝑟 ) = ∏𝑒 ∈𝑟 𝛼 (𝑒 ) denote the availability of route 
+
+𝑟 as the probability that all links of the route are available. We model the end-to-end availability of an application 𝑎 for the users in area 𝑣 as 
+
+𝛼 (𝑣, 𝑎 ) = 1 − ∏
+
+> 𝑟 ∈(𝑣,𝑎 )
+
+(1 − 𝛼 (𝑟 ) ⋅ 𝛼 (ℎ) ⋅ 𝛼 (𝑠 𝑎 ))
+
+where ℎ is the data center at the end of route 𝑟 , and 𝑠 𝑎 the server of application 𝑎 
+
+that is hosted in data center ℎ. The calculation of 𝛼 (𝑣, 𝑎 ) is based on the complement 5probability that there is no available route to an area with an available application server. We generalize this definition from individual areas to the entire network: The end-to-end availability of an application 𝑎 describes the probability that any user can access the application from any area at any point in time: 
+
+𝛼 (𝑎 ) = 1
+
+𝑎 
+
+⋅ ∑
+
+> 𝑣 ∈
+
+𝑣,𝑎 ⋅ 𝛼 (𝑣, 𝑎 ) (3) A challenge causes systems to fail for a number of timeslots [26]. In every timeslot, users try to access applications, and the end-to-end utility of the application deployment captures the fraction of successful user-to-application connections. The end-to-end ro-bustness of application deployments captures their utility during a timeslot with an ac-tive challenge. We consider robustness to be the degree to which a system or component can function correctly in the presence of challenges [26]. We model the robustness of system 𝑧 ∈  to challenge 𝑥 ∈  as 
+
+𝜔 (𝑧, 𝑥 ) = 
+
+{
+
+1 if 𝑧 provides its service during 𝑥 
+
+0 if 𝑧 does not provide its service during 𝑥. 
+
+We model the robustness of application 𝑎 to challenge 𝑥 for the users in area 𝑣 as 
+
+𝜔 (𝑣, 𝑎, 𝑥 ) = 1 − ∏
+
+> 𝑟 ∈(𝑣,𝑎 )
+
+(1 − 𝜔 (𝑟, 𝑥 ) ⋅ 𝜔 (ℎ, 𝑥 ) ⋅ 𝜔 (𝑠 𝑎 , 𝑥 ))
+
+where ℎ is the data center at the end of route 𝑟 , the server 𝑠 𝑎 is hosted in data center 
+
+ℎ, and 𝜔 (𝑣, 𝑎, 𝑥 ) models whether users in area 𝑣 can access application 𝑎 in the face of challenge 𝑥 . Finally, we derive the robustness of applications 𝑎 to challenge 𝑥 :The end-to-end robustness of an application 𝑎 to challenge 𝑥 describes the quota of users in the communication network who wish to access the application 𝑎 and can successfully do so in the face of challenge 𝑥 :
+
+𝜔 (𝑎, 𝑥 ) = 1
+
+𝑎 
+
+⋅ ∑
+
+> 𝑣 ∈
+
+𝑣,𝑎 ⋅ 𝜔 (𝑣, 𝑎, 𝑥 ) (4) For the notion of resilience , we consider applications deployed in a communication network over a period of time  = [ 𝑡 0, 𝑡 1, … , 𝑡 | |−1 ], modeled as a sequence of times-lots. All aforementioned metrics can be measured for individual timeslots. In contrast, resilience measures a system over a sequence of timeslots. 6DRACO CN Model 
+
+> areas, links, centers
+
+App Model 
+
+> servers, users
+
+Challenge Model 
+
+> challenges, failures
+
+Configuration 
+
+> timeslots, routing
+
+Graph Representation 
+
+> nodes, edges, attributes
+
+E2E Connectivity 
+
+> Equation 1
+
+E2E Utility 
+
+> Equation 2
+
+E2E Availability 
+
+> Equation 3
+
+Failure Simulation 
+
+> challenge-affected + random failures
+
+E2E Robustness 
+
+> Equation 4
+
+E2E Resilience 
+
+> Equation 5
+
+Figure 2: Evaluation Workflow. Users upload a configuration with models for a com-munication network (CN), an application deployment, and challenges, and DRACO calculates the end-to-end metrics defined in Equations (1) to (5). The end-to-end resilience of an application 𝑎 is the level to which it withstands arbi-trary challenges 𝑥 and remains accessible for users during the affected timeslots: 
+
+𝜌 (𝑎, 𝑥,  ) = ∫ 
+
+> 𝑡 ||−1
+> 𝑡 0
+
+𝜔 (𝑎, 𝑡 ) 𝑑𝑡, (5) where 𝜔 (𝑎, 𝑡 ) measures the robustness of 𝑎 to challenges 𝑥 in timeslot 𝑡 .
+
+# 3 DRACO: An End-to-End Resilience Measurement Frame-work 
+
+We present a resilience measurement framework DRACO. 1 It enables users to model communication networks, deploy applications within them, and measure their end-to-end availability, utility, robustness, and resilience under various challenges. 
+
+## 3.1 Workflow 
+
+Figure 2 visualizes the workflow to evaluate scenarios with DRACO. First, the user up-loads files that specify the communication network, with its areas, links, and data center 
+
+> 1
+
+DRACO is an anagram of “connectivity resilience of application deployments” 
+
+7Case Study 1 (France) Case Study 2 (Germany) 
+
+Areas 19 metropolitan areas a 42 cities Links a 39 physical fiber links b 123 physical fiber links b
+
+data centers 7 data centers c 17 data centers c
+
+Applications 6 messengers a 3 fictive 5G systems Deployments 1 server per application 1,4,11 servers per application Users Reported application traffic a Derived from population Timeslots One day (96 15-min slots) a One day (96 15-min slots) 
+
+> a NetMob [35] b iGDB [7] c AWS [4], Cloudflare [14], GCP [22], Meta [37]
+
+Table 2: Input Data. Data sources used in our case studies. locations, and the application deployment, with application servers and users per area. DRACO processes the user input and generates an intermediary graph representation of areas ( nodes ) and links ( edges ). The node attributes model the data center locations, application servers, and the application users per area, as well as the availability of data centers and application servers. The edge attributes model the links’ distances and their availability. Then, the user uploads files that specify the scenario, i. e., challenges and timeslots. DRACO processes the user input and starts the failure simulation. For each timeslot, active challenges are evaluated to determine the affected systems. Systems affected by a challenge are simulated to fail in that timeslot. For unaffected systems, DRACO conducts probabilistic testing based on the system’s availability to determine whether it fails in that timeslot. DRACO displays the measurement results, visualiza-tions of the intermediate graph representation, and graph-related metrics with interpre-tation guidelines. The following two sections demonstrate DRACO’s functionality and its support for a wide range of input data sources by conducting two case studies. We evaluate the resilience of two scenarios: mobile applications in France (Section 4) and cellular connectivity in Germany (Section 5). 
+
+# 4 Case Study: Mobile Messaging in France 
+
+Table 2 summarizes the data sources integrated into both case studies We choose the application category messengers because messaging is one of the most prominent use cases for mobile applications during everyday life and in crisis situations [29]. 
+
+## 4.1 Input Data 
+
+We use two main data sources, NetMob [35] and iGDB [7], to model mobile application usage in France. In 2023, Orange published the NetMob23 dataset as part of a data challenge. It contains real-world mobile traffic data from 68 applications, collected in 20 French cities over 77 days in April and May 2019. NetMob has a geospatial resolution 8of 100 m × 100 m tiles and a temporal resolution of 15-minute timeslots, and iGDB combines the physical and logical areas of the Internet, reporting real-world transport links connecting physical nodes and combine them with Internet Protocol (IP)-level and autonomous system (AS)-level information. Since iGDB does not report connections from the city of Metz, we omit this area to achieve a connected communication network. We use the remaining 19 NetMob metropolitan areas and aggregate the NetMob traffic data per city to estimate the number of application users per area. We use iGDB to extract real-world links that exist between the NetMob cities. We searched online for the European data center networks of major cloud and edge providers, i. e., AWS [4], 
+
+Cloudflare [14], GCP [22], and Meta [37], which together operate seven data centers in France. We select six messengers, Apple iMessage , Facebook Messenger , Skype ,
+
+Snapchat , Telegram , and WhatsApp , from the 68 NetMob applications. We assign each data center to the closest area and simulate the deployment of application servers of these messengers across the data centers. Note how the available public datasets allow us to choose real-world approximations for the areas, links, data centers, and users of this example. As a result, we have to simulate only the deployment locations of the application servers. For instance, we simulate an Apple iMessage server in the AWS data center of Marseille, a Facebook Messenger server in the Cloudflare data center of Lyon, and a Snapchat server in the Cloudflare data center of Bordeaux. To study the robustness of the modeled application deployments, we simulate an at-tack on France that challenges the availability of the deployed messengers. At 12:00, we simulate a targeted Denial-of-Service (DoS) attack on the physical Internet infrastruc-ture around Paris, destroying all links from Paris to the south of France. We simulate a recovery of the links to Marseille, Lyon, and Dijon at 13:00, to Montpellier at 15:00, and to Bordeaux, Rennes, Nantes, Le Mans, and Tours at 19:00. 
+
+## 4.2 Interpretation of the DRACO Results 
+
+Figure 3 visualizes the intermediate graph representation of DRACO that shows the NetMob metropolitan areas with real-world data center locations marked with red cir-cles and the iGDB physical Internet connections between areas. Figure 4 depicts the availability of selected messengers from the perspective of users in Saint-Étienne. The depicted routes show the shortest paths. DRACO calculates the end-to-end availability of each messenger from Saint-Étienne as defined in Equation (3) with the following selected results: The end-to-end availability of iMessage, Facebook Messenger, and Snapchat for the users in Saint-Étienne is 0.9966 , 0.9993 , and 0.9939 , respectively. An app’s utility translates the theoretical availability into practice by probabilistic probing to determine whether the systems of the communication network are functional during a timeslot. The utility of an application drops below one when a system in the communication network is unavailable, as shown as noise in Figure 5. DRACO determines the failure chances in the absence of challenges with probabilistic probing, considering the system’s availability. An app’s robustness measures its utility in the face of a challenge. The Skype and WhatsApp servers are hosted in Paris, which explains the low robustness of these applications against the DoS attack on Paris visible in Figure 5. In contrast, applications with servers hosted outside of Paris, such as Snapchat, show higher robustness against the simulated attack. An app’s resilience measures its utility 9PMLBFigure 3: French Internet Topology. A map of cities ( ⦁) connected by fiber links (beige lines). Cities marked in blue ( ⦁) have local data centers ( ◾). user 
+
+Saint-Etienne Marseille Lyon Clermont-Ferrand Bordeaux 
+
+AWS Cloudflare Cloudflare 
+
+iMessage FB Messenger Snapchat    
+
+> 0.9966 0.9993 0.9983 0.9963 0.9999 0.9999 0.9999 0.9999 0.9999 0.9999
+
+Figure 4: End-to-end Availability (Case Study 1). How users from Saint-Etienne access selected messengers. 10 00:00 01:00 02:00 03:00 04:00 05:00 06:00 07:00 08:00 09:00 10:00 11:00 12:00 13:00 14:00 15:00 16:00 17:00 18:00 19:00 20:00 21:00 22:00 23:00 
+
+Time 
+
+> 0.2 0.4 0.6 0.8 1.0
+> End-to-end utility
+> Application
+> Apple_iMessage Facebook_Messenger Skype Snapchat Telegram WhatsApp
+
+Figure 5: End-to-end Resilience (Case Study 1). The simulated attack on Paris leads to utility degradation visible from 12:00 to 19:00. The line plot shows the mean and 95% confidence interval. over time, capturing its robustness against arbitrary challenges. DRACO calculates the end-to-end resilience as defined in Equation (5), with the following results: The end-to-end resilience of the simulated deployments of Apple iMessage, Facebook Messenger, and Snapchat is 0.9769 , 0.9589 , and 0.9682 , respectively. 
+
+# 5 Case Study: Cellular Cores in Germany 
+
+The goal of this case study is to evaluate the resilience of different 5G core deployment strategies. Cellular networks heavily rely on a cellular core system that handles all control-plane tasks and connects mobile users to the Internet [1]. With the transition from fourth generation of cellular network technology (4G) to 5G, the cellular core has become cloud-native and can be hosted in arbitrary data centers. This invites modeling 
+
+5G cores as applications that are deployed within a country’s communication network. Since cellular networks are critical infrastructure in most countries, mobile network operators (MNOs) do not disclose their network topologies or user traffic data. Amini et al. [5] reviewed publicly available cellular datasets, but none of them are applicable to this scenario. Therefore, we can use this case study to demonstrate how our resilience measurement framework supports synthetic and simulated data. Table 2 summarizes the data sources integrated into this example. 
+
+## 5.1 Input Data 
+
+We use the Python package geonamescache to select and model the major German cities with at least 100000 inhabitants as areas. We use the iGDB project to select and model real-world links between these areas. German MNOs operate 17 data centers in 11 SNLHHH FEDBFigure 6: German Internet Topology. A map of cities ( ⦁) connected by fiber links (beige lines). Cities marked in blue ( ⦁) have local data centers ( ◾). user 
+
+Würzburg Frankfurt Nürnberg Berlin 
+
+Telekom AWS Cloudflare Cloudflare 
+
+H-5G C-5G R-5G H-5G 
+
+Figure 7: End-to-end Robustness (Case Study 2). Simulated 5G systems with central (C-5G), high-availability (H-5G), and island-ready (R-5G) deployments. 12 00:00 01:00 02:00 03:00 04:00 05:00 06:00 07:00 08:00 09:00 10:00 11:00 12:00 13:00 14:00 15:00 16:00 17:00 18:00 19:00 20:00 21:00 22:00 23:00 
+
+Time   
+
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> End-to-end utility
+> Application
+> H-5G C-5G R-5G
+
+Figure 8: End-to-end Resilience (Case Study 2). Simulated 5G networks in Germany with simulated data center outages in Frankfurt (06:00 - 11:00) and Munich (14:00 -16:30). The line plot shows the mean and 95% confidence interval. Germany, as Internet service providers (ISPs) increasingly offer multi-access edge com-puting (MEC) on their own edge infrastructure. For instance, Telekom operates five and plans to build at least 10 further edge data centers in Germany in 2026 [48], Telefoni-ca/O2 operates 12 data centers [41], and Vodafone uses AWS Wavelength [38]. We map these data center locations to the closest area. For the application servers, we model three hypothetical German cellular networks to simulate different variants of cellular core deployments: C-5G only features a central core hosted in the AWS data center in Frankfurt, H-5G features a high-availability core with replicas in four data centers (Frankfurt, München, Düsseldorf, Hamburg), and R-5G features an island-ready 5G core with one replica in all areas with a data center (Hannover, Essen, Leverkusen, Stuttgart, Nürnberg, Leipzig, Berlin, and the aforementioned locations). According to related work, H-5G resembles today’s typical 5G deployments [43] and R-5G imple-ments a proposed design for resilient 5G deployments [28]. We use the population of these cities as a proxy for the number of cellular users and consider two targeted attacks on German data centers: All data centers in Frankfurt fail between 06:00 and 11:00, and all data centers in München fail between 14:00 and 16:30. This affects the Frankfurt data centers of all 5G deployments, and those of H-5G and R-5G in München. 
+
+## 5.2 Interpretation of the DRACO Results 
+
+Figure 6 shows the intermediate graph representation of the German Internet as a com-munication network of interconnected areas with data center locations marked with red circles. Figure 7 depicts the robustness of Würzburg during the simulated attack on Frankfurt. The only C-5G core is hosted in the AWS data center of Frankfurt, which is not accessible from Würzburg because all Internet links to Frankfurt have failed. The H-5G core in Frankfurt is inaccessible for the same reason, but the H-5G users in 13 Würzburg can instead access the H-5G core in Berlin, which is accessible via Nürn-berg. The closest C-5G core to Würzburg is hosted in Nürnberg, so the C-5G users in Würzburg are unaffected by the failure of the Frankfurt C-5G core. In contrast, the simulated attack on München has little effect on C-5G. The end-to-end resilience of the simulated 5G deployment are 0.7899 for C-5G , 0.9164 for H-5G , and 0.9692 for R-5G .This measures the deployments’ robustness against arbitrary challenges, specifically the two simulated attacks on Frankfurt and München in this case study, visible in Figure 8. 
+
+# 6 Discussion 
+
+The pain point in conducting security and resilience research in the realm of critical in-frastructure is the lack of public operator-verified information, which forces researchers to make assumptions whose accuracy only real-world actors can verify. We address this issue by designing DRACO to be usable with public real-world data and with synthetic data. 
+
+## 6.1 Data Availability 
+
+The Internet is a complex network of networks with physical points of presence (PoPs) all around the globe and links spanning land, sea, and space. On top of that, the Internet comprises logical networks of networks, such as IP networks and ASs. 
+
+Datasets Researchers can use iGDB to link the logical and physical layers of the In-ternet [7]. It builds on public locations and transport network routes, such as PoPs, Internet exchange points (IXPs), submarine cables, and their landing sites. They inter-polate connections between sites based on other critical infrastructure networks, such as roads, rails, and power lines. 
+
+Topology Generators Decades of research on Internet topologies produced a multi-tude of topology generators, starting with Waxman random graphs [49] and power-law generators [3]. There are topology generators focusing on the physical Internet, such as HOT [33] for router-level topologies and COLD [9] for PoP-level topologies. For the logical Internet, there are AS-level topology generators, such as INET [50], Real-NET [12], and Chang et al. [11]. In addition, IGEN [44] generates IP-level topologies. 
+
+POBTOG [43] allows researchers to generate country-wide communication network topologies based on population density. 
+
+Data Center Locations Most hyperscalers publish locations where they operate cloud data centers, e. g., AWS [4], Cloudflare [14], GCP [22], and Meta [37]. In addition, an increasing number of MNOs and ISPs operate data centers, e. g., Telekom [48] and Telefonica/O2 [41] in Germany. Together with the DRACO source code, we will pub-lish the German and French data center locations we identified for the case studies in Sections 4 and 5. 
+
+14 Application Deployments The server infrastructure of most applications is not pub-licly known, but related work offers tools to explore the cloud usage of individual ap-plications, e. g., CloudAnalyzer by Henze et al. [25] and the MATAdOR framework by Scheitle et al. [47]. With the NetMob23 data challenge [35], Orange provided a dataset reporting uplink and downlink traffic for 68 mobile applications collected across 20 French cities over a period of 77 days in 2019. However, NetMob was only shared with participants of the data challenge and is not publicly available. The MIRAGE-APPxACT-2024 dataset [23] features traffic traces from many Android applications, including the messengers studied in our case study of mobile messaging in France. In addition, the MopEye dataset [51] features crowdsourced measurements of Android ap-plications. 
+
+Challenges There are datasets reporting on past natural disasters, such as tropical storms [42], earthquakes [19], and EM-DAT [10] reporting general disasters. Clare et al. [13] investigate potential challenges for Internet infrastructure caused by climate change, and Jyuoti et al. [30] study potential solar superstorms. Combining these with geographic models of the earth, e. g., a global relief model [16], allows simulating nat-ural disasters as challenges. 
+
+Answers to our research questions. Our end-to-end resilience metric measures the area under the end-to-end robustness graph that plots the quota of successful user-to-application connections over time. This definition accounts for an application de-ployment’s average utility over time, its robustness against arbitrary challenges, and the recovery speed after challenges (RQ 1). Our resilience measurement framework, DRACO, allows the configuration of real-world communication networks. The case studies of Sections 4 and 5 demonstrate DRACO’s compatibility with a wide variety of public data sources (RQ 2). 
+
+## 6.2 Related Work 
+
+This paper makes contributions in two realms: We introduced a definition and metric for the end-to-end resilience of applications (RQ 1) and developed a resilience measure-ment framework that implements it (RQ 2). Additionally, we demonstrated DRACO’s functionality with two case studies. The resilience metric closest to our work is Giotsas et al. [20] that analyzes the route resilience of the Internet from a cloud provider’s perspective. Their robustness definition is the system’s ability to withstand a certain challenge with limited perfor-mance degradation, which closely resembles our own definition. They define Internet resilience as the network’s ability to maintain diverse, secure routing paths under stress. In contrast, we define end-to-end resilience as successful user-to-app connections over time, adding a user-centric perspective that differentiates our metric from related work. The measurement framework closest to our work is Xaminer , presented by Ra-manathan et al. [45], that analyzes the impact of physical-layer failures on the network-layer of the Internet. They do not provide a specific resilience definition, but report 15 the percentage of IP traffic that fails due to physical cable failures when addressing resilience against outages. Most prominently, our framework DRACO supports con-figuring arbitrary communication networks and application deployments within them, exceeding the functionality of Xaminer .There exist related studies of communication networks facing individual challenges, such as wildfires [6], earthquakes [36], solar superstorms [30], climate change in gen-eral [15], and electromagnetic pulse attacks [39, 40]. In addition, there are case studies of the Internet during previous natural disasters, such as Heidemann et al. [24] and Aben [2], which report on network outages and routing recovery during Hurricane Sandy, respectively, and Liu et al. [34] analyzing inter-domain rerouting after the Japan Earthquake. 
+
+## 6.3 Limitations and Future Work 
+
+This paper includes two case studies in Sections 4 and 5, but their purpose is to sup-port the contributions of our work rather than evaluate the specific simulated scenarios. With our case studies, we demonstrate which insights our availability, robustness, and resilience metrics can provide. We publish DRACO as open-source software under the MIT license to facilitate future work and are curious to see the potential of DRACO when it is applied to support the evaluation in future case studies. For more complex use cases, we designed DRACO to be extensible and implemented all metrics modu-larly, so adding new metrics is straightforward. Doing so only requires implementing the metric as a Python function based on our intermediary graph representation of the scenario, and adding a streamlit container that displays the measurement on the web app. In Section 6, we discuss selected data sources and tools to generate synthetic data that can be integrated into DRACO. However, the landscape of data sources and tools is constantly evolving, as the resilience of critical infrastructure is still a hot topic. We designed DRACO to flexibly support models of real-world communication networks, applications, and challenge scenarios. It expects input data as text files, which can be generated from most available data sources and tools. 
+
+# 7 Conclusions 
+
+This paper contributes to the resilience of critical infrastructures with three main con-tributions: First, we introduce definitions and metrics that capture the end-to-end avail-ability, utility, robustness, and resilience of application deployments (RQ 1). Second, we survey data sources for communication networks, application deployments, and challenges, identifying many datasets and tools that allow researchers to model custom scenarios. Third, we implement these metrics in our resilience measurement frame-work DRACO that enables users to model application deployments within communi-cation models and simulate challenges to measure their resilience (RQ 2). It supports the configuration of communication networks, applications, and challenges as input, making it compatible with a wide range of data sources. We conduct two case stud-ies to demonstrate the functionality of DRACO and highlight the applicability of our 16 end-to-end resilience definition. These case studies showed how DRACO can be used to model and evaluate a wide range of scenarios based on public and synthetic data. We hope that the research community profits from DRACO to measure the resilience of applications in future work. 
+
+# Availability 
+
+Upon the acceptance of this paper, we will publish DRACO as open-source software to facilitate future work. DRACO is easily extensible, allowing future work to integrate additional metrics. In addition, we will publish the input data used for the case studies to enable the reproduction and verification of our evaluation. 
+
+# Acknowledgments 
+
+This work was supported by the Federal Ministry of Education and Research of Ger-many in the project Open6GHub (grant number: 16KISK014), by the Federal Min-istry of Research, Technology and Space of Germany in the project Open6GHub+ (grant number: 16KIS2407), and by the LOEWE initiative (Hesse, Germany) within the emergenCITY center [LOEWE/1/12/519/03/05.001(0016)/72]. Parts of our research were performed using data made available by Orange within the Netmob 2023 Chal-lenge [35]. 
+
+# References 
+
+[1] 3rd Generation Partnership Project (3GPP). System Architecture for the 5G Sys-tem (5GS) . Technical Specification 3GPP TS 23.501. 3rd Generation Partnership Project (3GPP), 2025. [2] Emile Aben. RIPE Atlas: Hurricane Sandy and How the Internet Routes Around Damage . URL : https://labs.ripe.net/author/emileaben/ripe-atlas -hurricane-sandy-and-how-the-internet-routes-around-damage/ .[3] William Aiello, Fan Chung, and Linyuan Lu. “A Random Graph Model for Power Law Graphs”. In: Experimental Mathematics (2001). [4] Amazon Web Services. Global AWS Infrastructure . URL : https://aws.amazo n.com/de/ .[5] Maryam Amini, Razvan Stanica, and Catherine Rosenberg. “Where Are the (Cel-lular) Data?” In: ACM Computing Surveys (2024). [6] Scott Anderson, Carol Barford, and Paul Barford. “Five Alarms: Assessing the Vulnerability of US Cellular Communication Infrastructure to Wildfires”. In: 
+
+Proceedings of the ACM Internet Measurement Conference . 2020. [7] Scott Anderson et al. “iGDB: Connecting the Physical and Logical Layers of the Internet”. In: Proceedings of the 22nd ACM Internet Measurement Conference .2022. DOI : 10.1145/3517745.3561443 .17 [8] Patrick Bolton and Mathias Dewatripont. “The Firm as a Communication Net-work”. In: The Quarterly Journal of Economics (1994). DOI : 10.2307/211834 9.[9] Rhys Bowden, Matthew Roughan, and Nigel Bean. “COLD: PoP-level Network Topology Synthesis”. In: Proceedings of the 10th ACM International Conference on Emerging Networking Experiments and Technologies . 2014. [10] Centre for Research on the Epidemiology of Disasters. EM-DAT: The Interna-tional Disaster Database . URL : https://www.emdat.be .[11] Hyunseok Chang, Sugih Jamin, and Walter Willinger. “To Peer or Not to Peer: Modeling the Evolution of the Internet’s AS-level Topology”. In: Proceedings IEEE INFOCOM 2006 . 2006. [12] Lechang Cheng, Norm C Hutchinson, and Mabo R Ito. “RealNET: A Topology Generator Based on Real Internet Topology”. In: 22nd International Conference on Advanced Information Networking and Applications – Workshops . 2008. [13] M.A. Clare et al. “Climate Change Hotspots and Implications for the Global Sub-sea Telecommunications Network”. In: Earth-Science Reviews (2023). [14] Cloudflare. The Global Cloudflare-Network . URL : https://www.cloudflare .com/de-de/network/ .[15] Ramakrishnan Durairajan, Carol Barford, and Paul Barford. “Lights Out: Cli-mate Change Risk to Internet Infrastructure”. In: Proceedings of the Applied Networking Research Workshop . 2018. [16] ETOPO. Global Relief Model . URL : https://www.ncei.noaa.gov/product s/etopo-global-relief-model .[17] Howard Frank, Robert E. Kahn, and Leonard Kleinrock. “Computer Communi-cation Network Design: Experience With Theory and Practice”. In: Proceedings of the May 16–18, 1972, Spring Joint Computer Conference . 1971. DOI : 10.10 02/net.3230020205 .[18] Jonas Franken and Christian Reuter. “The Subsea Data Cable Security Map – Fusing Public Information for Enhanced Critical Maritime Infrastructure Secu-rity”. In: 4th Maritime Security Conference Proceedings . 2024. DOI : 10.5281 /zenodo.14216270 .[19] Domenico Giardini. “The Global Seismic Hazard Assessment Program (GSHAP)-1992/1999”. In: Annals of Geophysics (1999). [20] Vasileios Giotsas et al. “Regional Perspectives for Route Resilience in a Global Internet: Metrics, Methodology, and Pathways for Transparency”. In: Proceed-ings of TPRC 53: The 53rd Research Conference on Communication, Informa-tion and Internet Policy . 2025. [21] Ralph E. Gomory and TC Hu. “Synthesis of a Communication Network”. In: 
+
+Journal of the Society for Industrial and Applied Mathematics (1964). DOI : 10 .1137/0112029 .[22] Google Inc. Cloud Locations . URL : https://cloud.google.com/about/lo cations .18 [23] Idio Guarino et al. “Mirage-App×Act-2024: A Novel Dataset for Mobile App and Activity Traffic Analysis”. In: 2024 20th International Conference on Wireless and Mobile Computing, Networking and Communications (WiMob) . 2024. [24] John Heidemann, Lin Quan, and Yuri Pradkin. A Preliminary Analysis of Net-work Outages During Hurricane Sandy . Technical Report. University of South-ern California Information Sciences Institute (USC/ISI), 2012. [25] Martin Henze et al. “CloudAnalyzer: Uncovering the Cloud Usage of Mobile Apps”. In: Proceedings of the 14th EAI International Conference on Mobile and Ubiquitous Systems: Computing, Networking and Services . 2017. [26] International Organization for Standardization (ISO). Systems and Software En-gineering – Vocabulary . International Standard ISO/IEC/IEEE 24765:2010. In-ternational Organization for Standardization (ISO), 2010. [27] International Telecommunication Union Telecommunication Standardization Sec-tor (ITU-T). Terms and Definitions Related to Quality of Service and Network Performance Including Dependability . Recommendation ITU-T E.800. Interna-tional Telecommunication Union Telecommunication Standardization Sector (ITU-T), 1994. [28] Leon Janzen and Matthias Hollick. “Making Cellular Networks Crisis-Proof: Towards Island-Ready, Resilient-by-Design 6G Communication Networks”. In: 
+
+Computer Communications (2026). DOI : 10.1016/j.comcom.2025.108407 .[29] Leon Janzen et al. “The User Perspective on Island-Ready 6G Communication: A Survey of Future Smartphone Usage in Crisis-Struck Areas With Local Cel-lular Connectivity”. In: Proceedings of the CHI Conference on Human Factors in Computing Systems . 2025. DOI : 10.1145/3706598.3714324 .[30] Sangeetha Abdu Jyothi. “Solar Superstorms: Planning for an Internet Apoca-lypse”. In: Proceedings of the 2021 ACM SIGCOMM Conference . 2021. [31] Ladan Khaloopour et al. “Resilience-by-Design in 6G Networks: Literature Re-view and Novel Enabling Concepts”. In: IEEE Access (2024). DOI : 10 . 1109 /ACCESS.2024.3480275 .[32] Simon Knight et al. “The Internet Topology Zoo”. In: IEEE Journal on Selected Areas in Communications (2011). [33] Lun Li et al. “A First-Principles Approach to Understanding the Internet’s Router-Level Topology”. In: ACM SIGCOMM Computer Communication Review (2004). [34] Yujing Liu et al. “Characterizing Inter-Domain Rerouting After Japan Earth-quake”. In: International Conference on Research in Networking . 2012. [35] Orlando E Martínez-Durive et al. The NetMob23 Dataset: A High-Resolution Multi-Region Service-Level Mobile Data Traffic Cartography . 2023. arXiv: 230 5.06933 .[36] Juno Mayer et al. “On the Resilience of Internet Infrastructures in Pacific North-west to Earthquakes”. In: Passive and Active Measurement . 2021. [37] Meta. Global Data Center Fleet . URL : https://datacenters.atmeta.com /all-locations/ .19 [38] Tobias Mohler. Erste Multi-Access Edge Computing Dienste in Deutschland .
+
+> URL
+
+: https://newsroom.vodafone.de/erste- multi- access- edge-computing-dienste-in-deutschland .[39] Sebastian Neumayer and Eytan Modiano. “Network Reliability Under Random Circular Cuts”. In: IEEE Global Telecommunications Conference . 2011. [40] Sebastian Neumayer et al. “Assessing the Vulnerability of the Fiber Infrastruc-ture to Disasters”. In: IEEE/ACM Transactions on Networking (2011). [41] O2 Business. O2 Business Data Center Housing . URL : https://www.o2busi ness.de/cloud-sicherheit/digitale-transformation/datacenter-housing/ .[42] OCHA Regional Office for Asia and the Pacific (ROAP). Asia Pacific: Storm Tracks 1956 to 2018 . URL : https://data.humdata.org/dataset/asia-pa cific-storm-tracks-1956-to-2018 .[43] Fabian Poignée et al. “POBTOG: A Population-Based Topology Generator for Country-Wide Communication Networks”. In: International Conference on Net-worked Systems (NetSys) . 2025. DOI : 10.22032/dbt.67118 .[44] Bruno Quoitin et al. “IGen: Generation of Router-Level Internet Topologies Through Network Design Heuristics”. In: 2009 21st International Teletraffic Congress .2009. [45] Alagappan Ramanathan, Rishika Sankaran, and Sangeetha Abdu Jyothi. “Xam-iner: An Internet Cross-Layer Resilience Analysis Tool”. In: Proceedings of the ACM on Measurement and Analysis of Computing Systems (2024). [46] Ron Ross, Mark Winstead, and Michael McEvilley. Engineering Trustworthy Secure Systems . Special Publication NIST SP 800-160 Vol. 1 Rev. 1. National Institute of Standards and Technology (NIST), 2022. DOI : 10.6028/NIST.SP.8 00-160v1r1 .[47] Quirin Scheitle et al. “Analyzing Locality of Mobile Messaging Traffic Using the MATAdOR Framework”. In: Passive and Active Measurement . 2016. [48] Telekom Deutschland GmbH. Telekom Edge Cloud: Speed, Security, and Scala-bility at the Edge . URL : https://wholesale.telekom.com/fileadmin/us er_upload/documents/global/downloads/flyer-telekom-edge-clou d.pdf .[49] Bernard M Waxman. “Routing of Multipoint Connections”. In: IEEE Journal on Selected Areas in Communications (2002). [50] Jared Winick, Sugih Jamin, et al. INET-3.0: Internet Topology Generator . Tech-nical Report. University of Michigan, 2002. [51] Daoyuan Wu et al. “MopEye: Opportunistic Monitoring of Per-App Mobile Net-work Performance”. In: 2017 USENIX Annual Technical Conference (USENIX ATC 17) . 2017. 20

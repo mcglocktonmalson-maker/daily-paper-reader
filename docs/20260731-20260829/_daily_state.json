@@ -1,0 +1,201 @@
+{
+  "date": "20260731-20260829",
+  "date_label": "2026-07-31 ~ 2026-08-29",
+  "generated_at": "2026-08-29 09:24:01 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.13212v1",
+      "route": "20260731-20260829/2608.13212v1-tangco-learning-topology-aware-capacity-allocation-for-overload-driven-cascading-failures",
+      "title": "TANGCO: Learning Topology-Aware Capacity Allocation for Overload-driven Cascading Failures",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "通过容量分配抵御过载驱动的级联故障",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.14427v1",
+      "route": "20260731-20260829/2608.14427v1-large-scale-workflow-placement-in-serverless-computing-using-integer-nonlinear-programming",
+      "title": "Large-scale workflow placement in serverless computing using integer nonlinear programming",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在边缘节点上进行工作流放置以优化成本和执行时间",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.19850v1",
+      "route": "20260731-20260829/2608.19850v1-resilience-in-trustworthy-wireless-systems",
+      "title": "Resilience in Trustworthy Wireless Systems",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "系统化无线系统韧性框架，区分韧性与可靠性、鲁棒性等概念",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.21910v1",
+      "route": "20260731-20260829/2608.21910v1-prism-predictive-runtime-in-place-scaling-and-model-selection-for-edge-microservices",
+      "title": "PRISM: Predictive Runtime In-place Scaling and Model Selection for Edge Microservices",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向容器化边缘微服务的预测式运行时缩放与模型选择",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.26559v1",
+      "route": "20260731-20260829/2608.26559v1-sfc-aware-online-aggregated-data-link-orchestration-for-sdnnfv-enabled-sagins",
+      "title": "SFC-Aware Online Aggregated Data-Link Orchestration for SDN/NFV-Enabled SAGINs",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在SDN/NFV使能的天地一体化网络中，面向SFC的在线数据链路编排，处理时变资源约束",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.00487v1",
+      "route": "20260731-20260829/2608.00487v1-collaborative-orbital-edge-intelligence-a-decentralized-paradigm-for-energy-efficient-computing-in-space",
+      "title": "Collaborative Orbital Edge Intelligence: A Decentralized Paradigm for Energy-Efficient Computing in Space",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "轨道边缘计算在卫星端接近数据源处理数据，体现边缘计算范式",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.00892v1",
+      "route": "20260731-20260829/2608.00892v1-execution-timing-control-for-deterministic-task-offloading-in-the-iot-edge-cloud-continuum",
+      "title": "Execution Timing Control for Deterministic Task Offloading in the IoT-Edge-Cloud Continuum",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "边缘-云任务卸载中的执行时序控制，提高资源效率",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.06033v1",
+      "route": "20260731-20260829/2608.06033v1-asge-rr-agentic-service-graph-embedding-with-revisable-reservations-for-dynamic-ai-agent-calls",
+      "title": "ASGE-RR: Agentic Service Graph Embedding with Revisable Reservations for Dynamic AI-Agent Calls",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "在容量、成本与截止日期约束下在线嵌入动态服务图",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.07392v1",
+      "route": "20260731-20260829/2608.07392v1-lyra-label-free-structural-synchronization-and-resource-allocation-for-uav-edge-networks",
+      "title": "LYRA: Label-Free Structural Synchronization and Resource Allocation for UAV Edge Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "无人机边缘网络中的联合模型更新调度与资源分配，最大化语义保真度",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.10611v1",
+      "route": "20260731-20260829/2608.10611v1-measuring-the-end-to-end-resilience-of-application-deployments-in-real-world-communication-networks-with-draco",
+      "title": "Measuring the End-to-End Resilience of Application Deployments in Real-World Communication Networks with DRACO",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "测量通信网络中应用部署的端到端网络韧性",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.14086v1",
+      "route": "20260731-20260829/2608.14086v1-integrated-sensing-communication-and-computing-in-multi-tier-systems-joint-hybrid-beamforming-design-and-computation-resource-allocation",
+      "title": "Integrated Sensing, Communication, and Computing in Multi-Tier Systems: Joint Hybrid Beamforming Design and Computation Resource Allocation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "在云边端系统中联合设计混合波束成形与计算资源分配，应对边缘资源竞争",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    },
+    {
+      "paper_id": "2608.24841v1",
+      "route": "20260731-20260829/2608.24841v1-next-generation-o-ran-edge-energy-aware-joint-placement-and-migration-of-cloud-native-functions",
+      "title": "Next-generation O-RAN Edge: Energy-aware Joint Placement and Migration of Cloud-Native Functions",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "O-RAN边缘中云原生网络功能的能量感知联合部署与迁移",
+      "first_seen_at": "2026-08-29 09:24:01 UTC",
+      "updated_at": "2026-08-29 09:24:01 UTC"
+    }
+  ]
+}
