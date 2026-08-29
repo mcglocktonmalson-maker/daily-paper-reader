@@ -1,0 +1,154 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-29T19:13:33.672629+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.21554v1",
+      "source": "arxiv",
+      "title": "Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under Distribution Shifts",
+      "abstract": "Heterogeneous multi-robot service systems must assign requests to compatible robots, construct feasible schedules, and adapt as new tasks arrive online. Historical data can help anticipate future demand, but relying too heavily on inaccurate predictions can degrade performance under distribution shifts. We develop a prediction-aware adaptive rollout framework for heterogeneous multi-robot task assignment with scheduled and real-time requests. The problem is formulated as a finite-horizon stochastic dynamic program incorporating robot-task compatibility, ordered service requirements, routing constraints, service windows, and end-of-horizon return requirements. The proposed policy evaluates current assignments using sampled future request scenarios while restricting immediate commitments to requests already observed. To enable online use, the framework combines pruned candidate controls, wait actions, and an interaction-aware base policy for efficient future-cost estimation. Robustness to forecast error is provided by adaptively reweighting predicted requests based on recent prediction mismatch and selectively re-optimizing assigned but unstarted requests. We also introduce a historical-data-driven procedure for selecting the heterogeneous fleet composition before deployment. In a case study using real nursing-task requests from hospital inpatient floors, the proposed approach achieves near-complete service and reduces serviced-request wait times relative to reactive, token-passing, prediction-positioning, and myopic greedy baselines, with the largest improvements in tail-delay metrics.",
+      "authors": [
+        "Daniel Garces",
+        "Sara Castro",
+        "Adrian Haimovich",
+        "Byron Crowe",
+        "Stephanie Gil"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG",
+        "cs.MA"
+      ],
+      "published": "2026-08-21T18:44:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.21554v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "ordered service requirements and routing constraints in multi-robot assignment are analogous to service function chain placement on edge nodes",
+      "llm_evidence_cn": "多机器人分配中的有序服务需求和路由约束类似于边缘节点上的服务功能链部署",
+      "llm_evidence": "多机器人分配中的有序服务需求和路由约束类似于边缘节点上的服务功能链部署",
+      "canonical_evidence": "多机器人分配中的有序服务需求和路由约束类似于边缘节点上的服务功能链部署",
+      "llm_tldr_en": "This paper presents a prediction-aware adaptive rollout framework for heterogeneous multi-robot task assignment with ordered service requirements, adapting to distribution shifts and online tasks while respecting routing and service windows.",
+      "llm_tldr_cn": "针对异构多机器人服务系统，论文研究了带有序服务需求、路由约束、服务窗口和在线任务到达的任务分配问题，提出预测感知的自适应滚动策略。该方法在有限时域随机动态规划框架下评估当前分配，并能适应分布偏移，为边缘节点上动态部署服务功能链提供了可迁移的决策框架。",
+      "llm_tldr": "针对异构多机器人服务系统，论文研究了带有序服务需求、路由约束、服务窗口和在线任务到达的任务分配问题，提出预测感知的自适应滚动策略。该方法在有限时域随机动态规划框架下评估当前分配，并能适应分布偏移，为边缘节点上动态部署服务功能链提供了可迁移的决策框架。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "What are effective strategies for deploying service function chains on edge nodes?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.21034v1",
+      "source": "arxiv",
+      "title": "AI Infrastructure in Space: How Far Can We Go?",
+      "abstract": "Satellites are becoming programmable computing platforms capable of running increasingly demanding AI workloads. This shift raises a systems problem: how can AI services remain deployable, manageable, and recoverable after launch when compute capacity, connectivity, energy, and thermal headroom vary over orbital time? This paper develops a systems vision for AI infrastructure in space. We define it as the systems layer that manages AI capabilities across spacecraft, orbital networks, ground stations, and cloud backends, while treating orbital and physical state as part of the resource model. We synthesize relevant foundations from terrestrial AI infrastructure, satellite networking, and satellite edge computing, and examine the physical constraints that directly shape system design. We further ground this vision in three in-orbit case studies spanning the node, platform, and service levels. Telemetry from BUPT-1 satellite shows that usable compute capacity is bounded by thermal and energy envelopes. SateLight on BUPT-2 satellite reduces application-update transmission latency by 56.54% on average and up to 91.18%, with 100% update correctness. A stateful VLM serving case further shows that thermal interruptions make execution-state recovery a first-class systems problem. These observations motivate a research agenda for space-native resource management, lifecycle support, and sustained AI service across space and ground.",
+      "authors": [
+        "Qing Li",
+        "Qiyang Zhang",
+        "Daliang Xu",
+        "Tianze Huang",
+        "Dingge Zhang",
+        "Yihao Zhao",
+        "Xiaolong Huang",
+        "Jinfeng Wen",
+        "Xiameng Hu",
+        "Tao Qi",
+        "Mengwei Xu",
+        "Shangguang Wang",
+        "Xuanzhe Liu"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-21T12:30:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.21034v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "satellite edge computing; addresses deployability, manageability, and recoverability of AI services when compute, connectivity, energy, and thermal headroom vary; orbital state treated as resource model",
+      "llm_evidence_cn": "涉及卫星边缘计算；关注算力、连接、能量与热余量变化下AI服务的可部署、可管理和可恢复；将轨道状态纳入资源模型",
+      "llm_evidence": "涉及卫星边缘计算；关注算力、连接、能量与热余量变化下AI服务的可部署、可管理和可恢复；将轨道状态纳入资源模型",
+      "canonical_evidence": "涉及卫星边缘计算；关注算力、连接、能量与热余量变化下AI服务的可部署、可管理和可恢复；将轨道状态纳入资源模型",
+      "llm_tldr_en": "Presents a systems vision for AI infrastructure in space, defining a systems layer that manages AI capabilities across spacecraft, orbital networks, ground stations, and cloud backends and treats orbital and physical state as part of the resource model.",
+      "llm_tldr_cn": "卫星正成为可编程计算平台，但在发射后如何使AI服务在算力、连接、能量和热余量随轨道变化的情况下保持可部署、可管理和可恢复，是尚待解决的系统问题。本文提出太空AI基础设施的系统愿景，将其定义为跨航天器、轨道网络、地面站和云后端管理AI能力的系统层，并把轨道和物理状态纳入资源模型。该工作综合地面AI基础设施与卫星边缘计算基础，为边缘-卫星协同的资源编排与韧性恢复提供了概念框架。",
+      "llm_tldr": "卫星正成为可编程计算平台，但在发射后如何使AI服务在算力、连接、能量和热余量随轨道变化的情况下保持可部署、可管理和可恢复，是尚待解决的系统问题。本文提出太空AI基础设施的系统愿景，将其定义为跨航天器、轨道网络、地面站和云后端管理AI能力的系统层，并把轨道和物理状态纳入资源模型。该工作综合地面AI基础设施与卫星边缘计算基础，为边缘-卫星协同的资源编排与韧性恢复提供了概念框架。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.26498v1",
+      "source": "arxiv",
+      "title": "PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units",
+      "abstract": "Open Radio Access Network (O-RAN) disaggregates RAN protocol functions and enables Centralized Unit (CU) and Distributed Unit (DU) software to execute on general-purpose computing platforms. Different CU and DU protocol responsibilities produce different processor workloads and execution paths. Conventional performance metrics, including CPU utilization and throughput, quantify aggregate resource usage without identifying function-level execution costs or processor microarchitectural bottlenecks. Processor-level characterization, on the other hand, provides insights into resource provisioning, function placement, software optimization, and hardware acceleration. The paper describes a controlled characterization framework that evaluates independently deployed CU and DU functions under matched hardware and traffic conditions. The experimental platform integrates the Linux Foundation OCUDU implementation with an emulated User Equipment, a ZeroMQ-based radio interface, and an Open5GS core. Automated validation confirms registration and bidirectional packet delivery before process-scoped Intel VTune Hotspots and Top-Down Microarchitecture Analysis. Under traffic load, accumulated process CPU time increases from 17.3 s to 37.4 s for the CU and from 462.0 s to 628.4 s for the DU during equal 300-s profiling intervals. The measurements identify distinct CU and DU execution characteristics and motivate function-specific processor analysis and optimization.",
+      "authors": [
+        "Moojan Kamalzadeh",
+        "Larry Horner",
+        "Linqi Xiao",
+        "Abhishek Bhattacharyya",
+        "Ehsan Bahaloo Horeh",
+        "Padmapriya Patil",
+        "Venkateswarlu Gudepu",
+        "Andrea Fumagalli"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.PF"
+      ],
+      "published": "2026-08-27T00:45:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.26498v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "processor-level characterization insights for VNF placement and resource provisioning in O-RAN",
+      "llm_evidence_cn": "O-RAN中面向VNF放置与资源供给的处理器级特征分析",
+      "llm_evidence": "O-RAN中面向VNF放置与资源供给的处理器级特征分析",
+      "canonical_evidence": "O-RAN中面向VNF放置与资源供给的处理器级特征分析",
+      "llm_tldr_en": "Presents PRO-RAN, a framework for processor-level characterization of O-RAN CU and DU functions, identifying microarchitectural bottlenecks to guide resource provisioning and VNF placement.",
+      "llm_tldr_cn": "针对Open RAN中集中式单元和分布式单元软件在通用平台上的执行成本无法用传统指标体现的问题，提出处理器级特征化框架。通过分析CU/DU的微架构行为，识别功能级执行开销与处理器瓶颈，为资源供应、功能放置和软硬件优化提供细粒度指导。该研究有助于提升虚拟化网络功能的部署效率，可服务于边云环境中的VNF放置决策。",
+      "llm_tldr": "针对Open RAN中集中式单元和分布式单元软件在通用平台上的执行成本无法用传统指标体现的问题，提出处理器级特征化框架。通过分析CU/DU的微架构行为，识别功能级执行开销与处理器瓶颈，为资源供应、功能放置和软硬件优化提供细粒度指导。该研究有助于提升虚拟化网络功能的部署效率，可服务于边云环境中的VNF放置决策。",
+      "llm_tags": [
+        "query:sfc-edge"
+      ],
+      "matched_query_tag": "query:sfc-edge",
+      "matched_query_text": "placement of virtual network functions with resilience constraints",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

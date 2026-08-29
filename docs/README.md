@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-31 ~ 2026-08-29</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-29</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 3 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>12</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-29 09:24:01 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-29 19:15:44 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日扫读12篇论文，其中3篇获9.0高分，覆盖级联故障、无服务器计算与无线系统韧性。最值得关注拓扑感知的容量分配策略，以及大规模工作流在无服务器环境下的整数非线性规划部署。下一步可深入精读这三篇高分文章，优先吃透级联故障的容量分配思路。</p>
+<p>今日速读3篇论文，聚焦强化学习、太空AI基础设施与Open RAN处理器性能。最值得关注的是《Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under Distribution Shifts》（7.0分），探讨了分布偏移下多机器人任务分配的新解法。建议普通读者优先看该文对异构机器人协作与鲁棒性设计的理解，其余两篇可作行业背景拓展。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -84,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">12 篇</strong>
+    <strong class="dpr-home-dashboard-count">3 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="TANGCO: Learning Topology-Aware Capacity Allocation for Overload-driven Cascading Failures">TANGCO: Learning Topology-Aware Capacity Allocation for Overload-driven Cascading Failures</span></li><li><span class="dpr-home-dashboard-paper-title" title="Large-scale workflow placement in serverless computing using integer nonlinear programming">Large-scale workflow placement in serverless computing using integer nonlinear programming</span></li><li><span class="dpr-home-dashboard-paper-title" title="Resilience in Trustworthy Wireless Systems">Resilience in Trustworthy Wireless Systems</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under Distribution Shifts">Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under Distribution Shifts</span></li><li><span class="dpr-home-dashboard-paper-title" title="AI Infrastructure in Space: How Far Can We Go?">AI Infrastructure in Space: How Far Can We Go?</span></li><li><span class="dpr-home-dashboard-paper-title" title="PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units">PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>9</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>1</strong></span></div>
 </section>
 </div>
 

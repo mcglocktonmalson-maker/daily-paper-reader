@@ -1,0 +1,54 @@
+{
+  "label": "2026-08-29",
+  "date": "2026-08-29",
+  "generated_at": "2026-08-29T19:15:46",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202608/29/2608.21554v1-model-based-reinforcement-learning-for-heterogeneous-multi-robot-task-assignment-under-distribution-shifts",
+      "section": "quick",
+      "title_en": "Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under Distribution Shifts",
+      "authors": "Daniel Garces, Sara Castro, Adrian Haimovich, Byron Crowe, Stephanie Gil",
+      "date": "2026-08-21",
+      "pdf": "https://arxiv.org/pdf/2608.21554v1",
+      "score": "7.0",
+      "evidence": "多机器人分配中的有序服务需求和路由约束类似于边缘节点上的服务功能链部署",
+      "tldr": "异构多机器人服务系统需在线分配任务，但依赖预测易受分布偏移影响。本文提出预测感知自适应 rollout 框架，通过采样未来场景并自适应重加权预测请求，同时选择性重优化未开始任务。在真实护理数据上，相比多种基线，该方法实现近完全服务并显著降低等待时间，尤其改善尾部延迟。该框架为异构车队分配提供了鲁棒的在线决策方法。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Heterogeneous multi-robot service systems must assign requests to compatible robots, construct feasible schedules, and adapt as new tasks arrive online. Historical data can help anticipate future demand, but relying too heavily on inaccurate predictions can degrade performance under distribution shifts. We develop a prediction-aware adaptive rollout framework for heterogeneous multi-robot task assignment with scheduled and real-time requests. The problem is formulated as a finite-horizon stochastic dynamic program incorporating robot-task compatibility, ordered service requirements, routing constraints, service windows, and end-of-horizon return requirements. The proposed policy evaluates current assignments using sampled future request scenarios while restricting immediate commitments to requests already observed. To enable online use, the framework combines pruned candidate controls, wait actions, and an interaction-aware base policy for efficient future-cost estimation. Robustness to forecast error is provided by adaptively reweighting predicted requests based on recent prediction mismatch and selectively re-optimizing assigned but unstarted requests. We also introduce a historical-data-driven procedure for selecting the heterogeneous fleet composition before deployment. In a case study using real nursing-task requests from hospital inpatient floors, the proposed approach achieves near-complete service and reduces serviced-request wait times relative to reactive, token-passing, prediction-positioning, and myopic greedy baselines, with the largest improvements in tail-delay metrics.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/29/2608.21034v1-ai-infrastructure-in-space-how-far-can-we-go",
+      "section": "quick",
+      "title_en": "AI Infrastructure in Space: How Far Can We Go?",
+      "authors": "Qing Li, Qiyang Zhang, Daliang Xu, Tianze Huang, Dingge Zhang, Yihao Zhao, Xiaolong Huang, Jinfeng Wen, Xiameng Hu, Tao Qi, Mengwei Xu, Shangguang Wang, Xuanzhe Liu",
+      "date": "2026-08-21",
+      "pdf": "https://arxiv.org/pdf/2608.21034v1",
+      "score": "6.0",
+      "evidence": "涉及卫星边缘计算；关注算力、连接、能量与热余量变化下AI服务的可部署、可管理和可恢复；将轨道状态纳入资源模型",
+      "tldr": "卫星正成为可编程计算平台，但轨道上的算力、连接、能耗和热裕度随时间变化，给AI服务的部署、管理与恢复带来系统难题。本文提出太空AI基础设施的系统愿景，将轨道与物理状态纳入资源模型，并基于三颗卫星的遥测与实验揭示：可用算力受热与能量约束，SateLight将更新传输延迟平均降低56.54%，热中断使执行状态恢复成为一流问题。由此提出空间原生资源管理、生命周期支持与天地持续AI服务的研究议程。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Satellites are becoming programmable computing platforms capable of running increasingly demanding AI workloads. This shift raises a systems problem: how can AI services remain deployable, manageable, and recoverable after launch when compute capacity, connectivity, energy, and thermal headroom vary over orbital time? This paper develops a systems vision for AI infrastructure in space. We define it as the systems layer that manages AI capabilities across spacecraft, orbital networks, ground stations, and cloud backends, while treating orbital and physical state as part of the resource model. We synthesize relevant foundations from terrestrial AI infrastructure, satellite networking, and satellite edge computing, and examine the physical constraints that directly shape system design. We further ground this vision in three in-orbit case studies spanning the node, platform, and service levels. Telemetry from BUPT-1 satellite shows that usable compute capacity is bounded by thermal and energy envelopes. SateLight on BUPT-2 satellite reduces application-update transmission latency by 56.54% on average and up to 91.18%, with 100% update correctness. A stateful VLM serving case further shows that thermal interruptions make execution-state recovery a first-class systems problem. These observations motivate a research agenda for space-native resource management, lifecycle support, and sustained AI service across space and ground.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/29/2608.26498v1-pro-ran-processor-level-characterization-of-open-ran-centralized-and-distributed-units",
+      "section": "quick",
+      "title_en": "PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units",
+      "authors": "Moojan Kamalzadeh, Larry Horner, Linqi Xiao, Abhishek Bhattacharyya, Ehsan Bahaloo Horeh, Padmapriya Patil, Venkateswarlu Gudepu, Andrea Fumagalli",
+      "date": "2026-08-27",
+      "pdf": "https://arxiv.org/pdf/2608.26498v1",
+      "score": "6.0",
+      "evidence": "O-RAN中面向VNF放置与资源供给的处理器级特征分析",
+      "tldr": "O-RAN将CU和DU软件部署在通用处理器上，但传统性能指标如CPU利用率只能反映整体资源占用，无法识别具体协议函数的执行耗时和微架构瓶颈。为此，论文设计并实现了一个受控的处理器级表征框架，集成OCUDU实现、模拟用户设备、ZeroMQ无线电接口和Open5GS核心网，使用VTune Hotspots和Top-Down分析进行进程级剖析。在相同300秒流量负载下，CU累计进程CPU时间从17.3秒增至37.4秒，DU从462.0秒增至628.4秒，显示出两者截然不同的执行特征。该工作为CU/DU资源分配、函数放置和硬件加速提供了重要的处理器级指导。",
+      "tags": "query:sfc-edge",
+      "abstract_en": "Open Radio Access Network (O-RAN) disaggregates RAN protocol functions and enables Centralized Unit (CU) and Distributed Unit (DU) software to execute on general-purpose computing platforms. Different CU and DU protocol responsibilities produce different processor workloads and execution paths. Conventional performance metrics, including CPU utilization and throughput, quantify aggregate resource usage without identifying function-level execution costs or processor microarchitectural bottlenecks. Processor-level characterization, on the other hand, provides insights into resource provisioning, function placement, software optimization, and hardware acceleration. The paper describes a controlled characterization framework that evaluates independently deployed CU and DU functions under matched hardware and traffic conditions. The experimental platform integrates the Linux Foundation OCUDU implementation with an emulated User Equipment, a ZeroMQ-based radio interface, and an Open5GS core. Automated validation confirms registration and bidirectional packet delivery before process-scoped Intel VTune Hotspots and Top-Down Microarchitecture Analysis. Under traffic load, accumulated process CPU time increases from 17.3 s to 37.4 s for the CU and from 462.0 s to 628.4 s for the DU during equal 300-s profiling intervals. The measurements identify distinct CU and DU execution characteristics and motivate function-specific processor analysis and optimization.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

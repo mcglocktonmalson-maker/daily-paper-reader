@@ -1,0 +1,4256 @@
+Highlights
+Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under
+Distribution Shifts
+Daniel Garces, Sara Castro, Adrian Haimovich, Byron Crowe, Stephanie Gil
+• Online task assignment for heterogeneous robots with service windows.
+• Prediction-aware rollout uses future requests without committing to them.
+• Adaptive weights reduce the impact of unreliable demand forecasts.
+• Selective re-optimization revises assigned but unstarted requests.
+• Hospital case study shows lower wait times and near-complete service.
+arXiv:2608.21554v1  [cs.RO]  21 Aug 2026
+
+
+Model-Based Reinforcement Learning for Heterogeneous Multi-Robot
+Task Assignment Under Distribution Shifts
+Daniel Garcesa,∗, Sara Castrob, Adrian Haimovichb,c, Byron Crowed and Stephanie Gila
+aJohn A. Paulson School Of Engineering And Applied Sciences, Harvard University, 150 Western Avenue, Boston, 02134, MA, USA
+bHarvard Medical School, 77 Avenue Louis Pasteur, Boston, 02215, MA, USA
+cBeth Israel Deaconess Medical Center, 330 Brookline Avenue, Boston, 02215, MA, USA
+dStanford University School of Medicine, 300 Pasteur Drive, Stanford, 94305, CA, USA
+A R T I C L E I N F O
+Keywords:
+Heterogeneous Task Allocation
+Multi-Agent Model-Based Reinforce-
+ment Learning
+Sequential Decision Making
+Planning Under Uncertainty
+Online Route Optimization
+Event Prediction
+Autonomous Robots
+A B S T R A C T
+Heterogeneous multi-robot service systems must assign requests to compatible robots, construct
+feasible schedules, and adapt as new tasks arrive online. Historical data can help anticipate future
+demand, but relying too heavily on inaccurate predictions can degrade performance under distribution
+shifts. We develop a prediction-aware adaptive rollout framework for heterogeneous multi-robot task
+assignment with scheduled and real-time requests. The problem is formulated as a finite-horizon
+stochastic dynamic program incorporating robot-task compatibility, ordered service requirements,
+routing constraints, service windows, and end-of-horizon return requirements. The proposed policy
+evaluates current assignments using sampled future request scenarios while restricting immediate
+commitments to requests already observed. To enable online use, the framework combines pruned can-
+didate controls, wait actions, and an interaction-aware base policy for efficient future-cost estimation.
+Robustness to forecast error is provided by adaptively reweighting predicted requests based on recent
+prediction mismatch and selectively re-optimizing assigned but unstarted requests. We also introduce a
+historical-data-driven procedure for selecting the heterogeneous fleet composition before deployment.
+In a case study using real nursing-task requests from hospital inpatient floors, the proposed approach
+achieves near-complete service and reduces serviced-request wait times relative to reactive, token-
+passing, prediction-positioning, and myopic greedy baselines, with the largest improvements in tail-
+delay metrics.
+1. Introduction
+Autonomous robot teams are increasingly being de-
+ployed in service environments where spatially distributed
+requests must be completed under timing, routing, and
+compatibility constraints. Examples include monitoring and
+maintenance [75, 114, 15, 95], warehouse and logistics
+operations [39, 92], last-mile delivery and transportation
+services [64, 84, 50, 17, 44, 78, 86, 48], UAV resupply
+and freight management [2, 102], and service coordination
+during emergency or pandemic responses [32]. In these
+settings, robot teams rarely execute a fixed set of tasks known
+completely in advance. Instead, they must repeatedly adapt
+assignments and schedules as new requests arrive, robot
+availability changes, and operating conditions deviate from
+historical expectations.
+This paper studies online task assignment and schedul-
+ing for heterogeneous multi-robot teams operating over a
+finite horizon. The team must serve both scheduled requests,
+known before execution, and real-time requests, revealed
+sequentially during operation. Requests may require ordered
+visits to one or more service locations and must satisfy
+timing, routing, and compatibility constraints. Robots may
+differ in their service capabilities, travel times, operational
+status, and maintenance requirements. The resulting plan-
+ning problem is to assign observed requests to robots while
+∗Corresponding author
+dgarces@g.harvard.edu (D. Garces)
+ORCID(s): 0000-0002-4161-0265 (D. Garces)
+preserving enough scheduling flexibility to respond effec-
+tively to uncertain future demand.
+A key challenge is that online assignment decisions
+have delayed consequences. Assigning a robot to a cur-
+rently observed request changes the robot’s future location,
+availability, and ability to serve requests that may arrive
+later. Predictive models can help by using historical data
+to generate possible future request scenarios, allowing the
+planner to estimate the opportunity cost of current commit-
+ments. However, operating conditions may change during
+deployment: the number, timing, location, or type of real-
+time requests may differ from the historical patterns used
+to generate predictions. When this occurs, a planner that
+continues to rely heavily on inaccurate forecasts may reserve
+robots unnecessarily, delay urgent observed requests, or
+overcommit resources to schedules that are poorly matched
+to the demand actually being realized. This paper addresses
+the question of how an online heterogeneous multi-robot
+planner should use predictive demand information when that
+information is useful on average but may become unreliable
+during operation.
+Existing approaches only partially address this issue.
+Reactive online assignment methods [96, 52, 113, 26, 8, 7,
+31, 100, 45] can respond to newly observed requests, but they
+are typically myopic and do not explicitly reason about the
+future consequences of current commitments. Prediction-
+based methods [99, 34, 80, 90, 109, 25] can anticipate likely
+future demand, but they often lack mechanisms for adjust-
+ing the influence of predictions when recent observations
+D. Garces et al.: Preprint submitted to Elsevier
+Page 1 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+indicate forecast mismatch. Offline deterministic scheduling
+methods [60, 115, 98] assume that the relevant requests are
+known in advance, while exact stochastic dynamic program-
+ming formulations [10, 58] are computationally intractable
+for the heterogeneous online setting considered here if no
+approximations are used. These limitations motivate an ap-
+proximate online planning method that can use lookahead
+to anticipate future demand when predictions are reliable,
+reduce the influence of predictions when recent observa-
+tions indicate forecast mismatch, and avoid overcommitting
+robots when future demand remains uncertain.
+Rollout-based lookahead [11, 12] provides a natural
+way to construct such an approximation. Because current
+assignments affect future robot availability, sampled future
+request scenarios can be used to estimate the opportunity
+cost of assigning a robot to a currently observed request,
+and candidate decisions can be compared according to their
+immediate and simulated future costs. However, deploying
+rollout in this setting introduces significant computational
+challenges. Each candidate decision is itself a schedule up-
+date: the planner must decide not only which robot should
+serve each known request, but also where that request should
+be inserted in the robot’s route and when each service should
+occur. As a result, the feasible schedule space grows com-
+binatorially with the number of robots, requests, compati-
+bility relations, and insertion positions, making exhaustive
+action enumeration impractical. In addition, each candidate
+schedule must be evaluated by simulating future decisions
+across sampled request scenarios. These simulations must
+be efficient enough to run repeatedly online, yet detailed
+enough to preserve the dominant interactions among robot
+compatibility, graph-based routing, service timing, and robot
+availability. Beyond the rollout computation itself, the use-
+fulness of these simulated policies also depends on the initial
+heterogeneous robot composition: if the team lacks sufficient
+compatible capacity for bottleneck request types, then even
+an effective online scheduling policy may be unable to
+maintain feasible service.
+Accurate future-cost estimation is also difficult because
+the request scenarios used in rollout are only approxima-
+tions of future operating conditions. Predictions generated
+from historical data may be informative on average, but
+the realized number, timing, location, or type of real-time
+requests can change during deployment. When this occurs,
+simulated future costs based on outdated or inaccurate fore-
+casts may misrepresent the true opportunity cost of current
+assignments. Moreover, forecast errors may have already
+influenced the current schedule before they are detected. For
+this reason, future-cost estimates should reflect the planner’s
+current confidence in the predicted request scenarios, rather
+than treating all predictions as equally reliable throughout
+the operating horizon. The planner must also be able to
+revise unexecuted assignments when new observations in-
+dicate that the current schedule was shaped by unreliable
+forecasts, while preserving commitments to services that
+have already begun.
+We address these challenges with a prediction-aware
+adaptive rollout framework for heterogeneous multi-robot
+task assignment and scheduling. The central idea is to treat
+predictions as uncertain evidence whose influence should
+vary over time, rather than as fixed information that should
+be trusted uniformly throughout the operating horizon. At
+each decision time, sampled future request scenarios are
+used to estimate the downstream cost of candidate schedul-
+ing decisions. Their contribution to these estimates is mod-
+ulated by confidence weights derived from recent discrep-
+ancies between predicted and observed demand. In this
+way, the planner can use predictions to make anticipatory
+decisions when they are informative, while reducing their
+influence when realized operating conditions suggest that the
+forecast is unreliable.
+The framework combines this adaptive use of predictions
+with computational mechanisms needed for online deploy-
+ment. A pruned action-generation procedure constructs a
+tractable set of candidate schedule modifications instead
+of enumerating the full feasible schedule space. Explicit
+wait actions allow the planner to preserve robot capac-
+ity when committing immediately to an observed request
+may be undesirable under uncertain future demand. An
+interaction-aware base policy is used inside rollout simu-
+lations to approximate future assignment and routing deci-
+sions efficiently while preserving the main coupling effects
+among timing, routing, compatibility, and robot availability.
+A selective re-optimization mechanism can return eligible
+assigned but unstarted requests to the pending set when new
+observations indicate that the current schedule has become
+undesirable, while already-started services remain fixed. As
+a supporting pre-deployment component, we also develop
+a historical-data-driven fleet-sizing procedure that selects
+an initial heterogeneous robot composition for which the
+assignment routines achieve a target empirical feasibility
+level on representative operating days.
+An overview of the proposed adaptive rollout method
+is shown in Figure 1. The framework integrates prediction,
+adaptive forecast reweighting, selective re-optimization, and
+rollout-based schedule evaluation. Together, these compo-
+nents produce an online planner that is anticipatory when
+predictions are useful, adaptive when operating conditions
+change, computationally tractable for repeated online deci-
+sions, and less prone to overcommitting robot capacity when
+future demand is uncertain.
+The main contributions of this paper are as follows:
+1. We formulate online heterogeneous multi-robot task
+assignment and scheduling with scheduled and real-
+time requests as a finite-horizon stochastic dynamic
+program that captures robot-request compatibility, or-
+dered service requirements, timing constraints, graph-
+based routing, and end-of-horizon feasibility.
+2. We develop a prediction-aware adaptive rollout frame-
+work for online scheduling under uncertain demand.
+The framework uses sampled future request scenar-
+ios to estimate the opportunity cost of current deci-
+sions, dynamically adjusts their influence based on
+D. Garces et al.: Preprint submitted to Elsevier
+Page 2 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 1: Overview of the proposed prediction-aware adaptive rollout framework for heterogeneous multi-robot task assignment.
+Local temporal point process models generate sampled future request scenarios, which are filtered to remove requests that are
+already observed or scheduled. Recent forecast errors are used to dynamically reweight predicted requests, producing context-
+dependent prediction-confidence scores and weighted future-cost estimates. Newly observed urgent requests can trigger re-
+optimization by returning eligible assigned but unstarted requests to the pending set. The rollout-based assignment module
+evaluates candidate assignments for observed and re-optimized requests using the weighted future-cost estimates and selects
+schedules for the heterogeneous robot team.
+recent forecast accuracy, and selectively re-optimizes
+assigned but unstarted requests when operating con-
+ditions deviate from predictions. Pruned action gener-
+ation, explicit wait actions, and an interaction-aware
+base policy make the resulting rollout computation
+practical for repeated online use.
+3. We develop a historical-data-driven fleet-sizing pro-
+cedure for selecting an initial heterogeneous robot
+composition that achieves a target empirical feasibility
+level on representative operating days while account-
+ing for robot-request compatibility and bottleneck ser-
+vice requirements.
+4. We evaluate the framework using real nursing-task
+requests from hospital inpatient floors at Beth Israel
+Deaconess Medical Center. Compared with reactive
+dispatching, token-passing, prediction-positioning, and
+myopic greedy baselines, the proposed method achieves
+near-complete service while reducing both average
+and upper-tail request waiting times. Ablation studies
+further demonstrate the complementary roles of adap-
+tive prediction reweighting and selective re-optimization.
+The remainder of the paper is organized as follows.
+Section 2 reviews related work on heterogeneous online task
+allocation, fleet sizing, request-sequence prediction, rollout-
+based replanning, and robustness under distribution shift.
+Section 3 presents the stochastic dynamic programming for-
+mulation. Section 4 introduces the prediction-aware adaptive
+rollout framework and the historical-data-driven fleet-sizing
+procedure. Section 5 presents the case study and empirical
+results. Finally, Section 6 concludes the paper and discusses
+limitations and future directions.
+2. Related Work
+This work lies at the intersection of heterogeneous multi-
+robot task allocation, online scheduling under uncertain
+demand, request-sequence prediction, and robust planning
+under forecast mismatch. Prior work has developed ex-
+pressive models for heterogeneous robot coordination, scal-
+able online allocation mechanisms, predictive models for
+irregular event sequences, and robustness techniques for
+model-based decision-making. However, these components
+are often studied separately. Many online allocation methods
+react to observed requests but do not explicitly reason about
+the downstream opportunity cost of current commitments.
+Prediction-aware methods can anticipate future demand, but
+often assume that forecasts remain reliable during deploy-
+ment. Robust planning methods account for uncertainty,
+but typically do not specify how concrete sampled future
+requests should be weighted inside an online heterogeneous
+scheduling policy. Our work addresses this gap by inte-
+grating future-request prediction into a rollout-based online
+D. Garces et al.: Preprint submitted to Elsevier
+Page 3 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+planner, adapting the influence of predicted requests using
+recent forecast errors, and supporting the planner with a
+historical-data-driven procedure for selecting an initial het-
+erogeneous fleet composition.
+2.1. Heterogeneous Online Task Allocation,
+Scheduling, and Fleet Composition
+Multi-robot task allocation has been studied through
+combinatorial optimization, task-and-motion planning, market-
+based coordination, decentralized algorithms, learning-based
+policies, and uncertainty-aware planning. These approaches
+differ in how they model robot heterogeneity, temporal
+constraints, routing constraints, and online task arrivals. The
+setting considered in this paper combines several of these
+difficulties: robots have type-dependent capabilities and
+travel times, requests have service windows and ordered end-
+point sequences, and new real-time requests arrive during
+execution. The resulting online scheduling problem requires
+decisions that are computationally tractable, compatible
+with heterogeneous robot capabilities, and sensitive to future
+fleet availability.
+A first line of work develops expressive models for het-
+erogeneous allocation, scheduling, and integrated task-and-
+motion planning. Complexity-theoretic results show that
+multi-robot task allocation is difficult in general [6], and
+dynamic variants remain challenging when tasks must be in-
+serted, deleted, or rescheduled under heterogeneous capabil-
+ities and temporal constraints [73, 14]. Integrated task-and-
+motion planning methods further couple assignment with
+sequencing, routing, energy constraints, coalition formation,
+or learned subteam performance [24, 74, 73, 76, 16, 69,
+4, 37, 9]. These methods provide high modeling fidelity,
+but repeatedly solving detailed coupled planning problems
+can be impractical in service settings where requests arrive
+continuously and schedules must be revised frequently.
+A second line of work emphasizes scalability and re-
+sponsiveness through heuristic, auction-based, market-based,
+decentralized, or metaheuristic mechanisms [96, 52, 113,
+26, 8, 7, 31, 100, 45]. These methods can often respond
+quickly to newly observed tasks without solving a large
+centralized optimization problem. However, purely reactive
+allocation can be myopic when current assignments affect
+future service quality. For example, assigning a scarce
+compatible robot to a low-urgency request may prevent
+that robot from serving a more urgent request that is likely
+to arrive later. Our framework addresses this limitation
+by using sampled future request scenarios to estimate the
+downstream opportunity cost of current commitments, while
+still restricting executable assignments to requests that have
+actually entered the system.
+Learning-based allocation methods provide another route
+to fast online decision-making. Recent work has explored
+graph neural network schedulers [99], imitation-learning-
+based collaborative schedulers [34], reinforcement learning
+for cooperative task allocation [80, 90, 109, 25], and LLM-
+based planning or coordination frameworks [23, 56, 46, 38,
+107]. These approaches can amortize computation through
+offline training and produce rapid decisions during deploy-
+ment. However, learned allocation policies can degrade
+when request arrival patterns, task frequencies, robot avail-
+ability, travel conditions, or operating policies shift away
+from the training distribution. In contrast, our approach does
+not require retraining the allocation policy when prediction
+quality changes. Instead, it adjusts the planning objective
+online by reducing the influence of predicted future requests
+when recent observations indicate forecast mismatch.
+Several works incorporate uncertainty directly into het-
+erogeneous allocation, including robust schedules under un-
+certain robot capabilities [33], stochastic trait models with
+probabilistic task satisfaction [81], hindsight optimization
+for uncertain task outcomes [27], and proactive allocation
+under spatiotemporal uncertainty [93]. These methods show
+the importance of modeling uncertainty in robot capabilities,
+task outcomes, and future demand. Our focus is complemen-
+tary: we consider uncertainty in the future request stream
+and, more specifically, in the reliability of the predictive dis-
+tribution used by the online planner. While prior uncertainty-
+aware allocation methods often model uncertainty in the
+planning problem itself, they do not typically adapt the in-
+fluence of predicted future requests based on forecast errors
+observed during deployment. Our method addresses this gap
+by estimating prediction reliability online and using it to
+reweight predicted demand during rollout-based replanning.
+The effectiveness of an online assignment policy also
+depends on the initial heterogeneous robot composition.
+In heterogeneous service systems, adding robots does not
+necessarily increase capacity for all requests: a fleet may
+still fail if it lacks robots compatible with bottleneck request
+types. Many allocation and scheduling approaches assume
+that the robot team is fixed before planning begins, while
+related work on team formation, coalition selection, and sub-
+team performance typically decides which available robots
+should cooperate on tasks during execution [74, 73, 37, 9].
+These problems are distinct from selecting the initial fleet
+composition before deployment, where the goal is to ensure
+that the online assignment policy has sufficient compatible
+capacity for the demand patterns it is likely to encounter.
+Our work treats initial heterogeneous fleet sizing as a sup-
+porting design decision for online scheduling. We develop
+a historical-data-driven procedure that evaluates candidate
+fleet compositions on representative operating days and se-
+lects a composition for which the assignment routines used
+in simulation achieve a target empirical feasibility level.
+2.2. Request-Sequence Prediction and Scenario
+Generation
+Future service demand in online task-allocation prob-
+lems can be represented as an irregular sequence of marked
+events. Each event has an arrival time and a mark encoding
+task-relevant information such as service type, location,
+priority, workload, or task family. Temporal point processes
+are well suited to this setting because they model event
+timing and marks directly, without requiring demand to be
+aggregated into fixed time bins. This is useful in sparse
+D. Garces et al.: Preprint submitted to Elsevier
+Page 4 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+or bursty service environments, where discretization can
+obscure timing structure or introduce many artificial zero-
+count observations [5, 19]. For heterogeneous robot allo-
+cation, the mark structure is especially important because
+downstream feasibility depends not only on when a request
+arrives, but also on which robot types can serve it and which
+service locations must be visited.
+Recent work has extended temporal point process mod-
+els beyond classical formulations by combining continuous-
+time event modeling with neural sequence architectures.
+Neural marked temporal point processes have been de-
+veloped for multivariate and set-valued event data [20],
+invertible intensity models improve likelihood evaluation
+and sampling for multivariate processes [5], and state-
+space point processes combine deep state-space models with
+continuous-time marked event dynamics [19]. Transformer-
+based event models provide another direction by using
+attention mechanisms to model dependencies across event
+histories while preserving continuous and discrete event
+attributes [28]. These developments are relevant to robot
+service systems because they enable predictive models to
+condition on irregular request histories and generate hetero-
+geneous future request samples.
+In our framework, temporal point process predictions are
+not used as fixed schedules or mandatory tasks. Instead, the
+prediction module generates sampled future request scenar-
+ios from an estimated distribution. Each sampled event is
+converted into the same request representation used by the
+planner, including task type, service-window parameters,
+and graph-grounded endpoint sequence. This representation
+allows predicted future requests to be evaluated using the
+same compatibility, routing, and timing constraints. How-
+ever, because deployment demand may differ from the his-
+torical data used to train the predictor, the planner must
+decide how much influence these sampled requests should
+have on current decisions. Our contribution is therefore not
+a new temporal point process architecture, but a planning
+framework that uses such predictions in a confidence-aware
+manner. As real requests are observed, recent forecast errors
+are used to update context-dependent prediction weights,
+and those weights determine how strongly predicted requests
+affect rollout values.
+2.3. Robust Planning Under Forecast Error and
+Distribution Shift
+The value of rollout-based lookahead [11, 12] depends
+on the quality of the future request scenarios used in simu-
+lation. Predictive models are typically trained on historical
+data, but deployment conditions may change because of
+shifts in request arrival rates, task mix, robot availabil-
+ity, travel times, patient or customer behavior, or operating
+policies. In online allocation, this mismatch is especially
+consequential because forecast-driven decisions affect future
+robot availability and may continue to shape the schedule
+even after prediction errors become apparent. If forecast er-
+rors persist, repeated replanning can continue to reintroduce
+misleading predicted demand unless the planner explicitly
+reassesses forecast reliability.
+Prior work addresses related issues through multi-step
+prediction, self-correction, adaptation, and retraining. Multi-
+step prediction and self-correcting dynamics models reduce
+error accumulation by training over longer rollouts or expos-
+ing models to their own past prediction errors [3, 94]. Other
+methods adapt learned models after detecting mismatch be-
+tween real and simulated data through feature alignment, in-
+stance reweighting, event-triggered updates, or concept-drift
+pipelines [89, 42, 112]. These approaches can improve the
+predictive model itself, but they may require sufficient post-
+shift data and additional computation before the adapted
+model becomes useful. Our method instead acts directly
+at the planning layer: when recent forecast errors increase,
+the rollout objective immediately reduces the influence of
+predicted future requests from unreliable contexts.
+Other work reduces reliance on model predictions when
+uncertainty or error is high. A common strategy is to shorten
+the effective model rollout horizon as model accuracy dete-
+riorates [43], as in short-horizon model-based reinforcement
+learning [40], or to use uncertainty-aware masking schemes
+that only use model rollouts when they are sufficiently re-
+liable [79]. Related approaches reweight simulated data,
+Bellman targets, or rewards according to model quality or
+uncertainty [105, 108], with similar ideas appearing in adap-
+tive learning and inference-time reweighting [57, 51]. Our
+framework shares the principle that unreliable predictions
+should have less influence, but differs in how this influence
+is applied. Rather than discarding predictions beyond a fixed
+horizon or retraining the predictor, we compute context-
+dependent confidence weights from observed forecast errors
+and use them to continuously modulate predicted-request
+costs during rollout.
+Distributionally robust optimization and conformal pre-
+diction provide more conservative forms of robustness. Dis-
+tributionally robust optimization optimizes against a family
+of plausible distributions and has been applied to stochastic
+control, routing, vehicle balancing, and other risk-sensitive
+planning problems [70, 21, 106, 68, 111, 41, 1, 85]. Con-
+formal prediction provides calibrated prediction sets or in-
+tervals and has been used in robotics, planning, control,
+online prediction, and safety assurance [97, 54, 55, 36, 35,
+22, 13, 53, 59]. These methods provide principled uncer-
+tainty quantification, but they do not directly specify how an
+online multi-robot allocation policy should weight concrete
+sampled future requests during replanning. Our approach is
+operational: it converts recent forecast errors into prediction-
+confidence weights that directly affect the rollout value of
+candidate scheduling decisions.
+Re-optimization provides a complementary mechanism
+for robustness. Model predictive control and online allo-
+cation methods repeatedly replan as new state information
+becomes available, which helps limit the effect of distur-
+bances and modeling errors [65]. However, replanning alone
+does not necessarily repair assignments that were made
+D. Garces et al.: Preprint submitted to Elsevier
+Page 5 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+when predictions appeared reliable, especially if those as-
+signments have not yet started but continue to occupy robot
+capacity. Our framework therefore combines adaptive pre-
+diction weighting with selective re-optimization of unstarted
+assignments. When new observations indicate that the cur-
+rent schedule has become undesirable, eligible assigned but
+unstarted requests are returned to the pending set and recon-
+sidered under the updated state and prediction-confidence
+weights. This allows the planner to recover from forecast-
+driven allocation errors while preserving commitments to
+services that have already begun.
+3. Problem Formulation
+We consider a heterogeneous multi-robot task-assignment
+and scheduling problem over a finite operating horizon.
+A fixed robot team must serve scheduled requests known
+before execution and real-time requests revealed sequentially
+during operation. Each request has a task type, an ordered
+sequence of service locations, and timing requirements.
+Robots are heterogeneous in their task compatibility, travel
+times, operational status, and assigned maintenance stations
+/ home stations. The online planning problem is to update
+assignments and schedules as new requests arrive so as
+to minimize service delay while satisfying compatibility,
+routing, timing, and end-of-horizon return constraints.
+Future real-time requests are uncertain, and the deploy-
+ment request distribution may differ from the historical
+distribution used to train the prediction model. We therefore
+formulate the online scheduling problem as a finite-horizon
+stochastic dynamic program. The robot team composition is
+treated as fixed in this formulation; the historical-data-driven
+procedure used to select this composition before deployment
+is introduced in Section 4.
+3.1. Operating Horizon and Environment
+We consider one operating day at a time and index the
+finite horizon by time steps 𝑡= 0, 1, … , 𝑇, where 𝑇is
+the horizon length. A control selected at decision time 𝑡∈
+{0, … , 𝑇−1} determines the evolution of the system over
+the interval [𝑡, 𝑡+ 1].
+The physical environment is represented by a directed
+traversal graph = (, ), where is the finite set of
+traversable nodes and ⊆× is the set of directed
+traversal edges. Each node 𝑣∈corresponds to a collision-
+free robot configuration, waypoint, or location in the envi-
+ronment. Each edge (𝑣, 𝑣′) ∈corresponds to a physically
+realizable local trajectory that moves a robot from node
+𝑣to node 𝑣′ without collision. Obstacles and inaccessible
+regions are therefore represented implicitly by the absence
+of corresponding nodes or edges in .
+Only a subset of traversal nodes can appear as request
+service locations. We denote this subset by svc
+⊆.
+Nodes in svc correspond to pickup, drop-off, or task-service
+locations. Nodes in ⧵svc are traversal nodes used only for
+motion planning and do not accept requests.
+Let denote the finite set of robot types. Robot types
+represent different robot capabilities with distinct available
+actions. For a robot of type 𝑧∈, the time it takes to traverse
+an edge (𝑣, 𝑣′) is denoted as 𝜏𝑧(𝑣, 𝑣′) > 0.
+3.2. Robot Team and Task Compatibility
+The heterogeneous team composition is 𝐌= (𝑀𝑧)𝑧∈,
+where 𝑀𝑧is the number of robots of type 𝑧. The total
+number of robots is 𝑀= ∑
+𝑧∈𝑀𝑧.
+The robot identifiers are indexed by = {1, … , 𝑀}.
+Each robot 𝓁∈has type 𝑧𝓁∈.
+The finite set of task types is denoted by . Robot-task
+compatibility is encoded by (𝑧) ⊆, where 𝑘∈(𝑧)
+means that a robot of type 𝑧can serve a request of task type
+𝑘.
+The environment contains a set of maintenance stations
+st ⊆. Each robot 𝓁∈is assigned a maintenance station
+𝑣st
+𝓁∈st. Robots start the horizon at their assigned mainte-
+nance stations and must return to their assigned maintenance
+stations no later than time 𝑇.
+The online planning problem is defined for a fixed team
+composition 𝐌.
+3.3. Requests
+A request 𝑟𝑗is described by
+𝑟𝑗=
+(
+𝑘𝑗, 𝝆𝑗, 𝑡entry
+𝑗
+, 𝑡start
+𝑗
+, 𝑡des
+𝑗, 𝑡comp
+𝑗
+)
+.
+(1)
+Here, 𝑘𝑗∈is the task type. Because the completion of a
+task may involve a robot visiting a sequence of locations in
+a specific order, we model the ordered sequence of service
+nodes that must be visited to complete request 𝑟𝑗as
+𝝆𝑗=
+(
+𝜌𝑗,1, 𝜌𝑗,2, … , 𝜌𝑗,𝑛svc
+𝑗
+)
+,
+𝜌𝑗,ℎ∈svc,
+(2)
+The restriction 𝜌𝑗,ℎ∈svc means that requests can only
+originate, terminate, or require service at designated service
+nodes; other nodes in are used only for traversal.
+The time 𝑡entry
+𝑗
+is the time at which request 𝑟𝑗becomes
+known to the system, 𝑡start
+𝑗
+is the earliest allowable service
+start time, 𝑡des
+𝑗
+is the desired completion time, and 𝑡comp
+𝑗
+is
+the latest allowable completion time. We assume
+𝑡entry
+𝑗
+≤𝑡start
+𝑗
+≤𝑡des
+𝑗
+≤𝑡comp
+𝑗
+≤𝑇.
+Each task type 𝑘∈has an execution time 𝐹𝑘. Thus, a
+feasible schedule for request 𝑟𝑗must visit the service nodes
+in the order specified by 𝝆𝑗, respect the earliest-start time
+𝑡start
+𝑗
+, allocate execution time 𝐹𝑘𝑗, and complete the request
+no later than 𝑡comp
+𝑗
+.
+Requests are divided into scheduled and real-time re-
+quests. The scheduled request set is
+sched =
+{
+𝑟𝑗∶𝑡entry
+𝑗
+< 0, 0 ≤𝑡start
+𝑗
+≤𝑡des
+𝑗
+≤𝑡comp
+𝑗
+≤𝑇
+}
+.
+(3)
+These requests are known before the operating horizon be-
+gins. The real-time request set revealed at time 𝑡is
+real
+𝑡
+=
+{
+𝑟𝑗∶𝑡entry
+𝑗
+= 𝑡, 𝑡≤𝑡start
+𝑗
+≤𝑡des
+𝑗
+≤𝑡comp
+𝑗
+≤𝑇
+}
+.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 6 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+(4)
+The set of requests known after the arrivals at time 𝑡have
+been observed is
+𝑡= sched ∪
+𝑡⋃
+𝜏=0
+real
+𝜏
+.
+(5)
+3.4. Standing Assumptions
+We impose the following assumptions throughout the
+paper.
+Assumption 1 (Well-formed environment and request pro-
+cess). The traversal graph = (, ) and the request
+process are well formed in the following sense:
+1. The scheduled request set sched is finite, and the
+real-time request set real
+𝑡
+entering the system at each
+decision time 𝑡= 0, … , 𝑇−1 is finite.
+2. For every ordered pair of service nodes 𝑣, 𝑣′ ∈svc
+that may appear as request endpoints, there exists a
+directed path 𝑃(𝑣, 𝑣′) = (𝑣0, 𝑣1, … , 𝑣𝐾
+) on such
+that 𝑣0 = 𝑣, 𝑣𝐾= 𝑣′, (𝑣𝑖, 𝑣𝑖+1) ∈for all 𝑖=
+0, … , 𝑁−1, and 𝑣𝑖∉svc for 𝑖= 1, … , 𝑁−1.
+Thus, any two request endpoints can be connected
+by a traversal path whose internal nodes are not
+themselves service locations.
+Assumption 2 (Reliable robot execution). Robots execute
+assigned motion and service actions without failures. In
+particular, if a robot is assigned a feasible schedule, then it
+follows the corresponding paths on , performs the required
+service actions, and completes them at the planned times.
+Thus, uncertainty in the model enters through the real-time
+request process rather than through robot failures, localiza-
+tion failures, or stochastic task execution.
+Assumption 1 ensures that the request process is finite
+over the planning horizon and that service locations are not
+unavoidable transit bottlenecks in the traversal graph. This
+allows a motion planner to connect request endpoints with-
+out requiring robots to pass through other service nodes as
+intermediate waypoints. Assumption 2 focuses the stochastic
+component of the model on future request arrivals, rather
+than on failures in robot motion, localization, or task execu-
+tion.
+3.5. Stochastic Request Process and Distribution
+Shift
+Let 𝜔𝑡= real
+𝑡
+denote the random real-time requests
+revealed at decision time 𝑡. For notational convenience, let
+𝜔𝑇= ∅, so that no new requests enter after the final decision
+time. The request sequence for an operating day is =
+(𝜔0, 𝜔1, … , 𝜔𝑇), where the last element is deterministic and
+empty. The true deployment distribution of is denoted
+by ℙ. This distribution governs the number of real-time
+requests, their task types, entry times, service windows,
+desired completion times, and spatial endpoints.
+Historical operating days provide request-sequence sam-
+ples that are used to train a predictive model. The model
+induces an estimated distribution̂ ℙ, from which sampled
+future request scenarios are generated during rollout. We do
+not assume that̂ ℙ= ℙ. The mismatch between̂ ℙand ℙ
+represents the distribution shift considered in this paper.
+3.6. Schedules and Feasible Controls
+At time 𝑡, each robot has a current node, operational
+status, assignment, and planned schedule. Let 𝑦𝓁
+𝑡denote the
+planned schedule for robot 𝓁. A schedule specifies the future
+traversal nodes and service actions of robot 𝓁from time 𝑡
+until its return to its maintenance station.
+For a given state 𝑥𝑡, let 𝓁
+𝑡(𝑥𝑡) denote the set of feasible
+schedules for robot 𝓁. A schedule 𝑦𝓁
+𝑡∈𝓁
+𝑡(𝑥𝑡) is feasible if
+it satisfies the following conditions:
+1. it starts from the current node of robot 𝓁at time 𝑡;
+2. it follows valid directed paths on the traversal graph ;
+3. it assigns only compatible requests to robot 𝓁, mean-
+ing 𝑘𝑗∈(𝑧𝓁);
+4. it visits the service nodes of each assigned request 𝑟𝑗
+in the order specified by 𝝆𝑗;
+5. it respects each assigned request’s earliest-start time
+and deadline;
+6. it preserves the already executed portion of the current
+schedule;
+7. it does not reassign a request to a different robot after
+service has started; and
+8. it returns robot 𝓁to its maintenance station 𝑣st
+𝓁no later
+than time 𝑇.
+The joint schedule is 𝐲𝑡= (𝑦1
+𝑡, 𝑦2
+𝑡, … , 𝑦𝑀
+𝑡
+). The corre-
+sponding feasible joint schedule set is 𝑡(𝑥𝑡) = 1
+𝑡(𝑥𝑡)×⋯×
+𝑀
+𝑡(𝑥𝑡).
+A control at time 𝑡is an updated assignment and sched-
+ule, 𝑢𝑡
+= (𝐚𝑢
+𝑡, 𝐲𝑢
+𝑡), where 𝑎𝑢
+𝑗,𝑡
+∈∪{−1, ∅} records
+whether each known request 𝑟𝑗
+∈𝑡is assigned to a
+robot, rejected, or left pending, and 𝐲𝑢
+𝑡is the resulting team
+schedule. The feasible control set is denoted by 𝑡(𝑥𝑡). Thus,
+𝑢𝑡∈𝑡(𝑥𝑡) if the updated assignments and schedules satisfy
+the compatibility, routing, time-window, no-reassignment,
+and return-to-station constraints described above.
+3.7. State Dynamics
+The state at time 𝑡, after observing the real-time requests
+revealed at time 𝑡, is 𝑥𝑡= (𝐩𝑡, 𝜽𝑡, 𝐲𝑡, 𝐚𝑡, 𝝈𝑡, 𝑡
+) . Here, 𝐩𝑡
+is the vector of nodes currently occupied by the robots, 𝜽𝑡
+is the vector of robot operational statuses, 𝐲𝑡is the current
+team schedule, 𝐚𝑡is the current request assignment vector,
+𝝈𝑡is the vector of request service statuses, and 𝑡is the set
+of requests known by time 𝑡.
+For each robot 𝓁the status 𝜃𝓁
+𝑡records whether robot
+𝓁is available, executing an assigned schedule, or returning
+to its maintenance station. For each request 𝑟𝑗∈𝑡, the
+assignment status satisfies 𝑎𝑗,𝑡∈∪{−1, ∅}, where 𝑎𝑗,𝑡= 𝓁
+means that request 𝑟𝑗is assigned to robot 𝓁, 𝑎𝑗,𝑡= ∅means
+that it is known but not currently assigned, and 𝑎𝑗,𝑡= −1
+means that it has been rejected. The service status satisfies
+𝜎𝑗,𝑡∈{pending, started, completed, rejected}.
+(6)
+D. Garces et al.: Preprint submitted to Elsevier
+Page 7 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+After selecting a feasible control 𝑢𝑡, robots execute the
+first step of their updated schedules. The system then ob-
+serves the next real-time request set 𝜔𝑡+1, and the state
+evolves according to 𝑥𝑡+1 = 𝑓𝑡
+(𝑥𝑡, 𝑢𝑡, 𝜔𝑡+1
+). For notational
+convenience, let 𝜔𝑇= ∅. For 𝑡= 0, … , 𝑇−2, the transition
+𝑥𝑡+1 = 𝑓𝑡(𝑥𝑡, 𝑢𝑡, 𝜔𝑡+1) incorporates the real-time requests
+revealed at the next decision time. At the terminal transition,
+𝑥𝑇
+= 𝑓𝑇−1(𝑥𝑇−1, 𝑢𝑇−1, 𝜔𝑇) with 𝜔𝑇
+= ∅, so no new
+requests enter after the final decision time.
+3.8. Service Cost and Planning Objective
+The planner evaluates assignments according to the ser-
+vice delay and feasibility of the resulting schedules. For
+a known request 𝑟𝑗∈𝑡that is assigned to a feasible
+schedule, let̂ 𝐶𝑗,𝑡(𝑥𝑡) denote its planned completion time
+under the current assignment and schedule. The planned
+delay of request 𝑟𝑗is ℎ𝑗(𝑥𝑡) = max
+{
+0,̂ 𝐶𝑗,𝑡(𝑥𝑡) −𝑡des
+𝑗
+}
+.
+A known request is said to be still serviceable at state
+𝑥𝑡if there exists at least one compatible robot schedule,
+consistent with the constraints in 𝑡(𝑥𝑡), that can complete
+the request no later than 𝑡comp
+𝑗
+. Pending serviceable requests
+are not assigned the infeasibility penalty, since a wait action
+may intentionally leave such requests unassigned to preserve
+future capacity.
+To compare candidate schedules during online planning,
+we use a finite penalized request cost that distinguishes
+between assigned requests, pending requests that can still be
+served, and requests that have been rejected or have become
+infeasible. Let Φ < ∞be a large penalty for rejected or
+infeasible requests. Define
+𝐻𝑗(𝑥𝑡) =
+⎧
+⎪
+⎪
+⎪
+⎨
+⎪
+⎪
+⎪⎩
+ℎ𝑗(𝑥𝑡),
+if 𝑟𝑗is assigned to a feasible
+schedule or completed,
+0,
+if 𝑟𝑗is pending and can still be
+feasibly served,
+Φ,
+if 𝑟𝑗is rejected or can no longer
+be feasibly served.
+(7)
+Pending serviceable requests incur no immediate cost, but
+they remain in the known request set and are evaluated in
+subsequent decision times. Any request that is not completed
+or assigned to a feasible schedule by the terminal time is
+treated as no longer serviceable and receives the penalty Φ.
+The aggregate schedule score is
+𝐻(𝑥𝑡) =
+∑
+𝑟𝑗∈𝑡
+𝐻𝑗(𝑥𝑡),
+(8)
+with the convention that 𝐻(𝑥𝑡) = 0 if no request has
+entered the system. The penalty Φ is chosen large enough to
+discourage rejection or loss of serviceability, while pending
+serviceable requests incur no immediate penalty. Thus, a
+wait action may intentionally leave a request unassigned
+when preserving capacity is valuable, but the request must
+eventually be assigned to a feasible schedule or incur the
+penalty if it is rejected or becomes no longer serviceable.
+The one-step cost is defined as the change in aggregate
+schedule score: 𝑔𝑡(𝑥𝑡, 𝑢𝑡, 𝜔𝑡+1) = 𝐻(𝑥𝑡+1) −𝐻(𝑥𝑡), where
+𝑥𝑡+1
+=
+𝑓𝑡(𝑥𝑡, 𝑢𝑡, 𝜔𝑡+1). This incremental cost measures
+how the selected assignment and schedule update changes
+planned service quality after the next request arrivals are
+incorporated.
+A policy is a sequence 𝜋= {𝜇0, 𝜇1, … , 𝜇𝑇−1
+}, where
+each decision rule maps the current state to a feasible con-
+trol: 𝜇𝑡(𝑥𝑡) ∈𝑡(𝑥𝑡).
+The finite-horizon cost-to-go of policy 𝜋from state 𝑥𝑡is
+𝐽𝜋
+𝑡(𝑥𝑡) = 𝔼ℙ
+[𝑇−1
+∑
+𝜏=𝑡
+𝑔𝜏
+(𝑥𝜏, 𝜇𝜏(𝑥𝜏), 𝜔𝜏+1
+) ||||||
+𝑥𝑡
+]
+,
+(9)
+where the expectation is taken over future real-time request
+arrivals governed by the deployment distribution ℙ. Because
+𝑔𝑡is defined as the change in aggregate schedule score, the
+finite-horizon objective evaluates the expected net change
+in planned service quality over the horizon. Equivalently,
+up to the fixed baseline 𝐻(𝑥𝑡), the objective minimizes the
+expected terminal aggregate schedule score.
+The ideal planning objective is to find an admissible
+policy that minimizes this expected cost-to-go:
+𝐽𝜋∗
+𝑡(𝑥𝑡) = min
+𝜋∈Π 𝐽𝜋
+𝑡(𝑥𝑡),
+(10)
+where Π is the set of admissible policies.
+The stochastic dynamic program in (10) provides a for-
+mal description of the online planning objective, but it
+cannot be solved exactly in the setting considered here. The
+control space grows combinatorially because each decision
+requires selecting assignments, insertion positions, service
+times, and routes for heterogeneous robots. In addition, eval-
+uating a candidate control requires reasoning about future
+request arrivals whose distribution is only estimated from
+historical data and may change during deployment. These
+difficulties motivate the prediction-aware adaptive rollout
+framework developed in Section 4, which approximates
+the feasible control set, estimates downstream cost through
+efficient base-policy simulation, adapts the influence of pre-
+dicted requests using recent forecast errors, and re-optimizes
+eligible unstarted assignments when the current schedule
+becomes undesirable.
+4. Our Approach
+We now develop the prediction-aware adaptive rollout
+framework motivated by the stochastic dynamic program
+in Section 3. The framework defines an online policỹ 𝜋=̃
+𝜇0,̃ 𝜇1, … ,̃ 𝜇𝑇−1, where each decision rule selects a feasible
+control from a tractable candidate set,̃ 𝜇𝑡(𝑥𝑡) ∈̃ 𝑡(𝑥𝑡),
+wherẽ 𝑡(𝑥𝑡) ⊆𝑡(𝑥𝑡). The candidate set contains schedule
+modifications for requests that have actually entered the sys-
+tem. Predicted future requests are not eligible for immediate
+assignment; they are used only inside rollout simulations to
+estimate the downstream cost of current decisions.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 8 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+4.1. Overview of the Prediction-Aware Adaptive
+Rollout Framework
+At each decision time, the online policy combines com-
+putationally tractable candidate generation, sampled future
+request scenarios, interaction aware base-policy simulation,
+adaptive prediction confidence weights, and selective re-
+optimization. After newly observed requests have been in-
+corporated into the state, the planner may return eligible
+assigned but unstarted requests to the pending set when the
+current schedule has become undesirable. It then generates
+a small set of feasible schedule modifications for currently
+pending requests. Each candidate is evaluated by simulating
+future decisions over sampled request scenarios from the
+estimated distribution̂ ℙ, with predicted requests weighted
+according to recent forecast accuracy. The selected control
+updates the real robot schedules, while predicted requests
+remain hypothetical and influence the decision only through
+their weighted contribution to simulated future cost.
+The rollout policy is implemented using a one-robot-at-
+a-time decision rule. Instead of optimizing over the full joint
+control set 𝑡(𝑥𝑡), the planner processes robots sequentially.
+When a robot is considered, controls already selected for
+earlier robots are held fixed, a robot-local candidate set is
+generated, and each local candidate is evaluated by com-
+pleting the remaining simulated decisions with an efficient
+base policy. This decomposition replaces one large joint
+scheduling problem with a sequence of smaller robot-level
+rollout decisions, making online evaluation practical while
+still accounting for interactions through the simulated state,
+service-node reservations, and future-cost base policy.
+The online rollout policy is supported by a pre-deployment
+fleet-sizing procedure. This procedure uses historical request
+sequences to select a heterogeneous robot composition for
+which the assignment routines used inside rollout achieve a
+target empirical feasibility level on representative operating
+days. The resulting composition is then treated as fixed
+during online deployment, as assumed in Section 3.
+The remainder of this section presents the components
+of the framework. Section 4.2 gives the one-robot-at-a-
+time rollout decision rule. Section 4.3 describes candidate-
+control generation and wait actions. Section 4.4 describes
+future-request scenario generation. Section 4.5 introduces
+the interaction-aware base policy used for future-cost esti-
+mation. Section 4.6 presents adaptive prediction-confidence
+weighting. Section 4.7 describes selective re-optimization
+of unstarted assignments. Finally, Section 4.8 presents the
+supporting historical fleet-sizing procedure.
+4.2. One-Robot-at-a-Time Rollout Decision Rule
+We first define the online rollout decision rule. The
+remaining subsections describe the components used by
+this rule: candidate-control generation, future-request sce-
+nario generation, the interaction-aware base policy, adaptive
+prediction-confidence weights, selective re-optimization,
+and the supporting fleet-sizing procedure.
+At decision time 𝑡, the planner has observed state 𝑥𝑡
+and must select a feasible control from a tractable subset
+of the full feasible control set. Directly optimizing over the
+joint candidate set for all robots is expensive because a joint
+control specifies assignments, insertion positions, service
+times, and routes for the entire team. We therefore use a one-
+robot-at-a-time rollout scheme, following the one-agent-at-
+a-time rollout principle in [11, 12]. This replaces one large
+joint optimization with a sequence of smaller robot-local
+optimizations, while using simulation to account for the
+effect of each local decision on the rest of the team.
+Let 𝑡= (𝓁1, 𝓁2, … , 𝓁𝑀) denote the order in which
+robots are processed at decision time 𝑡. This order may
+be fixed or chosen from the current state, for example by
+prioritizing robots that become available earlier. When robot
+𝓁𝑖is considered, the local controls already selected for
+robots 𝓁1, … , 𝓁𝑖−1 are held fixed. The planner then generates
+a robot-local candidate set̃ 𝓁𝑖
+𝑡
+(
+𝑥𝑡;̃ 𝑢𝓁1
+𝑡, … ,̃ 𝑢𝓁𝑖−1
+𝑡
+)
+, where
+each candidate modifies only the schedule of robot 𝓁𝑖and
+only uses requests that have entered the system by time
+𝑡. This set includes feasible assignment actions and a wait
+action, as described in Section 4.3. Predicted future requests
+are not included in the immediate candidate set.
+For a candidate local control
+𝑢𝓁𝑖
+𝑡∈̃ 𝓁𝑖
+𝑡
+(
+𝑥𝑡;̃ 𝑢𝓁1
+𝑡, … ,̃ 𝑢𝓁𝑖−1
+𝑡
+)
+,
+we construct a completed joint control by fixing the controls
+already selected for earlier robots, applying 𝑢𝓁𝑖
+𝑡
+to robot
+𝓁𝑖, and using the base policy to complete the simulated
+decisions for robots that have not yet been processed:
+𝑢comp,𝑖
+𝑡
+(
+𝑢𝓁𝑖
+𝑡
+)
+= Completē𝜋
+(
+𝑥𝑡;̃ 𝑢𝓁1
+𝑡, … ,̃ 𝑢𝓁𝑖−1
+𝑡
+, 𝑢𝓁𝑖
+𝑡
+)
+.
+Here,̄ 𝜋is the interaction-aware base policy introduced in
+Section 4.5. The completion step is used only to evaluate
+candidate local controls inside rollout; the executable control
+applied to the real system is obtained after all robots have
+been processed.
+The candidate 𝑢𝓁𝑖
+𝑡is evaluated using sampled future re-
+quest scenarios. Let̂ 𝑠
+𝑡=
+(̂
+𝜔𝑠
+𝑡+1,̂ 𝜔𝑠
+𝑡+2, … ,̂ 𝜔𝑠̄
+𝑇
+)
+be the 𝑠-th
+sampled scenario generated from the estimated distribution̂
+ℙ, wherē 𝑇= min{𝑡+ 𝐷+ 1, 𝑇} and 𝐷denotes the rollout
+depth. Starting from 𝑥𝑡, the simulator applies the completed
+joint control 𝑢comp,𝑖
+𝑡
+(𝑢𝓁𝑖
+𝑡), incorporates the sampled future
+requests in̂ 𝑠
+𝑡, and then applies the base policȳ 𝜋until the
+truncated horizon̄ 𝑇. Let 𝑥𝑠,𝑖,𝑢̄
+𝑇
+denote the resulting simulated
+state.
+Because pending serviceable requests have zero imme-
+diate cost in the formulation of 𝐻𝑗, the rollout value is not
+computed by scoring an arbitrary partially unresolved state.
+Instead, before evaluating the terminal score, the base policy
+is used to resolve pending requests that remain relevant
+within the truncated rollout horizon. Let Resolvē𝜋(𝑥) denote
+the simulated state obtained by applying the base policy to
+the pending requests in state 𝑥, assigning them if feasible
+and marking them rejected or no longer serviceable if they
+D. Garces et al.: Preprint submitted to Elsevier
+Page 9 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+cannot be completed before their deadlines. We define the
+resolved weighted terminal score
+𝐻𝜆
+res(𝑥) = 𝐻𝜆(Resolvē𝜋(𝑥)) ,
+(11)
+where 𝐻𝜆is the weighted aggregate schedule score defined
+in Section 4.6. Observed and scheduled requests receive
+unit weight, while predicted requests are weighted according
+to the current prediction-confidence values. This resolved
+score ensures that a request left pending by a wait action
+is not treated as cost-free indefinitely: during simulation it
+is either assigned and contributes its planned delay, remains
+available for assignment at a later simulated decision time,
+or is eventually marked rejected or no longer serviceable and
+receives the penalty Φ.
+The prediction-aware rollout value of candidate 𝑢𝓁𝑖
+𝑡
+is
+estimated bŷ
+𝑄𝜆,𝑖
+𝑡
+(
+𝑥𝑡, 𝑢𝓁𝑖
+𝑡
+)
+= 1
+𝑆
+𝑆
+∑
+𝑠=1
+𝐻𝜆
+res
+(
+𝑥𝑠,𝑖,𝑢̄
+𝑇
+)
+.
+(12)
+Because the one-step cost in Section 3.8 is defined as a
+change in aggregate schedule score, this terminal-score form
+is equivalent, up to a fixed baseline, to summing weighted
+incremental costs over the truncated rollout horizon.
+The selected local control for robot 𝓁𝑖is̃
+𝑢𝓁𝑖
+𝑡∈
+argmin
+𝑣𝓁𝑖
+𝑡∈̃𝓁𝑖
+𝑡
+(
+𝑥𝑡;̃𝑢𝓁1
+𝑡,…,̃𝑢𝓁𝑖−1
+𝑡
+)̂ 𝑄𝜆,𝑖
+𝑡
+(
+𝑥𝑡, 𝑣𝓁𝑖
+𝑡
+)
+.
+(13)
+After the selected control is fixed, the planner proceeds
+to the next robot in the order 𝑡. Once all robots have
+been processed, the one-robot-at-a-time rollout control is̃
+𝑢𝑡=
+(̃
+𝑢𝓁1
+𝑡,̃ 𝑢𝓁2
+𝑡, … ,̃ 𝑢𝓁𝑀
+𝑡
+)
+. This decision rule is prediction-
+aware because candidate controls are evaluated using sam-
+pled future request scenarios. It is adaptive because the
+contribution of predicted requests to 𝐻𝜆depends on online
+confidence weights computed from recent forecast errors. It
+avoids premature commitment because predicted requests
+are never included in the immediate candidate sets; they
+influence the decision only through their effect on simulated
+downstream schedule quality.
+4.3. Candidate-Control Generation and Wait
+Actions
+The one-robot-at-a-time rollout rule in Section 4.2 re-
+quires a finite robot-local candidate set. This subsection
+describes how that set is constructed. The goal is not to
+enumerate all feasible controls in 𝑡(𝑥𝑡), but to generate a
+small set of feasible and promising schedule modifications
+for currently known requests. Predicted future requests are
+deliberately excluded from this immediate candidate set;
+they influence candidate selection only later, through rollout
+simulation.
+At decision time 𝑡, let 𝑡denote the set of known
+requests that are eligible for assignment by the candidate
+generator. After any selective re-optimization step has been
+applied, we let
+𝑡= {𝑟𝑗∈𝑡∶𝜎𝑗,𝑡= pending, 𝑎𝑗,𝑡= ∅} .
+(14)
+Thus, 𝑡contains requests that are known, not rejected, not
+completed, and not currently fixed in an executing service.
+Requests whose service has already started are excluded
+because feasible controls must preserve started assignments.
+Assigned but unstarted requests enter 𝑡only if the re-
+optimization mechanism in Section 4.7 explicitly releases
+them back to the pending set.
+For each request 𝑟𝑗∈𝑡, the compatible robot set is
+𝑗= {𝓁∈∶𝑘𝑗∈(𝑧𝓁)} .
+(15)
+When robot 𝓁is processed by the one-robot-at-a-time rollout
+rule, only requests for which 𝓁is a compatible robot (i.e.
+𝓁∈𝑗) are considered as assignment candidates for that
+robot.
+A robot-local assignment action assigns a request 𝑟𝑗∈
+𝑡to a compatible robot 𝓁∈𝑗and appends the service-
+node sequence 𝝆𝑗at the end of the remaining schedule of
+robot 𝓁. We denote such an action by 𝑎= (𝑟𝑗, 𝓁). The action
+is retained only if the resulting schedule is feasible with
+respect to the constraints in Section 3.6: it must follow valid
+directed paths on , visit the service nodes in the order spec-
+ified by 𝝆𝑗, satisfy release-time and deadline constraints,
+preserve the already executed portion of the schedule, and
+return the robot to its maintenance station by time 𝑇.
+For each action 𝑎= (𝑟𝑗, 𝓁), we compute two heuristic
+values used only to rank candidate actions before rollout
+evaluation. First, we compute a latest feasible service-start
+time. Let 𝐹travel
+𝓁,𝑗
+denote the estimated time required for robot
+𝓁to traverse the service-node sequence 𝝆𝑗, ignoring con-
+gestion and conflicts with other robots, but using the type-
+dependent graph travel-time estimates. The latest feasible
+service-start time is
+𝐹start
+𝓁,𝑗
+= 𝑡comp
+𝑗
+−𝐹travel
+𝓁,𝑗
+−𝐹𝑘𝑗.
+(16)
+This value estimates how urgent the request is: smaller
+values indicate less remaining scheduling flexibility.
+Second, we compute a robot-specific heuristic comple-
+tion delay. Let 𝐹reach
+𝓁,𝑗
+denote the estimated time at which
+robot 𝓁reaches the first service node of 𝑟𝑗if the request
+is appended to its remaining schedule. The corresponding
+heuristic completion time iŝ
+𝐶𝓁,𝑗,𝑡= max
+{
+𝐹reach
+𝓁,𝑗
+, 𝑡start
+𝑗
+}
++ 𝐹travel
+𝓁𝑗
++ 𝐹𝑘𝑗.
+(17)
+If̂ 𝐶𝓁,𝑗,𝑡> 𝑡comp
+𝑗
+, the action is discarded. Otherwise, the
+heuristic delay is
+𝐹delay
+𝓁,𝑗,𝑡= max
+{
+0,̂ 𝐶𝓁,𝑗,𝑡−𝑡des
+𝑗
+}
+.
+(18)
+Candidate assignment actions are ranked lexicographically
+by urgency and estimated delay:
+rank𝑡(𝓁, 𝑟𝑗) =
+(
+𝐹start
+𝓁,𝑗, 𝐹delay
+𝓁,𝑗,𝑡
+)
+.
+(19)
+D. Garces et al.: Preprint submitted to Elsevier
+Page 10 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Actions with earlier latest feasible service-start times are
+expanded first, and ties are broken by the robot-specific
+heuristic delay. After sorting by (19), the generator keeps
+only the first 𝐿feasible assignment actions for robot 𝓁,
+where 𝐿is the candidate limit.
+The ranking in (19) is used only for pruning. It is not the
+rollout objective. After the robot-local candidate set has been
+generated, each retained assignment action and associated
+scheduled is evaluated by the rollout estimator in Section 4.2,
+which accounts for sampled future requests, the base policy,
+and prediction-confidence weights.
+The candidate set also includes a wait action, denoted
+𝑎wait
+𝓁
+. This action assigns no request to robot 𝓁during the
+current local decision. The wait action is always included,
+even when no feasible assignment action is available, so that
+the robot-local candidate set is never empty. If the wait action
+is selected, robot 𝓁remains unassigned in the real system for
+the current decision cycle and may be reconsidered at a later
+decision time.
+When a wait action is evaluated inside rollout, robot
+𝓁is temporarily treated as unavailable for the simulated
+completion of the current local decision. This prevents the
+base policy used inside the rollout simulation from imme-
+diately undoing the wait action by assigning the same robot
+to another pending request in the same simulated decision.
+The robot is not removed from the real system; it is simply
+left available for future decision times. We denote the set
+of robots that must be treated as unavailable for future cost
+estimation as block.
+This procedure reduces the action space used by rollout
+from the full feasible control set 𝑡(𝑥𝑡) to a tractable robot-
+local candidate set̃ 𝓁𝑖
+𝑡. The retained assignment actions are
+feasible for the current robot, urgent according to their latest
+feasible service-start times, and promising according to their
+heuristic delay estimates. The wait action preserves the
+planner’s ability to defer assignment when the downstream
+rollout estimate indicates that keeping capacity available is
+preferable.
+4.4. Future-Request Scenario Generation
+The rollout decision rule in Section 4.2 evaluates current
+candidate controls by simulating possible future request
+arrivals. This subsection describes how those future request
+scenarios are generated. The scenario generator provides the
+interface between the learned request-prediction model and
+the scheduling model in Section 3: it samples future events
+from the estimated distribution̂ ℙ, converts those events
+into request tuples with graph-grounded service locations
+and service windows, and returns sampled disturbance se-
+quences that can be used directly inside rollout simulation.
+Historical operating data are used to train temporal point
+process models for future request generation. Rather than
+predicting a single global request process over the entire
+environment, we decompose demand into local request pro-
+cesses. In the hospital case study, each local process corre-
+sponds to a patient encounter, but the same construction ap-
+plies to any setting in which future demand can be associated
+Figure 2: Schematic of the neural temporal point process
+used for future-request generation. Past request events are
+represented as a sequence of timed marks and encoded
+into a history-dependent representation. This representation
+parameterizes conditional distributions over future event times
+and request marks. Samples from these distributions are
+then converted into graph-grounded request tuples for rollout
+simulation.
+with local entities, regions, or service contexts. Let 𝑡denote
+the set of local processes active at decision time 𝑡. For each
+process 𝑝∈𝑡, let
+𝑝,𝑡=
+(
+(𝜏𝑝,1, 𝜅𝑝,1), … , (𝜏𝑝,𝑁𝑝,𝑡, 𝜅𝑝,𝑁𝑝,𝑡)
+)
+(20)
+denote the observed timed-mark history available at time 𝑡.
+Here, 𝜏𝑝,𝑞is the time of previously observed request event
+𝑞and 𝜅𝑝,𝑞is its mark. The mark encodes the task family or
+request type, together with any discrete attributes used by
+the trained prediction model. The number of timed marks
+considered in the history is denoted by 𝑁𝑝,𝑡.
+For each active process 𝑝, the trained temporal point
+process defines a conditional distribution over future timed
+marks. For rollout sample 𝑠, we draw
+{
+(̂𝜏𝑠
+𝑝,𝑞,̂ 𝜅𝑠
+𝑝,𝑞)
+}
+𝑞≥1 ∼̂ ℙ𝑝
+(⋅∣𝑝,𝑡
+)
+(21)
+up to the truncated rollout horizon. Figure 2 illustrates
+this prediction module. The observed timed-mark prefix is
+encoded by a neural temporal point process, whose history-
+dependent representation parameterizes conditional distri-
+butions over future event times and marks. Samples from
+these conditional distributions provide the raw future de-
+mand events used by the scenario generator.
+The temporal point process samples timed marks, but the
+rollout simulator requires request tuples of the form defined
+in Section 3.3. We therefore apply a deterministic request-
+construction map to each sampled timed mark. Given a
+sampled event (̂𝜏𝑠
+𝑝,𝑞,̂ 𝜅𝑠
+𝑝,𝑞), the mark is decoded into a task
+typê 𝑘𝑗and any task-specific attributes. The sampled time
+is converted into the desired service timê 𝑡des
+𝑗, while the
+entry time, earliest allowable start time, and deadline are
+constructed from task-specific service-window parameters.
+We write this conversion abstractly aŝ
+𝑟𝑗= Γ
+(
+𝑝,̂ 𝜏𝑠
+𝑝,𝑞,̂ 𝜅𝑠
+𝑝,𝑞
+)
+=
+(̂
+𝑘𝑗,̂ 𝝆𝑗,̂ 𝑡entry
+𝑗
+,̂ 𝑡start
+𝑗
+,̂ 𝑡des
+𝑗,̂ 𝑡comp
+𝑗
+)
+.
+(22)
+D. Garces et al.: Preprint submitted to Elsevier
+Page 11 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Where Γ is a request constructor operator. The endpoint
+sequencê 𝝆𝑗is obtained from the local process context and
+the task type. In the hospital case study, the process con-
+text identifies the patient location at the sampled time. For
+single-location service requests, this location is the service
+endpoint. For multi-location requests, such as delivery tasks,
+the endpoint sequence also includes the relevant supply or
+pickup location before the destination endpoint. Thus, the
+learned model predicts irregular timed marks, while the
+planner converts those marks into graph-grounded service
+requests using known location and task mappings.
+For rollout sample 𝑠, the generator aggregates all pre-
+dicted requests into a sampled future disturbance sequencê
+𝑠
+𝑡=
+(̂
+𝜔𝑠
+𝑡+1,̂ 𝜔𝑠
+𝑡+2, … ,̂ 𝜔𝑠̄
+𝑇
+)
+,̄
+𝑇= min{𝑡+𝐷+1, 𝑇},
+(23)
+where 𝐷is the rollout depth. Eacĥ 𝜔𝑠
+𝜏is a set of predicted
+requests that enter the simulated system at future decision
+time 𝜏. Let 𝜓(̂𝑟𝑗) denote the decision time associated with
+the predicted entry timê 𝑡entry
+𝑗
+. Then̂ 𝑟𝑗is added to the bucket̂
+𝜔𝑠
+𝑡′, where 𝑡′ = 𝜓(̂𝑟𝑗) and 𝜓(̂𝑟𝑗) ∈𝑡+ 1, … ,̄ 𝑇. Algorithm 1
+summarizes the scenario-generation procedure.
+The generator also filters predicted requests that match
+requests already known to the planner. This prevents the
+rollout estimator from double-counting scheduled requests
+or real-time requests already observed in 𝑡. A predicted
+request is treated as matching a known request if it has the
+same task type, compatible service-node context, and a pre-
+dicted service time within a tolerance window Δ. Matched
+predictions are removed before the sampled disturbance
+sequence is passed to the rollout simulator.
+Algorithm 1 Future-request scenario generation
+Input: State 𝑥𝑡, active local processes 𝑡, local histories
+𝑝,𝑡, local TPP modelŝ ℙ𝑝, request-construction map Γ,
+rollout depth 𝐷, sample count 𝑆, match tolerance Δ.
+Output: Sampled future request sequenceŝ 1
+𝑡, … ,̂ 𝑆
+𝑡.
+1: Set̄ 𝑇←min{𝑡+ 𝐷+ 1, 𝑇}.
+2: for 𝑠= 1, … , 𝑆do
+3:
+Initializê 𝜔𝑠
+𝜏←∅for 𝜏= 𝑡+ 1, … ,̄ 𝑇.
+4:
+for each active local process 𝑝∈𝑡do
+5:
+Sample future timed marks from̂ ℙ𝑝(⋅∣𝑝,𝑡) up to
+the truncated horizon.
+6:
+for each sampled timed mark (̂𝜏𝑠
+𝑝,𝑞,̂ 𝜅𝑠
+𝑝,𝑞) do
+7:
+Construct
+the
+predicted
+request̂
+𝑟𝑗
+=
+Γ(𝑝,̂ 𝜏𝑠
+𝑝,𝑞,̂ 𝜅𝑠
+𝑝,𝑞).
+8:
+if̂ 𝑟𝑗does not match a scheduled or already
+observed request within tolerance Δ then
+9:
+Add̂ 𝑟𝑗to the future disturbance bucket̂ 𝜔𝑠
+𝜓(̂𝑟𝑗),
+if 𝜓(̂𝑟𝑗) ∈{𝑡+ 1, … ,̄ 𝑇}.
+10:
+Form̂ 𝑠
+𝑡= (̂𝜔𝑠
+𝑡+1, … ,̂ 𝜔𝑠̄
+𝑇).
+11: return̂ 1
+𝑡, … ,̂ 𝑆
+𝑡.
+The resulting scenarios have the same request structure
+as the observed request process in Section 3. Consequently,
+future demand is evaluated inside rollout using the same
+compatibility, routing, service-window, and scheduling con-
+straints as real requests, while remaining excluded from the
+immediate candidate-control set.
+4.5. Interaction-Aware Base Policy for
+Future-Cost Estimation
+The one-robot-at-a-time rollout rule evaluates each can-
+didate local control by simulating future system evolution.
+Because this simulation is repeated across candidate actions,
+robots, and sampled future request scenarios, the policy used
+inside rollout must be much cheaper than solving the full
+online scheduling problem. We therefore use an interaction-
+aware base policy, denoted̄ 𝜋, to approximate downstream
+assignment cost after a candidate control has been applied.
+The base policy is used in two places. First, in the
+completion operator Completē 𝜋, it fills in simulated assign-
+ments for robots that have not yet been processed by the
+one-robot-at-a-time rollout rule. Second, in the resolution
+operator Resolvē 𝜋, it attempts to resolve pending requests
+before the truncated terminal score is evaluated. In both
+cases, the base policy is used only inside rollout simulation.
+It is not required to produce the final executable paths
+applied to the real robots; instead, it provides a fast estimate
+of how difficult the remaining requests are likely to be after
+the current candidate decision.
+Given a simulated statẽ 𝑥and a batch of requests ,
+the base policy processes requests in priority order. The
+priority is based on the latest feasible service-start time
+used in Section 4.3: requests with less remaining scheduling
+flexibility are considered first. The batch may contain newly
+sampled future requests, requests left pending by earlier
+simulated decisions, or requests released for reconsidera-
+tion in the simulated state. Predicted and observed requests
+are processed by the same assignment routine; prediction-
+confidence weights are applied later when the resulting
+simulated state is scored.
+For each queued request 𝑟𝑗, the base policy considers
+compatible robots 𝓁∈𝑗. Robots that have been temporar-
+ily blocked by a wait action in the current rollout evaluation
+are excluded, so that the base policy cannot immediately
+undo the candidate wait decision being evaluated. For each
+remaining compatible robot, the policy estimates the com-
+pletion time that would result from appending 𝑟𝑗to the
+robot’s simulated schedule. This estimate is calculated using
+the type-dependent graph travel times through the service-
+node sequence 𝝆𝑗, the request service durations, release-time
+constraints, deadlines, and a service-node reservation table.
+The service-node reservation table is the main interaction-
+aware component of the base policy. It records time intervals
+during which simulated robots are expected to occupy task
+service nodes. When the tentative service interval for a new
+request overlaps an existing reservation at the same service
+node, the interval is shifted to the earliest available time that
+satisfies the request’s timing constraints. Figure 3 illustrates
+D. Garces et al.: Preprint submitted to Elsevier
+Page 12 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 3: Reservation-table check used by the interaction-
+aware base policy. A candidate service interval is computed
+from the robot’s estimated arrival time and the request execu-
+tion duration. If the interval overlaps an existing reservation at
+the same service node, it is shifted to the earliest available
+interval that satisfies the request’s timing constraints. The
+resulting interval determines the estimated completion time
+used to compare compatible robot assignments.
+this reservation-table check. This approximation captures
+service-location blocking and competition for shared service
+locations without constructing full collision-free paths for
+every hypothetical future request.
+After estimating feasible completion times for all com-
+patible robots, the request is assigned to the robot with the
+smallest heuristic delay. If no compatible, unblocked robot
+can complete the request before its deadline, the request
+is marked as rejected or no longer serviceable in the sim-
+ulated state. The resulting simulated assignments, planned
+completion times, rejected-request indicators, and service-
+node reservations are then used by the rollout estimator
+when computing the resolved weighted terminal score. Al-
+gorithm 2 summarizes the base-policy update.
+This base policy preserves the constraints that most
+strongly affect downstream assignment cost: robot-task com-
+patibility, endpoint order, release times, deadlines, service
+durations, robot availability, and service-location blocking.
+At the same time, it avoids the cost of constructing full
+executable schedules for every hypothetical future request in
+every rollout sample. Full feasibility of the immediate real
+candidate action is checked before rollout evaluation; the
+base policy approximation is used only to estimate down-
+stream cost and to rank current candidate controls.
+4.6. Adaptive Prediction Confidence and Weighted
+Rollout Costs
+The rollout policy uses sampled future requests to es-
+timate downstream cost, but the predictive distribution̂ ℙ
+may differ from the deployment distribution ℙ. If inaccurate
+predictions are trusted too strongly, the planner may preserve
+capacity for requests that do not occur or make current
+assignments that reflect an outdated demand pattern. We
+therefore assign confidence weights to predicted requests
+and update those weights online from recent forecast errors.
+Algorithm 2 Interaction-aware base policy used inside roll-
+out
+Input: Simulated statẽ 𝑥, request batch , compatible robot
+sets 𝑗, service-node reservation table, blocked robot set
+block.
+Output: Updated simulated statẽ 𝑥′.
+1: Add requests in to the simulated state if they are not
+already present.
+2: Build a priority queue from unresolved requests, ordered
+by latest feasible service-start time.
+3: while the priority queue is not empty do
+4:
+Remove the highest-priority request 𝑟𝑗.
+5:
+Initialize best robot 𝓁∗←∅, best delay 𝑐∗←+∞,
+and best service intervals ∗←∅.
+6:
+for each robot 𝓁∈𝑗⧵block do
+7:
+Estimate the earliest feasible service intervals for
+𝑟𝑗if appended to robot 𝓁’s simulated schedule.
+8:
+Enforce endpoint order, release time, deadline, ser-
+vice duration, and service-node reservation con-
+straints.
+9:
+if all service nodes of 𝑟𝑗can be served before the
+deadline then
+10:
+Compute the resulting heuristic delay 𝑐.
+11:
+if 𝑐< 𝑐∗then
+12:
+Set 𝓁∗←𝓁, 𝑐∗←𝑐, and store the corre-
+sponding service intervals in ∗.
+13:
+if 𝓁∗= ∅then
+14:
+Mark 𝑟𝑗as rejected or no longer serviceable in the
+simulated state.
+15:
+else
+16:
+Assign 𝑟𝑗to 𝓁∗, record its planned completion
+time, and add ∗to the reservation table.
+17: return the updated simulated statẽ 𝑥′.
+The confidence mechanism affects only hypothetical re-
+quests used inside rollout simulation. Observed real-time re-
+quests and scheduled requests always receive unit weight be-
+cause they correspond to demand that is known to the plan-
+ner. Predicted requests receive context-dependent weights.
+Let 𝑛𝑗denote the prediction context of a predicted request̂
+𝑟𝑗. A context may encode task family, request type, spatial
+region, floor, time of day, or any other grouping used to
+estimate prediction reliability. Let 𝑏𝑗denote the confidence-
+update bin associated with the predicted request̂ 𝑟𝑗. The
+confidence weight for context 𝑛in bin 𝑏is denoted by 𝜆𝑛,𝑏∈
+[𝜆min, 1], where 𝜆min ∈[0, 1] is the smallest prediction
+weight allowed by the planner. A value near one means that
+predictions in the context are trusted, while smaller values
+reduce their effect on rollout evaluation.
+For a simulated state 𝑥, let obs(𝑥) denote the observed
+or scheduled requests in the state, and let̂ (𝑥) denote
+the predicted requests present in the simulated state. The
+weighted aggregate schedule score is
+𝐻𝜆(𝑥) =
+∑
+𝑟𝑗∈obs(𝑥)
+𝐻𝑗(𝑥) +
+∑̂
+𝑟𝑗∈̂(𝑥)
+𝜆𝑛𝑗,𝑏𝑗𝐻̂𝑟𝑗(𝑥). (24)
+D. Garces et al.: Preprint submitted to Elsevier
+Page 13 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+This score is used only inside rollout simulation. It does
+not alter the real system state, the feasibility constraints, or
+the commitments made to observed requests. In the one-
+robot-at-a-time rollout rule, 𝐻𝜆is used through the resolved
+terminal score 𝐻𝜆
+res, so that pending predicted requests are
+resolved by the base policy before their weighted contribu-
+tion is evaluated.
+The weights are updated by comparing recent observa-
+tions with prediction snapshots generated before those ob-
+servations were available. Prediction confidence is evaluated
+on fixed bins of duration Δ𝜆. Let 𝜉index the confidence-
+update bin, and let 𝜉denote the short set of bins used for the
+comparison. In the implementation, 𝜉includes the target bin
+and adjacent bins used to tolerate small timing shifts. Let 𝑂𝑛,𝜄
+be the observed request count in context 𝑛and comparison
+bin 𝜄∈𝜉, and let̂ 𝑂𝑠
+𝑛,𝜄be the corresponding predicted count
+in rollout sample 𝑠. The update distinguishes two forecast
+errors: overprediction, where predicted requests fail to occur,
+and timing error, where predicted demand appears near the
+predicted time but in an adjacent bin.
+The sampled predictions define the mean predicted count
+𝜇𝑛,𝜄= 1
+𝑆
+𝑆
+∑
+𝑠=1̂
+𝑂𝑠
+𝑛,𝜄.
+(25)
+We also compute empirical surprise scores from the sampled
+predictive counts. With add-one smoothing,
+𝜀over
+𝑛,𝜄
+=
+1 + ∑𝑆
+𝑠=1 𝟙{̂𝑂𝑠𝑛,𝜄≤𝑂𝑛,𝜄}
+𝑆+ 1
+,
+(26)
+𝐸over
+𝑛,𝜄
+= −log max{𝜀over
+𝑛,𝜄, 𝜖}
+(27)
+𝜀under
+𝑛,𝜄
+=
+1 + ∑𝑆
+𝑠=1 𝟙{̂𝑂𝑠𝑛,𝜄≥𝑂𝑛,𝜄}
+𝑆+ 1
+,
+(28)
+𝐸under
+𝑛,𝜄
+= −log max{𝜀under
+𝑛,𝜄
+, 𝜖},
+(29)
+where 𝜖> 0 prevents undefined logarithms. The over-
+prediction surprise 𝐸over
+𝑛,𝜄
+is large when the realized count
+is unusually low under the predictive samples, while the
+underprediction surprise 𝐸under
+𝑛,𝜄
+is large when the realized
+count is unusually high.
+To separate spurious predictions from small temporal
+shifts, we first compute predicted and observed excess
+counts,
+𝜚+
+𝑛,𝜄= [𝜇𝑛,𝜄−𝑂𝑛,𝜄]+,
+𝜑+
+𝑛,𝜄= [𝑂𝑛,𝜄−𝜇𝑛,𝜄]+,
+(30)
+where [𝑧]+ = max{𝑧, 0}. Predicted excess mass in bin 𝜄may
+be matched to observed excess mass in an adjacent bin 𝜄′,
+with |𝜄−𝜄′| = 1. Let 𝑚𝑛,𝜄,𝜄′ denote the amount of predicted
+excess mass in bin 𝜄matched to observed excess mass in bin
+𝜄′. This matched mass is treated as timing error rather than as
+a completely spurious prediction. The remaining unmatched
+predicted excess is
+𝑃over
+𝑛,𝜄
+= 𝜚+
+𝑛,𝜄−
+∑
+𝜄′∈𝜉∶|𝜄−𝜄′|=1
+𝑚𝑛,𝜄,𝜄′.
+(31)
+The instantaneous error scores are normalized by the pre-
+dicted mass in the evaluated window,
+𝐵𝑛,𝜉= 𝜖+
+∑
+𝜄∈𝜉
+𝜇𝑛,𝜄.
+(32)
+The overprediction score is
+𝐴over
+𝑛,𝜉=
+1
+𝐵𝑛,𝜉
+∑
+𝜄∈𝜉
+𝑃over
+𝑛,𝜄𝐸over
+𝑛,𝜄,
+(33)
+and the timing-error score is
+𝐴time
+𝑛,𝜉
+=
+1
+𝐵𝑛,𝜉
+∑
+𝜄∈𝜉
+∑
+𝜄′∈𝜉∶|𝜄−𝜄′|=1
+𝑚𝑛,𝜄,𝜄′
+𝐸over
+𝑛,𝜄
++ 𝐸under
+𝑛,𝜄′
+2
+. (34)
+Thus, 𝐴over
+𝑛,𝜉penalizes predicted mass that does not mate-
+rialize even after adjacent-bin tolerance, while 𝐴time
+𝑛,𝜉
+penal-
+izes predicted mass that appears shifted to a neighboring bin.
+Unmatched observed excess corresponds to underprediction.
+We record this diagnostically, but do not use it to decrease
+prediction confidence, because newly observed requests en-
+ter the real state with unit weight and can be handled directly
+by the online planner and the re-optimization mechanism.
+The instantaneous scores are smoothed over time:
+𝑆over
+𝑛,𝜉
+= (1 −𝛼over)𝑆over
+𝑛,𝜉−1 + 𝛼over𝐴over
+𝑛,𝜉,
+(35)
+and
+𝑆time
+𝑛,𝜉
+= (1 −𝛼time)𝑆time
+𝑛,𝜉−1 + 𝛼time𝐴time
+𝑛,𝜉,
+(36)
+where 𝛼over, 𝛼time ∈[0, 1] control the responsiveness of the
+update. The confidence weight is then
+𝜆𝑛,𝜉= 𝜆min +(1−𝜆min) exp
+(
+−𝛽over𝑆over
+𝑛,𝜉
+−𝛽time𝑆time
+𝑛,𝜉
+)
+,
+(37)
+where 𝛽over, 𝛽time ≥0 control how strongly the smoothed
+errors reduce confidence. Persistent overprediction or timing
+mismatch therefore lowers the weight assigned to future pre-
+dicted requests in the same context. In our implementation,
+we typically choose 𝛽over ≥𝛽time, because persistent over-
+prediction can cause rollout to reserve capacity for demand
+that does not occur, whereas small timing shifts may still
+correspond to nearby real demand. If a prediction snapshot
+contains no positive predicted mass for a context, the update
+for that context is skipped and the previous smoothed error
+states are retained.
+For sparse local processes, the implementation uses a
+hierarchical fallback to avoid overreacting to limited evi-
+dence. Let 𝜆loc
+𝑛,𝜉be the local context weight, let 𝜆fb
+𝑛,𝜉be a
+broader fallback-context weight, and let 𝑐𝑛,𝜉be the number
+of positive-prediction windows observed so far for context
+𝑛. The local credibility coefficient is
+𝜒𝑛,𝜉=
+𝑐𝑛,𝜉
+𝑐𝑛,𝜉+ 𝜁,
+(38)
+D. Garces et al.: Preprint submitted to Elsevier
+Page 14 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+where 𝜁≥0 is a credibility prior. The effective weight
+applied to a predicted request is
+𝜆eff
+𝑛,𝜉= 𝜒𝑛,𝜉𝜆loc
+𝑛,𝜉+ (1 −𝜒𝑛,𝜉)𝜆fb
+𝑛,𝜉.
+(39)
+When hierarchical fallback is enabled, the symbol 𝜆𝑛,𝜉in
+(24) denotes this effective weight. Thus, new or sparse
+contexts initially rely more heavily on a broader reliability
+estimate, while local context weights dominate after suf-
+ficient prediction evidence has accumulated. Algorithm 3
+summarizes the confidence-update procedure.
+Algorithm 3 Online prediction-confidence update
+Input: Prediction snapshot {̂𝑂𝑠
+𝑛,𝜄∶𝜄∈𝜉}𝑆
+𝑠=1, observed
+counts {𝑂𝑛,𝜄∶𝜄∈𝜉}, previous states 𝑆over
+𝑛,𝜉−1 and
+𝑆time
+𝑛,𝜉−1, hyperparameters 𝛼over, 𝛼time, 𝛽over, 𝛽time, 𝜆min,
+and 𝜖.
+Output: Updated confidence weight 𝜆𝑛,𝜉.
+1: Compute mean predicted counts 𝜇𝑛,𝜄and surprise scores
+𝐸over
+𝑛,𝜄, 𝐸under
+𝑛,𝜄
+.
+2: Compute predicted excess 𝜚+
+𝑛,𝜄and observed excess 𝜑+
+𝑛,𝜄.
+3: Match predicted excess to adjacent-bin observed excess,
+yielding timing matches 𝑚𝑛,𝜄,𝑙𝜄′.
+4: Compute residual overprediction mass 𝑃over
+𝑛,𝜄.
+5: Compute 𝐴over
+𝑛,𝜉and 𝐴time
+𝑛,𝜉.
+6: Update 𝑆over
+𝑛,𝜉
+and 𝑆time
+𝑛,𝜉
+using (35) and (36).
+7: Compute 𝜆𝑛,𝜉using (37).
+8: Apply hierarchical fallback, if enabled, using (39).
+9: return the effective confidence weight.
+Adaptive prediction confidence provides prospective
+correction. It does not change real assignments already
+made by the planner; rather, it changes how strongly future
+predicted requests influence subsequent rollout evaluations.
+Retrospective correction of already assigned but unstarted
+requests is handled by the selective re-optimization mecha-
+nism in Section 4.7.
+4.7. Selective Re-optimization of Unstarted
+Assignments
+Adaptive prediction confidence provides prospective
+correction: it changes how strongly predicted future requests
+influence subsequent rollout evaluations. However, chang-
+ing the prediction weights does not automatically repair
+assignments that were already made when those predictions
+appeared reliable. The planner may therefore remain com-
+mitted to a schedule that is no longer desirable after new
+requests arrive or after recent observations reveal forecast
+mismatch. To address this issue, we include a selective re-
+optimization step for requests that have been assigned but
+whose service has not yet started.
+Let
+unstarted
+𝑡
+= {𝑟𝑗∈𝑡∶𝑎𝑗,𝑡∈, 𝜎𝑗,𝑡= pending} (40)
+denote the set of assigned but unstarted requests at decision
+time 𝑡. These requests may be returned to the pending set
+because changing their assignment does not violate the no-
+reassignment constraint for started requests. Requests whose
+service has already begun remain fixed until completion.
+To decide when re-optimization is useful, we compare
+the urgency of newly observed requests with the urgency of
+assigned but unstarted requests. Let 𝐶𝑗,𝑡be a lower bound on
+the earliest possible completion time of request 𝑟𝑗from state
+𝑥𝑡, obtained using shortest-path travel-time estimates and the
+request execution duration. We define the slack index
+𝜍𝑗,𝑡= 𝑡comp
+𝑗
+−𝐶𝑗,𝑡.
+(41)
+Smaller values of 𝜍𝑗,𝑡indicate less remaining flexibility
+before the request deadline. Re-optimization is considered
+only when both newly observed requests and assigned but
+unstarted requests are present.The re-optimization trigger is
+min
+𝑟𝑗∈𝑅real
+𝑡
+𝜍𝑗,𝑡<
+min
+𝑟𝑖∈unstarted
+𝑡
+𝜍𝑖,𝑡.
+(42)
+When (42) holds, at least one newly observed request is more
+urgent than every currently assigned but unstarted request.
+In this case, the planner releases lower-priority unstarted as-
+signments back to the pending set. In particular, an assigned
+but unstarted request 𝑟𝑖∈unstarted
+𝑡
+is eligible for release
+if its slack is larger than the slack of the most urgent newly
+observed request: 𝜍𝑖,𝑡> min𝑟𝑗∈𝑅real
+𝑡
+𝜍𝑗,𝑡.
+Released requests have their assignment reset to 𝑎𝑖,𝑡= ∅
+and are added to 𝑡. The affected robot schedules are then
+repaired by removing the released requests while preserving
+all started or completed service commitments.
+After this release step, the one-robot-at-a-time rollout
+policy is applied to the updated state. Newly observed re-
+quests and released unstarted requests are considered to-
+gether by the candidate generator, and candidate controls are
+evaluated using the current prediction-confidence weights.
+Thus, re-optimization allows the planner to revise eligible
+commitments when new information makes the previous
+schedule undesirable.
+This step provides retrospective correction. Prediction-
+confidence weighting reduces the influence of unreliable
+future predictions in subsequent rollout evaluations, whereas
+selective re-optimization allows the planner to recover from
+assignments made before those forecast errors were de-
+tected.
+4.8. Supporting Pre-Deployment Fleet Sizing
+The online planning problem in Section 3 is defined for a
+fixed heterogeneous team composition 𝐌= (𝑀𝑧)𝑧∈. The
+rollout policy developed above assumes that this composi-
+tion is given during deployment. However, the quality of
+rollout estimates depends on whether the team has enough
+capacity of the right robot types to serve the request pat-
+terns likely to occur in operation. If the assignment rou-
+tines used inside rollout frequently reject requests or miss
+deadlines, then simulated future costs become dominated by
+infeasibility rather than by meaningful comparisons among
+current candidate controls. We therefore use a supporting
+D. Garces et al.: Preprint submitted to Elsevier
+Page 15 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+pre-deployment procedure to select a heterogeneous team
+composition from historical request sequences.
+Let day denote a set of historical operating days. Each
+day 𝑑∈day provides a realized request sequence 𝑑=
+(𝜔𝑑
+0, 𝜔𝑑
+1, … , 𝜔𝑑
+𝑇−1
+). The goal is to choose a fixed composi-
+tion 𝐌for which the assignment routine used in simulation
+achieves a target empirical feasibility level 𝛾∈(0, 1] on
+these representative days. A historical day is considered
+feasible for composition 𝐌if all requests are assigned to
+compatible robots, completed no later than their deadlines,
+and all robots return to their assigned maintenance stations
+by time 𝑇.
+Our proposed team-sizing procedure has two phases.
+The first phase computes day-wise feasible compositions and
+uses them to initialize the team size. For each historical day
+𝑑, the procedure starts from a small baseline composition
+and simulates the assignment routine on 𝑑. If a request
+is rejected or violates its service window, the procedure
+increases the count of a robot type compatible with the failed
+request and repeats the simulation. Once all requests on day
+𝑑are served feasibly, the resulting day-wise composition
+is recorded as 𝐌𝑑= (𝑀𝑑
+𝑧){𝑧∈}. These day-wise counts
+estimate the amount of type-specific capacity required by
+individual historical operating days.
+For each robot type 𝑧, we form the empirical distribution
+of the day-wise feasible counts {𝑀𝑑
+𝑧∶𝑑∈day}. Let̂
+𝑝𝑧(𝑚) =
+1
+|day|
+∑
+𝑑∈day
+𝟙{𝑀𝑑𝑧≤𝑚}
+(43)
+be the empirical distribution function for type 𝑧, where
+𝟙{𝑀𝑑𝑧≤𝑚} is an indicator variable. The initial team size for
+type 𝑧is chosen as the 𝛾-quantile of this empirical distribu-
+tion:
+𝑀(0)
+𝑧
+= min {𝑚∈ℤ≥0 ∶̂ 𝑝𝑧(𝑚) ≥𝛾} .
+(44)
+The resulting initialization is 𝐌(0) = (𝑀(0)
+𝑧){𝑧∈}.
+For example, if 𝛾= 0.95, then 𝑀(0)
+𝑧
+is the smallest count
+such that at least 95% of the historical single-day sizing runs
+required no more than 𝑀(0)
+𝑧
+robots of type 𝑧. Algorithm 4
+summarizes this initialization phase.
+The second phase verifies the joint composition across
+all historical days. This step is necessary because the per-
+centile initialization treats robot types marginally: choosing
+a high percentile for each type separately does not guarantee
+that the combined heterogeneous team achieves the desired
+feasibility rate when task interactions, service windows,
+routing, and robot-type substitution are evaluated jointly.
+For a candidate composition 𝐌, define the empirical
+feasibility ratê
+𝑝feas(𝐌) =
+1
+|day|
+∑
+𝑑∈day
+𝟙{day 𝑑is feasible under 𝐌}. (45)
+where 𝟙is an indicator variable. The verification phase
+starts from 𝐌(0) and repeatedly simulates the historical
+days. If̂ 𝑝feas(𝐌) ≥𝛾, the current composition is accepted.
+Algorithm 4 Histogram-based initialization of the heteroge-
+neous team composition
+Input: Historical days day, target level 𝛾, baseline compo-
+sition 𝐌base.
+Output: Initial team composition 𝐌(0).
+1: for each historical day 𝑑∈day do
+2:
+Set 𝐌𝑑←𝐌base.
+3:
+repeat
+4:
+Simulate the assignment routine on 𝑑using team
+𝐌𝑑.
+5:
+if all requests are completed feasibly and robots
+return by 𝑇then
+6:
+Mark day 𝑑feasible under 𝐌𝑑.
+7:
+else
+8:
+Select a rejected or deadline-violating request 𝑟𝑗.
+9:
+Select a robot type 𝑧such that 𝑘𝑗∈(𝑧).
+10:
+Increase 𝑀𝑑
+𝑧←𝑀𝑑
+𝑧+ 1.
+11:
+until day 𝑑is feasible
+12:
+Record 𝐌𝑑= (𝑀𝑑
+𝑧){𝑧∈}.
+13: for each robot type 𝑧∈do
+14:
+Computê 𝑝𝑧from {𝑀𝑑
+𝑧∶𝑑∈day}.
+15:
+Set 𝑀(0)
+𝑧
+←min{𝑚∈ℤ≥0 ∶̂ 𝑝𝑧(𝑚) ≥𝛾}.
+16: return 𝐌(0).
+Otherwise, the procedure identifies which robot types are
+associated with failed requests and increments the type with
+the largest failure score.
+Let 𝑑
+fail(𝐌) denote the set of requests that are rejected
+or violate their deadlines on historical day 𝑑when using
+composition 𝐌. The failure score of robot type 𝑧is
+𝐵𝑧(𝐌) =
+∑
+𝑑∈day
+∑
+𝑟𝑗∈𝑑
+fail(𝐌)
+𝟙{𝑘𝑗∈(𝑧)}.
+(46)
+This score counts how often robots of type 𝑧could have
+served failed requests. The search increases the count of a
+type with the largest failure score and repeats the historical
+verification. Algorithm 5 summarizes this phase.
+This procedure does not prove feasibility under the de-
+ployment distribution ℙ. It selects a fixed heterogeneous
+team composition for which the assignment routine is em-
+pirically feasible on representative historical operating days.
+The selected composition is then used as the fixed team
+𝐌assumed by the online problem formulation and by the
+prediction-aware rollout policy.
+5. Case Study: Task Assignment in Hospital
+Floors
+We evaluate the proposed framework on a hospital-floor
+task-assignment problem constructed from historical service
+requests on inpatient floors. This setting captures the main
+features of the formulation in Section 3: requests arrive
+over time, different task families require different robot
+capabilities, requests have service windows and deadlines,
+D. Garces et al.: Preprint submitted to Elsevier
+Page 16 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Algorithm 5 Historical verification of the heterogeneous
+team composition
+Input: Historical days day, target feasibility level 𝛾, initial
+composition 𝐌(0).
+Output: Verified team composition 𝐌.
+1: Set 𝐌←𝐌(0).
+2: repeat
+3:
+Set 𝑁feas ←0 and 𝐵𝑧←0 for all 𝑧∈.
+4:
+for each historical day 𝑑∈day do
+5:
+Simulate the assignment routine on 𝑑using team
+𝐌and base policȳ 𝜋.
+6:
+if all requests are completed feasibly and robots
+return by 𝑇then
+7:
+Set 𝑁feas ←𝑁feas + 1.
+8:
+else
+9:
+Let 𝑑
+fail(𝐌) be the rejected or deadline-
+violating requests.
+10:
+for each 𝑟𝑗∈𝑑
+fail(𝐌) do
+11:
+for each type 𝑧∈such that 𝑘𝑗∈(𝑧) do
+12:
+Set 𝐵𝑧←𝐵𝑧+ 1.
+13:
+Computê 𝑝feas(𝐌) = 𝑁feas∕|day|.
+14:
+if̂ 𝑝feas(𝐌) < 𝛾then
+15:
+Select 𝑧∗∈argmax𝑧∈𝐵𝑧, using a deterministic
+tie-breaker.
+16:
+Increase 𝑀𝑧←𝑀𝑧∗+ 1.
+17: until̂ 𝑝feas(𝐌) ≥𝛾
+18: return 𝐌.
+and current assignment decisions affect the robot capacity
+available for future demand. It also provides a realistic
+setting in which the predictive request model may be useful
+on average but unreliable in particular time periods, floors,
+or task contexts.
+The case study has three goals. First, we evaluate whether
+the temporal point process models used for scenario gen-
+eration produce useful sampled future request sequences.
+Second, we evaluate the pre-deployment fleet-sizing proce-
+dure from Section 4.8, which selects the fixed heterogeneous
+team composition used by the online policies. Third, we
+compare the full prediction-aware adaptive rollout policy
+against baseline assignment policies and against ablated
+rollout variants. These comparisons isolate the contribution
+of sampled future-demand information, adaptive prediction
+reweighting, and selective re-optimization of unstarted as-
+signments.
+The results are presented in the same order as the com-
+ponents of the proposed framework. We first evaluate the
+temporal point process predictions used to generate future
+scenarios. We then report the fleet-sizing results that deter-
+mine the fixed monitoring and delivery robot teams. Next,
+we compare the full adaptive rollout policy against baseline
+online assignment policies over held-out floor-days. Finally,
+we present ablation studies that separate the effects of predic-
+tion reweighting and re-optimization, followed by runtime
+results that assess whether the rollout computation is suitable
+for online use.
+Figure 4: Environment-generation pipeline used in the case
+study. Starting from an architectural floor plan, we construct
+a simplified three-dimensional representation of the hospital
+floor and then extract a two-dimensional navigation map for
+robot simulation and planning. The resulting map defines the
+traversable workspace used to build the graph representation,
+compute travel-time heuristics, and assign service locations for
+scheduled, observed, and predicted requests.
+Figure 5: Example traversal graph used in the case-study
+simulations. Waypoint nodes and feasible local motion edges
+are overlaid on the hospital navigation map, with zoomed
+regions showing graph connectivity in representative corridor
+and intersection areas. The resulting graph supports shortest-
+path travel-time estimation and graph-constrained routing for
+task assignment and scheduling.
+5.1. Experimental Setup
+The simulated environment consists of inpatient hospital
+floors represented as traversal graphs. An example of how
+the hospital floor environments are generated is shown in
+Figure 4, while the extracted traversal graph for robot motion
+is shown in Figure 5. Nodes in the traversal graph correspond
+to traversable waypoints, patient rooms, supply rooms, and
+robot parking locations, while edges encode feasible robot
+motion through the floor. Each experiment uses the same
+graph representation and motion-planning interface for all
+policies. Shortest paths between any pair of nodes are cached
+for fast retrieval and fast heuristic travel-time estimation.
+Robots start from parking locations and must complete as-
+signed service tasks while respecting routing, compatibility,
+timing, and return-to-station constraints.
+We consider two robot families. Monitoring robots serve
+vital-sign requests, including blood pressure, heart rate, res-
+piratory rate, temperature, and oxygen saturation tasks. De-
+livery robots serve medication requests, which require visit-
+ing a supply location before delivering to the patient-room
+endpoint. These two robot families define the heterogeneous
+team composition 𝐌= (𝑀𝑧){𝑧∈} used in the problem
+D. Garces et al.: Preprint submitted to Elsevier
+Page 17 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+formulation: monitoring robots and delivery robots provide
+different capabilities and cannot generally substitute for one
+another.
+All policies are evaluated on four inpatient floors from
+the west wing of BIDMC. Each floor contains approximately
+25 to 30 patient beds. The historical data span June 24, 2024
+through June 29, 2025. For each floor, we select six ISO
+weeks for evaluation: two high-demand weeks, two medium-
+demand weeks, and two low-demand weeks. This produces
+42 test days per floor and 168 floor-day evaluations per
+policy. Each floor-day is simulated over a 12 hour window
+starting at 6𝑎𝑚and ending at 6𝑝𝑚, with one simulator time
+step corresponding to one second. The rest of the historical
+data is left as part of the training and validation sets. Request
+arrivals, service windows, patient-room endpoints, supply-
+room endpoints, and scheduled medication times are taken
+from the processed hospital historical data.
+5.1.1. Constructing the Test Set
+The held-out evaluation set is designed to test the poli-
+cies under different demand regimes on each floor. We iden-
+tify high-, medium-, and low-demand weeks using Laney 𝑢-
+charts [71], a statistical process-control method for identify-
+ing unusual count rates when the number of observational
+units may vary over time. In this setting, the unit is a floor-
+day, so the weekly rate is the average number of requests
+per floor-day for a given floor and task type. The Laney 𝑢
+chart adjusts the standard Poisson control limits using an es-
+timated dispersion factor, making the demand-regime labels
+less sensitive to natural overdispersion or underdispersion in
+hospital request data [49].
+For each floor and task type, we construct a weekly
+Laney 𝑢chart over the historical data. A week is flagged as
+high demand for a task type if its request rate exceeds the
+upper control limit, and as low demand if its request rate
+falls below the lower control limit. An example 𝑢-chart with
+flagged weeks for delivery requests is shown in Figure 6.
+We then aggregate flags across task types at the floor level.
+High-demand and low-demand weeks are selected as those
+with the largest number of corresponding task-type flags,
+while medium-demand weeks provide reference operating
+conditions between these extremes. This selection rule fa-
+vors weeks in which the demand regime reflects a broad
+change in floor activity rather than an isolated anomaly in
+a single task type.
+The selected weeks are listed in Table 1. Because the
+split is defined at the week level, every policy is evaluated
+on the same contiguous request sequences for each floor
+and demand regime. This preserves temporal correlations in
+the request stream and avoids evaluating policies on isolated
+requests removed from their operational context.
+5.2. Implementation Details
+This subsection specifies the implementation choices
+and parameter values used to instantiate the proposed frame-
+work in the hospital-floor case study. The goal is not to
+restate the algorithms in Section 4, but to describe how their
+Figure 6: Example weekly delivery-request arrival rates used to
+select evaluation periods. The empirical mean is shown by the
+dotted blue line, and the dashed lines mark the Laney-adjusted
+upper and lower control limits. Weeks exceeding these limits
+are identified as abnormal high- or low-demand periods and
+are used to test the robustness of the proposed planner under
+demand shifts.
+inputs, hyperparameters, heuristics, and motion-planning
+components are configured for this domain.
+Both monitoring and delivery robots are modeled as disk
+robots with diameter 0.40, m. The two robot families have
+different capabilities: monitoring robots can service vital-
+sign requests, while delivery robots can service medication-
+delivery requests. Unless otherwise stated, both robot fami-
+lies use a nominal speed of 0.30, m∕s. The traversal graph is
+constructed so that its edges correspond to physically realiz-
+able motions under the robot footprint and speed assump-
+tions. All committed robot trajectories are planned using
+a variant of Safe Interval Path Planning with reservation
+tables, denoted SIPPwRT [61], which extends SIPP [82]
+time-interval reasoning with reservations induced by pre-
+viously planned robot trajectories [91]. This choice is well
+suited to prioritized multi-robot routing because each robot
+can be planned sequentially while treating earlier planned
+trajectories as dynamic reservations.
+5.2.1. One-Robot-at-a-Time Rollout Configuration
+The one-robot-at-a-time rollout rule in Section 4.2 re-
+quires an ordering of robots at each decision time. In the
+case study, the ordering set 𝑡is constructed from the
+current simulator state by sorting robots according to the
+time at which they are expected to become available. Robots
+that are already available and unassigned are considered
+first, followed by robots whose currently assigned request
+is expected to finish within two minutes. Robots with longer
+remaining service times are not included in 𝑡at that deci-
+sion time. If 𝑡= ∅, no new assignments are made and the
+current schedules continue to execute.
+The rollout depth is set to one hour of simulated opera-
+tion. Since the simulator advances in one-second time steps,
+this corresponds to 𝐷= 3600. Thus, each rollout evaluation
+accounts for predicted and scheduled requests that may enter
+during the next hour, while avoiding the computational cost
+of simulating to the end of the full operating window.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 18 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Table 1
+Summary of the hospital-floor test set. The table reports the selected high-, medium-, and low-demand weeks for each floor. The
+final row gives the total number of requests in each demand level aggregated across all task types, selected weeks, and floors.
+Floor
+High-demand weeks
+Medium-demand weeks
+Low-demand weeks
+2
+2025-W06, 2025-W08
+2024-W44, 2025-W14
+2024-W27, 2024-W28
+3
+2025-W05, 2025-W10
+2024-W44, 2025-W14
+2024-W46, 2025-W02
+7
+2024-W39, 2024-W40
+2024-W44, 2025-W14
+2024-W46, 2025-W26
+9
+2024-W43, 2025-W06
+2024-W44, 2025-W14
+2025-W19, 2025-W21
+Total requests
+36,948
+30,824
+25,300
+5.2.2. Candidate-Control Generation
+The candidate generator in Section 4.3 retains at most
+𝐿= 20 assignment actions per processed robot. The wait ac-
+tion is then added separately, so the robot-local candidate set
+contains at most 𝐿+1 controls. The value 𝐿= 20 was chosen
+to preserve the most urgent and promising assignments while
+keeping the number of rollout evaluations manageable.
+The candidate-ranking heuristics are computed as fol-
+lows. The travel heuristic 𝐹travel
+𝓁,𝑗
+is obtained from cached
+shortest-path distances on the traversal graph. Specifically,
+the shortest-path distance needed to traverse the service-
+node sequence 𝝆𝑗is divided by the nominal speed of robot 𝓁.
+This computation ignores dynamic robot-robot interactions
+and service-node conflicts; those are handled by SIPPwRT
+for committed paths and by the reservation-table approxima-
+tion in the rollout base policy.
+The reach estimate 𝐹reach
+𝓁,𝑗,𝑡
+used in the heuristic com-
+pletion calculation is computed with the motion planner.
+Candidate actions that cannot satisfy the request deadline
+under this heuristic estimate are discarded before rollout
+evaluation.
+5.2.3. Future-Request Scenario Generation
+Future request scenarios are generated from the temporal
+point process models described in Section 4.4. In the hospital
+case study, we instantiate one local TPP model per patient
+process. At each rollout decision, the planner draws 𝑆= 20
+future-request samples. This value was chosen to represent
+variation in the predictive distribution while keeping online
+rollout runtimes reasonable.
+Because each TPP prediction is associated with a patient
+process, the graph-grounded service nodes can be derived
+directly from the patient’s room information at the sam-
+pled time. For vital-sign requests, the patient room is the
+service endpoint. For medication requests, the service-node
+sequence includes the relevant medication supply location
+followed by the patient-room endpoint.
+We evaluate two mark representations for the temporal
+point process models. In the standard mark representation,
+vital-sign events are marked only by the request type, such as
+blood pressure, temperature, oxygen saturation, heart rate, or
+respiratory rate. In the enhanced mark representation, vital-
+sign events include both the request type and a discretized
+representation of the measured value, so that the model can
+condition on the magnitude of recent patient measurements.
+Medication names are first mapped to RxNorm identi-
+fiers [72]. The medication mark is then constructed from
+Anatomical Therapeutic Chemical (ATC) codes [101]. In the
+standard medication mark representation, we use the ATC
+level-3 code. In the enhanced medication mark representa-
+tion, we use the first three ATC hierarchy components, which
+provide a richer representation of the medication class while
+avoiding excessive sparsity at the individual-drug level.
+Predicted requests that match scheduled or already ob-
+served requests are removed before rollout evaluation. The
+matching tolerance is set to Δ = 10 minutes. Thus, a sampled
+prediction is removed if it corresponds to a request of the
+same task context that is already known to the simulator
+within a (10)-minute time window. This prevents the roll-
+out estimator from double-counting demand that is already
+represented in the state.
+5.2.4. Interaction-Aware Base Policy
+The base policy used inside rollout is the interaction-
+aware future-cost estimator described in Section 4.5. Its
+reservation table is a simplified version of the full SIPP-
+wRT reservation table used for committed motion planning.
+Instead of reserving all vertices and edges along complete
+robot trajectories, the base-policy reservation table only
+records service intervals at patient rooms and medication
+supply rooms. This approximation captures the dominant
+service-location interactions while avoiding the cost of plan-
+ning full collision-free paths for every hypothetical future
+request in every rollout sample.
+For each simulated assignment considered by the base
+policy, estimated service times are computed using cached
+graph shortest paths, the nominal robot speed, request exe-
+cution durations, release times, deadlines, and the simplified
+service-node reservation table. If a tentative service interval
+overlaps a reservation at the same patient room or supply
+room, the interval is shifted to the earliest available time
+that satisfies the request’s service-window constraints. If
+no feasible interval exists before the request deadline, the
+request is marked as rejected or no longer serviceable in the
+simulated state.
+5.2.5. Adaptive Prediction Confidence
+The adaptive prediction-confidence mechanism in Sec-
+tion 4.6 is enabled for rollout variants with prediction
+reweighting. Prediction weights are updated in bins of length
+Δ𝜆= 5 minutes. The minimum prediction weight is 𝜆min =
+0.05, so predicted requests can be strongly downweighed
+D. Garces et al.: Preprint submitted to Elsevier
+Page 19 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+but are not completely ignored. The exponential smoothing
+parameters are 𝛼over = 0.3 and 𝛼time = 0.2. Thus, the
+overprediction state reacts somewhat faster than the timing-
+error state. The confidence-decay parameters are 𝛽over =
+4.0 and 𝛽time = 1.0, which makes persistent overpredic-
+tion reduce confidence more strongly than one-bin timing
+shifts. The numerical constant used for normalization and
+logarithmic clipping is 𝜖= 10−6. Hierarchical fallback is
+enabled in all rollout variants that use adaptive prediction
+confidence. The local-context credibility prior is 𝜁= 3.0.
+Therefore, patient-specific confidence weights are initially
+blended strongly with the broader fallback context, and they
+dominate only after enough positive-prediction windows
+have been observed. Confidence updates are skipped for
+zero-prediction windows, so contexts are not penalized or
+rewarded when the prediction snapshot contains no positive
+predicted mass.
+5.2.6. Scheduled Requests, Re-optimization, and
+Decision Triggers
+Known future scheduled requests are included in the
+rollout future-cost estimate for the proposed rollout variants.
+They are treated as known commitments and receive unit
+weight in the weighted schedule score. However, they are
+not added to the immediately assignable request set until
+they enter the simulator state. In contrast, stochastic TPP
+predictions are never eligible as immediate assignment ac-
+tions; they affect decisions only through sampled rollout
+simulations and confidence-weighted future costs.
+Selective re-optimization is enabled only in rollout vari-
+ants that include the mechanism described in Section 4.7.
+When enabled, assigned but unstarted requests may be re-
+leased back to the pending set if newly observed requests
+have smaller slack. Started requests are never released or
+reassigned.
+5.3. Temporal-Point-Process Prediction Ablation
+Before evaluating the online assignment policies, we
+evaluate the temporal point process models used to gener-
+ate future request scenarios in Section 4.4. This ablation
+serves two purposes. First, it identifies the prediction model
+configuration used by the rollout policies in the remaining
+experiments. Second, it tests whether richer timed-mark rep-
+resentations and previous-day context improve the quality of
+sampled future request sequences in the hospital setting.
+The ablation compares the candidate temporal point
+process models used to sample future request sequences. The
+model set includes: RMTPP [29], NHP [66], FullyNN [77],
+SAHP [110], THP [116], IntesityFree [87], AttnNHP [67],
+ANHN [104], WSM-THP [18], S2P2 [19], TriTPP [88],
+inhomogeneous Poisson [88], Renewal [88] , Modulated
+Renewal [88], Spline Transformer [88], and FlexTPP-based
+variants [28]. The implementation of the first 8 methods was
+derived from [103], while the implementation for the rest
+of the methods was derived from their respective papers.
+The only modifications applied to all architectures were
+dimensionality adjustments needed to process the enhanced
+marks. All models under consideration were tested for both
+enahnced and standard marks. The standard mark repre-
+sentation uses only the request type for vital-sign requests
+and a coarser medication-code representation for medication
+requests. The enhanced mark representation augments vital-
+sign marks with discretized measurement information and
+uses a richer medication-code representation, as described
+in Section 5.2.
+For the FlexTPP variants, we also compare models
+trained with and without previous-day summary condi-
+tioning. Previous-day conditioning summarizes the recent
+patient-level history available before the prediction prefix.
+For vital-sign requests, this includes whether previous-
+day context is available, the time since the last previous-
+day request, total previous-day request count, task-specific
+request counts, task-specific last request times, and summary
+statistics of previous-day measurements. For medication
+requests, the conditioning vector summarizes previous-day
+vital-sign and medication-administration activity for the
+same local patient process.
+We train all architectures for 300 epochs using the train-
+ing set. We select the log likelihood as the optimization
+objective for each temporal point process, and we use Adam
+[47] as the optimizer. The learning rate for each architecture
+is chosen using a hyper-parameter search. We choose a batch
+size of 32, and we shuffle the batches at every epoch during
+training. The number of layers and the width of each layer for
+each architecture are chosen following the recommendations
+given in their respective papers. All training was done using
+two NVIDIA RTX A6000 ADA.
+Prediction quality is evaluated by comparing sampled
+future event sequences against the realized future sequence.
+For a local process 𝑝and prediction prefix ending at time 𝑡,
+let̂
+𝑊𝑠
+𝑝,𝑡=
+(̂
+𝑒𝑠
+1, … ,̂ 𝑒𝑠̂
+𝑁𝑠
+)
+,
+𝑊𝑝,𝑡= (𝑒1, … , 𝑒𝑁
+) (47)
+denote the 𝑠-th sampled predicted suffix and the correspond-
+ing realized suffix, wherê 𝑁𝑠is the number of predicted
+events and 𝑁is the actual number of observed events. Each
+event is a timed mark 𝑒= (𝜏, 𝑘, 𝜅), where 𝜏is the event
+time, 𝑘is the request type, and 𝜅is the model-specific
+mark representation. We evaluate each sampled suffix using
+a marked Optimal Transport Distance (OTD), implemented
+as an ordered edit-alignment distance between̂ 𝑊𝑠
+𝑝,𝑡and 𝑊𝑝,𝑡.
+Matching a predicted event̂ 𝑒𝑠
+𝑖to a realized event 𝑒𝑗
+incurs the substitution cost
+𝑑sub
+(̂𝑒𝑠
+𝑖, 𝑒𝑗
+) = 𝛼OTD
+|||̂𝜏𝑠
+𝑖−𝜏𝑗|||
+𝜏scale
+𝑘𝑗
++ 𝛽OTD𝟙{̂
+𝑘𝑠
+𝑖≠𝑘𝑗
+}, (48)
+where 𝜏scale
+𝑘𝑗
+is a task-specific time scale used to normalize
+timing errors. Predicted events that cannot be matched to
+realized events incur deletion cost 𝑐del, and realized events
+that are missing from the prediction incur insertion cost 𝑐ins.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 20 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+The sequence-level OTD is
+OTD
+(̂
+𝑊𝑠
+𝑝,𝑡, 𝑊𝑝,𝑡
+)
+= min
+
+[
+∑
+(𝑖,𝑗)∈match
+𝑑sub
+(̂𝑒𝑠
+𝑖, 𝑒𝑗
+)
++ 𝑐del|del| + 𝑐ins|ins|
+]
+, (49)
+where ranges over all ordered edit alignments between the
+sampled and realized suffixes. Lower OTD values indicate
+better agreement in event timing, task type, and sequence
+length. For each prediction prefix, we estimate the expected
+OTD over sampled futures bŷ
+OTD𝑝,𝑡=
+1
+𝑆eval
+𝑆eval
+∑
+𝑠=1
+OTD
+(̂
+𝑊𝑠
+𝑝,𝑡, 𝑊𝑝,𝑡
+)
+,
+(50)
+where 𝑆eval is the number of sampled futures used for the
+prediction evaluation.
+For all OTD results reported below, we use 𝑆eval = 20,
+𝛼OTD
+= 1.0, 𝑐del
+= 1.0, and 𝑐ins
+= 1.0. The timing
+weight 𝛼OTD controls the contribution of normalized timing
+error for matched events. The deletion penalty 𝑐del penalizes
+spurious predicted events, and the insertion penalty 𝑐ins
+penalizes realized events that were missed by the prediction.
+The normalizing constant 𝜏scale
+𝑘𝑗
+is set to the mean inter-event
+time for request type 𝑘𝑗in the training data.
+For monitoring requests, we use a finite request-type
+substitution penalty 𝛽OTD = 0.25. This allows the alignment
+to match different vital-sign request types at a small cost,
+reflecting that the same monitoring robot can service all
+vital-sign tasks. The resulting OTD decomposes into timing,
+request-type mismatch, deletion, and insertion components.
+For medication-delivery requests, we use hard type match-
+ing: substitutions between different medications are disal-
+lowed. This reflects that different medication requests should
+not be treated as interchangeable. Therefore, the delivery
+OTD decomposes into timing, deletion, and insertion com-
+ponents, without a finite request-type mismatch component.
+The OTD evaluation is stratified by the same high-,
+medium-, and low-demand weeks used in the assignment-
+policy experiments. Because the qualitative conclusions
+were similar across load regimes, Figures 7 and 8 report
+the high-demand results, where prediction errors are most
+likely to affect downstream assignment decisions. Figure 7
+summarizes monitoring-request prediction, and Figure 8
+summarizes medication-delivery prediction.
+For monitoring requests, Figure 7 shows that the FlexTPP
+model with enhanced marks and previous-day context ob-
+tains the lowest OTD among the evaluated configurations.
+This result indicates that measurement-aware marks and re-
+cent patient-level history provide useful signal for predicting
+future vital-sign request sequences, provided that the model
+architecture can use the additional conditioning information
+effectively.
+For medication-delivery requests, Figure 8 shows that
+FlexTPP-based models also outperform the other evaluated
+Table 2
+Selected heterogeneous team composition.
+Phase
+Monitoring robots
+Delivery robots
+Histogram
+initialization
+6
+2
+Joint historical
+verification
+6
+3
+prediction models. However, unlike the monitoring case, the
+enhanced mark representation and previous-day context do
+not consistently improve OTD. One likely explanation is that
+medication-code features are substantially sparser than vital-
+sign marks, so the richer representation increases feature
+granularity without providing enough repeated evidence for
+the model to exploit. Based on these results, the rollout
+experiments use the best-performing monitoring and med-
+ication prediction configurations identified by this ablation
+to generate future request scenarios.
+5.4. Team-Sizing Results
+We next evaluate the historical team-composition pro-
+cedure described in Section 4.8. This step determines the
+fixed heterogeneous team 𝐌used in the subsequent online
+policy experiments. The procedure is important because
+monitoring and delivery robots provide different capabili-
+ties: additional delivery robots cannot resolve monitoring
+bottlenecks, and additional monitoring robots cannot resolve
+medication-delivery bottlenecks. The sizing procedure must
+therefore select enough capacity for each robot family while
+also verifying that the resulting joint team composition
+is feasible when all request types, timing constraints, and
+routing interactions are evaluated together.
+Figure 9 shows the day-wise robot requirements pro-
+duced by the histogram-based initialization phase in Al-
+gorithm 4. For each historical floor-day, the sizing routine
+increases the number of robots in the relevant family until
+all requests of that family can be served feasibly. The mon-
+itoring histogram summarizes the number of monitoring
+robots required across historical floor-days, and the delivery
+histogram summarizes the corresponding requirement for
+medication-delivery robots. Using the 99-th percentile of
+these empirical distributions gives an initial team compo-
+sition of 6 monitoring robots and 2 delivery robots.
+The initialized composition is then checked using the
+joint historical verification phase described in Algorithm 5.
+Table 2 summarizes the composition before and after this
+verification step. The monitoring fleet remains unchanged at
+6 robots, while the delivery fleet increases from 2 to 3 robots.
+The increase in delivery capacity illustrates why the ver-
+ification phase is necessary: marginal percentile estimates
+for each robot family do not necessarily guarantee that the
+combined team achieves the target empirical feasibility level
+once shared timing constraints, routing interactions, and
+multi-request schedules are evaluated jointly. The verified
+team composition 𝐌= (6, 3) is used as the fixed het-
+erogeneous robot team in the remaining policy-comparison
+D. Garces et al.: Preprint submitted to Elsevier
+Page 21 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 7: Comparison of temporal point process (TPP) models for monitoring-request prediction using the OTD metric. Each
+stacked bar reports mean OTD for one model configuration, decomposed into timing, request-type, deletion, and insertion
+components. Error bars indicate variability across evaluation samples. Lower values indicate better agreement between predicted
+and observed request sequences, while smaller deletion and insertion components correspond to fewer missed or spurious predicted
+events. TPP model names and references are given at the beginning of Section 5.3. In the model labels, (+) denotes the use of
+enhanced marks, (𝐶) denotes conditioning on previous-day information, and (𝐶)(+) denotes the use of both enhanced mark and
+previous day conditioning.
+Figure 8: Comparison of temporal point process (TPP) models for medication-delivery prediction using the OTD metric. Each
+stacked bar reports mean OTD for one model configuration, decomposed into timing, request-type, deletion, and insertion
+components. Error bars indicate variability across evaluation samples. Lower values indicate better agreement between predicted
+and observed request sequences, while smaller deletion and insertion components correspond to fewer missed or spurious predicted
+events.TPP model names and references are given at the beginning of Section 5.3. In the model labels, (+) denotes the use of
+enhanced marks, (𝐶) denotes conditioning on previous-day information, and (𝐶)(+) denotes the use of both enhanced mark and
+previous day conditioning.
+and ablation experiments, so subsequent performance dif-
+ferences reflect the online assignment policies rather than
+differences in available fleet capacity.
+5.5. Policy Comparison
+We next compare the proposed adaptive rollout policy
+against reactive, deadline-aware, prediction-based, and my-
+opic assignment baselines. All policies are evaluated on
+the same held-out floor-days defined in Section 5.1.1, using
+the fixed heterogeneous team composition selected in Sec-
+tion 5.4. Thus, differences in performance reflect the online
+assignment policy rather than differences in fleet capacity,
+request streams, traversal graphs, or robot capabilities.
+The main proposed method is the adaptive rollout pol-
+icy with future scheduled requests, temporal-point-process
+prediction scenarios, adaptive prediction reweighting, and
+selective re-optimization enabled. This policy uses predicted
+requests only inside rollout simulations; immediate assign-
+ment actions are restricted to requests that have already
+entered the system.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 22 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 9: Day-wise robot requirements obtained during team-
+size initialization. For each historical day, the sizing routine
+increases the number of monitoring or delivery robots until all
+requests are feasibly served. The histograms summarize the
+resulting feasible robot counts across historical days and are
+used to initialize the heterogeneous team composition at the
+desired empirical percentile.
+5.5.1. Baselines for Comparison
+The comparison includes the following policies.
+Fleet Manager. The Fleet Manager baseline is a reactive
+queue-based policy adapted from [83]. Requests are pro-
+cessed according to their release times. When a compatible
+robot is available, the policy assigns the next request to the
+available robot that can reach it most quickly. A collision-
+free path is then planned for the assignment, while previ-
+ously committed paths are treated as fixed and immutable.
+This baseline represents a simple operational dispatching
+strategy that does not explicitly reason about future requests.
+Token Passing (TP). The Token Passing baseline follows
+the multi-agent task-allocation framework of [62]. Robots
+request a shared token when they are available. When a robot
+holds the token, it selects an unassigned task using a local
+cost based on travel distance to the task, without explicitly
+accounting for deadline urgency or future demand. After the
+task is selected, the robot plans a path to the task location
+while avoiding the trajectories of other robots. This baseline
+captures a standard decentralized assignment strategy with
+prioritized path planning.
+Token Passing with Task Swaps (TPTS). The Token
+Passing with Task Swaps baseline extends token passing by
+allowing unstarted tasks to be reassigned when a different
+robot can serve them more effectively [62]. When a robot
+considers a task that is already assigned but not yet started,
+the policy may remove that assignment and assign the task
+to the current robot, provided that the displaced robot can
+obtain another feasible assignment. This baseline introduces
+limited reassignment flexibility while remaining reactive
+and myopic.
+Token Passing with Deadlines (TP-D). The deadline-
+aware token-passing baseline incorporates request deadlines
+into the task-selection objective [63]. Instead of ranking
+tasks only by travel cost, the policy uses a weighted score
+that combines travel cost and deadline urgency. We set the
+deadline-weight parameter to 𝛼= 0.2, which was selected
+by grid search over 𝛼∈0.1, 0.2, 0.3, 0.4 on the tuning
+runs. This baseline tests whether explicit deadline awareness
+improves service reliability relative to distance-based token
+passing.
+Deadline-Aware Token Passing with Task Swaps (D-
+TPTS). This baseline combines deadline-aware task scor-
+ing with reassignment of unstarted tasks [63]. Newly avail-
+able robots request the token, evaluate deadline-aware as-
+signment costs, and may deallocate lower-priority unstarted
+tasks when a more urgent task arrives. We again use 𝛼=
+0.2, selected from the same grid search. This policy is
+the strongest token-passing baseline because it combines
+deadline awareness with limited schedule repair.
+Idle Rebalance. The Idle Rebalance baseline uses pre-
+dictions of future requests to reposition idle robots [30].
+When robots are idle, predicted requests can act as pseudo-
+tasks that influence robot positioning. This differs from the
+proposed rollout policy: in our method, predicted requests
+are never immediate assignment actions and affect decisions
+only through the simulated future-cost estimate.
+Greedy Assignment Policy (Base Policy). The greedy
+assignment baseline is the standalone myopic policy that
+we proposed as the base policy for rollout in Section 4.5.
+It orders currently known requests by urgency, evaluates
+compatible robots, and assigns the request to the robot that
+results in the lowest heuristic assignment cost.
+Proposed Adaptive Rollout (Our Approach). The pro-
+posed method is the prediction-aware adaptive rollout policy
+developed in Section 4. It restricts immediate candidate
+actions to currently observed eligible requests, evaluates
+each candidate through sampled future request scenarios,
+scores predicted requests using adaptive confidence weights,
+and selectively re-optimizes assigned but unstarted requests
+when newly observed demand makes the current schedule
+undesirable.
+5.5.2. Performance Metrics
+We evaluate policies using service-level, service-quality,
+and computational metrics.
+The service-level metrics are the number of serviced
+and rejected requests. A request is counted as serviced if
+it is assigned to a compatible robot and completed within
+its service window. A request is counted as rejected if the
+policy cannot assign it feasibly before its deadline. We report
+these counts separately for high-, medium-, and low-demand
+days, because policy differences are expected to be most
+pronounced when robot capacity and request deadlines are
+most constrained.
+The service-quality metrics are computed over requests
+that are successfully serviced. For each serviced request 𝑟𝑗,
+the wait time is ℎ𝑗= max{0, 𝐶𝑗−𝑡des
+𝑗}, where 𝐶𝑗is the real-
+ized completion time and 𝑡des
+𝑗
+is the desired service time. For
+D. Garces et al.: Preprint submitted to Elsevier
+Page 23 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Table 3
+Service-level results by demand regime. Each entry reports serviced and rejected requests for the corresponding policy and load
+level.
+Policy
+High demand
+Medium demand
+Low demand
+Serviced
+Rejected
+Serviced
+Rejected
+Serviced
+Rejected
+Fleet Manager
+36,948
+0
+30,824
+0
+25,300
+0
+Token Passing
+36,920
+28
+30,824
+0
+25,300
+0
+Token Passing with Task Swaps
+36,920
+28
+30,824
+0
+25,300
+0
+Token Passing with Deadlines
+36,948
+0
+30,824
+0
+25,300
+0
+Deadline-Aware
+Token
+Passing
+with Task Swaps
+36,948
+0
+30,824
+0
+25,300
+0
+Idle Prediction
+36,948
+0
+30,824
+0
+25,300
+0
+Greedy Assignment Policy
+36,948
+0
+30,824
+0
+25,300
+0
+Proposed Adaptive Rollout
+36,948
+0
+30,824
+0
+25,300
+0
+each policy and day, we compute the mean serviced-request
+wait time and the 95-th percentile serviced-request wait time.
+We then plot the distribution of these daily statistics across
+days, stratified by demand regime. The mean wait-time plots
+summarize typical service responsiveness, while the 95-th
+percentile plots capture tail delays.
+The computational metric is the planning time required
+to generate a decision for one request. We report the distri-
+bution of per-request planning times across the evaluation
+runs. This metric is important because the proposed rollout
+policy evaluates multiple candidate actions over sampled
+future scenarios, whereas the baselines generally make more
+local decisions.
+5.5.3. Service-Level Results
+Table 3 reports the number of serviced and rejected
+requests for each policy, stratified by demand regime. This
+metric evaluates whether each policy can maintain feasi-
+bility with the heterogeneous team selected in Section 5.4.
+High-demand days are the most informative for service-
+level performance because robot availability and deadline
+constraints are most likely to become binding. Medium-
+and low-demand days test whether the same policies remain
+feasible when the system is less capacity constrained.
+The selected team composition is sufficient to service
+all requests for most policies across all demand regimes.
+The only service-level failures occur on high-demand days
+for Token Passing and Token Passing with Task Swaps,
+which reject 28 requests out of 36,948 high-demand re-
+quests. These rejections do not occur for the deadline-aware
+token-passing variants, the Fleet Manager baseline, Idle
+Prediction, the Greedy Assignment Policy, or the proposed
+adaptive rollout policy.
+This result has two implications. First, it supports the
+fleet-sizing procedure: the selected team composition pro-
+vides enough monitoring and delivery capacity to avoid per-
+sistent overload on the held-out floor-days. Second, it shows
+that aggregate rejection counts alone do not fully distin-
+guish the stronger policies in this experiment, because most
+policies achieve zero rejections once the fleet is properly
+sized. The remaining comparisons therefore focus on service
+quality and computational cost. In particular, the wait-time
+results below evaluate whether policies that service the same
+number of requests differ in how close they complete those
+requests to their desired service times.
+5.5.4. Request Wait-Time Results
+The service-level results in Table 3 show that most
+policies complete nearly all requests under the selected team
+composition. We therefore use wait-time metrics to compare
+the quality of the schedules produced by the policies. For
+each serviced request 𝑟𝑗, wait time is computed as ℎ𝑗=
+max 0, 𝐶𝑗−𝑡des
+𝑗, where 𝐶𝑗is the realized completion time
+and 𝑡des
+𝑗
+is the desired service time. For each floor-day,
+we compute two daily summary statistics: the mean wait
+time over serviced requests and the 95-th percentile wait
+time over serviced requests. The box plots below summarize
+the distribution of these daily statistics across evaluation
+instances for each demand regime.
+Figure 10 shows the wait-time comparison for the highest-
+demand weeks. In this regime, robot capacity and deadline
+constraints are most restrictive, so assignment decisions have
+the largest effect on downstream congestion. The proposed
+adaptive rollout policy achieves the lowest median wait time
+among the evaluated methods for both the daily mean and
+daily 95-th percentile metrics. The median improvement
+is approximately 5% for the mean wait-time metric and
+approximately 10% for the 95-th percentile metric. The
+reduction is even more pronounced in the upper tail: the
+proposed method reduces the 75-th percentile and maximum
+values of both wait-time metrics by more than 15% relative
+to the baselines.
+These high-demand results indicate that the main benefit
+of prediction-aware rollout is not only a reduction in typical
+delay, but also a reduction in severe delay. This is consistent
+with the role of rollout: candidate assignments are evaluated
+based on their downstream effect on future capacity, which
+helps avoid decisions that are locally feasible but create later
+bottlenecks. The comparison with Idle Prediction is also in-
+formative. Although Idle Prediction uses future-demand in-
+formation, it treats predicted requests as positioning targets.
+Its weaker performance shows that inaccurate or mistimed
+predictions can bias robot movement when predictions are
+treated too directly. The proposed rollout policy instead uses
+D. Garces et al.: Preprint submitted to Elsevier
+Page 24 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 10: Comparison of request wait times across assignment policies during the highest-demand evaluation weeks. The left
+panel reports the distribution of daily mean wait times for serviced requests, and the right panel reports the distribution of daily
+95-th percentile wait times for serviced requests. Each box summarizes performance across evaluation instances, with lower values
+indicating shorter delays. Abbreviated policy labels correspond to the assignment policies defined in Section 5.5.1.
+predictions as uncertain inputs to future-cost estimation,
+with adaptive weighting and re-optimization limiting the
+effect of unreliable forecasts.
+Figure 11 reports the same comparison for medium-
+demand weeks. This regime represents nominal operating
+conditions, where the system is less congested than in the
+high-demand case but still has enough request volume for
+assignment quality to matter. The proposed adaptive rollout
+policy again obtains the lowest median wait time for both
+metrics. The median reduction is approximately 2% for
+daily mean wait time and approximately 5% for daily 95-
+th percentile wait time. At the 75-th percentile of the daily
+distributions, the improvement is approximately 5% for the
+mean metric and approximately 15% for the 95-th percentile
+metric.
+The medium-demand results show that rollout remains
+useful even when the system is not persistently overloaded.
+Under these conditions, future request predictions are gener-
+ally informative enough to improve assignment timing, but
+direct prediction-based repositioning is still less effective
+than evaluating sampled futures through a scheduling-aware
+cost estimate. The proposed method benefits from this dis-
+tinction: it uses multiple sampled futures and the interaction-
+aware base policy to estimate downstream cost, rather than
+greedily moving robots toward individual predicted requests.
+Figure 12 shows the results for the lowest-demand
+weeks. In this regime, more robots are idle for longer
+periods, so even simple policies can often complete requests
+without rejection. Nevertheless, the proposed adaptive roll-
+out policy still achieves the lowest median wait time for
+both the mean and 95-th percentile metrics. The median
+improvement is approximately 2% for daily mean wait time
+and approximately 7% for daily 95-th percentile wait time.
+At the 75-th percentile, the proposed method reduces both
+metrics by approximately 10% relative to the baselines.
+The low-demand results show that the proposed method
+does not rely only on congestion to provide benefit. When
+capacity is abundant, the main opportunity is to position
+or preserve robots so that requests can be served quickly
+after they arrive. Prediction-aware methods can help in this
+setting, but only if the planner avoids overcommitting to
+uncertain predictions. The proposed rollout policy improves
+over both reactive baselines and the Idle Prediction baseline
+because it evaluates predicted demand through sampled
+future costs while keeping immediate assignments restricted
+to requests that have actually entered the system.
+Across all demand regimes, the largest and most consis-
+tent gains appear in the 95-th percentile wait-time metric.
+This suggests that the proposed adaptive rollout policy is
+particularly useful for reducing tail delays among serviced
+requests. Since most policies achieve similar service levels
+under the selected fleet size, these wait-time results pro-
+vide the strongest evidence that prediction-aware rollout im-
+proves schedule quality beyond simply completing requests.
+5.5.5. Policy Planning-Time Results
+Finally, we evaluate the computational cost of each pol-
+icy. This comparison is important because the proposed
+D. Garces et al.: Preprint submitted to Elsevier
+Page 25 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 11: Comparison of request wait times across assignment policies during medium-demand evaluation weeks. The left panel
+reports the distribution of daily mean wait times for serviced requests, and the right panel reports the distribution of daily 95-th
+percentile wait times for serviced requests. Each box summarizes performance across evaluation instances, with lower values
+indicating shorter delays. Abbreviated policy labels correspond to the assignment policies defined in Section 5.5.1.
+adaptive rollout policy performs substantially more compu-
+tation than the reactive baselines: it generates robot-local
+candidate actions, evaluates those candidates over sampled
+future request scenarios, applies the interaction-aware base
+policy inside each rollout simulation, and scores the result-
+ing simulated states. The candidate limit 𝐿, sample count 𝑆,
+one-robot-at-a-time decision rule, and decision-suppression
+mechanism described in Section 5.2 are therefore used to
+keep the computation compatible with online execution.
+Figure 13 reports the distribution of planning time re-
+quired to process a request-triggered decision across the
+evaluated policies. As expected, the reactive and token-
+passing baselines require less computation because they
+make local assignment decisions without simulating sam-
+pled future demand. The proposed adaptive rollout policy
+has the largest planning time among the evaluated meth-
+ods, but its median planning time remains approximately 2
+minutes per request-triggered decision. In the hospital case
+study, requests have a 5-minute lead time between entry
+into the system and the earliest time at which they may be
+serviced. Thus, the observed median planning time remains
+within the operational window available for online decision
+making.
+These results show that the improved wait-time perfor-
+mance of the proposed policy comes with a measurable
+computational cost. However, the runtime remains prac-
+tical for the simulated hospital setting under the chosen
+rollout configuration. The implementation used for these
+experiments evaluates rollout simulations sequentially, even
+though many parts of the computation are naturally paral-
+lelizable. In particular, different sampled future scenarios,
+and in some cases different candidate-action evaluations,
+can be evaluated independently. A parallel implementation
+would therefore be expected to reduce wall-clock planning
+time without changing the policy logic. The reported run-
+times should consequently be interpreted as a conservative
+estimate of the computational cost of the proposed rollout
+policy.
+5.6. Adaptive Rollout Ablation
+The ablation study isolates the two adaptive mecha-
+nisms introduced in Sections 4.6 and 4.7: adaptive predic-
+tion reweighting and selective re-optimization of unstarted
+assignments. All variants use the same one-robot-at-a-time
+rollout framework, the same candidate-generation proce-
+dure, the same future scheduled requests, and the same
+sampled prediction scenarios. The only difference across
+variants is whether predicted request costs are reweighted
+online and whether assigned but unstarted requests can be
+released for reconsideration.
+We evaluate four rollout variants:
+Rollout without adaptation. This variant uses future
+scheduled requests and sampled predicted requests in the
+rollout future-cost estimate, but prediction costs are not
+downweighted online and assigned but unstarted requests
+are not reconsidered.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 26 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 12: Comparison of request wait times across assignment policies during the lowest-demand evaluation weeks. The left
+panel reports the distribution of daily mean wait times for serviced requests, and the right panel reports the distribution of daily
+(95)-th percentile wait times for serviced requests. Each box summarizes performance across evaluation instances, with lower
+values indicating shorter delays. Abbreviated policy labels correspond to the assignment policies defined in Section 5.5.1.
+Table 4
+Ablation study of the adaptive rollout components. All variants use the same rollout framework and include future scheduled
+requests in the future-cost estimate. The table reports the mean and standard deviation of request wait times, in seconds, for
+each demand level.
+Policy
+High demand
+Medium demand
+Low demand
+Mean
+Std.
+Mean
+Std.
+Mean
+Std.
+Rollout without adaptation
+49.25
+90.02
+34.23
+78.21
+25.65
+68.72
+Rollout with re-optimization only
+46.78
+86.88
+32.18
+74.08
+24.36
+65.97
+Rollout with prediction reweighting only
+49.39
+90.49
+33.70
+77.25
+25.17
+67.69
+Proposed adaptive rollout
+46.01
+85.41
+31.88
+73.54
+24.28
+65.91
+Rollout with re-optimization only. This variant allows
+assigned but unstarted requests to be returned to the pending
+set when newly observed requests make the previous assign-
+ment order undesirable, but predicted request costs are not
+adaptively reweighted.
+Rollout with prediction reweighting only. This variant
+updates the contribution of predicted requests to the rollout
+objective using recent forecast errors, but it does not release
+previously assigned unstarted requests.
+Proposed adaptive rollout. This is the full proposed pol-
+icy. It combines adaptive prediction reweighting with selec-
+tive re-optimization of unstarted assignments.
+Table 4 reports the mean and standard deviation of re-
+quest wait times for each demand regime. The mean captures
+average service responsiveness, while the standard deviation
+captures the spread of request delays. Lower values are better
+for both metrics.
+The full adaptive rollout policy achieves the lowest mean
+wait time and the lowest wait-time standard deviation in
+every demand regime. Relative to rollout without adaptation,
+the full policy reduces mean wait time by approximately
+6% under high demand, 7% under medium demand, and 5%
+under low demand. It also reduces the standard deviation of
+wait times by approximately 5%, 6%, and 4%, respectively.
+These reductions show that the adaptive mechanisms im-
+prove both average responsiveness and delay variability.
+The ablation also shows that the two mechanisms play
+different roles. Re-optimization provides the larger indi-
+vidual improvement: by releasing assigned but unstarted
+requests, it allows the planner to repair schedules that be-
+come undesirable after new information arrives. Prediction
+reweighting alone provides smaller benefits and, under high
+demand, performs similarly to the non-adaptive rollout vari-
+ant. This is expected because reweighting changes the influ-
+ence of future predicted requests prospectively, but it cannot
+by itself revise assignments that have already been made.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 27 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+Figure 13: Planning time per request-triggered decision across
+the evaluated assignment policies. Each box plot summarizes
+the computation time required to process a decision during the
+evaluation runs. Lower values indicate faster online decision
+making. The proposed adaptive rollout policy requires more
+computation than myopic and token-passing baselines because
+it evaluates candidate assignments through sampled future
+scenarios, but its median planning time remains within the
+operational lead time of the case-study setting. Abbreviated
+policy labels correspond to the assignment policies defined in
+Section 5.5.1.
+When reweighting and re-optimization are combined, the
+policy obtains the best performance in all regimes, indicating
+that the two mechanisms are complementary: reweighting
+reduces the future influence of unreliable predictions, while
+re-optimization repairs eligible commitments made under
+earlier forecasts.
+Figure 14 compares the planning-time distributions for
+the rollout ablation variants. The adaptive mechanisms add
+only modest overhead relative to rollout without adapta-
+tion, because the dominant computational cost is evaluating
+candidate actions over sampled future scenarios. Prediction
+reweighting requires only lightweight updates to prediction-
+confidence weights, and re-optimization changes the set of
+eligible pending requests only when the trigger condition is
+satisfied.
+The runtime results also show that the full adaptive
+rollout policy does not incur the largest tail planning times
+among the ablation variants. In particular, combining reweight-
+ing with re-optimization can reduce unnecessary schedule
+repair by lowering the influence of unreliable predictions
+before they lead to poor assignments. Thus, the full method
+improves wait-time performance without substantially in-
+creasing the computational cost of the underlying rollout
+procedure.
+Figure 14: Planning time per request-triggered decision across
+the ablation policies. Each box plot shows the distribution of
+computation time required to process a decision during the
+evaluation runs. Lower values indicate faster online decision
+making.
+6. Conclusion
+This paper studied online heterogeneous multi-robot task
+assignment and scheduling with scheduled requests, real-
+time requests, service-window constraints, and uncertain fu-
+ture demand. We formulated the problem as a finite-horizon
+stochastic dynamic program in which controls update the
+assignments and schedules of known requests, while future
+real-time requests enter through a stochastic disturbance
+process. The formulation explicitly distinguishes between
+the true deployment distribution ℙand the learned pre-
+dictive distribution̂ ℙ, which makes it possible to reason
+about prediction error and distribution shift within the online
+decision-making problem.
+To address this problem, we proposed a prediction-
+aware adaptive rollout framework. The key design choice
+is to separate immediate commitments from future-demand
+estimates: robots can only be assigned to requests that have
+actually entered the system, while predicted requests influ-
+ence decisions through sampled rollout simulations. This
+allows the planner to account for the opportunity cost of
+current assignments without prematurely committing robots
+to requests that may never occur. The rollout policy is made
+computationally tractable using one-robot-at-a-time deci-
+sion making, heuristic candidate pruning, wait actions, and
+an interaction-aware base policy for future-cost estimation.
+The framework also includes adaptive mechanisms for
+robustness under prediction error. Prediction-confidence
+weights are updated online from recent forecast errors and
+used to reduce the contribution of unreliable predicted
+requests in the rollout objective. Selective re-optimization
+D. Garces et al.: Preprint submitted to Elsevier
+Page 28 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+complements this prospective correction by allowing as-
+signed but unstarted requests to be reconsidered when
+new observations make the current schedule undesirable.
+Together, these mechanisms allow predictions to guide
+online allocation when they are useful, while limiting their
+influence when they become misleading.
+The hospital-floor case study demonstrated how the
+framework can be instantiated in a realistic heterogeneous
+service setting. Historical request data were used both
+to train temporal point process models for future-request
+scenario generation and to select a fixed heterogeneous
+team composition before deployment. The empirical results
+showed that the selected team composition was sufficient
+to avoid persistent overload on the held-out floor-days, and
+that the proposed adaptive rollout policy reduced request
+wait times relative to reactive, token-passing, prediction-
+positioning, and myopic greedy baselines. The largest im-
+provements appeared in tail wait-time metrics, indicating
+that prediction-aware rollout is especially useful for avoiding
+severe delays. The ablation study further showed that re-
+optimization and prediction reweighting play complemen-
+tary roles: re-optimization repairs eligible commitments
+after new information arrives, while reweighting reduces the
+future influence of unreliable predictions.
+Several directions remain for future work. First, the cur-
+rent implementation uses a finite set of sampled future sce-
+narios and a heuristic base policy for downstream cost esti-
+mation. Future work could study stronger scenario-reduction
+methods, learned value approximations, or uncertainty-
+aware base policies that preserve rollout quality while reduc-
+ing runtime. Second, the prediction-confidence mechanism
+currently relies on count-based forecast errors within pre-
+defined contexts; richer calibration methods could account
+for spatial structure, task dependencies, and correlations
+between local request processes. Third, the selective re-
+optimization rule could be extended to reason about the cost
+of schedule disruption more explicitly, especially in settings
+where changing unstarted assignments affects human work-
+flows or resource availability. Finally, future deployments
+should evaluate the framework in closed-loop physical or
+high-fidelity hospital operations, where communication de-
+lays, navigation uncertainty, human interaction, and opera-
+tional constraints may further affect the value of prediction-
+aware decision making.
+Overall, the proposed framework provides a practical
+way to use learned future-demand predictions in online het-
+erogeneous multi-robot scheduling. By restricting immedi-
+ate actions to observed requests while adaptively weighting
+predicted requests in the lookahead objective, the method
+exploits useful forecasts without allowing unreliable predic-
+tions to dominate online decisions.
+7. Acknowledgments
+Authors are grateful for the Amazon Gift that funded this
+research in part. This work was also supported in part by
+the Defense Advanced Research Projects Agency (DARPA)
+under Grant No. 𝐷24𝐴𝑃00319−01. The views and conclu-
+sions expressed in this paper are those of the authors and do
+not reflect the official policy or position of the U.S. Army,
+U.S. Department of War, or U.S. Government.
+CRediT authorship contribution statement
+Daniel Garces: Conceptualization, Formal Analysis, In-
+vestigation, Methodology, Software, Validation, Visualiza-
+tion, Writing - original draft, Writing - review and editing.
+Sara Castro: Conceptualization, Data curation, Method-
+ology, Writing - review and editing. Adrian Haimovich:
+Data curation, Supervision. Byron Crowe: Conceptualiza-
+tion, Data curation, Supervision. Stephanie Gil: Funding
+Acquisition, Supervision, Writing - review and editing.
+References
+[1] Akella, P., Dixit, A., Ahmadi, M., Lindemann, L., Chapman, M.P.,
+Pappas, G.J., Ames, A.D., Burdick, J.W., 2025. Risk-aware robotics:
+Tail risk measures in planning, control, and verification [focus on
+education]. IEEE Control Systems 45, 46–78. doi:10.1109/MCS.2025.
+3577050.
+[2] Arribas, E., Cholvi, V., Mancuso, V., 2023. Optimizing uav resupply
+scheduling for heterogeneous and persistent aerial service. IEEE
+Transactions on Robotics 39, 2639–2653.
+doi:10.1109/TRO.2023.
+3263077.
+[3] Asadi, K., Misra, D., Kim, S., Littman, M.L., 2019.
+Com-
+bating the compounding-error problem with a multi-step model.
+CoRR abs/1905.13320.
+URL: http://arxiv.org/abs/1905.13320,
+arXiv:1905.13320.
+[4] Aswale, A., Pinciroli, C., 2023. Heterogeneous coalition formation
+and scheduling with multi-skilled robots, in: 2023 IEEE/RSJ Inter-
+national Conference on Intelligent Robots and Systems (IROS), pp.
+5402–5409. doi:10.1109/IROS55552.2023.10342489.
+[5] Augusto Zagatti, G., Kiong Ng, S., Bressan, S., 2024.
+Learning
+multivariate temporal point processes via the time-change theorem,
+in: Dasgupta, S., Mandt, S., Li, Y. (Eds.), Proceedings of The 27th
+International Conference on Artificial Intelligence and Statistics,
+PMLR. pp. 3241–3249. URL: https://proceedings.mlr.press/v238/
+augusto-zagatti24a.html.
+[6] Aziz, H., Chan, H., Cseh, A., Li, B., Ramezani, F., Wang, C.,
+2021.
+Multi-robot task allocation-complexity and approxima-
+tion, in: Proceedings of the 20th International Conference on Au-
+tonomous Agents and MultiAgent Systems, International Founda-
+tion for Autonomous Agents and Multiagent Systems, Richland, SC.
+p. 133–141.
+[7] Bai, X., Li, C., Zhang, B., Wu, Z., Ge, S.S., 2024a.
+Efficient
+performance impact algorithms for multirobot task assignment with
+deadlines. IEEE Transactions on Industrial Electronics 71, 14373–
+14382. doi:10.1109/TIE.2024.3374366.
+[8] Bai, Y., Lindqvist, B., Nordström, S., Kanellakis, C., Nikolakopou-
+los, G., 2024b. Cluster-based multi-robot task assignment, planning,
+and control.
+International Journal of Control, Automation and
+Systems 22, 2537–2550. doi:10.1007/s12555-023-0745-4.
+[9] Banfi, J., Messing, A., Kroninger, C., Stump, E., Hutchinson, S.,
+Roy, N., 2022.
+Hierarchical planning for heterogeneous multi-
+robot routing problems via learned subteam performance.
+IEEE
+Robotics and Automation Letters 7, 4464–4471. doi:10.1109/LRA.
+2022.3148489.
+[10] Berbeglia, G., Cordeau, J.F., Laporte, G., 2010.
+Dynamic
+pickup
+and
+delivery
+problems.
+European
+Journal
+of
+Operational
+Research
+202,
+8–15.
+URL:
+https://www.
+sciencedirect.com/science/article/pii/S0377221709002999,
+doi:https://doi.org/10.1016/j.ejor.2009.04.024.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 29 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+[11] Bertsekas, D., 2019. Reinforcement Learning and Optimal Control.
+Athena Scientific optimization and computation series, Athena Sci-
+entific, Nashua, NH, USA. URL: https://books.google.com/books?
+id=2f85EAAAQBAJ.
+[12] Bertsekas, D., 2020. Rollout, Policy Iteration, and Distributed Rein-
+forcement Learning. Athena scientific optimization and computation
+series, Athena Scientific., Nashua, NH, USA. URL: https://books.
+google.com/books?id=Hbo-EAAAQBAJ.
+[13] Binny, A.E., Dixit, A., 2025.
+Who moved my distribution?
+conformal prediction for interactive multi-agent systems.
+ArXiv
+abs/2511.11567. URL: https://api.semanticscholar.org/CorpusID:
+283055266.
+[14] Bischoff, E., Kohn, S., Hahn, D., Braun, C., Rothfuß, S.,
+Hohmann,
+S.,
+2024.
+Heuristic
+reoptimization
+of
+time-
+extended multi-robot task allocation problems.
+Networks
+84, 64–83.
+URL:
+https://onlinelibrary.wiley.com/doi/abs/
+10.1002/net.22217,
+doi:https://doi.org/10.1002/net.22217,
+arXiv:https://onlinelibrary.wiley.com/doi/pdf/10.1002/net.22217.
+[15] Bopardikar, S.D., Smith, S.L., Bullo, F., 2014. On dynamic vehicle
+routing with time constraints. IEEE Transactions on Robotics 30,
+1524–1532. doi:10.1109/TRO.2014.2344451.
+[16] Calvo, A., Capitan, J., 2024.
+Heterogeneous multi-robot task al-
+location for long-endurance missions in dynamic scenarios. URL:
+https://arxiv.org/abs/2411.02062, arXiv:2411.02062.
+[17] Camisa, A., Testa, A., Notarstefano, G., 2023. Multi-robot pickup
+and delivery via distributed resource allocation. IEEE Transactions
+on Robotics 39, 1106–1118. doi:10.1109/TRO.2022.3216801.
+[18] Cao, H., Meng, Z., Ke, T., Zhou, F., 2024.
+Is score matching
+suitable for estimating point processes?, in: The Thirty-eighth An-
+nual Conference on Neural Information Processing Systems. URL:
+https://openreview.net/forum?id=HQgHCVZiHw.
+[19] Chang, Y., Boyd, A.J., Xiao, C., Kass-Hout, T., Bhatia, P., Smyth, P.,
+Warrington, A., 2026. Deep continuous-time state-space models for
+marked event sequences, in: The Thirty-ninth Annual Conference on
+Neural Information Processing Systems. URL: https://openreview.
+net/forum?id=74SvE2GZwW.
+[20] Chang, Y., J Boyd, A., Smyth, P., 2024. Probabilistic modeling for
+sequences of sets in continuous-time, in: Dasgupta, S., Mandt, S.,
+Li, Y. (Eds.), Proceedings of The 27th International Conference on
+Artificial Intelligence and Statistics, PMLR. pp. 4357–4365. URL:
+https://proceedings.mlr.press/v238/chang24a.html.
+[21] Chaouach, L.M., Boskos, D., Oomen, T., 2022.
+Uncertain un-
+certainty in data-driven stochastic optimization: towards structured
+ambiguity sets, in: 2022 IEEE 61st Conference on Decision and
+Control (CDC), pp. 4776–4781. doi:10.1109/CDC51059.2022.9992405.
+[22] Chee, K.Y., Silva, T.C., Hsieh, M.A., Pappas, G.J., 2024. Uncer-
+tainty quantification and robustification of model-based controllers
+using conformal prediction, in: Abate, A., Cannon, M., Margellos,
+K., Papachristodoulou, A. (Eds.), Proceedings of the 6th Annual
+Learning for Dynamics; Control Conference, PMLR. pp. 528–540.
+URL: https://proceedings.mlr.press/v242/chee24a.html.
+[23] Chen, Y., Arkin, J., Zhang, Y., Roy, N., Fan, C., 2024.
+Scalable
+multi-robot collaboration with large language models: Centralized
+or decentralized systems?, in: 2024 IEEE International Conference
+on Robotics and Automation (ICRA), pp. 4311–4317. doi:10.1109/
+ICRA57147.2024.10610676.
+[24] Chen, Z., Alonso-Mora, J., Bai, X., Harabor, D.D., Stuckey, P.J.,
+2021. Integrated task assignment and path planning for capacitated
+multi-agent pickup and delivery. IEEE Robotics and Automation
+Letters 6, 5816–5823. doi:10.1109/LRA.2021.3074883.
+[25] Dai, W., Rai, U., Chiun, J., Yuhong, C., Sartoretti, G., 2025. Het-
+erogeneous multi-robot task allocation and scheduling via reinforce-
+ment learning. IEEE Robotics and Automation Letters , 1–8doi:10.
+1109/LRA.2025.3534682.
+[26] Das, G., McGinnity, T., Coleman, S., Behera, L., 2015. A distributed
+task allocation algorithm for a multi-robot system in healthcare
+facilities. Journal of Intelligent & Robotic Systems 80. doi:10.1007/
+s10846-014-0154-2.
+[27] Dhanaraj, N., Kang, J.H., Mukherjee, A., Nemlekar, H., Nikolaidis,
+S., Gupta, S.K., 2024. Multi-robot task allocation under uncertainty
+via hindsight optimization, in: 2024 IEEE International Conference
+on Robotics and Automation (ICRA), pp. 16574–16580.
+doi:10.
+1109/ICRA57147.2024.10611370.
+[28] Draxler, F., Meng, Y., Nelson, K., Laskowski, L., Yang, Y., Kar-
+aletsos, T., Mandt, S., 2026.
+Transformers for mixed-type event
+sequences, in: The Thirty-ninth Annual Conference on Neural Infor-
+mation Processing Systems. URL: https://openreview.net/forum?
+id=MtwsRjPZhf.
+[29] Du, N., Dai, H., Trivedi, R., Upadhyay, U., Gomez-Rodriguez,
+M., Song, L., 2016. Recurrent marked temporal point processes:
+Embedding event history to vector, in: Proceedings of the 22nd ACM
+SIGKDD International Conference on Knowledge Discovery and
+Data Mining, Association for Computing Machinery, New York,
+NY, USA. p. 1555–1564. URL: https://doi.org/10.1145/2939672.
+2939875, doi:10.1145/2939672.2939875.
+[30] Fan, H., Li, D., Ouyang, B., Yan, Z., Wang, Y., 2023. Improving
+scheduling in multi-agv systems by task prediction.
+Journal of
+Scheduling , 1–10URL: https://api.semanticscholar.org/CorpusID:
+265207678.
+[31] Ferreira, B.A., Petrović, T., Bogdan, S., 2022. Distributed mission
+planning of complex tasks for heterogeneous multi-robot systems, in:
+2022 IEEE 18th International Conference on Automation Science
+and Engineering (CASE), pp. 1224–1231. doi:10.1109/CASE49997.
+2022.9926542.
+[32] Fu, B., Smith, W., Rizzo, D.M., Castanier, M., Ghaffari, M., Barton,
+K., 2023a. Robust task scheduling for heterogeneous robot teams
+under capability uncertainty.
+IEEE Transactions on Robotics 39,
+1087–1105. doi:10.1109/TRO.2022.3216068.
+[33] Fu, B., Smith, W., Rizzo, D.M., Castanier, M., Ghaffari, M., Barton,
+K., 2023b. Robust task scheduling for heterogeneous robot teams
+under capability uncertainty.
+IEEE Transactions on Robotics 39,
+1087–1105. doi:10.1109/TRO.2022.3216068.
+[34] Gao, P., Siva, S., Micciche, A., Zhang, H., 2023.
+Collaborative
+scheduling with adaptation to failure for heterogeneous robot teams,
+in: 2023 IEEE International Conference on Robotics and Automa-
+tion (ICRA), pp. 1414–1420. doi:10.1109/ICRA48891.2023.10161502.
+[35] Gibbs, I., Candès, E., 2024. Conformal inference for online predic-
+tion with arbitrary distribution shifts. J. Mach. Learn. Res. 25.
+[36] Gibbs, I., Candès, E.J., 2021. Adaptive conformal inference under
+distribution shift, in: Proceedings of the 35th International Confer-
+ence on Neural Information Processing Systems, Curran Associates
+Inc., Red Hook, NY, USA.
+[37] Gosrich, W., Mayya, S., Narayan, S.R., Malencia, M., Agarwal, S.,
+Kumar, V.R., 2022. Multi-robot coordination and cooperation with
+task precedence relationships. 2023 IEEE International Conference
+on Robotics and Automation (ICRA) , 5800–5806URL: https://
+api.semanticscholar.org/CorpusID:252595835.
+[38] Gupta, P., Isele, D., Sachdeva, E., Huang, P.H., Dariush, B., Lee,
+K., Bae, S., 2025. Generalized mission planning for heterogeneous
+multi-robot teams via llm-constructed hierarchical trees.
+URL:
+https://arxiv.org/abs/2501.16539, arXiv:2501.16539.
+[39] Ham,
+A.,
+2021.
+Transfer-robot
+task
+scheduling
+in
+job
+shop.
+International Journal of Production Research 59, 813–
+823.
+URL:
+https://doi.org/10.1080/00207543.2019.1709671,
+doi:10.1080/00207543.2019.1709671.
+[40] Janner, M., Fu, J., Zhang, M., Levine, S., 2019. When to trust your
+model: model-based policy optimization. Curran Associates Inc.,
+Red Hook, NY, USA.
+[41] Ji, R., Lejeune, M., Fan, Z., 2019. Distributionally robust portfolio
+optimization with starr performance measure.
+SSRN Electronic
+Journal doi:10.2139/ssrn.3542667.
+[42] Ji, T., Luo, Y., Sun, F., Jing, M., He, F., Huang, W., 2022. When to
+update your model: Constrained model-based reinforcement learn-
+ing, in: Oh, A.H., Agarwal, A., Belgrave, D., Cho, K. (Eds.), Ad-
+vances in Neural Information Processing Systems.
+URL: https:
+//openreview.net/forum?id=9a1oV7UunyP.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 30 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+[43] Jiang, N., Kulesza, A., Singh, S., Lewis, R., 2015. The dependence of
+effective planning horizon on model accuracy, in: Proceedings of the
+2015 International Conference on Autonomous Agents and Multia-
+gent Systems, International Foundation for Autonomous Agents and
+Multiagent Systems, Richland, SC. p. 1181–1189.
+[44] Jokinen, J.P., Sihvola, T., Hyytiä, E., Sulonen, R., 2011.
+Why
+urban mass demand responsive transport?, in: 2011 IEEE Forum
+on Integrated and Sustainable Transportation Systems, pp. 317–322.
+doi:10.1109/FISTS.2011.5973631.
+[45] Kalempa, V.C., Piardi, L., Limeira, M., de Oliveira, A.S., 2021.
+Multi-robot preemptive task scheduling with fault recovery: A novel
+approach to automatic logistics of smart factories. Sensors 21. URL:
+https://www.mdpi.com/1424-8220/21/19/6536, doi:10.3390/s21196536.
+[46] Kannan, S.S., Venkatesh, V.L.N., Min, B.C., 2024. Smart-llm: Smart
+multi-agent robot task planning using large language models, in:
+2024 IEEE/RSJ International Conference on Intelligent Robots and
+Systems (IROS), pp. 12140–12147.
+doi:10.1109/IROS58592.2024.
+10802322.
+[47] Kingma, D.P., Ba, J., 2014. Adam: A method for stochastic optimiza-
+tion.
+CoRR abs/1412.6980.
+URL: https://api.semanticscholar.
+org/CorpusID:6628106.
+[48] Kondor, D., Bojic, I., Resta, G., Duarte, F., Santi, P., Ratti, C.,
+2022. The cost of non-coordination in urban on-demand mobility.
+Scientific Reports 12. doi:10.1038/s41598-022-08427-2.
+[49] Laney, D.B., 2002. Improved control charts for attributes. Quality
+Engineering 14, 531–537. doi:10.1081/QEN-120003555.
+[50] Lee, S., Shahzaad, B., Alkouz, B., Lakhdari, A., Bouguettaya, A.,
+2023.
+Autonomous delivery of multiple packages using single
+drone in urban airspace, in: Adjunct Proceedings of the 2022 ACM
+International Joint Conference on Pervasive and Ubiquitous Com-
+puting and the 2022 ACM International Symposium on Wearable
+Computers, Association for Computing Machinery, New York, NY,
+USA. p. 72–74.
+URL: https://doi.org/10.1145/3544793.3560330,
+doi:10.1145/3544793.3560330.
+[51] Lee, Y., Williams, J., Marklund, H., Sharma, A., Mitchell, E.,
+Singh, A., Finn, C., 2025. Inference-time alignment via hypothesis
+reweighting, in: Second Workshop on Test-Time Adaptation: Putting
+Updates to the Test! at ICML 2025. URL: https://openreview.net/
+forum?id=tl2nXqQSQJ.
+[52] Li, Y., Jiao, X.Y., Sun, B.Q., Zhang, Q.H., Yang, J.Y., 2021. Multi-
+welfare-robot cooperation framework for multi-task assignment in
+healthcare facilities based on multi-agent system, in: 2021 IEEE
+International Conference on Intelligence and Safety for Robotics
+(ISR), pp. 413–416. doi:10.1109/ISR50024.2021.9419496.
+[53] Lin, V., Kaur, R., Yang, Y., Dutta, S., Kantaros, Y., Roy, A., Jha,
+S., Sokolsky, O., Lee, I., 2025.
+Safety monitoring for learning-
+enabled cyber-physical systems in out-of-distribution scenarios, in:
+Proceedings of the ACM/IEEE 16th International Conference on
+Cyber-Physical Systems (with CPS-IoT Week 2025), Association
+for Computing Machinery, New York, NY, USA.
+URL: https:
+//doi.org/10.1145/3716550.3722022, doi:10.1145/3716550.3722022.
+[54] Lindemann, L., Cleaveland, M., Shim, G., Pappas, G.J., 2023.
+Safe planning in dynamic environments using conformal prediction.
+IEEE Robotics and Automation Letters 8, 5116–5123. doi:10.1109/
+LRA.2023.3292071.
+[55] Lindemann, L., Zhao, Y., Yu, X., Pappas, G.J., Deshmukh, J.V.,
+2025. Formal verification and control with conformal prediction:
+Practical safety guarantees for autonomous systems. IEEE Control
+Systems 45, 72–122. doi:10.1109/MCS.2025.3611545.
+[56] Liu, K., Tang, Z., Wang, D., Wang, Z., Zhao, B., Li, X., 2024.
+Coherent: Collaboration of heterogeneous multi-robot system with
+large language models.
+URL: https://arxiv.org/abs/2409.15146,
+arXiv:2409.15146.
+[57] Liu, R., Gao, P., Shen, Y., Lin, M., Tokekar, P., 2026.
+Adaptive
+conformal guidance for learning under uncertainty, in: The Four-
+teenth International Conference on Learning Representations. URL:
+https://openreview.net/forum?id=1gxP0WtOoO.
+[58] Lowalekar, M., Varakantham, P., Jaillet, P., 2018.
+Online
+spatio-temporal
+matching
+in
+stochastic
+and
+dynamic
+domains.
+Artificial Intelligence 261, 71–112.
+URL: https:
+//www.sciencedirect.com/science/article/pii/S0004370218302030,
+doi:https://doi.org/10.1016/j.artint.2018.04.005.
+[59] Luo, R., Zhao, S., Kuck, J., Ivanovic, B., Savarese, S., Schmerling,
+E., Pavone, M., 2024. Sample-efficient safety assurances using con-
+formal prediction. The International Journal of Robotics Research
+43, 1409–1424.
+[60] Lyu, Y., Chow, C.Y., Lee, V.C., Ng, J.K., Li, Y., Zeng, J., 2019. Cb-
+planner: A bus line planning framework for customized bus systems.
+Transportation Research Part C: Emerging Technologies 101, 233–
+253.
+URL: https://www.sciencedirect.com/science/article/pii/
+S0968090X18305126, doi:https://doi.org/10.1016/j.trc.2019.02.006.
+[61] Ma, H., Hönig, W., Kumar, T.K.S., Ayanian, N., Koenig, S., 2019.
+Lifelong path planning with kinematic constraints for multi-agent
+pickup and delivery, in: Proceedings of the AAAI Conference on
+Artificial Intelligence, pp. 7651–7658.
+doi:10.1609/aaai.v33i01.
+33017651.
+[62] Ma, H., Li, J., Kumar, T.S., Koenig, S., 2017. Lifelong multi-agent
+path finding for online pickup and delivery tasks, in: Proceedings
+of the 16th Conference on Autonomous Agents and MultiAgent
+Systems, International Foundation for Autonomous Agents and Mul-
+tiagent Systems, Richland, SC. p. 837–845.
+[63] Makino, H., Ito, S., 2024. Online multi-agent pickup and delivery
+with task deadlines, in: 2024 IEEE/RSJ International Conference on
+Intelligent Robots and Systems (IROS), pp. 8428–8434. doi:10.1109/
+IROS58592.2024.10802597.
+[64] Mathew, N., Smith, S.L., Waslander, S.L., 2015.
+Planning paths
+for package delivery in heterogeneous multirobot teams.
+IEEE
+Transactions on Automation Science and Engineering 12, 1298–
+1308. doi:10.1109/TASE.2015.2461213.
+[65] McAllister, R.D., Rawlings, J.B., 2024. On the inherent distribu-
+tional robustness of stochastic and nominal model predictive control.
+IEEE Transactions on Automatic Control 69, 741–754. doi:10.1109/
+TAC.2023.3273420.
+[66] Mei, H., Eisner, J., 2017. The neural Hawkes process: A neurally
+self-modulating multivariate point process, in: Advances in Neural
+Information Processing Systems, Long Beach. URL: https://arxiv.
+org/abs/1612.09328.
+[67] Mei, H., Yang, C., Eisner, J., 2022. Transformer embeddings of ir-
+regularly spaced events and their participants, in: International Con-
+ference on Learning Representations.
+URL: https://openreview.
+net/forum?id=Rty5g9imm7H.
+[68] Miao, F., He, S., Pepin, L., Han, S., Hendawi, A., Khalefa, M.E.,
+Stankovic, J.A., Pappas, G., 2021.
+Data-driven distributionally
+robust optimization for vehicle balancing of mobility-on-demand
+systems. ACM Trans. Cyber-Phys. Syst. 5. URL: https://doi.org/
+10.1145/3418287, doi:10.1145/3418287.
+[69] Miloradović, B., Çürüklü, B., Ekström, M., Papadopoulos, A.V.,
+2023. Optimizing parallel task execution for multi-agent mission
+planning. IEEE Access 11, 24367–24381. doi:10.1109/ACCESS.2023.
+3254900.
+[70] Mohajerin Esfahani, P., Kuhn, D., 2018. Data-driven distributionally
+robust optimization using the wasserstein metric: Performance guar-
+antees and tractable reformulations.
+Mathematical Programming
+171, 115–166.
+[71] Montgomery, D.C., 2019. Introduction to Statistical Quality Control.
+8 ed., John Wiley & Sons.
+[72] National Library of Medicine, 2026.
+ATC Product Classes
+in RxClass: ATCPROD.
+https://lhncbc.nlm.nih.gov/RxNav/
+applications/RxClass-ATC-product-classes-ATCPROD.html.
+Accessed: 2026-01-26.
+[73] Neville, G., Chernova, S., Ravichandar, H., 2023. D-itags: A dy-
+namic interleaved approach to resilient task allocation, scheduling,
+and motion planning.
+IEEE Robotics and Automation Letters 8,
+1037–1044. doi:10.1109/LRA.2023.3234824.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 31 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+[74] Neville, G., Messing, A., chaandar Ravichandar, H., Hutchinson,
+S.A., Chernova, S., 2021. An interleaved approach to trait-based task
+allocation and scheduling. 2021 IEEE/RSJ International Conference
+on Intelligent Robots and Systems (IROS) , 1507–1514URL: https:
+//api.semanticscholar.org/CorpusID:236924745.
+[75] Nishi, T., Ando, M., Konishi, M., 2005. Distributed route planning
+for multiple mobile robots using an augmented lagrangian decompo-
+sition and coordination technique. IEEE Transactions on Robotics
+21, 1191–1200. doi:10.1109/TRO.2005.853489.
+[76] Notomista, G., Mayya, S., Emam, Y., Kroninger, C., Bohannon, A.,
+Hutchinson, S., Egerstedt, M., 2022. A resilient and energy-aware
+task allocation framework for heterogeneous multirobot systems.
+IEEE Transactions on Robotics 38, 159–179. doi:10.1109/TRO.2021.
+3102379.
+[77] Omi, T., ueda, n., Aihara, K., 2019.
+Fully neural network
+based
+model
+for
+general
+temporal
+point
+processes,
+in:
+Wallach,
+H.,
+Larochelle,
+H.,
+Beygelzimer,
+A.,
+d'Alché-
+Buc, F., Fox, E., Garnett, R. (Eds.), Advances in Neural
+Information Processing Systems, Curran Associates, Inc.
+URL:
+https://proceedings.neurips.cc/paper_files/paper/2019/file/
+39e4973ba3321b80f37d9b55f63ed8b8-Paper.pdf.
+[78] Ongel, A., Loewer, E., Roemer, F., Sethuraman, G., Chang, F.,
+Lienkamp, M., 2019. Economic assessment of autonomous electric
+microtransit vehicles. Sustainability 11. URL: https://www.mdpi.
+com/2071-1050/11/3/648, doi:10.3390/su11030648.
+[79] Pan, F., He, J., Tu, D., He, Q., 2020.
+Trust the model when it
+is confident: masked model-based actor-critic, in: Proceedings of
+the 34th International Conference on Neural Information Processing
+Systems, Curran Associates Inc., Red Hook, NY, USA.
+[80] Park, B., Kang, C., Choi, J., 2022.
+Cooperative multi-robot task
+allocation with reinforcement learning. Applied Sciences 12. URL:
+https://www.mdpi.com/2076-3417/12/1/272, doi:10.3390/app12010272.
+[81] Park, J., Messing, A., Ravichandar, H., Hutchinson, S., 2023. Risk-
+tolerant task allocation and scheduling in heterogeneous multi-robot
+teams, in: 2023 IEEE/RSJ International Conference on Intelligent
+Robots and Systems (IROS), pp. 5372–5379. doi:10.1109/IROS55552.
+2023.10341837.
+[82] Phillips, M., Likhachev, M., 2011. SIPP: Safe interval path planning
+for dynamic environments, in: Proceedings of the IEEE International
+Conference on Robotics and Automation, pp. 5628–5635. doi:10.
+1109/ICRA.2011.5980306.
+[83] Popolizio, F., Vinetti, M., Combrink, A., Roselli, S.F., Pia Fanti,
+M., Fabian, M., 2024.
+Online conflict-free scheduling of fleets
+of autonomous mobile robots, in: 2024 IEEE 20th International
+Conference on Automation Science and Engineering (CASE), pp.
+3063–3068. doi:10.1109/CASE59546.2024.10711693.
+[84] Reed, S., Campbell, A.M., Thomas, B.W., 2022.
+The value
+of
+autonomous
+vehicles
+for
+last-mile
+deliveries
+in
+urban
+environments.
+Management Science 68, 280–299.
+URL: https:
+//doi.org/10.1287/mnsc.2020.3917,
+doi:10.1287/mnsc.2020.3917,
+arXiv:https://doi.org/10.1287/mnsc.2020.3917.
+[85] Robey, A., Chamon, L., Pappas, G.J., Hassani, H., 2022.
+Proba-
+bilistically robust learning: Balancing average and worst-case perfor-
+mance, in: International Conference on Machine Learning, PMLR.
+pp. 18667–18686.
+[86] Shaheen, S., Cohen, A., 2019.
+Shared ride services in
+north
+america:
+definitions,
+impacts,
+and
+the
+future
+of
+pooling.
+Transport Reviews 39, 427–442.
+URL:
+https:
+//www.sciencedirect.com/science/article/pii/S0144164722001301,
+doi:https://doi.org/10.1080/01441647.2018.1497728.
+[87] Shchur, O., Biloš, M., Günnemann, S., 2020a. Intensity-free learn-
+ing of temporal point processes, in: International Conference on
+Learning Representations. URL: https://openreview.net/forum?id=
+HygOjhEYDH.
+[88] Shchur, O., Gao, N., Biloš, M., Günnemann, S., 2020b. Fast and
+flexible temporal point processes with triangular maps, in: Advances
+in Neural Information Processing Systems (NeurIPS).
+[89] Shen, J., Lai, H., Liu, M., Zhao, H., Yu, Y., Zhang, W., 2023.
+Adaptation augmented model-based policy optimization.
+Journal
+of Machine Learning Research 24, 1–35. URL: http://jmlr.org/
+papers/v24/22-0606.html.
+[90] Shida, Y., Jimbo, T., Odashima, T., Matsubara, T., 2024.
+Rein-
+forcement learning of multi-robot task allocation for multi-object
+transportation with infeasible tasks. URL: https://arxiv.org/abs/
+2404.11817, arXiv:2404.11817.
+[91] Silver, D., 2005. Cooperative pathfinding, in: Proceedings of the
+AAAI Conference on Artificial Intelligence and Interactive Digital
+Entertainment, pp. 117–122. doi:10.1609/aiide.v1i1.18726.
+[92] Sorbelli, F.B., Carpin, S., Corò, F., Das, S.K., Navarra, A., Pinotti,
+C.M., 2022. Speeding up routing schedules on aisle graphs with
+single access. IEEE Transactions on Robotics 38, 433–447. doi:10.
+1109/TRO.2021.3082021.
+[93] Street, C., Lacerda, B., Mühlig, M., Hawes, N., 2024. Right place,
+right time: Proactive multi-robot task allocation under spatiotempo-
+ral uncertainty. Journal of Artificial Intelligence Research 79, 137–
+171.
+[94] Talvitie, E., 2017. Self-correcting models for model-based reinforce-
+ment learning, in: Proceedings of the Thirty-First AAAI Conference
+on Artificial Intelligence, AAAI Press. p. 2597–2603.
+[95] Testa, A., Notarstefano, G., 2022. Generalized assignment for multi-
+robot systems via distributed branch-and-price. IEEE Transactions
+on Robotics 38, 1990–2001. doi:10.1109/TRO.2021.3120046.
+[96] Verma, A., Gautam, A., Singh Shekhawat, V., Mohan, S., 2024.
+Dta-hmr-tt: Dynamic task allocation for a heterogeneous team of
+mobile robots with task transfer. IEEE Access 12, 177050–177063.
+doi:10.1109/ACCESS.2024.3505947.
+[97] Vincent, J.A., Feldman, A.O., Schwager, M., 2024. Guarantees on
+robot system performance using stochastic simulation rollouts. IEEE
+Transactions on Robotics 40, 3984–4002.
+doi:10.1109/TRO.2024.
+3444070.
+[98] Wang, J., Lian, Z., Liu, C., Liu, K., 2023.
+Iterated clustering
+optimization
+of
+the
+split-delivery
+vehicle
+routing
+problem
+considering
+passenger
+walking
+distance.
+Transportation
+Research Interdisciplinary Perspectives 17, 100751. URL: https:
+//www.sciencedirect.com/science/article/pii/S2590198222002123,
+doi:https://doi.org/10.1016/j.trip.2022.100751.
+[99] Wang, Z., Liu, C., Gombolay, M., 2022. Heterogeneous graph atten-
+tion networks for scalable multi-robot scheduling with temporospa-
+tial constraints. Auton. Robots 46, 249–268. URL: https://doi.org/
+10.1007/s10514-021-09997-2, doi:10.1007/s10514-021-09997-2.
+[100] Wei, C., Ji, Z., Cai, B., 2020.
+Particle swarm optimization for
+cooperative multi-robot task allocation: A multi-objective approach.
+IEEE Robotics and Automation Letters 5, 2530–2537. doi:10.1109/
+LRA.2020.2972894.
+[101] WHO Collaborating Centre for Drug Statistics Methodology, 2026.
+ATC Classification Index with DDDs, 2026.
+https://atcddd.fhi.
+no/atc_ddd_index_and_guidelines/atc_ddd_index/. Accessed: 2026-
+06-26.
+[102] Xidias, E., Zacharia, P., Nearchou, A., 2022.
+Intelligent fleet
+management of autonomous vehicles for city logistics.
+Applied
+Intelligence 52. doi:10.1007/s10489-022-03535-y.
+[103] Xue, S., Shi, X., Chu, Z., Wang, Y., Hao, H., Zhou, F., Jiang, C.,
+Pan, C., Zhang, J.Y., Wen, Q., Zhou, J., Mei, H., 2024. Easytpp:
+Towards open benchmarking temporal point processes, in: Inter-
+national Conference on Learning Representations (ICLR).
+URL:
+https://arxiv.org/abs/2307.08097.
+[104] Xue, S., Shi, X., Hao, H., Ma, L., Zhang, J., Wang, S., Wang, S.,
+2021.
+A graph regularized point process model for event propa-
+gation sequence, in: 2021 International Joint Conference on Neural
+Networks (IJCNN), pp. 1–7. doi:10.1109/IJCNN52387.2021.9533830.
+[105] Yang, G., Li, J., Geng, Z., Luo, C., 2024. Quality-aware experience
+exploitation in model-based reinforcement learning, in: 2024 IEEE
+International Conference on Big Data (BigData), pp. 1161–1166.
+doi:10.1109/BigData62323.2024.10825395.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 32 of 33
+
+
+Model-Based Reinforcement Learning Under Distribution Shifts
+[106] Yang, I., 2021. Wasserstein distributionally robust stochastic con-
+trol: A data-driven approach.
+IEEE Transactions on Automatic
+Control 66, 3863–3870. doi:10.1109/TAC.2020.3030884.
+[107] Yang, T., Feng, P., Guo, Q., Zhang, J., Ning, J., Wang, X., Mao,
+Z., 2025. Autohma-llm: Efficient task coordination and execution
+in heterogeneous multi-agent systems using hybrid large language
+models.
+IEEE Transactions on Cognitive Communications and
+Networking , 1–1doi:10.1109/TCCN.2025.3528892.
+[108] Yu, T., Thomas, G., Yu, L., Ermon, S., Zou, J., Levine, S., Finn,
+C., Ma, T., 2020. Mopo: model-based offline policy optimization,
+in: Proceedings of the 34th International Conference on Neural
+Information Processing Systems, Curran Associates Inc., Red Hook,
+NY, USA.
+[109] Zhang, D., Dong, P., Peng, P., Dong, Y., 2025a. A graph reinforce-
+ment learning framework for real-time distributed multi-robot task
+allocation. Aerospace Systems , 1–12.
+[110] Zhang, Q., Lipani, A., Kirnap, O., Yilmaz, E., 2020.
+Self-
+attentive Hawkes process, in: III, H.D., Singh, A. (Eds.), Proceed-
+ings of the 37th International Conference on Machine Learning,
+PMLR. pp. 11183–11193.
+URL: https://proceedings.mlr.press/
+v119/zhang20q.html.
+[111] Zhang, Y., Zhang, Z., Lim, A., Sim, M., 2021. Robust data-driven
+vehicle routing with time windows. Operations Research 69, 469–
+485.
+URL: https://doi.org/10.1287/opre.2020.2043, doi:10.1287/
+opre.2020.2043, arXiv:https://doi.org/10.1287/opre.2020.2043.
+[112] Zhang, Y., Zhou, P., Zhang, R., Lu, S., Chai, T., 2025b.
+Semi-supervised
+concept
+drift
+detection
+and
+adaptation
+based
+on
+conformal
+martingale
+framework.
+Journal
+of
+Process
+Control
+147,
+103374.
+URL:
+https://www.
+sciencedirect.com/science/article/pii/S0959152425000022,
+doi:https://doi.org/10.1016/j.jprocont.2025.103374.
+[113] Zhao, D., Yang, C., Zhang, T., Yang, J., Hiroshi, Y., 2022. A task
+allocation approach of multi-heterogeneous robot system for elderly
+care. Machines 10. URL: https://www.mdpi.com/2075-1702/10/8/622,
+doi:10.3390/machines10080622.
+[114] Zheng, C., Li, L., Xu, F., Sun, F., Ding, M., 2005. Evolutionary route
+planner for unmanned air vehicles. IEEE Transactions on Robotics
+21, 609–620. doi:10.1109/TRO.2005.844684.
+[115] Zuo, H., Cao, B., Zhao, Y., Shen, B., Zheng, W., Huang, Y., 2021.
+High-capacity ride-sharing via shortest path clustering on large road
+networks. J. Supercomput. 77, 4081–4106. URL: https://doi.org/
+10.1007/s11227-020-03424-6, doi:10.1007/s11227-020-03424-6.
+[116] Zuo, S., Jiang, H., Li, Z., Zhao, T., Zha, H., 2020.
+Transformer
+hawkes process, in: Proceedings of the 37th International Confer-
+ence on Machine Learning, JMLR.org.
+Daniel Garces is a Computer Science Ph.D. student
+in the School of Engineering and Applied Sciences
+at Harvard University, advised by Prof. Stephanie
+Gil. His research focuses on the development of
+model-based multi-agent reinforcement learning
+algorithms for task allocation in real world appli-
+cations. He is interested in adaptation mechanisms
+and task allocation problems under uncertainty.
+He received his Bachelor’s degree in Computer
+Engineering from Columbia University in 2021.
+Sara Castro, MD, MPH, is an OB/GYN resident in
+the Harvard Mass General Brigham program. Her
+work focuses on patient perspectives and prefer-
+ences regarding the use of robotics and emerging
+technologies in healthcare, with particular inter-
+est in equity, communication, care navigation, and
+language access. She earned her MPH in Health-
+care Management, with a concentration in Public
+Health Leadership, from the Harvard T.H. Chan
+School of Public Health and her MD from Harvard
+Medical School. She also holds a BA in Medicine,
+Literature, and Society from Columbia University.
+Dr. Adrian Haimovich is an Assistant Professor of
+Emergency Medicine at Harvard Medical School
+and Director of the Division of Artificial Intelli-
+gence in the Department of Emergency Medicine
+at Beth Israel Deaconess Medical Center in Boston,
+Massachusetts. His research is at the intersection
+between emergency medicine and healthcare AI.
+Dr. Byron Crowe is Chief Medical Officer at Doc-
+tronic, where he leads clinical strategy and devel-
+opment of its AI-native care model. He is also a
+Clinical Assistant Professor of Medicine at Stan-
+ford, focused on improving complex systems at
+scale. Previously, he served as CMO at Solera
+Health and on the faculty of Harvard Medical
+School, where he studied AI in clinical reasoning
+and health policy. Named to Modern Healthcare’s
+2024 “40 Under 40,” he earned his MD from
+Emory and a master’s in clinical informatics man-
+agement from Stanford, and is board-certified in
+internal medicine and clinical informatics.
+Stephanie Gil is an Assistant Professor in the
+Computer Science Department at Harvard Univer-
+sity’s School of Engineering and Applied Sciences,
+where she directs the Robotics, Embedded Auton-
+omy, and Communication Theory (REACT) Lab.
+Previously, she served as an Assistant Professor
+at Arizona State University. Her research explores
+multi-robot systems, focusing on how communi-
+cation and information exchange impact resilience
+and trusted coordination. She has received several
+recognitions, including the NSF CAREER Award
+(2019), ONR Young Investigator Program Award,
+DARPA Young Faculty Award, and was named
+2020 Alfred P. Sloan Fellow. Stephanie earned her
+PhD from the Massachusetts Institute of Technol-
+ogy in 2014.
+D. Garces et al.: Preprint submitted to Elsevier
+Page 33 of 33

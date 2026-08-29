@@ -1,0 +1,57 @@
+{
+  "date": "20260829",
+  "date_label": "",
+  "generated_at": "2026-08-29 19:15:44 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.21554v1",
+      "route": "202608/29/2608.21554v1-model-based-reinforcement-learning-for-heterogeneous-multi-robot-task-assignment-under-distribution-shifts",
+      "title": "Model-Based Reinforcement Learning for Heterogeneous Multi-Robot Task Assignment Under Distribution Shifts",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "多机器人分配中的有序服务需求和路由约束类似于边缘节点上的服务功能链部署",
+      "first_seen_at": "2026-08-29 19:15:44 UTC",
+      "updated_at": "2026-08-29 19:15:44 UTC"
+    },
+    {
+      "paper_id": "2608.21034v1",
+      "route": "202608/29/2608.21034v1-ai-infrastructure-in-space-how-far-can-we-go",
+      "title": "AI Infrastructure in Space: How Far Can We Go?",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "涉及卫星边缘计算；关注算力、连接、能量与热余量变化下AI服务的可部署、可管理和可恢复；将轨道状态纳入资源模型",
+      "first_seen_at": "2026-08-29 19:15:44 UTC",
+      "updated_at": "2026-08-29 19:15:44 UTC"
+    },
+    {
+      "paper_id": "2608.26498v1",
+      "route": "202608/29/2608.26498v1-pro-ran-processor-level-characterization-of-open-ran-centralized-and-distributed-units",
+      "title": "PRO-RAN: Processor-Level Characterization of Open RAN Centralized and Distributed Units",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "O-RAN中面向VNF放置与资源供给的处理器级特征分析",
+      "first_seen_at": "2026-08-29 19:15:44 UTC",
+      "updated_at": "2026-08-29 19:15:44 UTC"
+    }
+  ]
+}
