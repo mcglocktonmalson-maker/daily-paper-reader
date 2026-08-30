@@ -1,0 +1,89 @@
+{
+  "date": "20260830",
+  "date_label": "",
+  "generated_at": "2026-08-30 19:37:21 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.25562v1",
+      "route": "202608/30/2608.25562v1-giant-strongly-biconnected-components-of-directed-networks-a-generating-function-approach",
+      "title": "Giant strongly biconnected components of directed networks: a generating function approach",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "有向网络在节点/链路失效下的鲁棒连通性",
+      "first_seen_at": "2026-08-30 19:37:21 UTC",
+      "updated_at": "2026-08-30 19:37:21 UTC"
+    },
+    {
+      "paper_id": "2608.25383v1",
+      "route": "202608/30/2608.25383v1-traffic-adaptive-per-hop-multipath-routing-in-multi-hop-uav-networks",
+      "title": "Traffic-Adaptive Per-Hop Multipath Routing in Multi-Hop UAV Networks",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "通过流量自适应逐跳多路径路由提升MEC网络的韧性",
+      "first_seen_at": "2026-08-30 19:37:21 UTC",
+      "updated_at": "2026-08-30 19:37:21 UTC"
+    },
+    {
+      "paper_id": "2608.21866v1",
+      "route": "202608/30/2608.21866v1-reliability-aware-scheduling-for-digital-twin-maintenance",
+      "title": "Reliability-Aware Scheduling for Digital Twin Maintenance",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向数字孪生维护的可靠性感知调度，可迁移到边缘资源编排",
+      "first_seen_at": "2026-08-30 19:37:21 UTC",
+      "updated_at": "2026-08-30 19:37:21 UTC"
+    },
+    {
+      "paper_id": "2608.21773v1",
+      "route": "202608/30/2608.21773v1-privacy-preserving-semantic-communications-in-wireless-edge-networks-with-vision-language-models",
+      "title": "Privacy Preserving Semantic Communications in Wireless Edge Networks with Vision Language Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向无线边缘网络的语义通信框架，在边缘服务器附近处理数据",
+      "first_seen_at": "2026-08-30 19:37:21 UTC",
+      "updated_at": "2026-08-30 19:37:21 UTC"
+    },
+    {
+      "paper_id": "2608.25442v1",
+      "route": "202608/30/2608.25442v1-e2-conditioned-finite-horizon-effective-capacity-for-public-safety-mcx-over-shared-o-ran",
+      "title": "E2-Conditioned Finite-Horizon Effective Capacity for Public-Safety MCX over Shared O-RAN",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向共享O-RAN有限事件时域的业务保障与资源管理，开发有限时域有效容量框架",
+      "first_seen_at": "2026-08-30 19:37:21 UTC",
+      "updated_at": "2026-08-30 19:37:21 UTC"
+    }
+  ]
+}

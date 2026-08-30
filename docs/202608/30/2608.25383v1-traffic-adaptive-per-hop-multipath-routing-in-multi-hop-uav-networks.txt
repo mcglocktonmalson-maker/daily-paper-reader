@@ -1,0 +1,2083 @@
+Title: Traffic-Adaptive Per-Hop Multipath Routing in Multi-Hop UAV Networks
+
+URL Source: https://arxiv.org/pdf/2608.25383v1
+
+Published Time: Thu, 27 Aug 2026 00:31:24 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+> 1
+
+# Traffic-Adaptive Per-Hop Multipath Routing in Multi-Hop UAV Networks 
+
+Zhenyu Zhao, Graduate Student Member, IEEE , Tiankui Zhang, Senior Member, IEEE , Xiaoxia Xu, Member, IEEE , Yuanpeng Zheng, Junjie Li, Wenjuan Xing 
+
+Abstract —In uncrewed aerial vehicle (UAV)-relayed mobile edge computing (MEC) networks, computation tasks generate traffic with diverse latency requirements and data sizes. Routing decisions therefore need to adapt to both traffic characteristics and changing network conditions. Compared with single-path routing, multipath routing is better suited to such heterogeneous traffic because it provides multiple forwarding options and enables flexible traffic splitting. However, conventional multipath routing usually splits traffic over predefined end-to-end paths, making it difficult to respond quickly to link fluctuations and topology changes in UAV networks. To address this issue, we propose a traffic-adaptive per-hop multipath routing method for multi-hop UAV networks, in which each UAV dynamically distributes traffic among multiple candidate next hops. We formulate the routing problem to improve the on-time packet delivery ratio while reducing the packet loss ratio, and model it as a decentralized partially observable Markov decision process (Dec-POMDP). To solve this problem, we develop a multi-agent reinforcement learning (MARL) algorithm, termed Multi-Agent Proximal Policy Optimization with Dirichlet Modeling (MAPPO-DM). MAPPO-DM follows the centralized-training-and-decentralized-execution framework and models continuous traffic-splitting actions using a Dirichlet distribution. Simulation results show that MAPPO-DM outperforms the baseline meth-ods and maintains robust performance under various network conditions. 
+
+Index Terms —Uncrewed aerial vehicle (UAV)-relayed mobile edge computing (MEC), per-hop multipath routing, multi-agent reinforcement learning (MARL). 
+
+I. I NTRODUCTION 
+
+# UNCREWED aerial vehicles (UAVs) possess advantages such as rapid deployment, wide coverage, and flexible networking [1], [2], making them a promising solution for enhancing communication and edge computing capabilities. In environments where ground infrastructure is limited, such as post-disaster areas or remote regions, UAVs can assist in establishing temporary communication networks [3], [4] or 
+
+Zhenyu Zhao and Tiankui Zhang are with the School of Information and Communication Engineering, Beijing University of Posts and Telecommu-nications, Beijing 100876, China (e-mail: zhaozhenyu@bupt.edu.cn; zhang-tiankui@bupt.edu.cn). Yuanpeng Zheng is with the China Mobile Zijin (Jiangsu) Innovation Research Institute, Jiangsu 210033, China (e-mail: zhengyp@js.chinamobile.com). Xiaoxia Xu is with the School of Electronic Engineering and Computer Science, Queen Mary University of London, London E1 4NS, U.K. (e-mail: x.xiaoxia@qmul.ac.uk). Junjie Li is with China Telecom Beijing Research Institute, Beijing 102200, China (e-mail: lijj28@chinatelecom.cn). Wenjuan Xing is with the School of Microelectronics and Communica-tion Engineering, Chongqing University, Chongqing 401331, China. (e-mail: xingwj@chinatelecom.cn). 
+
+mobile edge computing (MEC) networks [5], [6], providing essential communication and computing services. In MEC networks, UAVs can take on different roles de-pending on application requirements. They may serve as aerial computing nodes to process computation tasks. Alternatively, they can act as relay nodes and forward data to ground base stations (GBSs) or other terminals through multi-hop transmission. When used as relay nodes, UAVs require flexible and efficient routing strategies to ensure the reliable delivery of computation-task traffic [7], [8]. However, reliable data trans-mission remains challenging due to heterogeneous task traffic, frequent topology changes, and limited network resources. To address these challenges, various routing schemes have been developed for multi-hop UAV networks [9]–[24]. 
+
+A. Related Work 
+
+Existing routing studies for multi-hop UAV networks can be broadly divided into protocol-based and learning-based schemes. Protocol-based schemes establish and maintain trans-mission paths using predefined routing rules. They are widely used because of their clear decision logic and low implementa-tion complexity [9]–[15]. In contrast, learning-based schemes use data-driven methods, especially reinforcement learning, to adapt routing decisions to changing network conditions. This makes them more flexible in complex and highly dynamic environments [16]–[24]. 
+
+1) Protocol-based routing approaches: According to [25], protocol-based routing can be broadly divided into topology-based routing, geographic routing, and topology–geographic hybrid routing. Topology-based routing relies mainly on network topology information and establishes routes us-ing proactive, reactive, or proactive–reactive hybrid mech-anisms [9]–[13]. Geographic routing makes forwarding de-cisions based mainly on node location information [14]. Topology–geographic hybrid routing combines topology in-formation with geographic information to improve routing decisions [15]. In topology-based routing, proactive protocols periodically exchange control messages to maintain network topology information and select routes accordingly. Optimized Link State Routing (OLSR) is a representative proactive protocol. In [9], a neural network is incorporated into OLSR to consider link stability, bandwidth, and energy consumption during route selection, thereby improving routing stability. In contrast, reactive protocols discover routes only when data transmission is required. Ad hoc On-Demand Distance Vector (AODV) and arXiv:2608.25383v1 [cs.NI] 26 Aug 2026 2
+
+Ad hoc On-Demand Multipath Distance Vector (AOMDV) are representative reactive protocols. AODV typically establishes a single end-to-end path between a source and a destination, whereas AOMDV maintains multiple loop-free candidate paths to improve reliability when links fail. In [10], the Technique for Order Preference by Similarity to Ideal Solution (TOPSIS) is integrated into AODV. The resulting route selection jointly considers hop count, link stability, and residual energy. In [11], residual energy, available bandwidth, queue length, and link stability are incorporated into AOMDV to construct multiple quality-of-service (QoS)-aware end-to-end paths. Among these paths, the most stable one is selected as the primary route. Similarly, [12] defines a service-aware QoS metric based on hop count, average nodal connectivity, and minimum available bandwidth. Several highly ranked end-to-end paths are then retained as primary and backup routes. Topology-based routing can also combine proactive and reactive mechanisms. Such proactive–reactive hybrid schemes maintain topology infor-mation within a local region for fast forwarding, while using on-demand route discovery for communication beyond that region. In [13], a distributed hybrid ant-colony routing protocol combines proactive pheromone maintenance with reactive ant-based path discovery. Geographic routing uses node locations to make hop-by-hop forwarding decisions. A packet is typically forwarded to a neighboring node that is closer to the destination or provides a higher forwarding utility. In [14], a three-dimensional geo-graphic routing protocol based on the effective transmission range is proposed. The next-hop node is selected according to link utility, while a three-dimensional perimeter recovery mechanism is used when relay candidates are unavailable. Topology–geographic hybrid routing combines topology-based route maintenance with geographic information. In [15], node position, velocity, and moving direction are incorporated into the multipoint relay selection process of OLSR to improve routing stability. 
+
+2) Learning-based routing approaches: Learning-based routing schemes usually employ machine learning methods, such as reinforcement learning, to optimize routing decisions. Existing studies have explored several directions, including hop-by-hop routing, routing coordination in large-scale UAV swarms, secure routing, and routing in space–air integrated networks [16]–[24]. For hop-by-hop routing, learning-based methods use infor-mation from neighboring UAVs, such as residual energy and link quality, to select the next-hop node. The studies in [16]– [18] develop Q-learning-based routing methods with reward functions that account for such neighbor information. These methods select suitable next hops to reduce end-to-end delay and balance energy consumption. For routing in UAV swarm networks, [19] combines multi-agent reinforcement learning (MARL) with an adaptive com-munication mechanism to reduce flooding overhead and im-prove routing coordination. Similarly, [20] develops an intelli-gent cluster-based routing scheme to improve routing stability and load balancing through multi-factor weight optimization and adaptive cluster-head selection. For scenarios with high security requirements, [21] develops a trust-aware routing framework that integrates blockchain with MARL. In [22], a reinforcement-learning-based routing recovery scheme is proposed to restore network connectivity under targeted routing attacks Learning-based routing has also been studied in space–air integrated networks to support reliable cross-domain transmis-sion. For example, [23] develops a two-layer deep reinforce-ment learning framework for UAV–satellite integrated Internet of Things networks. The framework combines hierarchical decision-making with a QoS-aware reward function to support reliable long-distance transmission with low latency. Related learning-based routing techniques have also been investigated in satellite networks. In [24], a graph neural network (GNN)-based multipath traffic-splitting method is proposed for low-Earth-orbit satellite networks. A centralized controller first generates multiple end-to-end candidate paths based on a global topology snapshot and then dynamically adjusts the traffic-splitting ratios according to current network conditions. 
+
+B. Motivations and Challenges 1) Motivations: Existing studies on multi-hop UAV routing have made significant progress in optimizing general perfor-mance metrics, such as energy efficiency and average latency. However, routing for heterogeneous computation-task traffic under high network loads remains largely unexplored. Specifically, routing decisions should adapt to heteroge-neous traffic with different latency requirements and data volumes. For latency-sensitive flows, routing should prioritize timely delivery to reduce end-to-end delay. For data-intensive flows, traffic should be balanced across the network to avoid packet loss caused by link congestion and queue buildup. Compared with single-path routing, multipath routing provides more forwarding options and allows traffic to be distributed across multiple paths according to service requirements and network conditions. It is therefore better suited to heteroge-neous traffic, especially under heavy network loads or frequent link fluctuations. However, existing multipath routing schemes usually con-struct multiple end-to-end paths based on network topology and then perform path selection, backup switching, or traf-fic splitting among these paths [11], [12], [24]. Such path-level designs are less responsive in highly dynamic multi-hop UAV networks, where UAV mobility can frequently change link conditions and even invalidate existing paths. Per-hop multipath routing provides a more adaptive alternative. Instead of relying on precomputed end-to-end paths, each UAV dynamically distributes traffic among multiple next-hop neighbors based on current link and traffic conditions. This enables faster adaptation to network changes and improves load balancing and transmission robustness. Nevertheless, per-hop multipath routing in multi-hop UAV networks has received limited attention. 
+
+2) Challenges: Designing traffic-adaptive per-hop multi-path routing for multi-hop UAV networks remains challenging. The main challenges are as follows:  
+
+> •
+
+Coupling between next-hop selection and traffic splitting: 
+
+Each UAV must select suitable next-hop neighbors based 3
+
+on current network conditions and determine how much traffic to assign to each selected neighbor according to traffic characteristics. These two decisions are closely coupled, leading to a large decision space and making efficient routing policies difficult to obtain.  
+
+> •
+
+Limited observability in per-hop routing: Each UAV makes forwarding decisions using only local observa-tions. However, a locally favorable decision may not lead to good end-to-end performance, especially for latency-sensitive traffic. Therefore, the routing policy should use local information effectively while accounting for its impact on end-to-end delay and overall network perfor-mance. 
+
+C. Contributions 
+
+This paper proposes a traffic-adaptive per-hop multipath routing method for heterogeneous computation-task traffic in multi-hop UAV networks. Each UAV uses local network and traffic information to dynamically split traffic among multi-ple next hops. We formulate the routing problem to jointly improve the on-time packet delivery ratio and reduce the packet loss ratio. The problem is modeled as a Decentralized Partially Observable Markov Decision Process (Dec-POMDP) and solved using a multi-agent reinforcement learning algo-rithm termed Multi-Agent Proximal Policy Optimization with Dirichlet Modeling (MAPPO-DM). To the best of our knowledge, this is the first study to investigate traffic-adaptive per-hop multipath routing in multi-hop UAV networks. The main contributions are summarized as follows:  
+
+> •
+
+We propose a traffic-adaptive per-hop multipath rout-ing framework for heterogeneous computation-task traf-fic in multi-hop UAV networks. A priority-based sub-queue mechanism organizes traffic according to deadline urgency. Each UAV selects packets from the highest-priority non-empty sub-queue and dynamically splits them among multiple next hops. The routing problem is formulated to jointly improve the on-time packet delivery ratio and reduce the packet loss ratio.  
+
+> •
+
+We model the per-hop multipath routing problem as a Dec-POMDP and develop a MARL algorithm termed MAPPO-DM. The decentralized Actor uses a Trans-former to model interactions among candidate next hops and a Gated Recurrent Unit (GRU) to capture temporal changes in local network conditions. A Dirichlet distribu-tion is used to model continuous traffic-splitting actions, with its parameters adaptively adjusted to improve policy exploration. The centralized Critic uses graph attention to capture the network topology and node–link interactions from the global graph state, improving value estimation.  
+
+> •
+
+We evaluate MAPPO-DM under different traffic loads, network sizes, and candidate next-hop constraints. The comparison includes four representative baselines: two heuristic per-hop multipath methods, one per-hop multi-path method guided by an existing end-to-end multipath routing algorithm [12], and one heuristic per-hop single-path method. The results show that multipath routing  
+
+> Fig. 1. Multi-UAV and GBS Collaborative System.
+
+generally outperforms single-path routing. Among the multipath methods, MAPPO-DM achieves the best over-all performance and demonstrates strong adaptability and robustness. The remainder of this paper is organized as follows. Section II presents the system model and problem formulation. Section III describes the proposed solution. Section IV presents the numerical results. Section V concludes the paper, and Section VI provides the acknowledgment. II. SYSTEM MODEL AND PROBLEM FORMULATION 
+
+A. System model 
+
+As shown in Fig. 1, we consider a network where multiple UAVs cooperate with a GBS. The UAVs perform sensing or inspection tasks, generating computation-task traffic that needs to be transmitted to the GBS for processing and analysis. The GBS is denoted by k, and the UAV set is M =
+
+{1, . . . , M }. Based on their locations, task-generation prob-abilities, and forwarding roles, the UAVs are divided into four disjoint subsets, 
+
+M = Mhot ∪ M gat ∪ M rel ∪ M reg , (1) where Mhot , Mgat , Mrel , and Mreg denote hotspot, gateway, relay, and regular UAVs, respectively. Their task-generation probabilities are denoted by pgen hot , pgen gat , pgen rel , and pgen reg , re-spectively. Hotspot UAVs operate in task-intensive areas and have the highest task-generation probability. Gateway UAVs are clustered near the GBS and mainly aggregate traffic for for-warding to the GBS, while generating little traffic themselves. Relay and regular UAVs are distributed throughout the oper-ating area. Relay UAVs have a relatively low task-generation probability and mainly support multi-hop forwarding, whereas regular UAVs generate tasks more frequently. Accordingly, these probabilities satisfy pgen hot > p gen reg > p gen rel > p gen gat .
+
+Let T denote the total UAV flight duration. During this period, each UAV follows a predefined trajectory. The flight duration is divided into Tmax equal time slots, each with length ∆t = T /T max . The set of time slots is denoted by 
+
+T = {1, . . . , T max }. We assume that ∆t is sufficiently small 4
+
+so that the UAV positions remain approximately unchanged within each slot, i.e., 
+
+∆t ≤ ∆tmax . (2) The position of UAV m in time slot t is denoted by 
+
+lm(t) = [ xuav  
+
+> m
+
+(t), y uav  
+
+> m
+
+(t), z uav  
+
+> m
+
+(t)] , while the GBS is fixed at lk = [ xgbs  
+
+> k
+
+, y gbs  
+
+> k
+
+, 0] .Under the above time-slot model, each UAV may gen-erate computation-task traffic in each time slot according to the probability associated with its role. Let U denote the total number of traffic flows generated during T , with 
+
+U = {1, . . . , U }. For each flow u ∈ U , tend  
+
+> u
+
+and Iu denote its deadline and data volume, respectively. Each flow is divided into fixed-size packets of size Ipkt . Let Wu denote the number of packets in flow u, with Wu = {1, . . . , W u}. Each packet inherits the deadline of its corresponding flow, i.e., tend  
+
+> w
+
+= tend 
+
+> u
+
+for w ∈ W u. The set of all packets generated during T is denoted by W = S 
+
+> u∈U
+
+Wu.
+
+1) Communication Model: Since UAV-to-UAV links are generally dominated by line-of-sight (LoS) propagation, we adopt an LoS channel model for inter-UAV communications. In time slot t, the distance between UAVs m and m′ is 
+
+dm,m ′ (t) = ∥lm(t) − lm′ (t)∥2 . Let β0 denote the channel gain at a reference distance of 1 m. The channel gain between UAVs m and m′ is then given by hm,m ′ (t) = β0  
+
+> d2
+> m,m ′(t)
+
+.
+
+The system has B orthogonal sub-bands, each with band-width bwid , and B = {1, . . . , B } denotes the sub-band set. Each transmission link occupies one sub-band, while the same sub-band can be reused by different UAVs. Let N0 denote the noise power spectral density. Each UAV maintains at most N
+
+candidate next-hop UAV links and one direct link to the GBS. For simplicity, the transmit-power budget is equally divided among these N + 1 possible outgoing links. Thus, the per-link transmit power of UAV m is ptx  
+
+> m
+
+= ptx ,max   
+
+> m
+> N+1
+
+, where ptx ,max  
+
+> m
+
+is the maximum transmit power of UAV m.When UAV m transmits to UAV m′ on a given sub-band, let ϕm′ (t) denote the set of UAVs transmitting on the same sub-band and causing interference at UAV m′. The resulting interference is ℓm,m ′ (t) = P  
+
+> i∈ϕm′(t), i ̸=m
+
+ptx  
+
+> i
+
+hi,m ′ (t). The corresponding signal-to-interference-plus-noise ratio (SINR) is 
+
+ϑm,m ′ (t) = ptx     
+
+> mhm,m ′(t)
+> bwid N0+ℓm,m ′(t)
+
+.
+
+To ensure reliable and loop-free forwarding, UAV m only considers UAV neighbors that satisfy both the SINR re-quirement and the geographic progress condition. Its reach-able neighbor set is defined as ψm(t) = {m′ ∈ M \ {m}| ϑm,m ′ (t) ≥ ϑmin , d m′,k (t) < d m,k (t)}, where ϑmin is the minimum SINR required for reliable transmission. The distance condition ensures that each hop moves packets closer to the GBS and therefore prevents routing loops. For each reachable neighbor m′ ∈ ψm(t), we define the geographic forwarding score as dscore  
+
+> m,m ′
+
+(t) = dm,k (t)−dm′,k (t)  
+
+> dm,m ′(t)
+
+.
+
+A larger score indicates greater progress toward the GBS relative to the forwarding distance. The UAVs in ψm(t) are ranked in descending order of dscore  
+
+> m,m ′
+
+(t). If two UAVs have the same score, the one with the smaller identifier is ranked first. UAV m retains at most the first N UAVs as its candidate next-hop set, denoted by ψcom  
+
+> m
+
+(t).For UAV m and a candidate next hop m′ ∈ ψcom  
+
+> m
+
+(t), the transmission rate is 
+
+Rm,m ′ (t) = bwid log 2 (1 + ϑm,m ′ (t)) , m′ ∈ ψcom  
+
+> m
+
+(t). (3) Accordingly, the maximum number of packets that can be transmitted over this link in one time slot is 
+
+gm,m ′ (t) = 
+
+ Rm,m ′ (t)∆ tIpkt 
+
+
+
+, (4) where ⌊·⌋ denotes the floor function. Unlike UAV-to-UAV links, UAV-to-GBS links may ex-perience both LoS and non-line-of-sight (NLoS) propaga-tion because of ground obstacles. In time slot t, the dis-tance and elevation angle between UAV m and GBS k
+
+are given by dm,k (t) = ∥lm(t) − lk∥2 and θm,k (t) = 
+
+> 180 ◦
+> π
+
+arcsin 
+
+ zuav   
+
+> m(t)
+> dm,k (t)
+
+
+
+, respectively. The LoS probability is modeled as P LoS  
+
+> m,k
+
+(t) = 11+ D1 exp[ −D2(θm,k (t)−D1)] , where D1
+
+and D2 are environment-dependent parameters. The NLoS probability is P NLoS  
+
+> m,k
+
+(t) = 1 − P LoS  
+
+> m,k
+
+(t).Following [26], the path loss under channel condition ξ
+
+is Lξm,k (t) = ηξ
+
+ 4πf cdm,k (t)
+
+> D3
+
+ℏ
+
+, ξ ∈ { LoS , NLoS }, where 
+
+ℏ is the path-loss exponent, ηξ is the excessive path-loss factor, fc is the carrier frequency, and D3 is the speed of light. Based on the average path loss over the LoS and NLoS conditions, the effective channel gain is hm,k (t) =       
+
+> 1
+> PLoS
+> m,k (t)LLoS
+> m,k (t)+ PNLoS
+> m,k (t)LNLoS
+> m,k (t)
+
+.
+
+When UAV m transmits to the GBS, let ϕk(t) de-note the set of UAVs transmitting on the same sub-band and causing interference at the GBS. The interference is 
+
+ℓm,k (t) = P  
+
+> i∈ϕk(t), i ̸=m
+
+ptx  
+
+> i
+
+hi,k (t), and the corresponding SINR is ϑm,k (t) = ptx     
+
+> mhm,k (t)
+> bwid N0+ℓm,k (t)
+
+. A direct UAV-to-GBS link is available only when ϑm,k (t) ≥ ϑmin . For an available link, the transmission rate is 
+
+Rm,k (t) = bwid log 2 (1 + ϑm,k (t)) . (5) The maximum number of packets that UAV m can transmit to the GBS within one time slot is then 
+
+gm,k (t) = 
+
+ Rm,k (t)∆ tIpkt 
+
+
+
+. (6) 
+
+2) Queueing Model: Each UAV is equipped with a finite-capacity communication buffer Qm, whose maximum storage capacity is denoted by qmax  
+
+> m
+
+(in packets). To prioritize latency-sensitive traffic, the communication queue of each UAV is divided into three sub-queues corre-sponding to high, medium, and low priority levels, denoted as Qm(t) = {Q1
+
+> m
+
+(t), Q 2
+
+> m
+
+(t), Q 3
+
+> m
+
+(t)}, where Q1
+
+> m
+
+(t), Q2
+
+> m
+
+(t),and Q3
+
+> m
+
+(t) represent the high-, medium-, and low-priority sub-queues, respectively. Let q1
+
+> m
+
+(t), q2
+
+> m
+
+(t), and q3
+
+> m
+
+(t) denote the numbers of packets stored in the corresponding sub-queues, respectively. Moreover, let qfree  
+
+> m
+
+(t) denote the remaining buffer capacity of UAV m at time slot t. These variables satisfy 
+
+q1
+
+> m
+
+(t) + q2
+
+> m
+
+(t) + q3
+
+> m
+
+(t) + qfree  
+
+> m
+
+(t) = qmax  
+
+> m
+
+, ∀m, t. (7) At each time slot t, UAV m selects the highest-priority non-empty sub-queue for packet forwarding, which is denoted by 
+
+Qsel  
+
+> m
+
+(t). The corresponding priority level and queue length are represented by νsel  
+
+> m
+
+(t) ∈ { 1, 2, 3} and qsel  
+
+> m
+
+(t), respectively. Incoming or locally generated traffic is placed into different sub-queues according to their deadlines. Specifically, at time slot t, the priority of traffic u ∈ U is determined by its urgency, 5
+
+denoted as uprio (t), and is given by 
+
+uprio (t) = 
+
+
+
+1, if tend  
+
+> u
+
+− t∆t ≤ 4.5 s,
+
+2, if 4.5 s < t end  
+
+> u
+
+− t∆t ≤ 9 s,
+
+3, if tend  
+
+> u
+
+− t∆t > 9 s.
+
+(8) 
+
+3) Forwarding Model: In each time slot t, UAV m forwards packets from its selected queue Qsel  
+
+> m
+
+(t). If a direct link to GBS 
+
+k is available, UAV m transmits up to the UAV-to-GBS link capacity. Thus, the number of packets delivered to the GBS is min {qsel  
+
+> m
+
+(t), g m,k (t)}. Packets that cannot be transmitted within the current time slot remain in the local queue for subsequent transmission. If UAV m cannot directly communicate with the GBS, it splits the packets in Qsel  
+
+> m
+
+(t) among multiple candi-date next-hop UAVs and may retain some packets lo-cally. The traffic-splitting action is defined as am(t) =am,m ′ (t) 
+
+> m′∈{ 0}∪ ψcom
+> m(t)
+
+, where am, 0(t) is the fraction re-tained locally and am,m ′ (t) is the fraction assigned to candi-date next-hop UAV m′ ∈ ψcom  
+
+> m
+
+(t). The splitting ratios satisfy 
+
+0 ≤ am,m ′ (t) ≤ 1, ∀m′ ∈ { 0} ∪ ψcom  
+
+> m
+
+(t), t ∈ T , (9) X  
+
+> m′∈{ 0}∪ ψcom
+> m(t)
+
+am,m ′ (t) = 1 , ∀t ∈ T . (10) For each candidate next-hop UAV m′ ∈ ψcom  
+
+> m
+
+(t), let 
+
+Wori  
+
+> m,m ′
+
+(t) denote the set of packets assigned by UAV m
+
+to UAV m′ in time slot t. Its cardinality is |W ori  
+
+> m,m ′
+
+(t)| =round  am,m ′ (t)qsel  
+
+> m
+
+(t), where round( ·) denotes nearest-integer rounding. Let Wtrans  
+
+> m,m ′
+
+(t) ⊆ Wori  
+
+> m,m ′
+
+(t) denote the set of packets successfully transmitted from UAV m to UAV m′. The number of transmitted packets is limited by the intended allocation, link capacity, and available buffer at the receiving UAV, 
+
+qtrans  
+
+> m,m ′
+
+(t) ≤ min {gm,m ′ (t), q free  
+
+> m′
+
+(t), q ori  
+
+> m,m ′
+
+(t)},
+
+∀m ∈ M , m ′ ∈ ψcom  
+
+> m
+
+(t), t ∈ T , (11) where qori  
+
+> m,m ′
+
+(t) = |W ori  
+
+> m,m ′
+
+(t)| and qtrans  
+
+> m,m ′
+
+(t) = |W trans  
+
+> m,m ′
+
+(t)|.Since multiple upstream UAVs may transmit to the same UAV simultaneously, their total incoming traffic must also satisfy the receiver-buffer constraint. The incoming-neighbor set of UAV m is defined as ζin  
+
+> m
+
+(t) = { m′ ∈ M \ { m} | m ∈
+
+ψcom  
+
+> m′
+
+(t)}. Therefore, X  
+
+> m′∈ζin
+> m(t)
+
+qtrans 
+
+> m′,m
+
+(t) ≤ qfree  
+
+> m
+
+(t). (12) If some packets assigned to a next-hop UAV can-not be successfully transmitted and admitted by the re-ceiver, they are regarded as dropped. The set of pack-ets dropped by UAV m in time slot t is Wloss  
+
+> m
+
+(t) =S 
+
+> m′∈ψcom
+> m(t)
+
+ Wori  
+
+> m,m ′
+
+(t) \ W trans  
+
+> m,m ′
+
+(t).For a fair evaluation, we only consider traffic flows whose deadlines fall within the flight duration, since the delivery outcomes of later-deadline flows cannot be fully observed before the simulation ends. The evaluated flow set is Ueval =
+
+{u ∈ U | tend  
+
+> u
+
+≤ T }, and the corresponding packet set is 
+
+Weval = S 
+
+> u∈U eval
+
+Wu. The set of dropped packets in Weval is 
+
+Wloss eval = Weval ∩ S 
+
+> t∈T
+
+S 
+
+> m∈M
+
+Wloss  
+
+> m
+
+(t). The overall packet loss ratio is 
+
+φloss = |W loss eval ||W eval | . (13) Let tarr  
+
+> w
+
+denote the arrival time of packet w ∈ W at the GBS. For a packet that never reaches the GBS, we set tarr  
+
+> w
+
+= + ∞.The set of packets delivered no later than their deadlines is 
+
+Won eval = {w ∈ W eval | tarr  
+
+> w
+
+≤ tend  
+
+> w
+
+}. The on-time packet delivery ratio is then 
+
+ηpack = |W on eval ||W eval | . (14) 
+
+B. Problem Formulation 
+
+This work aims to develop a traffic-adaptive per-hop multi-path routing strategy that improves the on-time packet delivery ratio while reducing the packet loss ratio. Let A = {am(t) |
+
+m ∈ M , t ∈ T } denote the routing decisions of all UAVs over the flight duration. The optimization problem is formulated as 
+
+(P1) : max  
+
+> A
+
+ηpack − φloss 
+
+s.t. (2) , (9) − (12) .
+
+Constraint (2) specifies the maximum slot duration. Con-straints (9) and (10) ensure that the traffic-splitting ratios lie within [0 , 1] and sum to one. Constraint (11) limits the number of packets transmitted to each next-hop UAV according to the link capacity, packet allocation, and available receiver buffer. Constraint (12) further ensures that the total packets received by each UAV do not exceed its available buffer capacity. III. P ROBLEM SOLUTION 
+
+Problem (P1) involves sequential decision-making among multiple UAVs under partial observability in a dynamic net-work environment. To address this problem, we first formulate it as a Dec-POMDP and then develop the MAPPO-DM algorithm. 
+
+A. Dec-POMDP Formulation 
+
+We formulate problem (P1) as a Dec-POMDP, D =
+
+⟨M , S, {O m}m∈M , {A m}m∈M , P, R⟩ . Here, M is the set of UAV agents, S is the global state space, and Om and 
+
+Am are the local observation and action spaces of UAV m,respectively. P denotes the state-transition function, and R
+
+denotes the shared reward function. In time slot t, each UAV m observes om(t) ∈ O m and selects a traffic-splitting action am(t) ∈ A m. After all UAVs execute their actions, the network transitions from s(t) ∈ S 
+
+to s(t + 1) according to P, and the UAVs receive a shared immediate reward determined by R.
+
+1) Observation Space: At each time slot, the local ob-servation of UAV m consists of the traffic information and candidate-neighbor information, given by om(t) =otraf  
+
+> m
+
+(t), onei  
+
+> m
+
+(t), where otraf  
+
+> m
+
+(t) characterizes the currently selected traffic, and onei  
+
+> m
+
+(t) contains the features of the candi-date next-hop UAVs. The flow information consists of the number of selected packets and their delay urgency. Since traffic splitting is performed for the highest-priority nonempty queue, its ur-gency is determined by the earliest packet deadline. The minimum remaining time and the corresponding urgency are defined as τ rem  
+
+> m
+
+(t) = max {0, min w∈Qsel  
+
+> m(t)
+
+(tend  
+
+> w
+
+− t∆t)}
+
+and ιurg  
+
+> m
+
+(t) = 1 − min {1, τ rem  
+
+> m
+
+(t)/τ ref }, respectively, where 
+
+τ ref is the normalization reference. A larger ιurg  
+
+> m
+
+(t) indicates greater forwarding urgency. Thus, the traffic feature vector is expressed as 
+
+otraf  
+
+> m
+
+(t) = [ qsel  
+
+> m
+
+(t), ι urg  
+
+> m
+
+(t)] . (15) 6
+
+Due to UAV mobility, the candidate next-hop set changes dynamically over time. Let Km(t) = |ψcom  
+
+> m
+
+(t)| denote the number of candidate next hops of UAV m at time slot t. To maintain a fixed and explicit correspondence between neighbor features and action components, UAV m sorts its candidate next hops in ascending order of their global identifiers, yield-ing σm(t) = 
+
+h
+
+σ1
+
+> m
+
+(t), . . . , σ Km(t) 
+
+> m
+
+(t)
+
+i
+
+, where σnm(t), 1 ≤ n ≤
+
+Km(t) denotes the n-th candidate next hop after sorting. For the n-th candidate next hop m′ = σnm(t), the nor-malized geographical progress is defined as pgeo  
+
+> m,m ′
+
+(t) =(dm,k (t) − dm′,k (t)) /d ref , where dref is the normalization reference. This metric quantifies the progress made toward the GBS when packets are forwarded through UAV m′.The neighbor features should also capture the communi-cation quality of each candidate link. Although the receiver can measure the current co-channel interference, collecting and feeding back such information before routing would introduce additional signaling delay. To enable immediate forwarding after the initial information exchange at the beginning of each time slot, the current interference and link capacity are approximated from historical receiver-side measurements using an exponentially weighted moving average (EWMA). Specifically, at the end of each time slot, each UAV records the aggregate interference measured on its active subbands. For each subband, only the latest measurement and its time-slot index are retained. Let trec  
+
+> j,b
+
+denote the most recent time slot in which UAV j measured the aggregate interference on subband b ∈ B, and let ℓj,b (trec  
+
+> j,b
+
+) denote the corre-sponding measurement. The EWMA interference estimate of UAV j on subband b at time slot t is defined as ¯ℓj,b (t) = 
+
+βew ¯ℓj,b (t − 1) + (1 − βew )ℓj,b (trec  
+
+> j,b
+
+), where βew ∈ [0 , 1] 
+
+is the smoothing factor. Moreover, since dynamic topology and subband allocation may render some historical measure-ments outdated, a default interference level is introduced. The average of the latest interference measurements across all subbands is defined as ℓavg  
+
+> j
+
+(t) = 1
+
+> B
+
+PBb=1 ℓj,b (trec  
+
+> j,b
+
+), and the default interference estimate is updated as ℓbase  
+
+> j
+
+(t) =
+
+βew ℓbase  
+
+> j
+
+(t − 1) + (1 − βew )ℓavg  
+
+> j
+
+(t). The freshness weight is defined as βdyn  
+
+> j,b
+
+(t) = exp( − max {0, t − trec  
+
+> j,b
+
+− 1}/τ hist ),where τhist controls the decay rate of outdated interference information. The effective interference estimate is then given by ˆℓj,b (t) = βdyn  
+
+> j,b
+
+(t)¯ℓj,b (t) + (1 − βdyn  
+
+> j,b
+
+(t)) ℓbase  
+
+> j
+
+(t). When 
+
+t − trec  
+
+> j,b
+
+= 1 , βdyn  
+
+> j,b
+
+(t) = 1 , and the latest subband-specific esti-mate is directly used. As the measurement becomes outdated, 
+
+βdyn  
+
+> j,b
+
+(t) decreases, causing the estimate to gradually revert to the default interference level. If UAV m transmits packets to the candidate next-hop UAV 
+
+m′ over subband b ∈ B at time slot t, the receiver-side interference estimate ˆℓm′,b (t) is used to compute the link rate and packet transmission capacity. The resulting estimated communication capacity is denoted by ˆgm,m ′ (t).For the n-th candidate next hop m′ = σnm(t), let ovalid  
+
+> m,n
+
+(t) ∈{0, 1} denote its validity indicator. Specifically, ovalid  
+
+> m,n
+
+(t) = 1 
+
+for n ≤ Km(t) and ovalid  
+
+> m,n
+
+(t) = 0 otherwise. The capacity-demand matching degree is further defined as cest  
+
+> m,m ′
+
+(t) = ˆgm,m ′ (t)/max {1, q sel  
+
+> m
+
+(t)}. A larger value indicates that the candidate link is better able to accommodate the current forwarding demand. In addition to the geographical progress pgeo  
+
+> m,m ′
+
+(t), valid-ity indicator ovalid  
+
+> m,n
+
+(t), and capacity-demand matching degree 
+
+cest  
+
+> m,m ′
+
+(t), the candidate-neighbor features also include the available buffer space at the receiver qfree  
+
+> m′
+
+(t) and the number of its upstream neighbors |ζin  
+
+> m′
+
+(t)|. The latter indicates how many UAVs may simultaneously transmit packets to UAV m′
+
+and thus captures its potential congestion risk. The feature vector of the n-th candidate neighbor is constructed as 
+
+onei 
+
+> m,n
+
+(t) = [ ovalid  
+
+> m,n
+
+(t), p geo  
+
+> m,m ′
+
+(t),cest  
+
+> m,m ′
+
+(t), q free  
+
+> m′
+
+(t), |ζin  
+
+> m′
+
+(t)|]. (16) Following the neighbor order in σm(t), the neigh-bor observation of UAV m is represented as onei  
+
+> m
+
+(t) =[onei 
+
+> m, 1
+
+(t), . . . , onei  
+
+> m,N
+
+(t)] . When Km(t) < N , the remaining feature vectors from Km(t) + 1 to N are zero-padded. 
+
+2) State Space: The global network state at time slot t is represented as a graph. Let V = M denote the node set, where each node corresponds to a UAV. The forward-edge set is defined as Efwd (t) = {(m, m ′) | m ∈ M , m ′ ∈ ψcom  
+
+> m
+
+(t)},where each edge follows the actual packet-forwarding di-rection. In addition, the reverse-edge and self-loop sets are defined as Erev (t) = {(m′, m ) | (m, m ′) ∈ E fwd (t)} and 
+
+Eself = {(m, m ) | m ∈ M} , respectively. The complete edge set is therefore E(t) = Efwd (t) ∪ E rev (t) ∪ E self . Accordingly, the global state is represented as 
+
+G(t) = ( V, E(t), X(t), E(t)) , (17) where X(t) = [ xm(t)] m∈M and E(t) = [ ei,j (t)] (i,j )∈E (t)
+
+denote the node- and edge-feature matrices, respectively. For UAV m, let δGBS  
+
+> m
+
+(t) ∈ {0, 1} indicate whether it can directly transmit packets to the GBS. Moreover, xrole  
+
+> m
+
+∈{0, 1}4 denotes the one-hot role vector of UAV m, with its four entries corresponding to the hotspot, gateway, relay, and regular UAV roles, respectively. Its queue occupancy is defined as qocc  
+
+> m
+
+(t) = qmax  
+
+> m
+
+− qfree  
+
+> m
+
+(t). The node features further include the available buffer space, flow urgency, number of selected packets, numbers of candidate downstream and upstream neighbors, and traffic-generation probability. Thus, the node feature vector is given by 
+
+xm(t) = [ qocc  
+
+> m
+
+(t), q free  
+
+> m
+
+(t), ι urg  
+
+> m
+
+(t), q sel  
+
+> m
+
+(t),
+
+|ψcom  
+
+> m
+
+(t)|, |ζin  
+
+> m
+
+(t)|, δ GBS  
+
+> m
+
+(t), p gen  
+
+> m
+
+, xrole  
+
+> m
+
+]. (18) Here, pgen  
+
+> m
+
+∈ {pgen hot , p gen gat , p gen rel , p gen reg } denotes the traffic-generation probability of UAV m, whose value is determined by its role. For each directed edge, define the direction indicator δdir  
+
+> i,j
+
+∈{1, −1, 0}, where δdir  
+
+> i,j
+
+= 1 for (i, j ) ∈ E fwd (t), δdir  
+
+> i,j
+
+= −1
+
+for (i, j ) ∈ E rev (t), and δdir  
+
+> i,j
+
+= 0 for i = j. For a forward edge (m, m ′) ∈ Efwd (t), the edge features comprise the direction indicator, geographical progress, estimated and actual communication capacities, receiver-side available buffer space, and actual SINR, 
+
+em,m ′ (t) = [ δdir  
+
+> m,m ′
+
+, p geo  
+
+> m,m ′
+
+(t), ˆgm,m ′ (t),gm,m ′ (t), q free  
+
+> m′
+
+(t), ϑ m,m ′ (t)] . (19) For the corresponding reverse edge (m′, m ), δdir  
+
+> m′,m
+
+is set to −1, while the remaining features are inherited from the forward edge (m, m ′). All features of a self-loop edge (m, m )
+
+are set to zero. To improve numerical stability during training, all continu-7
+
+ous features are normalized according to their physical ranges and clipped when necessary. 
+
+3) Action Space: At time slot t, UAV m forwards packets from its sub-queue Qsel  
+
+> m
+
+(t) either to its neighbors or retains them locally. This decision is represented by the action vector 
+
+am(t) = [ am, 0(t), a m, 1(t), . . . , a m,N (t)] , ∀m, t, (20) where am, 0(t) represents the proportion of packets retained locally, and am,n (t) represents the proportion forwarded to the 
+
+n-th neighbor in σm(t). These variables satisfy 0 ≤ am,n (t) ≤
+
+1 for all n ∈ { 0, 1, . . . , N }. The action vector must satisfy the normalization constraint 
+
+> N
+
+X
+
+> n=0
+
+am,n (t) = 1 , ∀m, t. (21) 
+
+4) Reward Function: Problem (P1) aims to improve on-time packet delivery while reducing packet loss. To provide immediate feedback for routing decisions, we design a dense reward that combines local forwarding performance with shared rewards for on-time arrivals and deadline misses. The routing reward of UAV m in time slot t is defined as 
+
+rm(t) = δact  
+
+> m
+
+(t)υurg  
+
+> m
+
+(t)
+
+> N
+
+X
+
+> n=0
+
+am,n (t)rm,n (t) + rglo (t), (22) where δact  
+
+> m
+
+(t) ∈ { 0, 1} indicates whether UAV m makes an active routing decision. Specifically, δact  
+
+> m
+
+(t) = 1 when UAV 
+
+m has packets awaiting forwarding, has at least one candidate next hop, and cannot directly transmit to the GBS. Otherwise, 
+
+δact  
+
+> m
+
+(t) = 0. Moreover, rm,n (t) denotes the local reward associated with action component am,n (t), while rglo (t) is a shared event reward determined by network-wide on-time packet arrivals and deadline misses. The urgency-aware scaling factor is given by υurg  
+
+> m
+
+(t) = 1 + χurg ιurg  
+
+> m
+
+(t), where χurg ≥ 0
+
+controls the influence of traffic urgency on the local routing reward. For a forwarding component am,n (t) with n̸ = 0, let 
+
+m′ = σnm(t) denote the corresponding next-hop UAV. The forwarding reward consists of a geographic progress gain 
+
+rprog  
+
+> m,n
+
+(t), a congestion-risk penalty rcong  
+
+> m,n
+
+(t), and a packet-loss penalty rloss 
+
+> m,n
+
+(t). It is defined as 
+
+rm,n (t) = υprog rprog  
+
+> m,n
+
+(t)−υcong rcong  
+
+> m,n
+
+(t)−υloss rloss 
+
+> m,n
+
+(t), (23) where υprog , υcong , and υloss are the weights for the corre-sponding reward and penalty terms. To evaluate the forwarding decision, we first define four related metrics. The effective forwarding capacity is given by cm,m ′ (t) = min( gm,m ′ (t), q free  
+
+> m′
+
+(t)) . The capacity-satisfaction ratio is then defined as cfit 
+
+> m,n
+
+(t) =min(1 , c m,m ′ (t)/max(1 , q ori  
+
+> m,m ′
+
+(t))) . The actual transmission ratio and packet-loss ratio are respectively given by ytx 
+
+> m,n
+
+(t) = min(1 , q trans  
+
+> m,m ′
+
+(t)/max(1 , q ori  
+
+> m,m ′
+
+(t))) , and yloss 
+
+> m,n
+
+(t) = 1 −
+
+ytx 
+
+> m,n
+
+(t).Based on these metrics, the geographic progress gain is given by rprog  
+
+> m,n
+
+(t) = cfit 
+
+> m,n
+
+(t)ytx 
+
+> m,n
+
+(t)pgeo 
+
+> m,n
+
+(t). It rewards for-warding decisions that make progress toward the GBS while providing sufficient capacity and successfully delivering pack-ets to the next hop. The congestion-risk penalty is defined as rcong  
+
+> m,n
+
+(t) = 1 − cfit 
+
+> m,n
+
+(t), discouraging links that cannot adequately support the intended forwarding load. Finally, the packet-loss penalty is given by rloss 
+
+> m,n
+
+(t) = yloss 
+
+> m,n
+
+(t) + 
+
+υquad loss 
+
+ yloss 
+
+> m,n
+
+(t)2 , where υquad loss controls the quadratic penalty and imposes a sharper penalty at high packet-loss ratios. For the local holding action am, 0(t), the reward distin-guishes between necessary and unnecessary packet holding based on the aggregate forwarding capacity of all candidate next hops. Specifically, the aggregate downstream capacity is defined as cagg  
+
+> m
+
+(t) = PKm(t) 
+
+> n=1
+
+cm,σ nm(t)(t). If cagg  
+
+> m
+
+(t) is suffi-cient to accommodate the selected traffic qsel  
+
+> m
+
+(t), holding the packets is considered unnecessary and is penalized; otherwise, no holding penalty is imposed. Accordingly, 
+
+rm, 0(t) = 
+
+(
+
+−υhold  
+
+> m
+
+(t), cagg  
+
+> m
+
+(t) ≥ qsel  
+
+> m
+
+(t),
+
+0, cagg  
+
+> m
+
+(t) < q sel  
+
+> m
+
+(t), (24) where υhold  
+
+> m
+
+(t) = Khold 0 + Khold 1 ιurg  
+
+> m
+
+(t). Here, Khold 0 is the basic holding-penalty coefficient, while Khold 1 increases the penalty for more urgent traffic. To directly incorporate end-to-end packet-delivery outcomes into the reward, a network-wide event reward is further intro-duced. Let W on (t) denote the number of packets that arrive at the GBS on time during time slot t, and let W mis (t) denote the number of packets that miss their deadlines during the same time slot. Moreover, let δall (t) = P 
+
+> m∈M
+
+δact  
+
+> m
+
+(t) denote the number of valid UAVs. The global event reward assigned to UAV m is given by 
+
+rglo  
+
+> m
+
+(t) = δact  
+
+> m
+
+(t)( υglo on W on (t)/max {1, δ all (t)},
+
+− υglo mis W mis (t)/max {1, δ all (t)}), (25) where υglo on and υglo mis control the contributions of on-time arrivals and deadline misses. When δall (t) > 0, the global event reward and penalty are equally distributed among the valid UAVs. 
+
+B. The Proposed MAPPO-DM Algorithm 
+
+Based on the Dec-POMDP formulation, we develop aMAPPO-DM algorithm. The proposed algorithm follows the centralized-training-and-decentralized-execution paradigm. 
+
+1) Decentralized Actor Design: The decentralized policy of UAV m is denoted by πθA , where θA represents the Actor parameters shared among all UAV agents. The Actor combines neighbor-set encoding, recurrent temporal modeling, traffic-conditioned action scoring, and Dirichlet concentration estimation. For each candidate-neighbor position n ∈ { 1, . . . , N }, the corresponding feature vector onei 
+
+> m,n
+
+(t) is encoded into a dnei enc -dimensional token, 
+
+hnei 
+
+> m,n
+
+(t) = fnei 
+
+ onei 
+
+> m,n
+
+(t) , (26) where fnei (·) is a multilayer perceptron (MLP). To model the interactions among candidate next hops, a learnable summary token hsum ∈ Rdnei enc is prepended to the neighbor tokens, 
+
+Hm(t) = [ hsum , hnei 
+
+> m, 1
+
+(t), . . . , hnei  
+
+> m,N
+
+(t)] . (27) The corresponding token-validity vector is defined as vm(t) = [1 , o valid  
+
+> m, 1
+
+(t), . . . , o valid  
+
+> m,N
+
+(t)] , where the first entry indicates that the summary token is always valid. The tokens are then processed by a Transformer encoder Tr( ·) [27], 
+
+[ehsum  
+
+> m
+
+(t), ehnei 
+
+> m, 1
+
+(t), . . . , ehnei  
+
+> m,N
+
+(t)] = Tr( Hm(t), vm(t)) , (28) where positions with ovalid  
+
+> m,n
+
+(t) = 0 are masked during self-attention. Since the identifier-based neighbor order is used only to align neighbor features with the corresponding action components, no positional encoding is introduced. 8 
+
+> Fig. 2. Architecture of the Actor network.
+
+The Transformer captures the interactions among candidate neighbors within each time slot but does not retain information across time slots. To capture the temporal evolution of the local network state, the contextualized neighbor-set summary is used to update a recurrent hidden state, 
+
+htem  
+
+> m
+
+(t) = GRU 
+
+
+
+fproj 
+
+ehsum  
+
+> m
+
+(t)
+
+
+
+, htem  
+
+> m
+
+(t − 1) 
+
+
+
+, (29) where GRU( ·) denotes a GRU that updates the current tempo-ral hidden state based on the projected neighbor-set summary and the hidden state from the previous time slot. The MLP 
+
+fproj (·) maps ehsum  
+
+> m
+
+(t) to the input space of the GRU. Meanwhile, the traffic features are encoded as 
+
+htraf  
+
+> m
+
+(t) = ftraf 
+
+ otraf  
+
+> m
+
+(t) , (30) where ftraf (·) is an MLP-based encoder that maps the traffic features into a latent representation. The temporal hidden state and traffic embedding are then concatenated to form the decision context, 
+
+hctx  
+
+> m
+
+(t) = concat  htem  
+
+> m
+
+(t), htraf  
+
+> m
+
+(t) . (31) The resulting representation is further transformed into an action-scoring context, 
+
+hacs  
+
+> m
+
+(t) = facs 
+
+ hctx  
+
+> m
+
+(t) , (32) where facs (·) is an MLP-based context encoder that extracts the latent features used for subsequent action scoring. To explicitly represent the local holding action, a learnable holding token hhold ∈ Rdnei enc is introduced. The token associ-ated with action component n ∈ { 0, . . . , N } is defined as 
+
+atok 
+
+> m,n
+
+(t) = 
+
+(
+
+hhold , n = 0 ,
+
+ehnei 
+
+> m,n
+
+(t), 1 ≤ n ≤ N. (33) Each action token is then concatenated with the action-scoring context and mapped to a scalar score, 
+
+λm,n (t) = fscore 
+
+ concat  atok 
+
+> m,n
+
+(t), hacs  
+
+> m
+
+(t) , (34) where fscore (·) is an MLP-based scoring network. It evaluates each candidate action conditioned on the current decision context and outputs the corresponding unnormalized score. Let ovalid  
+
+> m, 0
+
+(t) = 1 , since the holding action is always avail-able. A masked softmax produces the mean traffic-splitting preference, 
+
+μm,n (t) = ovalid  
+
+> m,n
+
+(t) exp( λm,n (t)) 
+
+PNj=0 ovalid  
+
+> m,j
+
+(t) exp( λm,j (t)) , (35) Thus, invalid neighbor positions receive zero probability, while the valid components satisfy PNn=0 μm,n (t) = 1 .Since the routing action is a continuous traffic-splitting vector defined on the probability simplex, the Actor parame-terizes its stochastic policy using a Dirichlet distribution [28]. Let μm(t) = [ μm, 0(t), . . . , μ m,N (t)] denote the mean traffic-splitting vector. To separately control the stochasticity of the policy, the decision context hm(t) is further used to estimate the total concentration parameter, 
+
+κm(t) = min κmax , κ min + softplus  fκ
+
+ hctx  
+
+> m
+
+(t) , (36) where fκ(·) is an MLP-based concentration estimator with a scalar output. The lower and upper bounds κmin and κmax 
+
+constrain the total concentration to a numerically stable range. The Dirichlet concentration parameter of action component 
+
+n is then constructed as 
+
+αm,n (t) = κm(t)μm,n (t). (37) Thus, μm(t) determines the mean traffic allocation, whereas 
+
+κm(t) controls how strongly the sampled action is concen-trated around this mean. Specifically, A larger κm(t) produces more stable traffic splitting, whereas a smaller value encour-ages stronger stochastic exploration. Let Im(t) = {0}∪{ n ∈ {1, ..., N }| ovalid  
+
+> m,n
+
+(t) = 1} de-note the set of valid action indices for UAV m. The corre-sponding concentration and action subvectors are defined as 
+
+αval  
+
+> m
+
+(t) = [ αm,n (t)] n∈I m(t) and aval  
+
+> m
+
+(t) = [ am,n (t)] n∈I m(t),respectively. The valid action components are then sampled on the corresponding probability simplex according to 
+
+aval  
+
+> m
+
+(t) ∼ Dir  αval  
+
+> m
+
+(t) , (38) while the components associated with invalid padded positions are set to zero. During training, the sampled action is used for stochastic ex-ploration and PPO policy evaluation, whereas the mean traffic-splitting vector μm(t) is used for deterministic execution. 
+
+2) Centralized Critic Design: The centralized Critic is denoted by VθC , where θC represents its trainable parameters. During training, the Critic takes the global graph state G(t)
+
+and the traffic features {otraf  
+
+> m
+
+(t)}m∈M as inputs to estimate an individual state value for each UAV. It consists of five main components, namely node feature encoding, edge-aware multi-head graph attention, global attention pooling, traffic feature encoding, and a value prediction head. First, the node feature xm(t) of UAV m is mapped into a dChid -dimensional hidden space to obtain its initial node representation, 
+
+hC,(0)  
+
+> m
+
+(t) = f Cnode (xm(t)) , (39) where f Cnode (·) is an MLP-based node encoder. The resulting 9 
+
+> Fig. 3. Architecture of the Critic network.
+
+hC,(0)  
+
+> m
+
+(t) serves as the input to the first graph attention layer. Following the node encoding, the Critic employs an LCGAT -layer edge-aware multi-head graph attention network. Each layer contains nChead attention heads, each with dimension 
+
+dChead = dChid /n Chead .Specifically, for a directed edge (i, j ) ∈ E (t), nodes i and 
+
+j are the message sender and receiver, respectively. In the ρ-th attention head of the l-th layer, the receiver representation is projected into a Query, while the sender representation is projected into a Key and a Value. They are given by 
+
+q(l)
+
+> j,ρ
+
+(t) = WC,(l)Q,ρ hC,(l−1)  
+
+> j
+
+(t), (40) 
+
+k(l)
+
+> i,ρ
+
+(t) = WC,(l)K,ρ hC,(l−1)  
+
+> i
+
+(t), (41) 
+
+v(l)
+
+> i,ρ
+
+(t) = WC,(l)V,ρ hC,(l−1)  
+
+> i
+
+(t). (42) Here, WC,(l)Q,ρ , WC,(l)K,ρ , and WC,(l)V,ρ are the corresponding trainable projection matrices. Meanwhile, the edge feature ei,j (t) is projected into an edge-key and an edge-value as 
+
+eK,(l) 
+
+> i,j,ρ
+
+(t) = WC,(l)EK ,ρ ei,j (t), (43) 
+
+eV,(l) 
+
+> i,j,ρ
+
+(t) = WC,(l)EV ,ρ ei,j (t), (44) where WC,(l)EK ,ρ and WC,(l)EV ,ρ are trainable edge-feature projec-tion matrices. Next, define the incoming-neighbor set of node j as 
+
+N in  
+
+> j
+
+(t) = {i | (i, j ) ∈ E (t)}. For each i ∈ N in  
+
+> j
+
+(t), the Key of sending node i is combined with the corresponding edge-key and matched with the Query of receiving node j. The resulting attention score is 
+
+ˆs(l)
+
+> i,j,ρ
+
+(t) = (q(l)
+
+> j,ρ
+
+(t)) T(k(l)
+
+> i,ρ
+
+(t) + eK,(l) 
+
+> i,j,ρ
+
+(t)) 
+
+q
+
+dChead 
+
+. (45) The attention scores are normalized over all incoming neigh-bors of node j using the Softmax function [29], 
+
+s(l)
+
+> i,j,ρ
+
+(t) = Softmax i∈N in  
+
+> j(t)
+
+
+
+ˆs(l)
+
+> i,j,ρ
+
+(t)
+
+
+
+. (46) Thus, the attention weights capture both node-state compati-bility and link attributes. The message propagated along edge (i, j ) is constructed as m(l)
+
+> i,j,ρ
+
+(t) = v(l)
+
+> i,ρ
+
+(t) + eV,(l) 
+
+> i,j,ρ
+
+(t). The ρ-th attention head then aggregates the incoming messages at node j using their attention weights, 
+
+z(l)
+
+> j,ρ
+
+(t) = P  
+
+> i∈N in
+> j(t)
+
+s(l)
+
+> i,j,ρ
+
+(t)m(l)
+
+> i,j,ρ
+
+(t). (47) The outputs of all attention heads are then concatenated as 
+
+z(l) 
+
+> j
+
+(t) = concat nChead  
+
+> ρ=1
+
+(z(l)
+
+> j,ρ
+
+(t)) , where concat( ·) denotes con-catenation. The resulting multi-head representation is projected and combined with the previous-layer node representation through a residual connection and LayerNorm, 
+
+ehC,(l) 
+
+> j
+
+(t) = LN C,(l)1 (hC,(l−1)  
+
+> j
+
+(t) + f C,(l)proj (z(l) 
+
+> j
+
+(t))) , (48) where LN C,(l)1 (·) denotes the first LayerNorm operation in the 
+
+l-th layer, and f C,(l)proj (·) denotes the corresponding multi-head output projection. Next, ehC,(l) 
+
+> j
+
+(t) is processed by a feed-forward network. Its output is combined with ehC,(l) 
+
+> j
+
+(t) through a second residual connection and normalization, yielding 
+
+hC,(l) 
+
+> j
+
+(t) = LN C,(l)2 (ehC,(l) 
+
+> j
+
+(t) + f C,(l)FFN (ehC,(l) 
+
+> j
+
+(t))) , (49) where LN C,(l)2 (·) denotes the second LayerNorm operation in the l-th layer, and f C,(l)FFN (·) denotes the corresponding feed-forward network. The resulting hC,(l) 
+
+> j
+
+(t) is used as the input to the next graph attention layer. After LCGAT graph attention layers, each node representa-tion incorporates multi-hop node and edge information. The Critic then applies attention pooling to obtain a global graph representation. Specifically, a linear mapping f Cgate (·) assigns an importance score to each UAV, and the corresponding attention weights and global representation are given by 
+
+snode  
+
+> m
+
+(t) = Softmax m∈M (f Cgate (hC,(LCGAT ) 
+
+> m
+
+(t))) , (50) 
+
+hC,glo (t) = P
+
+> m∈M
+
+snode  
+
+> m
+
+(t)hC,(LCGAT ) 
+
+> m
+
+(t). (51) In parallel, the current traffic features are encoded as 
+
+hC,traf  
+
+> m
+
+(t) = f Ctraf (otraf  
+
+> m
+
+(t)) , where f Ctraf (·) is a MLP-based traffic encoder. Finally, the node, global graph, and traffic representations are concatenated and passed through an MLP-based value prediction head f Cval (·) to obtain the state-value estimate for UAV m,
+
+Vm(t) = f Cval (concat( hC,(LCGAT ) 
+
+> m
+
+(t),
+
+hC,glo (t), hC,traf  
+
+> m
+
+(t))) , (52) 
+
+3) Experience Collection and Policy Optimization: At time slot t, UAV m obtains its local observation om(t), from which the Actor constructs the Dirichlet concentration parameter vector αm(t). A stochastic routing action is then sampled as 
+
+am(t) ∼ Dir( αm(t)) , and its log-probability is recorded as 
+
+LogP old  
+
+> m
+
+(t) = log p(am(t)|αm(t)) . After all UAVs select their actions, the environment executes the joint action and returns the immediate reward rm(t) for each UAV. At the end of the time slot, the corresponding experience is stored as Mem( t) = (G(t), {(om(t), am(t), LogP old  
+
+> m
+
+(t), δ act  
+
+> m
+
+(t), r m(t)) |m ∈ M} ).After completing the episode, the collected trajectory is de-noted by B = {Mem( t) | t ∈ T } .For Actor updating, the stored observation sequence is replayed in temporal order to reconstruct the recurrent hid-den states. The current Actor then recomputes the Dirichlet concentration parameters at each time slot and evaluates the 10 
+
+stored actions under the current policy. For UAV m, the resulting action log-probability is denoted by LogP new  
+
+> m
+
+(t) = log p(am(t) | αm(t)) , and the entropy of the corresponding Dirichlet distribution is denoted by H(Dir( αm(t))) .The advantage is estimated using Generalized Advantage Estimation (GAE) [30]. Before the PPO updates, the Critic computes the reference state values V old  
+
+> m
+
+(t), which remain fixed during the subsequent updates. The temporal-difference error is TDE m(t) = rm(t) + γV old  
+
+> m
+
+(t + 1) − V old  
+
+> m
+
+(t), where 
+
+0 ≤ γ ≤ 1 is the discount factor. The advantage is recursively computed as Am(t) = TDE m(t) + γλA m(t + 1) , where 
+
+0 ≤ λ ≤ 1 controls the bias-variance tradeoff in GAE. The probability ratio between the current policy and the behavior policy is computed as 
+
+ϖm(t) = exp 
+
+
+
+LogP new  
+
+> m
+
+(t) − LogP old  
+
+> m
+
+(t)
+
+
+
+. (53) The PPO clipped surrogate objective is then defined as 
+
+Jclip  
+
+> m
+
+(t) = min 
+
+n
+
+ϖm(t)Am(t),
+
+clip ( ϖm(t), 1 − ε1, 1 + ε1) Am(t)
+
+o
+
+, (54) where ε1 is the policy clipping threshold. Let Iact = {(m, t ) |
+
+δact  
+
+> m
+
+(t) = 1 } denote the set of valid routing-decision samples. With entropy regularization, the Actor loss is defined as 
+
+Lactor = − 1
+
+|I act |
+
+X
+
+> (m,t )∈I act
+
+[Jclip  
+
+> m
+
+(t) + ℘H (Dir( αm(t)))] ,
+
+(55) where ℘ controls the strength of entropy regularization. For Critic updating, a value clipping strategy is adopted to stabilize training. The clipped value estimate is defined as 
+
+V clip  
+
+> m
+
+(t) = V old  
+
+> m
+
+(t) + clip  Vm(t) − V old  
+
+> m
+
+(t), −ε2, ε 2
+
+ , (56) where Vm(t) is the current Critic estimate and ε2 is the value clipping threshold. The Critic is trained using the one-step temporal-difference target 
+
+ˆVm(t) = rm(t) + γV old  
+
+> m
+
+(t + 1) . (57) The Critic loss is then defined as 
+
+Lcritic = 1
+
+|I act |
+
+X
+
+> (m,t )∈I act
+
+max {(Vm(t) − ˆVm(t)) 2,
+
+(V clip  
+
+> m
+
+(t) − ˆVm(t)) 2}. (58) Let Nepi denote the total number of training episodes and Nupd denote the number of PPO updates performed on each collected trajectory. In each episode, MAPPO-DM first collects a complete trajectory over Tmax time slots and then repeatedly updates the Actor and Critic using the collected experience. The overall training procedure is summarized in Algorithm 1. The source code for both training and testing is publicly available online. 1
+
+C. Computational Complexity and Practical Feasibility 
+
+Since online deployment only requires each UAV to exe-cute the shared Actor locally, we focus on the forward-pass complexity of the Actor, which mainly consists of MLPs, a Transformer encoder, and a GRU. For an MLP f (·) with layer dimensions {df 
+
+> 0
+
+, ..., d fLf }, its dominant computational cost is Cf = PLf 
+
+> l=1
+
+dfl−1dfl [31]. The Transformer processes N + 1 tokens of dimension dnei enc .For LTr Transformer layers with nTr head attention heads and 
+
+> 1Source code: GitHub repository.
+
+Algorithm 1: Training procedure of the MAPPO-DM algo-rithm 
+
+1 Initialize the Actor parameters θA and Critic parameters θC.
+
+2 Initialize the experience buffer B.
+
+3 for i = 1 , . . . , N epi do 4 Clear the experience buffer B.
+
+5 for t = 1 , . . . , T max do 6 Obtain the local observations {om(t) | m ∈ M} 
+
+and global graph state G(t).
+
+7 for m = 1 , . . . , M do 8 Construct the Dirichlet concentration parameters αm(t) using the Actor. 
+
+9 Sample am(t) ∼ Dir( αm(t)) .
+
+10 Record 
+
+LogP old  
+
+> m
+
+(t) = log p(am(t) | αm(t)) .
+
+11 end for 12 Execute the routing actions {am(t) | m ∈ M} 
+
+and obtain the rewards {rm(t) | m ∈ M} .
+
+13 Store Mem( t) in B.
+
+14 end for 15 Compute the reference state values V old  
+
+> m
+
+(t) and advantages Am(t) from the collected trajectory. 
+
+16 for n = 1 , . . . , N upd do 17 Replay the observation sequence and compute the action log-probabilities and policy entropies. 
+
+18 Update θA using Lactor in Eq. (55). 
+
+19 Update θC using Lcritic in Eq. (58). 
+
+20 end for 21 end for 
+
+feed-forward dimension dTr ff , where each head has dimension 
+
+dTr head = dnei enc /n Tr head , its dominant cost is CTr = LTr [( N +1)( dnei enc )2+( N +1) 2dnei enc +( N +1) dnei enc dTr ff ] [27]. The projection MLP fproj (·) outputs a dGRU in -dimensional vector, while the GRU hidden state has dimension dtem . Hence, the GRU cost per time slot is CGRU = dGRU in dtem + d2tem [32]. Following the Actor architecture, fnei (·) is evaluated for N
+
+candidate neighbors, while the Transformer, fproj (·), GRU, 
+
+ftraf (·), and fctx (·) are each evaluated once. The scoring network fscore (·) is evaluated for all N +1 action components, followed by an O(N ) masked Softmax operation. Therefore, the online complexity for one UAV per time slot is Conline A =
+
+O(N C fnei + CTr + Cfproj + CGRU + Cftraf + Cfctx + ( N +1) Cfscore + N ).During deployment, each UAV only exchanges lightweight neighbor information, such as node identifiers, positions, queue states, interference estimates, and timestamps. Thus, the communication overhead is limited. Moreover, the time-slotted model does not require strict global synchronization, since neighbor information can be exchanged asynchronously and refreshed on demand. IV. N UMERICAL RESULTS 
+
+This section evaluates the proposed MAPPO-DM algorithm through simulations under different traffic loads, UAV network scales, and candidate-neighbor limits. The evaluation mainly considers the on-time packet delivery ratio and packet loss ratio to assess the reliability and robustness of different routing schemes. 
+
+1) System settings: The simulations are conducted in a three-dimensional UAV network covering a horizontal area 11                                              
+
+> TABLE I KEY ENVIRONMENT PARAMETERS
+> Parameter Value
+> Number of UAV nodes M= 35
+> Duration of each time slot ∆t= 0 .5 s
+> Episode duration T= 60 s
+> Maximum number of candidate neighbors N= 6
+> Reference channel gain β0=−50 dB
+> Path-loss exponent h= 2
+> Maximum UAV transmit power Pmax
+> m= 30 dBm
+> Number of orthogonal sub-channels B= 64
+> Bandwidth of each sub-channel b= 5 MHz
+> Noise power spectral density N0≈−170 dBm /Hz
+> Carrier frequency fc= 6 .2 GHz
+> TABLE II KEY MAPPO-DM A LGORITHM PARAMETERS
+> Parameter Value
+> Dirichlet concentration bounds κmin = 2 ,κmax = 80
+> Discount factor and GAE coefficient γ= 0 .95 ,λ= 0 .95
+> PPO clipping thresholds ε1= 0 .20 ,ε2= 0 .20
+> Entropy regularization coefficient ℘= 0 .003
+> PPO update rounds Nupd = 2
+> Total training episodes Nepi = 1000
+
+of 1200 m × 1200 m. In the implementation coordinate system, UAVs move within x, y ∈ [−600 , 600] m and z ∈
+
+[0 , 100] m , while the GBS is fixed at [0 , 0, −100] m . The three-dimensional Gauss–Markov mobility model [33] is adopted, with the UAV velocity bounded between [15 , 15 , 5] m /s and 
+
+[50 , 50 , 20] m /s along the three axes. To emulate heterogeneous traffic demand, UAVs are as-signed different traffic-generation roles. The per-slot task-generation probabilities of hotspot, regular, relay, and gateway UAVs are set to 0.085 , 0.015 , 0.0065 , and 0.0045 , respectively. Each generated task contains 1.0–2.0 MB of data, with a packet payload of 1500 Bytes . The corresponding routing deadline varies from 8 to 14 s according to the task size. The communication queue capacity is set to 3000 packets for hotspot, regular, and relay UAVs, and 2000 packets for gate-way UAVs. Other key environment parameters are summarized in Table I. The MAPPO-DM algorithm is implemented using PyTorch. Both the Actor and Critic are optimized using AdamW, with an initial learning rate of 1×10 −5 and a weight decay coefficient of 1 × 10 −3. Cosine learning-rate annealing is adopted with a minimum learning rate of 1 × 10 −6. The main network and PPO hyperparameters are summarized in Table II. The remaining environment and algorithm settings, together with implementation details of the baseline and ablation meth-ods, are available in the released source code 1.
+
+2) Benchmark Algorithms: Four representative routing schemes are adopted as baseline algorithms:  
+
+> •
+
+Priority-Aware Greedy Single-Path: This baseline for-wards all selected traffic to one downstream neighbor. For urgent traffic ( uprio (t) = 1 ), it selects the neighbor closest to the GBS; otherwise, it selects the neighbor with the largest min( qfree  
+
+> m′
+
+(t), bgm,m ′ (t)) . 
+
+> •
+
+Equal-Split Per-Hop Multipath: This baseline equally splits traffic among all downstream neighbors, without considering link capacity or queue states.  
+
+> •
+
+Capacity-Aware Per-Hop Multipath: This base-line splits traffic according to the available capac-ity of candidate neighbors. For neighbor m′, define 
+
+ˆcm,m ′ (t) = min 
+
+
+
+1, min( qfree    
+
+> m′(t),bgm,m ′(t))
+> qsel
+> m(t)
+
+
+
+and ˜cm(t) = 
+
+P 
+
+> m′
+
+ˆcm,m ′ (t). The total forwarding ratio is ˆctot  
+
+> m
+
+(t) = min(1 , ˆctot  
+
+> m
+
+(t)) . Accordingly, am, 0(t) = 1 − ˆctot  
+
+> m
+
+(t) and 
+
+am,m ′ (t) = ˆ ctot  
+
+> m
+
+(t)ˆ cm,m ′ (t)/˜cm(t) for ˜cm(t) > 0. 
+
+> •
+
+I-AOMDV-Guided Per-Hop Multipath: This baseline is adapted from I-AOMDV [12]. Each UAV updates its best 
+
+K = 3 QoS-aware paths every 10 time slots based on hop count, available bandwidth, and path stability. The path scores are mapped to next-hop weights and normalized to obtain the per-hop traffic-splitting ratios. To reduce the effect of randomness, all algorithm per-formance comparisons reported below are averaged over 50 
+
+independent runs for each environment setting. 
+
+A. Performance Evaluation 
+
+To evaluate the contribution of the key components in MAPPO-DM, we consider three ablation variants. The w/o Graph Critic variant replaces the centralized graph-based Critic with decentralized MLP-based Critics. The w/o Transformer variant replaces the Transformer-based neighbor interaction module with an MLP-based representation. The w/o μ-κ
+
+Dirichlet variant removes adaptive concentration estimation and fixes κ at 30. Fig. 4 compares the training convergence of MAPPO-DM and its ablation variants, while Fig. 5 compares their on-time packet delivery and packet loss ratios. The rewards of all meth-ods gradually increase during training and eventually stabilize, indicating stable convergence. For on-time packet delivery, w/o 
+
+μ-κ Dirichlet achieves the highest ratio of 96 .70% , followed by MAPPO-DM, w/o Transformer, and w/o Graph Critic at 
+
+96 .40% , 96 .25% , and 95 .91% , respectively. For packet loss, MAPPO-DM and w/o Graph Critic achieve the lowest ratio of 0.48% , compared with 0.84% for w/o Transformer and 
+
+1.78% for w/o μ-κ Dirichlet. These results show that the three components affect the two performance metrics differently. Removing the Graph Critic mainly reduces on-time delivery, whereas removing the Transformer also increases packet loss. Fixing κ slightly improves on-time delivery but leads to a clear increase in packet loss, indicating the benefit of adaptive concentration control in reducing packet loss. Overall, the complete MAPPO-DM achieves a better balance between on-time packet delivery and packet loss. Fig. 6 shows the spatial layout of the simulation scenario, including the GBS, UAV locations, flight directions, and hotspot regions. The UAVs are divided into four roles, hotspot, 12 0 200 400 600 800 1000   
+
+> Episode
+> -0.10 -0.05 0.00 0.05 0.10 0.15
+> Routing Reward
+> Proposed MAPPO-DM w/o Graph Critic w/o Transformer w/o μ-κDirichlet
+
+Fig. 4. Convergence of the proposed algorithm and its ablated variants. Proposed MAPPO-DM w/o Graph Critic w/o Transformer w/o μ-κ Dirichlet        
+
+> Algorithm
+> 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+> Percentage
+> 96.40% 95.91% 96.25% 96.70% 0.48% 0.48% 0.84% 1.78%
+> Mean On-time Packet Delivery Ratio Mean Packet Loss Ratio
+
+Fig. 5. Performance of the proposed algorithm and its ablated variants. -600 -500 -400 -300 -200 -100 0 100 200 300 400 500 600 
+
+> X Coordinate (m)
+> -600 -500 -400 -300 -200 -100 0100 200 300 400 500 600
+> Y Coordinate (m)
+> Hotspot UAV Relay UAV Gateway UAV Regular UAV Flight Direction GBS Hotspot Region
+
+Fig. 6. Spatial Distribution of GBS and UAV Trajectories. 
+
+relay, gateway, and regular UAVs. Regular UAVs make up the largest group, followed by hotspot UAVs, while relay and gateway UAVs are fewer. Regular and relay UAVs are distributed throughout the area, gateway UAVs are mainly located near the GBS, and hotspot UAVs are concentrated in the designated hotspot regions. Fig. 7 shows the cumulative packet arrival ratios of different algorithms. The x-axis represents the arrival-time deviation, defined as the packet arrival time at the GBS minus its deadline. At each x-axis value, the y-axis gives the proportion of packets with deviations no greater than that value. For example, at x = −1, 0, and 1, the y-axis gives the cumulative fraction of packets that have arrived at least 1 s before their deadlines, by their deadlines, and within 1 s after their deadlines, respectively. As shown in Fig. 7, Priority-Aware Greedy Single-Path cannot split traffic and is therefore more vulnerable to local congestion, resulting in the lowest cumulative arrival ratio of about 45% . Among the multipath baselines, Capacity-Aware Per-Hop Multipath and I-AOMDV-Guided Per-Hop Multipath rise quickly for negative arrival-time deviations but level off near the deadline, reaching about 88% and 75% at x = 0 ,respectively. Capacity-Aware Per-Hop Multipath mainly relies on local link capacity and neighbor queue states, without considering downstream conditions. I-AOMDV-Guided Per-Hop Multipath relies on periodically updated end-to-end path information and is less responsive to short-term network changes. Both methods are therefore more vulnerable to downstream congestion and packet loss. Equal-Split Per-Hop Multipath distributes traffic evenly among multiple next hops, which helps avoid traffic concentration. Its cumulative arrival ratio increases more gradually and reaches about 90% at the deadline. In comparison, MAPPO-DM rises rapidly as the deadline approaches and surpasses all baselines before x = 0 .It reaches about 96% at the deadline and nearly 98% after-ward. These results show that MAPPO-DM can adapt traffic allocation to traffic urgency and changing network conditions, allowing more packets to arrive before their deadlines. Fig. 8 compares MAPPO-DM with the baseline algorithms under different numbers of hotspot regions. The simulation area is divided into multiple equal-sized regions. For each setting, the specified number of regions is randomly selected as hotspot regions, excluding the region containing the GBS, and hotspot UAVs are deployed within these regions. As the num-ber of hotspot regions increases, both the number of hotspot UAVs and the overall traffic load increase. Therefore, the on-time packet delivery ratio of all algorithms gradually de-creases, while the packet loss ratio increases. Compared with the baseline algorithms, MAPPO-DM consistently achieves the best performance and shows a slower performance degradation as the traffic load increases. These results demonstrate that MAPPO-DM is more robust than other algorithms. Fig. 9 compares the performance of different algorithms under different network sizes. To isolate the effect of network size, the overall traffic load is kept approximately constant. Specifically, as the number of UAVs increases, the task-generation probability of each UAV is reduced accordingly to maintain a similar aggregate task-generation rate. 13 -8.0 -7.5 -7.0 -6.5 -6.0 -5.5 -5.0 -4.5 -4.0 -3.5 -3.0 -2.5 -2.0 -1.5 -1.0 -0.5 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 
+
+Time Relative to Deadline (s) 
+
+> 0% 20% 40% 60% 80% 100%
+> Mean Cumulative Packet Arrival Ratio
+> Proposed MAPPO-DM Priority-Aware Greedy Single Equal-Split Per-Hop Multipath Capacity-Aware Per-Hop Multipath I-AOMDV-Guided Per-Hop Multipath Deadline
+
+Fig. 7. Cumulative packet arrival ratio. 1 2 3 4 5 6 7 8Number of Hotspot Regions 
+
+40% 50% 60% 70% 80% 90% 100% 
+
+> Mean On-time Packet Delivery Ratio
+
+0% 10% 20% 30% 40% 50% 60%  
+
+> Mean Packet Loss Ratio
+> Solid/filled: on-time PDR Dashed/open: packet loss
+> Proposed MAPPO-DM Priority-Aware Greedy Single Equal-Split Per-Hop Multipath Capacity-Aware Per-Hop Multipath I-AOMDV-Guided Per-Hop Multipath
+
+Fig. 8. Performance under different numbers of hotspot regions. 
+
+As the network grows, the denser topology provides more forwarding options. MAPPO-DM, Equal-Split Per-Hop Multi-path, and Capacity-Aware Per-Hop Multipath all benefit from these additional options, generally achieving higher on-time packet delivery ratios and lower packet loss ratios. When the number of UAVs increases from 35 to 40 , their perfor-mance changes only slightly, indicating that further increas-ing network density provides limited benefits once sufficient forwarding options are available. I-AOMDV-Guided Per-Hop Multipath first improves and then degrades as the network size increases. At moderate network sizes, additional UAVs provide more end-to-end paths and improve routing flexibility. In denser networks, however, the larger number of links and paths makes end-to-end path information more difficult to maintain. Since I-AOMDV-Guided Per-Hop Multipath relies on periodic path updates, outdated information can reduce routing effectiveness. Priority-Aware Greedy Single-Path uses only one next hop and cannot balance traffic across multiple neighbors. As the topology becomes denser, multiple upstream 20 25 30 35 40 Number of UAVs  
+
+> 40% 50% 60% 70% 80% 90% 100%
+> Mean On-time Packet Delivery Ratio
+> 0% 10% 20% 30% 40% 50% 60%
+> Mean Packet Loss Ratio
+> Solid/filled: on-time PDR Dashed/open: packet loss
+> Proposed MAPPO-DM Priority-Aware Greedy Single Equal-Split Per-Hop Multipath Capacity-Aware Per-Hop Multipath I-AOMDV-Guided Per-Hop Multipath
+
+Fig. 9. Performance under different numbers of UAVs. 1 2 3 4 5 6Maximum Number of Forwarding Nodes  
+
+> 30% 40% 50% 60% 70% 80% 90% 100%
+> Mean On-time Packet Delivery Ratio
+> 0% 10% 20% 30% 40% 50% 60% 70% 80%
+> Mean Packet Loss Ratio
+> Solid/filled: on-time PDR Dashed/open: packet loss
+> Proposed MAPPO-DM Equal-Split Per-Hop Multipath Capacity-Aware Per-Hop Multipath I-AOMDV-Guided Per-Hop Multipath
+
+Fig. 10. Performance under different numbers of candidate forwarding nodes. 
+
+UAVs may still select the same locally preferred next hops, causing traffic concentration and congestion. As a result, its on-time packet delivery ratio decreases and its packet loss ratio increases within the tested range. Fig. 10 shows the impact of the maximum number of forwarding nodes N on the four multipath schemes. For Capacity-Aware Per-Hop Multipath, performance improves as 
+
+N increases from 1 to 4, since more high-capacity neighbors become available. However, when N > 4, the on-time packet delivery ratio decreases and the packet loss ratio increases. This scheme mainly considers one-hop link capacity and receiver buffer availability. As N increases further, more forwarding branches are activated and less traffic is retained locally. Although these additional neighbors can accept traffic at the current hop, their downstream forwarding conditions may be less favorable, leading to congestion and packet loss in later hops. I-AOMDV-Guided Per-Hop Multipath also benefits from a larger N when the candidate set is small, but its performance becomes nearly stable once enough forwarding 14 
+
+options are available. In comparison, MAPPO-DM is less sensitive to N . Its performance improves slightly from N = 1 
+
+to N = 2 and then remains nearly unchanged, showing that it can make effective routing decisions even with limited forwarding options. Equal-Split Per-Hop Multipath continues to improve as N increases, since more forwarding branches allow traffic to be distributed more evenly and help reduce local congestion. V. C ONCLUSIONS 
+
+In this paper, a traffic-adaptive per-hop multipath routing framework was proposed, in which traffic can be dynamically split among multiple next-hop neighbors by each UAV. The routing problem was formulated to jointly improve the on-time packet delivery ratio and reduce the packet loss ratio, and the MAPPO-DM algorithm was developed to solve it. Simulation results show that the proposed algorithm achieves the best overall performance among the compared schemes. In particular, it maintains better latency guarantees and lower packet loss under different network loads, UAV scales, and forwarding constraints, demonstrating strong adaptability and robustness. VI. A CKNOWLEDGMENT 
+
+OpenAI ChatGPT was used for language editing and limited code assistance. All technical content and results were verified by the authors. REFERENCES [1] J.-H. Kim, M.-C. Lee, and T.-S. Lee, “Generalized UAV Deployment for UAV-Assisted Cellular Networks,” IEEE Trans. Wireless Commun. ,vol. 23, no. 7, pp. 7894–7910, 2024. [2] K. Mao, Q. Zhu, C.-X. Wang, X. Ye, J. Gomez-Ponce, X. Cai, Y. Miao, Z. Cui, Q. Wu, and W. Fan, “A survey on channel sounding technolo-gies and measurements for uav-assisted communications,” IEEE Trans. Instrum. Meas. , vol. 73, pp. 1–24, 2024. [3] J. Zheng, Q. Zhu, and A. Jamalipour, “Content delivery performance analysis of a cache-enabled uav base station assisted cellular network for metaverse users,” IEEE J. Sel. Areas Commun. , vol. 42, no. 3, pp. 643–657, 2024. [4] L. T. Hoang, C. T. Nguyen, H. D. Le, and A. T. Pham, “Adaptive 3d placement of multiple uav-mounted base stations in 6g airborne small cells with deep reinforcement learning,” IEEE/ACM Trans. Netw. ,vol. 33, no. 4, pp. 1989–2004, 2025. [5] Y. Wang, J. Zhu, H. Huang, and F. Xiao, “Bi-objective ant colony optimization for trajectory planning and task offloading in uav-assisted mec systems,” IEEE Trans. Mobile Comput. , vol. 23, no. 12, pp. 12 360– 12 377, 2024. [6] K. Xiang and Y. He, “Uav-assisted mec system considering uav trajec-tory and task offloading strategy,” in Proc. IEEE Int. Conf. Commun. (ICC) , 2023, pp. 4677–4682. [7] M. Y. Arafat and S. Moh, “A q-learning-based topology-aware routing protocol for flying ad hoc networks,” IEEE Internet Things J. , vol. 9, no. 3, pp. 1985–2000, 2022. [8] Y. Cui, Q. Zhang, Z. Feng, Z. Wei, C. Shi, and H. Yang, “Topology-aware resilient routing protocol for fanets: An adaptive q-learning approach,” IEEE Internet Things J. , vol. 9, no. 19, pp. 18 632–18 649, 2022. [9] X. Wei, H. Yang, and W. Huang, “Low-delay routing scheme for uav communications in smart cities,” IEEE Internet Things J. , vol. 10, no. 21, pp. 18 837–18 843, 2023. [10] Y. Li, Q. Li, H. Yu, and L. Li, “Taaodv: Topsis-aided aodv routing protocol to diffuse mass information in the unstable and high-density uav ad hoc networks,” IEEE Trans. Intell. Transp. Syst. , pp. 1–14, 2024. [11] Z. Chen, W. Zhou, S. Wu, and L. Cheng, “An adaptive on-demand multipath routing protocol with qos support for high-speed manet,” IEEE Access , pp. 44 760–44 773, 2020. [12] M. Zhu, Y. Zhou, J. Chu, Z. Chen, H. Ai, J. Li, and J. Han, “I-aomdv: Qos-aware multipath routing protocol for enhanced in dynamic multi-node vehicle area network,” China Commun. , vol. 23, no. 3, pp. 286– 297, 2026. [13] C.-M. Wang, S. Yang, W.-Y. Dong, W. Zhao, and W. Lin, “A distributed hybrid proactive-reactive ant colony routing protocol for highly dynamic fanets with link quality prediction,” IEEE Trans. Veh. Technol. , vol. 74, no. 1, pp. 1817–1822, 2025. [14] Y. Cui, H. Tian, C. Chen, W. Ni, H. Wu, and G. Nie, “New geographical routing protocol for three-dimensional flying ad-hoc network based on new effective transmission range,” IEEE Trans. Veh. Technol. , vol. 72, no. 12, pp. 16 135–16 147, 2023. [15] S. Gangopadhyay and V. K. Jain, “A position-based modified olsr routing protocol for flying ad hoc networks,” IEEE Trans. Veh. Technol. , vol. 72, no. 9, pp. 12 087–12 098, 2023. [16] N. P. Sharvari, D. Das, J. Bapat, and D. Das, “Improved q-learning-based multi-hop routing for uav-assisted communication,” IEEE Trans. Netw. Serv. Manag. , vol. 22, no. 2, pp. 1330–1344, 2025. [17] L. Zhang, X. Ma, Z. Zhuang, H. Xu, V. Sharma, and Z. Han, “Q-learning aided intelligent routing with maximum utility in cognitive uav swarm for emergency communications,” IEEE Trans. Veh. Technol. , vol. 72, no. 3, pp. 3707–3723, 2023. [18] P. Mahajan, B. Palanisamy, A. Kumar, G. S. S. Chalapathi, V. Chamola, and M. Khabbaz, “Multi-objective mdp-based routing in uav networks for search-based operations,” IEEE Trans. Veh. Technol. , vol. 73, no. 9, pp. 13 777–13 789, 2024. [19] Z. Wang, H. Yao, T. Mai, Z. Xiong, X. Wu, D. Wu, and S. Guo, “Learning to routing in uav swarm network: A multi-agent reinforcement learning approach,” IEEE Trans. Veh. Technol. , vol. 72, no. 5, pp. 6611– 6624, 2023. [20] J. Guo, H. Gao, Z. Liu, F. Huang, J. Zhang, X. Li, and J. Ma, “Icra: An intelligent clustering routing approach for uav ad hoc networks,” IEEE Trans. Intell. Transp. Syst. , vol. 24, no. 2, pp. 2447–2460, 2023. [21] Z. Jia, S. He, Q. Zhu, W. Wang, Q. Wu, and Z. Han, “Trusted routing for blockchain-empowered uav networks via multi-agent deep reinforcement learning,” IEEE Trans. Commun. , pp. 1–1, 2025. [22] S. He, Z. Jia, C. Dong, W. Wang, Y. Cao, Y. Yang, and Q. Wu, “Routing recovery for uav networks with deliberate attacks: A reinforcement learning based approach,” in Proc. IEEE Glob. Commun. Conf. (GLOBE-COM) , 2023, pp. 952–957. [23] F. Zheng, J. Wei, S. Li, P. Yu, S. Guo, J. Zhao, and Y. Huang, “A dual-layer deep reinforcement learning routing approach for integrated uav and satellite iot networks,” IEEE Internet Things J. , pp. 1–1, 2025. [24] Y. Huang, D. Yang, B. Feng, A. Tian, P. Dong, S. Yu, and H. Zhang, “A gnn-enabled multipath routing algorithm for spatial-temporal varying leo satellite networks,” IEEE Trans. Veh. Technol. , vol. 73, no. 4, pp. 5454–5468, 2024. [25] D. Shumeye Lakew, U. Sa’ad, N.-N. Dao, W. Na, and S. Cho, “Routing in flying ad hoc networks: A comprehensive survey,” IEEE Commun. Surv. Tutor. , vol. 22, no. 2, pp. 1071–1120, 2020. [26] X. Zhang, H. Zhao, J. Wei, C. Yan, J. Xiong, and X. Liu, “Cooperative trajectory design of multiple uav base stations with heterogeneous graph neural networks,” IEEE Trans. Wireless Commun. , vol. 22, no. 3, pp. 1495–1509, 2023. [27] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, “Attention is all you need,” in Proc. Adv. Neural Inf. Process. Syst. (NIPS) , 2017, pp. 5998–6008. [28] C. M. Bishop and N. M. Nasrabadi, Pattern Recognition and Machine Learning . New York, NY, USA: Springer, 2006. [29] J. S. Bridle, “Probabilistic interpretation of feedforward classification network outputs, with relationships to statistical pattern recognition,” in 
+
+Proc. NATO Adv. Res. Workshop Neurocomputing , 1990, pp. 227–236. [30] J. Schulman, P. Moritz, S. Levine, M. Jordan, and P. Abbeel, “High-dimensional continuous control using generalized advantage estimation,” arXiv preprint arXiv:1506.02438 , 2015. [Online]. Available: https://arxiv.org/abs/1506.02438 [31] P. Freire, S. Srivallapanondh, B. Spinnler, A. Napoli, N. Costa, J. E. Prilepsky, and S. K. Turitsyn, “Computational complexity optimization of neural network-based equalizers in digital signal processing: Acomprehensive approach,” J. Lightw. Technol. , vol. 42, no. 12, pp. 4177– 4201, 2024. [32] J. Hou, Z. Wei, Y. Ji, and X. Deng, “Otfs channel estimation method based on ibo-dynamic gated bi-gru,” Sci. Rep. , vol. 16, no. 15157, 2026. [33] D. Broyles, A. Jabbar, and J. P. Sterbenz, “Design and analysis of a 3-d gauss-markov mobility model for highly dynamic airborne networks,” in Proc. Int. Telemetering Conf. (ITC) , San Diego, CA, USA, Oct. 2010.

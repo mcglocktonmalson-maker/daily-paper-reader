@@ -1,0 +1,1204 @@
+Title: Privacy Preserving Semantic Communications in Wireless Edge Networks with Vision Language Models
+
+URL Source: https://arxiv.org/pdf/2608.21773v1
+
+Published Time: Tue, 25 Aug 2026 00:24:19 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+> 1
+
+# Privacy Preserving Semantic Communications in Wireless Edge Networks with Vision Language Models 
+
+Haoran Chang, Graduate Student Member, IEEE , Mingzhe Chen, Senior Member, IEEE , and Qianqian Zhang, 
+
+Member, IEEE 
+
+Abstract —Semantic communication has emerged as a promis-ing paradigm for next-generation wireless systems by improving communication efficiency through the transmission of high-level semantic features rather than raw bits. Recent advances in semantic communications have enabled multiple devices to collaboratively transmit complementary semantic information, thereby enhancing the semantic understanding and reasoning at the receiver. Meanwhile, the increasing availability of multi-modal data has further enriched the semantic representations and expanded the scope of wireless applications. However, the involvement of collaborative devices and multimodal transmis-sions substantially enlarges the attack surface and introduces new privacy risks, as sensitive information may be exposed through both inter-device semantic fusion and cross-modal se-mantic leakage during transmission. To address this challenge, we propose a privacy-preserving semantic communication frame-work to protect privacy-sensitive information in the wireless edge communication system. Leveraging a vision-language model (VLM), the proposed framework extracts textual semantics from the input image and identifies privacy-sensitive entities using a privacy database maintained exclusively at an edge server. Prior to image transmission, each edge device removes the identified private regions while preserving useful semantic content to support unknown downstream tasks. Upon reception, the server reconstructs the removed regions from the received masked image, guided by textual embeddings and semantic priors learned by the VLM. The framework is designed against a strong model-aware adversary that can eavesdrop on wireless transmissions and has full knowledge of the edge-device model parameters, but has no access to any server-side data. Simulation results show that the proposed framework reduces privacy leakage to the model-aware adversary by more than 50% compared with the state-of-art semantic communication scheme without privacy protection. Moreover, the authorized server achieves a 48% improvement in perceptual reconstruction quality over the adversary when recovering the removed private regions. The proposed framework also effectively suppresses cross-device semantic redundancy, with the estimated mutual information between transmitted representations approaching 0 bit, indicating that redundant semantic information is rarely transmitted across devices. 
+
+I. I NTRODUCTION 
+
+In recent years, the rapid expansion of wireless edge net-work applications and the growing volume of data have placed increasing demands on efficient transmission under limited 
+
+Haoran Chang and Qianqian Zhang are with the Department of Electrical and Computer Engineering, Rowan University, Glassboro, NJ 08028, USA (E-mail: changh35@rowan.edu; zhangqia@rowan.edu). Mingzhe Chen is with the Department of Electrical and Computer En-gineering, University of Miami, Coral Gables, FL 33146, USA (E-mail: mingzhe.chen@miami.edu). He is also with the Frost Institute for Data Science and Computing, University of Miami, FL, USA. 
+
+communication resources. In this context, semantic commu-nication has attracted significant attention. Unlike traditional communication systems that focus on the reliable delivery of bit sequences, semantic communication aims to convey the underlying meaning of the transmitted information [1]. Based on the received semantic information, the receiver is able to perform the downstream tasks or recover the original content. As a result, semantic communication offers a promising solu-tion for wireless edge communication systems. To realize the promise of semantic communications, deep neural networks (DNNs) have become a key enabling tech-nology. A DNN-based framework was first proposed in [1] to jointly train semantic and channel encoders/decoders for semantic extraction and robust text transmission over physical channels. For image transmissions, variational autoencoder (VAE) [2] and vision transformer [3] have been employed for image feature extraction and reconstruction. However, most early works primarily relied on single-modal repre-sentations with limited semantic reasoning and cross-modal understanding. To address these challenges, some recent works [4] and [5] leveraged the large-language model (LLM) to enhance the image understanding and reconstruction. In these frameworks, the transmitter converts input images into textual descriptions, while the receiver reconstructs the image from texts and transmitted semantic representations to achieve high reconstruction quality. Nevertheless, existing studies [6]–[9] have shown that textual descriptions alone can reveal sufficient identity-related semantic information to enable image retrieval, leading to privacy leakage. These findings highlight that, despite the remarkable semantic capabilities of multimodal frameworks, protecting privacy-sensitive information remains a fundamental challenge for semantic communications. Beyond multi-modal presentations, recent works in [10] and [11] have extended semantic communications from point-to-point transmission into multi-device systems, where multiple devices collaboratively transmit semantic information about the same event. By exploiting diverse sensing perspectives, these frameworks overcome the sensing limitation of individ-ual devices and improve the performance of downstream tasks. However, the semantic information generated by different devices is often partially redundant, resulting in unneces-sary communication overhead. More critically, inter-device semantic correlation substantially enlarges the attack surface, allowing adversaries to infer sensitive information by jointly analyzing transmissions from multiple devices or launching model inversion attacks on compromised edge devices with arXiv:2608.21773v1 [cs.CR] 22 Aug 2026 2
+
+limited security capabilities [12]–[14]. Consequently, secure semantic communications in the wireless edge network require not only efficient suppression of redundant information but also effective protection against semantic leakage. 
+
+A. Related Work 1) Multimodal-enabled Semantic Communication: Vision-language model (VLM) have recently become a key technol-ogy for multi-modal semantic communication. By representing visual content as natural language, VLMs provide semantically interpretable representations that improve communication ef-ficiency and robustness to channel impairments [15]. At the receiver, the transmitted textual semantics are used to con-dition a generative model for image reconstruction However, textual descriptions alone often fail to preserve fine-grained visual details, resulting in limited reconstruction quality. To address this limitation, [4] and [5] additionally transmit latent features to enhance reconstruction fidelity. While these works demonstrate the effectiveness of VLMs for multimodal seman-tic communications, they primarily focus on communication efficiency and reconstruction quality, overlooking the privacy risks associated with semantic representations. 
+
+2) Privacy-preserving Semantic Communication: Existing privacy-preserving semantic communication approaches can be categorized into differential privacy, cryptographic protec-tion, and sensitive information suppression [16]. Differential privacy protects semantic representations by introducing cal-ibrated perturbations. For example, [17] separates semantic features into private and non-private latent representations and perturbs only the private component before transmission, while [18] employs differential privacy to protect features dur-ing collaborative inference across multiple devices. Although these methods achieve a favorable tradeoff between privacy preservation and task performance, they primarily consider conventional wireless eavesdroppers and overlook potential learning-based attacks. Cryptographic approaches, on the other hand, secure seman-tic representations through learned encryption mechanisms. Neural adversarial cryptography was first introduced in [19] and later adopted for semantic communications in [20], where a pre-shared secret key enables legitimate receivers to recover the transmitted information while preventing unauthorized decoding. However, these methods rely on secure key es-tablishment and management, which remain challenging in practice. Finally, sensitive information suppression removes or obfuscates privacy-sensitive content before transmission. Rep-resentative examples include suppressing sensitive semantic features through adversarial learning [21] and removing user-specified objects from shared images [22]. However, these methods are largely task-specific, with semantic encoder and decoder optimized to predefined tasks, and fail to support re-construction of the original data. Thus, this limitation restricts the utility of the received data in task-unaware scenarios. 
+
+3) Multi-Device Information Bottleneck: Multiple devices often observe the same scene or object from different per-spectives, resulting in redundant semantic information. To reduce address this issue, the information bottleneck prin-ciple has been extended to multi-device settings [23]. This work established a theoretical framework for balancing com-munication efficiency and task information. Building upon this framework, [11] leveraged the information bottleneck for multi-device task-oriented communication, where each device encodes its local observations and transmits compact semantic representations to a central server for inference. Similarly, [24] incorporated the information bottleneck into federated learning, where the devices are trained jointly with a server. Although these works demonstrate the effectiveness of information bottleneck learning for distributed inference, they primarily aim to preserve task-relevant information and do not explicitly address semantic redundancy across multi-ple devices. Nevertheless, existing studies provide valuable insights for designing efficient multi-device semantic systems. 
+
+B. Main Contributions 
+
+In this work, a privacy-preserving semantic communication framework is proposed to jointly protect sensitive information and reduces cross-device semantic redundancy in wireless edge networks. Main contributions are summarized as follows:  
+
+> •
+
+A VLM-enabled semantic communication framework is proposed for wireless edge systems. A text-based privacy identification module detects privacy-sensitive entities by matching image descriptions against a server-side privacy database. The identified image regions are removed be-fore transmission and reconstructed only at the authorized receiver using a VLM, preventing unauthorized receivers from recovering the protected content.  
+
+> •
+
+To prevent information leakage, we propose an encrypted semantic text transceiver. Instead of relying on pre-shared secret keys, the encryption key is generated from reciprocal wireless channel characteristics between the legitimate edge device and server, eliminating the need for prior key distribution. As a result, unauthorized receivers cannot correctly decode intercepted semantic messages, even with full knowledge of the edge-device model parameters.  
+
+> •
+
+We propose the information bottleneck framework to suppress redundant semantic information across multiple edge devices. A variational approximation is developed to obtain a tractable optimization problem of minimizing the cross-device mutual information while preserving task-relevant semantic content.  
+
+> •
+
+Extensive simulation results demonstrate that the pro-posed framework achieves high-quality image reconstruc-tion at the authorized receiver while effectively prevent-ing model-aware adversaries from recovering privacy-sensitive content. Furthermore, the proposed distributed semantic information bottleneck significantly reduces cross-device semantic redundancy, thereby improving se-mantic communication efficiency. 3
+
+The remainder of this paper is organized as follows. Section II presents the system model, including the privacy detection and protection procedures, the model-aware adversary, the semantic information bottleneck, and the problem formulation. Section III details the proposed solution. Section IV presents the simulation evaluation of the proposed framework. Finally, Section V concludes the paper. II. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+We consider a wireless system comprising a group of edge devices N and a server. Each device n ∈ N captures an image of an object of interest from a different viewpoint and transmits the data to the server. In this context, the object of interest often constitutes sensitive information, which unauthorized entities may attempt to intercept and extract. To safeguard privacy, a semantic protection framework is employed. Specifically, a privacy dataset K is maintained exclusively at the server to characterize and identify sensi-tive content within the captured images. The edge devices, however, have no prior knowledge of the sensitive object and cannot directly access K. Instead, each device relies on semantic guidance provided by the server using text-based instructions. Based on this guide, each device performs on-device filtering to remove sensitive information from captured images prior to transmission, ensuring that no privacy-related content is included in the transmitted data. For example, if the privacy object is a cat named Vicky, as shown in Fig. 1. After privacy removal, only the server can semantically recover the cat’s identity, while the adversary produces inconsistent outputs. Although the adversary may infer that the masked image is a cat, it cannot clearly identify the color or fur pattern, thus preserving the identity information about Vicky. To imple-ment this mechanism, we first introduce the privacy detection module, privacy protection framework, and adversary model, followed by the performance metrics and problem formulation. 
+
+A. Privacy Detection 
+
+The purpose of privacy detection is to identify sensitive information in the captured images of each edge device with the assistance of the server. Let S = {Sn}Nn=1 denote a multi-view image set captured by devices, where Sn ∈
+
+RC×H×W denotes the image at device n ∈ N , and C , H ,and W represent the channel, height, and width, respectively. As shown in Fig. 2, each device employs a Bootstrapping Language-Image Pre-training (BLIP) model [25] to generate a textual description of the captured image, as 
+
+tn = fBLIP (Sn) = [ wn, 1, w n, 2, . . . , w n,L ] , (1) where wn,l represents the l-th word generated by device n.The resulting token sequence tn serves as a compact semantic representation of the image, which is then transmitted to the server for privacy detection via a frequency division multiple access approach. To protect textual information, a physical-layer encryption module is employed, where the channel state information (CSI) between each device and the server is first estimated using pilot signaling and then used for text-massage pro-tection. Assuming a full-duplex setting, the CSI observed at device n and the server are denoted by hdev  
+
+> n
+
+and hsrv  
+
+> n
+
+,respectively. Due to the channel reciprocity, the generated secret keys kdev  
+
+> n
+
+= fPLK (hdev  
+
+> n
+
+) ∈ Rd at device n and 
+
+ksrv  
+
+> n
+
+= fPLK (hsrv  
+
+> n
+
+) ∈ Rd at the server are highly correlated [26], where d is the embedding dimension of the textual token representation and fPLK (·) is the physical-layer key generation function [27]. Each device then encodes the text data using an encryption encoder Tθn (·) with θn as the trainable parameters of device 
+
+n, and Θ = [ θ1, . . . , θ N ] represents the parameters for all devices. The transmitted signal from device n is given by 
+
+xtn = Tθn (tn, kdev  
+
+> n
+
+). (2) The received signal from device n at the server is 
+
+ytn = hn ⊙ xtn + n, (3) where hn denotes the flat-fading channel from device n to the server, ⊙ denotes element-wise multiplication, and n ∼CN (0 , σ 2
+
+> n
+
+I) is additive white Gaussian noise. The server then applies a decoder Cβ (·) with parameters β to recover the text: 
+
+ˆtn = Cβ (ytn, ksrv  
+
+> n
+
+). (4) After aggregating the reconstructed semantic texts 
+
+{ˆt1, · · · , ˆtN } from all devices, the server applies a text-based privacy identification module Iϕ(·), parameterized by ϕ, to determine whether the captured image at each device contains any sensitive content defined in the privacy database K.Here, the privacy database K = {S ∗ 
+
+> i
+
+}i=1 ,··· ,K is constructed from predefined privacy entities specified by the server, where S∗ 
+
+> i
+
+= {S∗
+
+> i,m
+
+}m=1 ,··· ,M is a set of M sample images associated with each privacy identity i. The privacy dataset is typically established during system initialization, device registration, or deployment via highly secure links. At the end of the privacy detection stage, if no sensitive object is identified, the corresponding image is transmitted to the server without further processing. Otherwise, a privacy identity label ˆi = Iϕ({ˆtn}Nn=1 ) is predicted based on the multi-view textual descriptions, and a feedback signal is broadcast to all devices to indicate whether privacy protection is required. Upon detection of sensitive content, each device applies a segmentation module to separate the privacy region from the background in the captured image and remove the correspond-ing area accordingly: 
+
+An = fSEG (Sn|ˆi), (5) where fSEG (·) denotes a segmentation function [28] that generates a mask to suppress privacy-sensitive objects. Here, we consider a single-object scenario, where fSEG (·) can be realized by a foreground–background segmentation, with the sensitive object treated as the foreground region and the 4
+
+Fig. 1: An example of the proposed privacy-preserving framework. The devices remove sensitive content before transmission. The server reconstructs the privacy object, while the adversary cannot reliably recover its identity. 
+
+Fig. 2: Privacy detection module to identify sensitive content via text descriptions. background considered as non-sensitive 1. The output An ∈
+
+RC×H×W is a sanitized image that masks sensitive content. As shown in Fig. 3, the sanitized image An is then encoded by a source-channel encoder Eηn (·) into a transmit signal: 
+
+xsn = Eηn (An), (6) where ηn is the trainable parameter of device n and η =[η1, η 2, . . . , η N ] collects the parameters of all devices. The received signal at the server is 
+
+ysn = hn ⊙ xsn + n. (7) 
+
+> 1The proposed framework can be extended to multi-object scenarios by decomposing a multi-object image into several single-object regions, and then the same privacy procedure is applied to mask sensitive objects individually. Finally, all processed regions are merged to reconstruct the sanitized image.
+
+Upon signal reception, the server applies a decoder Dψ (·)
+
+with parameter ψ to reconstruct the masked image ˆAn ∈
+
+RC×H×W , via ˆAn = Dψ (ysn). (8) The decoded output are then passed to a privacy recovery module Rλ(·), based on a vision–language model (VLM) with parameter λ, to recover the complete image as 
+
+ˆSn = Rλ( ˆAn|ˆi, ˆtn, K). (9) 
+
+B. Adversary Model 
+
+We consider a model-aware adversary that has full access to the model parameters deployed on the edge devices. This threat model is well motivated in wireless edge systems, where the limited computational and security capabilities of edge devices make them more vulnerable to model leakage and compromise. In contrast, the server-side model parameters and 5
+
+Fig. 3: Privacy protection module to remove sensitive information prior to transmission and recover the image at the server using a vision-language model. privacy dataset K are assumed to be inaccessible, as the edge server provides a substantially higher level of physical and cyber security. By exploiting the exposed edge models, the adversary can launch model inversion attacks to infer semantic information. We further assume that all edge devices share the same backbone architecture for the text encoder Tθn and image encoder Eηn , a common practice in edge computing platforms to reduce deployment and maintenance cost. Thus, compromising a single edge device enables the adversary to recover semantic representations through model inversion. Specifically, the adversary collects textual samples ta =[wa, 1, . . . , w a,L ] from public datasets and feeds them into the encoder Tθn (·) to obtain the corresponding outputs, forming a large number of input–output pairs. Based on these pairs, the adversary then trains a surrogate decoder 
+
+Dβa (·) to minimize the cross-entropy loss: DCE (p, q ) =
+
+− PLl=1 p(wl) log  q(wl), where p(wl) denotes the ground-truth token probability induced by the input text t, and 
+
+q(wl) denotes the predicted token probability produced by the decoder. Accordingly, the loss function is given as follows: 
+
+LA(βa) = DCE (ta, D βa (Tθn (ta))) . (10) Similarly, the adversary can intercept the privacy-removed im-age representations. Using the same model inversion strategy, the adversary feeds image samples from public datasets to the encoder Eηn (·) to obtain latent representations, and train a sur-rogate image decoder Dψa (·) to reconstruct the original visual content. In addition, the adversary employs a VLM module 
+
+Rλa (·) with capability comparable to that of the server, but whose parameters are derived from a publicly available VLM without access to the privacy dataset. Consequently, the image recovered by the adversary is 
+
+˜Sa,n = Rλa
+
+ Dψa
+
+ ysa,n 
+
+ |Dβa
+
+ yta,n 
+
+ . (11) However, without access to the privacy database K, the adver-sary is limited to partial image reconstruction, with sensitive content either omitted or incorrectly inferred. 
+
+C. Semantic Information Bottleneck 
+
+Under the multi-view setting, different edge devices may capture either complementary or redundant semantic infor-mation from diverse viewpoints. Although complementary semantic cues improve downstream privacy identification and image reconstruction, redundant cross-view information re-duces communication efficiency. To address this issue, a multi-device semantic information bottleneck (SIB) loss is intro-duced to preserve task-relevant semantic information while suppressing redundant cross-view correlations. Accordingly, the SIB loss is formulated as 
+
+LSIB (β, Θ) = H(i|yt 
+
+> 1: N
+
+) + γ
+
+> N
+
+X
+
+> n=1
+> N
+
+X
+
+> m=n+1
+
+I(ytn; ytm), (12) where H(i|yt 
+
+> 1: N
+
+) represents the conditional entropy of the ground-truth identity label i, given all text messages. It characterizes the uncertainty of privacy identification after multi-message fusion, and its minimization encourages yt
+
+> 1: N
+
+to retain sufficient information to tell accurate identification. Meanwhile, P
+
+> n
+
+P 
+
+> m
+
+I(ytn; ytm) measures the mutual seman-tic information across different devices’ viewpoints. Minimiz-ing this term suppresses semantic redundancy and promotes complementary representations across devices. Finally, γ > 0
+
+controls the tradeoff between preserving task-relevant seman-tic information and reducing cross-view redundancy. 
+
+D. Problem Formulation 
+
+The goal of the proposed privacy-preserving semantic com-munication framework is to minimize the image reconstruction 6
+
+distortion at the server, while limiting privacy leakage to the adversary and reducing redundant cross-view semantic infor-mation in the multi-device communication system. In the first stage of privacy detection, the accuracy of the reconstructed text ˆtn and the privacy identity label ˆi will directly affect the reconstruction performance of ˆSn in the second stage, as shown in (9). Therefore, the reconstruction performance at the server can be quantified as 
+
+Os = 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+Sn − ˆSn(β, ϕ, ψ, λ, θ n, η n) 22
+
+. (13) Meanwhile, according to (11), the performance of the privacy detection module also affects the adversary’s reconstruction quality of ˜Sa,n , which can be characterized by 
+
+Oa = 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+Sn − ˜Sa,n (β, ϕ, θ n, η n) 22
+
+. (14) Therefore, the overall objective function is 
+
+O = Os(β, ϕ, ψ, λ, Θ, η) − Oa(β, ϕ, Θ, η) + μLSIB (β, Θ),
+
+(15) where μ is a regularization weight. Consequently, the privacy-preserving semantic communication problem can be formu-lated as: 
+
+min  
+
+> β,ϕ,ψ,λ, Θ,η
+
+O(β, ϕ, ψ, λ, Θ, η) (16a) s. t. ∥hnxtn(θn)∥2
+
+B σ 2
+
+> n
+
+≥ τ (t)thre , ∀n, (16b) 
+
+xtn(θn) 2 ≤ P (t)max , ∀n, (16c) 
+
+∥hnxsn(β, ϕ, θ n, η n)∥2
+
+B σ 2
+
+> n
+
+≥ τ (s)thre , ∀n, (16d) 
+
+∥xsn(β, ϕ, θ n, η n)∥2 ≤ P (s)max , ∀n, (16e) 
+
+kdev  
+
+> n
+
+− ksrv 
+
+> n
+> 2
+
+≤ ϵk, ∀n, (16f) where constraints (16b) and (16d) ensure that the received signal-to-noise ratio (SNR) exceed the predefined thresholds 
+
+τ (t)thre and τ (s)thre , constraints (16c) and ((16e)) limit the trans-mission powers of the two-stage transmission by P (t)max and 
+
+P (s)max , respectively, and constraint (16f) ensures that the key discrepancy between each device n and the server in the physical-layer encryption stage is bounded within ϵk.The problem (16) is challenging to solve for three reasons. Firstly, the multi-view wireless setting introduces a trade-off between semantic fidelity and communication efficiency. Since different devices capture the same object from differ-ent viewpoints, the transmitted representations contain both complementary and redundant semantic information. With the information bottleneck imposed by the wireless channel on semantic transmission, the solution must carefully preserve task-relevant information while suppressing cross-view re-dundancy. Secondly, the multi-modal nature of the frame-work requires textual descriptions and visual information to jointly guide privacy identification and image reconstruction. Therefore, semantic consistency across different modalities must be preserved to ensure reliable recovery performance. Thirdly, the presence of a model-aware adversary complicates the framework design. The system must maintain sufficient semantic information for accurate reconstruction at the server, while simultaneously minimizing privacy leakage caused by intercepted textual signals, privacy-removed images, and ex-posed edge-side model parameters. III. S OLUTION 
+
+Although the system-level optimization problem (16) is difficult to solve across two stages in an end-to-end manner, the optimization variables are largely decoupled within the constraints. Specifically, the privacy detection and protection modules, as well as the transmitter and receiver, operate sequentially, resulting in relatively independent optimization processes. Therefore, (16) can be decomposed into several subproblems and optimized on a module-wise basis. An it-erative algorithm is then developed to alternately solve the resulting subproblems until convergence. 
+
+A. Privacy Detection Module 1) Encrypted Semantic-Channel Text Encoder and De-coder: We first optimize the encryption semantic-channel text (ESCT) encoder and decoder in the privacy detection stage, as shown in Fig. 2. Here, the aim is to improve the reconstructed text quality, thus enhancing the server-side reconstruction objective in (13) for the next stage. Specifically, the encoder parameters Θ and decoder param-eter β are optimized to minimize the discrepancy between the original text tn and the reconstructed text ˆtn. The correspond-ing loss function is given by 
+
+LK (β, Θ) = 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+DCE 
+
+ tn, ˆtn
+
+ . (17) Meanwhile, the adversary aims to maximize privacy leakage, by minimizing the adversarial loss in (10). To optimize the decoder Dβa (·) and reconstruct the original text from the intercepted signal ya,n , the adversarial reconstruction loss is 
+
+Ladv (βa|Θ) = 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+DCE 
+
+ tn, D βa (ya,n ) . (18) Consequently, the privacy detection stage can be reformulated as an adversarial semantic-channel training problem. Rather than directly optimizing the image reconstruction quality in (16a), this stage first optimizes the privacy detection modules to improve the quality of the reconstructed text. The resulting loss function is given by 
+
+LD (Θ, β ) = LK (Θ, β ) − L adv (Θ) + μLSIB (Θ, β ). (19) which optimizes the encrypted semantic-channel transceiver jointly with the semantic information bottleneck. The overall architecture of the ESCT encoder and de-coder is given in Fig. 4, where a transformer-based network 7
+
+Fig. 4: Encryption semantic-channel encoder and decoder for text message in the privacy detection stage. 
+
+Fig. 5: Encryptor architecture that fuses semantic features and physical-layer secret keys through a fully connected layer. is employed for semantic coding and decoding, with an autoencoder-based architecture for channel coding. By jointly optimizing semantic and channel coding, the proposed frame-work reduces the transmitted data amount while preserving the semantic meaning, to improve communication efficiency and robustness, particularly in low signal-to-noise ratio (SNR) en-vironments [29]. Furthermore, to defend against model inver-sion attacks and protect semantic text information, physical-layer encryption and decryption modules are introduced. As shown in Figs. 4 and 5, a encryptor takes the secret key 
+
+kdev  
+
+> n
+
+and the semantic encoder output. After concatenation, the combined representation is flattened, transformed through a reshape layer, and projected back to the original embedding dimension. Correspondingly, the decryptor utilizes the channel decoder output and the secret key kdev  
+
+> n
+
+to reconstruct the textual information ˆtn.The training procedure for the ESCT transceiver is summa-rized in Algorithm 1. 
+
+2) Text-based Privacy Identification Module: Given the trained ESCT encoder and decoder, the next component in Fig. 2 is the privacy identification module Iϕ(·), which consists of a text encoder Gϕ(·) and a feature matching module. First, the reconstructed text messages {ˆtn}Nn=1 from all devices are jointly processed by 
+
+{ˆf n}Nn=1 = Gϕ({ˆtn}Nn=1 ), (20) where ˆf n ∈ Rd is the identity-discriminative feature ex-tracted by the text encoder Gϕ(·). Meanwhile, each image 
+
+{S∗
+
+> i,m
+
+}Mm=1 in the privacy database is converted into textual descriptions, using the same process as (1), which is subse-quently encoded by the same encoder in (20) to obtain the corresponding feature representation {f ∗
+
+> i,m
+
+}Mm=1 .
+
+Algorithm 1 Train the Encrypted Text Semantic Transceiver  
+
+> 1:
+
+Input : S, Dβa (·), τ (t)thre , P (t)max , and ϵk . 
+
+> 2:
+
+while LD in (19) has not converged do  
+
+> 3:
+
+Sample a multi-view image set {Sn}Nn=1 from S. 
+
+> 4:
+
+for n = 1 , . . . , N do  
+
+> 5:
+
+Channel Probing and Key Generation:  
+
+> 6:
+
+Device n and the server exchange pilot signals.  
+
+> 7:
+
+Estimate hdev  
+
+> n
+
+and hsrv  
+
+> n
+
+. 
+
+> 8:
+
+fPLK (hdev  
+
+> n
+
+|ϵk ) → kdev  
+
+> n
+
+. 
+
+> 9:
+
+fPLK (hsrv  
+
+> n
+
+|ϵk ) → ksrv  
+
+> n
+
+. 
+
+> 10:
+
+Transmitter:  
+
+> 11:
+
+fBLIP (Sn) → tn 
+
+> 12:
+
+Tθn (tn, kdev  
+
+> n
+
+|τ (t)thre , P (t)max ) → xtn 
+
+> 13:
+
+Transmit xtn over the channel.  
+
+> 14:
+
+Receiver:  
+
+> 15:
+
+Receive ytn via Eq. (3).  
+
+> 16:
+
+Cβ (ytn, ksrv  
+
+> n
+
+|τ (t)thre , P (t)max ) → ˆtn. 
+
+> 17:
+
+Adversary:  
+
+> 18:
+
+Dβa (yta,n ) → ˆta,n . 
+
+> 19:
+
+end for  
+
+> 20:
+
+Compute the loss LD by (19).  
+
+> 21:
+
+Update Θ and β using gradient descent.  
+
+> 22:
+
+end while  
+
+> 23:
+
+Output : {Tθn (·)}Nn=1 and Cβ (·).
+
+To determine the identity revealed in the text message, the query feature {ˆf n}Nn=1 is matched against each reference fea-ture {f ∗
+
+> i,m
+
+}Mm=1 in a set-to-set manner. The pairwise similarity between the n-th query feature and the m-th reference feature of entity i is computed as 
+
+ζ(i) 
+
+> n,m
+
+= ˆf Hn f ∗
+
+> i,m
+
+. (21) Since reference images in the privacy database originate from different viewpoints, it is unknown which one best matches the query feature of device n. Therefore, the maximum similarity over all reference features is selected for each query, and the matching score of entity i is the average of the maximum similarities of all viewpoints. The identity with the highest matching score is selected as the output, i.e., 
+
+ˆi = arg max 
+
+> i
+
+1
+
+N
+
+> N
+
+X
+
+> n=1
+
+max  
+
+> m
+
+ζ(i)
+
+> n,m
+
+. (22) To training Gϕ(·) for identity representations, contrastive learning is adopted to cluster features of the same identity while separating those of different identities. For an anchor text message ti, the contrastive loss is defined as 
+
+LC (ϕ) = − log exp  Gϕ(ti) · Gϕ(t+ 
+
+> i
+
+)/τ P 
+
+> j
+
+exp ( Gϕ(ti) · Gϕ(tj )/τ ) , (23) where t+ 
+
+> i
+
+denotes a positive sample of the same identity i,
+
+tj represents all samples in the batch, and τ is a temperature parameter. Minimizing (23) promotes intra-class compactness and inter-class separability in the learned embedding space. Here, the anchor text message is generated from training images in S rather than from the privacy database K. The cor-responding training procedure is summarized in Algorithm 2. 8
+
+Algorithm 2 Train the Privacy Identification Module  
+
+> 1:
+
+Input : S. 
+
+> 2:
+
+while LC in (23) has not converged do  
+
+> 3:
+
+Sample a mini-batch of images with identity labels from S. 
+
+> 4:
+
+for each image do  
+
+> 5:
+
+Generate textual description:  
+
+> 6:
+
+fBLIP (S) → t. 
+
+> 7:
+
+Extract identity-discriminative feature:  
+
+> 8:
+
+Gϕ(t) → f . 
+
+> 9:
+
+end for  
+
+> 10:
+
+Compute the contrastive loss LC by (23).  
+
+> 11:
+
+Update ϕ using gradient descent.  
+
+> 12:
+
+end while  
+
+> 13:
+
+Output : Gϕ(·).
+
+3) Approximation of multi-device SIB Loss: A practical challenge of the proposed framework is that the SIB loss in (12), as well as the loss in (19), contains conditional entropy and mutual information terms that are generally intractable to compute, making the optimization in Algorithm 1 difficult. To enable efficient training and improve convergence, we adopt tractable approximations for these quantities. The first term of the conditional entropy is defined as 
+
+H(i|yt 
+
+> 1: N
+
+) = −Ep(i, yt 
+
+> 1: N)
+
+[log p(i|yt 
+
+> 1: N
+
+)] which is generally intractable, because the true posterior distribution p(i|yt 
+
+> 1: N
+
+)
+
+is unknown. To obtain a tractable surrogate objective, we introduce a variational posterior distribution qϕ(i|yt 
+
+> 1: N
+
+), pa-rameterized by the text-based privacy identification module with parameter ϕ, to approximate the true posterior. Using the non-negativity property of the KL divergence, we first have 
+
+Ep(yt  
+
+> 1: N)
+
+[DKL (p(i|yt 
+
+> 1: N
+
+) ∥ qϕ(i|yt 
+
+> 1: N
+
+))] ≥ 0, which yields 
+
+−Ep(i, yt 
+
+> 1: N)
+
+log qϕ
+
+ i|yt
+
+> 1: N
+
+ − H(i|yt 
+
+> 1: N
+
+) ≥ 0. (24) Therefore, the conditional entropy can be upper-bounded as 
+
+H(i|yt 
+
+> 1: N
+
+) ≤ − Ep(i, yt 
+
+> 1: N)
+
+log qϕ
+
+ i|yt
+
+> 1: N
+
+ ≜ Ltask . (25) Here, minimizing Ltask encourages the variational posterior 
+
+qϕ(i|yt 
+
+> 1: N
+
+) to accurately predict the privacy identity i from the reconstructed semantic representations, thereby reducing the uncertainty of privacy identification and indirectly minimizing the conditional entropy term. In practice, qϕ(i|yt 
+
+> 1: N
+
+) corre-sponds to the output probability distribution of the text-based privacy identification network. Consequently, Ltask reduces to the standard cross-entropy classification loss, which can be efficiently optimized using stochastic gradient descent. The second term of SIB loss is the mutual information 
+
+I(ytn; ytm) = Ep(ytn,ytm)
+
+
+
+log p(ytn, ytm)
+
+p(ytn)p(ytm)
+
+
+
+, (26) which measures the amount of shared semantic information extracted from different views of two edge devices n and 
+
+m. However, directly computing this quantity is generally intractable since the joint distribution p(ytn, ytm), as well as the marginal distributions p(ytn) and p(ytm) are unknown. To ob-tain a tractable approximation, we adopt the variational Con-trastive Log-ratio Upper Bound (vCLUB) estimator [30] and introduce a variational conditional distribution qω (ytm|ytn), pa-rameterized by ω, to approximate the dependency between the semantic representations from different views. In particular, qω
+
+is trained using positive and negative multi-view pairs, where given a mini-batch with B objects, for the representation 
+
+(ytn)(b), a positive pair (ytm)(b) is selected from a different view m of the same object b, while a negative sample (ytm)(b′)
+
+is selected from a different view m of a different object b′̸ = b.The corresponding training loss is given by 
+
+LvCLUB (ω) = 1
+
+B
+
+> B
+
+X
+
+> b=1
+
+h
+
+log qω
+
+
+
+(ytm)(b)|(ytn)(b)
+
+− log qω
+
+
+
+(ytm)(b′)|(ytn)(b) i 
+
+,
+
+(27) This objective encourages qω to assign a high likelihood to semantic representations corresponding to the same object while assigning a low likelihood to representations originating from different objects. Consequently, the learned conditional distribution captures the statistical dependency between corre-lated semantic representations. Using the trained conditional distribution qω (ytm|ytn), the vCLUB estimator of mutual information [30] is given by 
+
+IvCLUB (ytn; ytm) = Ep(ytn,ytm)
+
+
+
+log qω (ytm|ytn)
+
+
+
+− Ep(ytn)p(ytm)
+
+
+
+log qω (ytm|ytn)
+
+
+
+.
+
+(28) The following theorem shows that the estimation in (28) pro-vides an upper bound on the true mutual information in (26), under the condition that the variational conditional distribution 
+
+qω must be well trained, i.e., qω (ytm|ytn) ≈ p(ytm|ytn).
+
+Theorem 1. Given DKL (p(ytn, ytm)|| qω (ytm|ytn)p(ytn)) ≤
+
+DKL (p(ytn)p(ytm)|| qω (ytm|ytn)p(ytn)) holds, the mutual infor-mation is upper-bounded by the vCLUB estimator, i.e., 
+
+I(ytn; ytm) ≤ IvCLUB (ytn; ytm). (29) 
+
+Proof. For notational simplicity, let u = ytn and v = ytm.The gap between vCLUB and the true mutual information is 
+
+∆ = IvCLUB (u; v) − I(u; v)= Ep(u,v) [log qω (v|u)] − Ep(u)p(v) [log qω (v|u)] 
+
+− Ep(u,v) [log p(v|u) − log p(v)] = Ep(u)p(v)
+
+
+
+log p(v)
+
+qω (v|u)
+
+
+
+− Ep(u,v)
+
+
+
+log p(v|u)
+
+qω (v|u)
+
+
+
+= DKL (p(u)p(v)∥qω (v|u)p(u)) 
+
+− DKL (p(u, v)∥qω (v|u)p(u)) . (30) According to the condition, the second KL-divergence term is no larger than the first. Therefore, ∆ ≥ 0, which implies 
+
+I(ytn; ytm) ≤ IvCLUB (ytn; ytm). (31) This completes the proof. 9
+
+Fig. 6: Privacy Recovery Module Based on Theorem 1, the cross-view redundancy reduction loss is approximated as 
+
+> N
+
+X
+
+> n=1
+> N
+
+X
+
+> m=n+1
+
+I(ytn; ytm) ≤
+
+> N
+
+X
+
+> n=1
+> N
+
+X
+
+> m=n+1
+
+IvCLUB (ytn; ytm) ≜ Lred .
+
+(32) By combining (25) and (32), the adversarial semantic-channel training objective in (19) can be rewritten as 
+
+LD ≤ ¯LD (Θ, β ) = LK (Θ, β ) − L adv (Θ)+ μ(Ltask (Θ) + γLred (Θ)) . (33) For a practical learning, Algorithm 1 will use the new loss function in (33), instead of (19) for the parameter training, which minimizes the upper bound of the original loss. 
+
+B. Privacy Protection Module 
+
+Given that all components in the privacy detection stage have been trained, we next focus on the privacy protection stage, which aims to minimize the image reconstruction dis-tortion at the server as formulated in (13). Specifically, once sensitive content is identified, the corresponding regions are removed from the captured images by the privacy segmenta-tion module, producing sanitized images for transmission. The privacy protection stage then consists of two key components: a source-channel image transceiver that efficiently delivers the sanitized images to the server, and a VLM-based recovery module that reconstructs the removed content. The following subsections describe these two components in detail. 
+
+1) Source-Channel Image Encoder and Decode: The source-channel image encoder and decoder are implemented based on the DeepJSCC framework [31], which adopts a fully convolutional autoencoder architecture for end-to-end wireless image transmission. Specifically, the encoder directly maps the sanitized image An into complex-valued channel symbols. The communication channel is modeled as a non-trainable differentiable layer within the network. At the receiver side, the decoder reconstructs the sanitized image ˆAn from the received signal through a series of transpose convolutional layers. The encoder and decoder are jointly trained to min-imize the reconstruction distortion of the sanitized image, and the loss function is defined as 
+
+LS (η, ψ ) = 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+An − ˆAn(ηn, ψ ) 22
+
+. (34) The training procedure is summarized in Algorithm 3. 
+
+Algorithm 3 Train the Source-Channel Image Transceiver  
+
+> 1:
+
+Input : S, ˆi, τ (s)thre and P (s)max . 
+
+> 2:
+
+while LS in (34) has not converged do  
+
+> 3:
+
+Sample a multi-view image set {Sn}Nn=1 from S. 
+
+> 4:
+
+for n = 1 , . . . , N do  
+
+> 5:
+
+Privacy Segmentation:  
+
+> 6:
+
+fSEG (Sn|ˆi) → An. 
+
+> 7:
+
+Transmitter:  
+
+> 8:
+
+Eηn (An|τ (s)thre , P (s)max ) → xsn. 
+
+> 9:
+
+Transmit xsn over the channel.  
+
+> 10:
+
+Receiver:  
+
+> 11:
+
+Receive ysn via (7).  
+
+> 12:
+
+Dψ (ysn) → ˆAn. 
+
+> 13:
+
+end for  
+
+> 14:
+
+Compute the loss LS by (34).  
+
+> 15:
+
+Update η and ψ using gradient descent.  
+
+> 16:
+
+end while  
+
+> 17:
+
+Output : {Eηn (·)}Nn=1 and Dψ (·).
+
+2) Privacy Recovery Module: The privacy recovery module incorporates a VLM-based diffusion framework to regenerate the removed sensitive content, as shown in Fig. 5. First, a binary mask ˆMn ∈ { 0, 1}H×W is obtained to detect the boundaries of the privacy region in ˆAn.In parallel, the received image ˆAn goes through a forward diffusion process, where Gaussian noise ϵ ∼ N (0, I) is gradually added over T timesteps onto the image. At each step t = 0 , · · · , T , the noisy latent variable is computed as: 
+
+Bn,t = √¯αt · ˆAn + √1 − ¯αt · ϵ, (35) where ¯αt ≥ 0 is time-dependent hyperparameter that decreases with t. At t = 0 , ¯α0 equals to 1, so Bn, 0 = ˆAn contains no noise, and as t increases, noise is progressively added, producing a sequence of latent variables {Bn,t }Tt=0 .Next, a denoising U-Net Uλ|K (·) is employed to reconstruct the removed privacy content. The model parameters λ are fine-tuned on the privacy database K via transfer learning, as summarized in Algorithm 4. The inputs to Uλ|K (·) include the binary mask ˆMn and the noisy latent sequence {Bn,t }Tt=0 
+
+generated from the forward diffusion process. Meanwhile, the textual description ˆtn provides conditional vision-language context to guide the image generation and ensure semantic consistency within the masked region. The denoising process starts from timestep t = T , where the input Bn,T is processed by the U-Net to produce the intermediate output Cn,T −1 = Uλ|K (Bn,T |ˆtn). The generated content is then masked to retain only the privacy region, while the non-privacy background is filled using pixels from the corresponding noisy image Bn,T −1, i.e., 
+
+Dn,T −1 = Cn,T −1 ⊙ ˆMn
+
+| {z }
+
+Masked-region generation 
+
++ Bn,T −1 ⊙ (1 − ˆMn)
+
+| {z }
+
+Background retention 
+
+,
+
+(36) which serves as the input for the next time step t = T − 1.This process is repeated iteratively for t = T − 1, · · · , 1 via 
+
+Dn,t −1 = Uλ|K (Dn,t |ˆtn)⊙ ˆMn +Bn,t −1 ⊙(1− ˆMn). (37) 10 
+
+Algorithm 4 Transfer Learning Based on Privacy Database K
+
+Initialization: Load the pre-trained model Uλ(·) 
+
+> 1:
+
+Input: K = {S ∗ 
+
+> i
+
+}i=1 ,··· ,K  
+
+> 2:
+
+for i = 1 , · · · , K do  
+
+> 3:
+
+Sample a image set S∗ 
+
+> i
+
+= {S∗
+
+> i,m
+
+}m=1 ,··· ,M from K 
+
+> 4:
+
+for m = 1 , · · · , M do  
+
+> 5:
+
+fBLIP (S∗
+
+> i,m
+
+) → t∗ 
+
+> i,m
+> 6:
+
+Forward diffusion on S∗ 
+
+> i,m
+
+→ { Bt,i,m }Tt=0  
+
+> 7:
+
+for t = T, · · · , 1 do  
+
+> 8:
+
+Uλ(Bt,i,m |t∗
+
+> i,m
+
+) → Ct−1,i,m  
+
+> 9:
+
+Compute Lt,i,m = ∥Ct−1,i,m − Bt−1,i,m ∥2 
+
+> 10:
+
+Update λ using gradient descent on loss Lt,i,m  
+
+> 11:
+
+end for  
+
+> 12:
+
+end for  
+
+> 13:
+
+end for  
+
+> 14:
+
+Output: Uλ|K (·)
+
+Algorithm 5 Train the Proposed Framework  
+
+> 1:
+
+Input : S, K, Iϕ(·), qω (·), τ (t)thre , τ (s)thre , P (t)max , P (s)max , and ϵk . 
+
+> 2:
+
+Train the privacy detection module via Algorithms 1 and 2.  
+
+> 3:
+
+Train the privacy recovery module via Algorithms 3 and 4.  
+
+> 4:
+
+while the overall objective in (16a) has not converged do  
+
+> 5:
+
+Sample a multi-view image set {Sn}Nn=1 from S. 
+
+> 6:
+
+for n = 1 , . . . , N do  
+
+> 7:
+
+Execute the privacy detection.  
+
+> 8:
+
+if a privacy entity is detected then  
+
+> 9:
+
+Execute the privacy protection stage.  
+
+> 10:
+
+else  
+
+> 11:
+
+Directly transmit the original images to the server.  
+
+> 12:
+
+end if  
+
+> 13:
+
+end for  
+
+> 14:
+
+Compute the objective in (16a).  
+
+> 15:
+
+Update Θ, β, η, ψ, and λ. 
+
+> 16:
+
+end while  
+
+> 17:
+
+Output : {Tθn (·)}Nn=1 , Cβ (·), {Eηn (·)}Nn=1 , Dψ (·), Uλ|K (·)
+
+The finial output Dn, 0 corresponds to the regenerated image 
+
+ˆSn, with the removed privacy content semantically recon-structed by the receiver. Furthermore, to enable conditional generation of the re-moved content based on the textual description ˆtn, the U-Net 
+
+Uλ|K (·) is augmented with a cross-attention mechanism [32]. In each cross-attention layer, the query Q is computed from intermediate feature maps of the U-Net, while the key K and value V are derived from the text embedding of ˆtn:Attention (Q, K, V) = softmax 
+
+ QK T
+
+√ν
+
+
+
+V, (38) 
+
+Q = WQ · Φn,t , K = WK · ˆtn, V = WV · ˆtn, (39) where Φn,t denotes the output of n-th intermediate layer within the U-Net at timestep t, WQ, WK , WV are learnable projection matrices, and ν is the scaling factor. The overall training procedure is provided in Algorithm 5. IV. S IMULATION RESULTS AND ANALYSIS 
+
+To evaluate the proposed privacy-preserving semantic framework, we use the multi-view dataset in [33], which contains 3, 926 objects of 13 categories, captured from M
+
+different viewpoints. In the simulations, we set M = 3 , i.e., each object is observed from three viewpoints, with each viewpoint captured by a distinct edge device. To improve the realism of the dataset, diverse background environments and lighting conditions are generated using Blender [34]. For the text generation module, we adopt the pretrained Qwen2.5-VL model [35], which employs a vision-language architecture to convert images into corresponding textual descriptions. For the ESCT transceiver, we adopt the pretrained T5-small model [36] as the semantic text encoder and decoder, where the T5 encoder extracts semantic representations from the input sentence, and the T5 decoder reconstructs the sentence from the recovered representations. The ESCT encoder and decoder, as well as the source-channel image transceiver, are trained in an end-to-end manner over an AWGN channel with an SNR of 
+
+12 dB and communication threshold of ϵk = 138 . Throughout the training and testing stages, the transmitted symbols are normalized as P (t)max = P (s)max = 1 Watt. During testing, unless specified, the SNR thresholds are τ (t)thre = τ (s)thre = 0 
+
+dB. For the Text-based Privacy Identification Module, the pretrained all-MiniLM-L6-v2 model [37] is adopt, where input text messages are projected into a 384 -dimensional identity embedding space. The privacy database is constructed by randomly selecting 30 sensitive images from the training set. For the privacy segmentation module, binary masks of the target objects are generated during the blender rendering process and used for privacy removal. For the privacy recovery module, the stable diffusion model [38] is fine-tuned on the privacy dataset to reconstruct the removed private content, conditioned on text embeddings. The adversary is equipped with a similar decoder architecture and the same pre-trained Stable Diffusion model but has no access to the privacy database. After decoding the received signal, the adversary attempts to recover the removed private content using only the received data and its local generative model. Four scenarios are considered in the performance evaluation of the proposed approach. Server-Full and Adversary-Full evaluate the reconstruction quality of the entire image at the authorized server and unauthorized receiver, respectively, while Server-Privacy and Adversary-Privacy evaluate the re-construction quality in the sensitive region of the transmitted image at the authorized server and unauthorized receiver, re-spectively. To further compare the proposed approach with the state-of-the-art method, the DeepJSCC model [31] is adopted as the baseline, where the original image is transmitted directly without any privacy protection, and both authorized receiver and adversary try to reconstruct the full image. For a fair comparison, the compression ratio, defined as the ratio of the dimension of the transmitted signal to that of the input image, is set to 1/48 for both the proposed approach and the DeepJSCC baseline. As shown in Fig. 7a, the peak signal-to-noise ratio (PSNR) is used to quantify the reconstruction quality, where a higher PSNR indicates greater pixel-level fidelity. The PSNR between 11 
+
+> (a)
+> (b)
+
+Fig. 7: (a) PSNR and (b) LPIPS of the original and reconstructed images at the server and the adversary. 
+
+the original image S and the reconstructed image ˆS in dB is    
+
+> PSNR (S,ˆS) = 10 log 10
+> X2max
+> MSE (S,ˆS)
+> !
+> ,(40)
+
+where Xmax is the maximum pixel value and MSE denotes the mean squared error. Fig. 7a shows that the PSNR of the reconstructed full image at the server increases with the received SNR, while that at the adversary remains nearly unchanged. This difference arises from their distinct capabil-ities in image reconstructions. At the server, better channel condition improves the quality of received image ˆAn, as well as the reliability of text transmission and physical-layer key generation, which jointly leads to a better reconstruction quality. In contrast, although the information received by the adversary improves with better channel conditions, it cannot access the privacy database, and thus its reconstruction of the privacy region shows little improvement. Consequently, the server consistently achieves a PSNR improvement of more than 6 dB over the adversary. Compared with the DeepJSCC baseline, the proposed framework yields a lower PSNR by around 2 dB, reflecting the tradeoff between reconstruction fidelity and privacy protection. Fig. 7a further shows that the PSNR within the privacy region remains nearly constant as the channel SNR increases for both the authorized server and the adversary. This is because the masked region contains no visual information, and thus improving the channel quality provides almost no benefits for image reconstruction in this region. Moreover, the PSNR within the privacy region is lower than that of the full image for both the server and the adversary, indicating the greater difficulty of pixel-level recon-struction in the masked area. Nevertheless, by leveraging the privacy database, the authorized server achieves a PSNR gain of more than 6 dB over the adversary in the sensitive region, demonstrating the effectiveness of the proposed framework. In Fig. 7b, we further adopt the Learned Perceptual Image Patch Similarity (LPIPS) metric [39] to evaluate the percep-tual quality of the reconstructed images. Using a pretrained AlexNet model [40], LPIPS measures perceptual similarity in the deep feature space rather than at the pixel level, by         
+
+> LPIPS (S,ˆS) = X
+> l
+> 1
+> HlWl
+> X
+> h,w
+> δl⊙
+> 
+> fl
+> Alex (S)−fl
+> Alex ( ˆS)
+> 22
+> ,
+> (41)
+
+where f l
+
+> Alex
+
+(·) denotes the normalized feature map extracted from the l-th layer of AlexNet, and δl is the learned channel-wise weighting vector for that layer. A lower LPIPS value corresponds to higher perceptual similarity, as it is computed from weighted feature distances. Unlike PSNR, LPIPS aligns more closely with human visual perception. Fig. 7b shows that the LPIPS of the reconstructed full images at both the server and adversary decrease with increasing channel SNR, as improved channel conditions enable more reliable recovery of semantic and visual information. As a result, the recovered image generated by the server in the proposed approach consistently achieves a lower LPIPS value by approximately 
+
+12% than the adversary. Fig. 7b further shows that LPIPS within the privacy region remains nearly unchanged as the SNR increases at both the authorized server and the adver-sary, since the masked region carries almost no information. The reconstructed image generated by the authorized server achieves the lowest LPIPS within the privacy region (Server-Privacy), indicating superior semantic consistency. Since the sensitive region is regenerated by the diffusion model rather than directly reconstructed from the received signal, it is less susceptible to channel noise while better preserving semantic meaning. Moreover, by leveraging the privacy database, the authorized server (Server-Privacy) achieves a lower LPIPS by 
+
+48% than the adversary (Adversary-Privacy) within the privacy region. Compared with the DeepJSCC baseline, although the proposed framework incurs a slight increase in the LPIPS of the full image, it significantly improves the perceptual quality on the reconstructed privacy region while effectively preventing privacy leakage, demonstrating a favorable tradeoff between semantic fidelity and privacy preservation. In Fig. 8, we evaluate the impact of the privacy database size by varying the number of reference images, denoted by 
+
+M , for each privacy entity in K during Stable Diffusion fine-12   
+
+> (a) (b) (c)
+
+Fig. 8: Effect of privacy database size on privacy-region reconstruction quality: (a) PSNR, (b) LPIPS, and (c) training loss. 
+
+tuning in Algorithm 4. For example, M = 3 corresponds to to three reference images captured from the front, side, and top views. For comparison, the adversary has no access to the privacy database K, corresponding to M = 0. As shown in Fig. 8a, increasing M from 1 to 3 slightly reduces the PSNR by approximately 1 dB, since multiple viewpoints make pixel-wise reconstruction more challenging. In contrast, Fig. 8b shows that the LPIPS decreases as M increases, indicating improved perceptual quality due to richer semantic information from multiple viewpoints. These results reveal a tradeoff between pixel-level fidelity and perceptual quality: in-corporating additional viewpoints slightly degrades pixel-wise reconstruction accuracy but significantly improves perceptual consistency. More importantly, the server consistently outper-forms the adversary across all values of M , demonstrating the effectiveness of the proposed privacy database K.Fig. 8c shows the training loss of Algorithm 4 during the privacy recovery optimization with a learning rate of 1×10 −6.Regardless of the viewpoint number M , the proposed frame-work eventually converges after sufficient training. Fig. 8c first shows that a smaller M leads to a lower final training loss, as a simpler training dataset is easier for the model to fit. However, a lower training loss does not guarantee a better perceptual reconstruction. The limited view diversity reduces the model’s generalization capability, resulting in lower visual quality as shown in Fig. 8b. In contrast, multi-view reference images provide richer semantic information during fine-tuning and a better perceptual reconstruction result. Therefore, increasing view diversity improves semantic fidelity, even though it slightly compromises pixel-level accuracy and training speed. In Figs. 9a and 9b, we investigate the impact of the encryption text transmission on the privacy detection stage. Specifically, the key disagreement rate (KDR) is introduced to evaluate the bit-wise discrepancy between the key kdev 
+
+generated at the device and ksrv at the server, by     
+
+> KDR( kdev ,ksrv ) = 1
+> d
+> dX
+> j=1
+> 1
+> 
+> kdev
+> j̸=ksrv
+> j
+> 
+> ,(42)
+
+where kdev  
+
+> j
+
+and ksrv  
+
+> j
+
+denote the j-th element of corresponding keys, and the indicator function 1(·) outputs 1 if two elements equal and 0 otherwise. A lower KDR indicates higher key con-sistency. In Fig. 9a, the KDR between the device and the server decreases as the SNR increases. This is because a higher SNR results in better quality of the physical channel measurement, thereby improving the key generation accuracy. Meanwhile, we assume that the adversary intercepts the strongest pilot signals between the device and the server, so as to estimate the CSI and generate a secret key using the same function 
+
+fPLK (·). As shown in Fig. 9a, the adversary achieves a much higher KDR than the legitimate users, and the resulting KDR stays close to 0.5 across all SNR, indicating that its generated keys are nearly random and statistically independent of the legitimate keys. This is because the adversary cannot exploit the channel reciprocity of the legitimate pair. These results demonstrate that the physical-layer key generation scheme achieves high key consistency between the legitimate uses while preventing adversary key recovery. To further evaluate the privacy leakage during the text-transmission stage, we feed the intercepted text-only signal 
+
+ya,n to the adversary, and check if the privacy identification can be detected in the reconstructed message Dβa (ya,n ). As shown in Fig. 9b, if no encryption is employed, the adversary achieves nearly 100% privacy identification accuracy across all SNR levels, indicating that the transmitted text alone leaks sufficient semantic information to reveal the privacy identity. In contrast, enabling physical-layer encryption reduces the identification accuracy to below 50% . The results in Fig. 9b further confirm the observations in Fig. 9a, where a high KDR between the adversary and the legitimate nodes leads to incorrect text decryption, thereby effectively suppressing 13 
+
+(a) (b) (c) 
+
+Fig. 9: (a) Key disagreement rate between the device and the server, and between the adversary and the server under different SNR. (b) Privacy detection accuracy at the adversary with and without encryption under different SNR. (c) Cross-view mutual information under different values of γ.
+
+privacy leakage. These results demonstrate that the proposed physical-layer encryption effectively protects sensitive identity information during the text transmission stage, even against a strong model-aware adversary. Fig. 9c investigates the effect of the weighting factor γ
+
+in (33), which controls the trade-off between the cross-view mutual information minimization and other training purposes. A higher mutual information weight indicates that more re-dundant semantic information will be removed from multiple devices’ observation of the same event. Note that, in this calculation, the cross-view mutual information is estimated using the well-trained variational approximation qω with a neural-based approximation of the conditional distribution in (28). Fig. 9c shows that the cross-view mutual information decreases as γ increases and approaches zero when γ ≥ 0.3.This indicates that redundant semantic information across different viewpoints can be effectively removed by setting the weight γ = 0 .3.V. C ONCLUSION 
+
+In this paper, we have proposed a novel VLM-based framework for privacy-preserving semantic communications in wireless edge systems. A text-based privacy detection module has been developed to identify sensitive entities using a privacy database maintained exclusively at the server. To protect the textual information, we further developed an encrypted semantic-channel encoder/decoder with a practical a practical secret-key establishment mechanism. Simulation results show that the keys generated from physical-layer characteristics ex-hibit a low mismatch rate between the device and server, while those obtained by the adversary remain effectively random. The proposed method also reduces textual privacy leakage by more than 50% compared with unprotected transmission. For image transmission, sensitive regions identified by the privacy detection module are removed at the edge device and reconstructed at the server using the VLM and prior knowledge stored in the privacy database. Even with access to comparable model parameters, the adversary cannot accurately recover the sensitive content without access to the privacy database, resulting in a 48% reconstruction-quality advantage at the server over the model-aware adversary. Furthermore, the proposed framework effectively suppresses cross-device semantic redundancy, with the estimated mutual information between transmitted representations approaching 0 bit, indicat-ing that redundant semantic information is rarely transmitted across devices. REFERENCES [1] H. Xie, Z. Qin, G. Y. Li, and B.-H. Juang, “Deep learning enabled semantic communication systems,” IEEE transactions on signal pro-cessing , vol. 69, pp. 2663–2675, 2021. [2] Q. Hu, G. Zhang, Z. Qin, Y. Cai, G. Yu, and G. Y. Li, “Robust semantic communications with masked VQ-VAE enabled codebook,”                            
+
+> IEEE Transactions on Wireless Communications , vol. 22, no. 12, pp. 8707–8722, 2023. [3] H. Yoo, T. Jung, L. Dai, S. Kim, and C.-B. Chae, “Real-time semantic communications with a vision transformer,” in Proc. IEEE International Conference on Communications Workshops , Seoul, South Korea, 2022, pp. 1–2. [4] G. Cicchetti, E. Grassucci, J. Park, J. Choi, S. Barbarossa, and D. Comminiello, “Language-oriented semantic latent representation for image transmission,” in Proc. IEEE International Workshop on Machine Learning for Signal Processing , London, UK, 2024, pp. 1–6. [5] Y. Zhao, Y. Yue, S. Hou, B. Cheng, and Y. Huang, “Lamosc: Large language model-driven semantic communication system for visual transmission,” IEEE Transactions on Cognitive Communications and Networking , vol. 10, no. 6, pp. 2005–2018, Dec. 2024. [6] S. Li, T. Xiao, H. Li, B. Zhou, D. Yue, and X. Wang, “Person search with natural language description,” in Proc. IEEE Conference on Computer Vision and Pattern Recognition , Honolulu, HI, USA, 2017, pp. 1970– 1979. [7] S. Zhao, C. Gao, Y. Shao, W.-S. Zheng, and N. Sang, “Weakly super-vised text-based person re-identification,” in Proc. IEEE International Conference on Computer Vision , Montreal, QC, Canada, 2021, pp. 11 395–11 404. [8] F. Jiang, S. Yang, M. W. Jones, and L. Zhang, “From attributes to natural language: A survey and foresight on text-based person re-identification,”
+> arXiv preprint arXiv:2408.00096 , 2024. 14
+
+[9] R. Agyeman and B. Rinner, “Decentralized text-based person re-identification in multi-camera networks,” IEEE Access , vol. 12, pp. 172 125–172 148, 2024. [10] H. Xie, Z. Qin, X. Tao, and K. B. Letaief, “Task-oriented multi-user semantic communications,” IEEE Journal on Selected Areas in Communications , vol. 40, no. 9, pp. 2584–2597, 2022. [11] J. Shao, Y. Mao, and J. Zhang, “Task-oriented communication for multi-device cooperative edge inference,” IEEE Transactions on Wireless Communications , vol. 22, no. 1, pp. 73–87, 2023. [12] Y. Yao, Z. Wang, P. Luo, Y. Cheng, J. Hou, and X.-Y. Li, “Priv-GuardInfer: Channel-level end-edge collaborative inference strategy protecting original inputs and sensitive attributes,” IEEE Transactions on Mobile Computing , vol. 25, no. 2, pp. 2480–2497, Feb. 2026. [13] S. A. Khowaja, A. Waqas, M. T. Quasim, and K. Dev, “POST: Pruning oriented security for inversion attack in edge-based internet of things,” 
+
+IEEE Internet of Things Journal , vol. 13, no. 3, pp. 4411–4420, Feb. 2026. [14] X. Dong, H. Yin, J. M. Alvarez, J. Kautz, P. Molchanov, and H. T. Kung, “Privacy vulnerability of split computing to data-free model inversion attacks,” in Proc. British Machine Vision Conference . London, UK: BMVA Press, 2022. [15] H. Nam, J. Park, J. Choi, M. Bennis, and S.-L. Kim, “Language-oriented communication with semantic coding and knowledge distillation for text-to-image generation,” in Proc. IEEE International Conference on Acoustics, Speech and Signal Processing , Seoul, South Korea, 2024, pp. 13 506–13 510. [16] R. Meng, S. Gao, D. Fan, H. Gao, Y. Wang, X. Xu, B. Wang, S. Lv, Z. Zhang, M. Sun, S. Han, C. Dong, X. Tao, and P. Zhang, “A survey of secure semantic communications,” arXiv preprint arXiv:2501.00842 ,2025. [17] W. Chen, S. Tang, and Q. Yang, “Enhancing image privacy in semantic communication over wiretap channels leveraging differential privacy,” in Proc. IEEE International Workshop on Machine Learning for Signal Processing , London, UK, 2024, pp. 1–6. [18] M. Seif, Y. Nie, A. J. Goldsmith, and H. V. Poor, “Collaborative inference over wireless channels with feature differential privacy,” arXiv preprint , 2024. [19] M. Abadi and D. G. Andersen, “Learning to protect communications with adversarial neural cryptography,” arXiv preprint arXiv:1610.06918 ,2016. [20] X. Luo, Z. Chen, M. Tao, and F. Yang, “Encrypted semantic com-munication using adversarial training for privacy preserving,” IEEE Communications Letters , vol. 27, no. 6, pp. 1486–1490, 2023. [21] Y. Wang, S. Guo, Y. Deng, H. Zhang, and Y. Fang, “Privacy-preserving task-oriented semantic communications against model inversion at-tacks,” arXiv preprint arXiv:2312.03252 , 2023. [22] T. Bai, Q. Yang, and S. Fu, “User-defined privacy-preserving data sharing for connected autonomous vehicles utilizing edge computing,” in Proc. IEEE/ACM Symposium on Edge Computing , Wilmington, DE, USA, 2023. [23] I. E. Aguerri and A. Zaidi, “Distributed variational representation learn-ing,” IEEE Transactions on Pattern Analysis and Machine Intelligence ,vol. 43, no. 4, pp. 1200–1214, 2021. [24] H. Wei, W. Ni, W. Xu, F. Wang, D. Niyato, and P. Zhang, “Federated semantic learning driven by information bottleneck for task-oriented communications,” IEEE Communications Letters , vol. 27, no. 10, pp. 2652–2656, 2023. [25] J. Li, D. Li, C. Xiong, and S. Hoi, “Blip: Bootstrapping language-image pre-training for unified vision-language understanding and generation,” 
+
+arXiv preprint arXiv:2201.12086 , 2022. [26] S. Mathur, W. Trappe, N. B. Mandayam, C. Ye, and A. Reznik, “Radio-telepathy: Extracting a secret key from an unauthenticated wireless channel,” in Proc. ACM International Conference on Mobile Computing and Networking , San Francisco, CA, USA, 2008, pp. 128–139. [27] K. Zeng, “Physical layer key generation in wireless networks: Chal-lenges and opportunities,” IEEE Communications Magazine , vol. 53, no. 6, pp. 33–39, 2015. [28] A. Kirillov, E. Mintun, N. Ravi, H. Mao, C. Rolland, L. Gustafson, T. Xiao, S. Whitehead, A. C. Berg, W.-Y. Lo, P. Doll´ ar, and R. Girshick, “Segment anything,” in Proc. IEEE/CVF International Conference on Computer Vision , Paris, France, 2023, pp. 15 054–15 066. [29] H. Xie, Z. Qin, G. Y. Li, and B.-H. Juang, “Deep learning enabled semantic communication systems,” IEEE Transactions on Signal Pro-cessing , vol. 69, pp. 2663–2675, 2021. [30] P. Cheng, W. Hao, S. Dai, J. Liu, Z. Gan, and L. Carin, “Club: A contrastive log-ratio upper bound of mutual information,” arXiv preprint arXiv:2006.12013 , 2020. [31] E. Bourtsoulatze, D. B. Kurka, and D. G¨ und¨ uz, “Deep joint source-channel coding for wireless image transmission,” IEEE Transactions on Cognitive Communications and Networking , vol. 5, no. 3, pp. 567–579, 2019. [32] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in Neural Information Processing Systems , vol. 30, 2017. [33] Z. Wu, S. Song, A. Khosla, F. Yu, L. Zhang, X. Tang, and J. Xiao, “3d shapenets: A deep representation for volumetric shapes,” in Proc. IEEE Conference on Computer Vision and Pattern Recognition , Boston, MA, USA, 2015, pp. 1912–1920. [34] B. Foundation, “Blender: A 3d creation suite,” 2025, accessed: 2026-06-15. [Online]. Available: https://www.blender.org [35] S. Bai, K. Chen, X. Liu, J. Wang, W. Ge, S. Song et al. , “Qwen2.5-vl technical report,” arXiv preprint arXiv:2502.13923 , 2025. [36] C. Raffel, N. Shazeer, A. Roberts, K. Lee, S. Narang, M. Matena, Y. Zhou, W. Li, and P. J. Liu, “Exploring the limits of transfer learning with a unified text-to-text transformer,” Journal of Machine Learning Research , vol. 21, no. 140, pp. 1–67, 2020. [37] W. Wang et al. , “Minilm: Deep self-attention distillation for task-agnostic compression of pre-trained transformers,” Advances in Neural Information Processing Systems , vol. 33, pp. 5776–5788, 2020. [38] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, “High-resolution image synthesis with latent diffusion models,” in Proc. IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , New Orleans, LA, USA, 2022, pp. 10 684–10 695. [39] R. Zhang, P. Isola, A. A. Efros, E. Shechtman, and O. Wang, “The unreasonable effectiveness of deep features as a perceptual metric,” in 
+
+Proc. IEEE Conference on Computer Vision and Pattern Recognition ,Salt Lake City, UT, USA, 2018, pp. 586–595. [40] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Imagenet classification with deep convolutional neural networks,” in Advances in Neural Information Processing Systems (NeurIPS) , vol. 25, 2012.

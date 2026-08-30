@@ -1,0 +1,2637 @@
+Title: E2-Conditioned Finite-Horizon Effective Capacity for Public-Safety MCX over Shared O-RAN
+
+URL Source: https://arxiv.org/pdf/2608.25442v1
+
+Published Time: Thu, 27 Aug 2026 00:35:50 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# E2-Conditioned Finite-Horizon Effective Capacity for Public-Safety MCX over Shared O-RAN 
+
+Jingqing Wang, Member, IEEE and Wenchi Cheng, Senior Member, IEEE 
+
+Abstract —Supporting public-safety Mission Critical Services (MCX) over a shared Open radio access network (O-RAN) requires service assurance over finite incident horizons, while ordinary mobile traffic competes for the same resources and heterogeneous E2 domains expose different observations, control actions, and actuation latencies. Existing RAN key performance indicators are retrospective, whereas conventional effective capac-ity characterizes an asymptotic stationary regime and therefore suppresses both the initial E2-observed condition and the finite selection-to-actuation transient. To solve this problem, in this paper we develop an E2-conditioned finite-horizon effective capacity (FH-EC) framework for public-safety MCX over shared O-RAN. Specifically, we first establish a finite-horizon O-RAN MCX-based service model that incorporates E2-observed net-work states, control actuation latency, and correlation-aware connectivity diversity. Based on this model, we derive an FH-EC formulation that characterizes the executable service capability within a finite mission horizon. Furthermore, we transform FH-EC into confidence-calibrated capability profiles and develop an MCX orchestration framework with contract certification, shared-resource protection, and FH-EC-driven profile selection at the Near-RT RAN Intelligent Controller (RIC). Coupled MATLAB/ns-3 evaluations demonstrate the predicted short-horizon state and actuation effects and show that adaptive connectivity selection improves MCX supportability under O-DU degradation while satisfying the configured multi-QoS and non-MCX protection requirements. 
+
+Index Terms —Finite-horizon effective capacity, multi-QoS pro-visioning, E2 exposure, HRLLC, public-safety MCX, O-RAN. 
+
+I. I NTRODUCTION 
+
+# OPEN radio access network (O-RAN) has emerged as a promising architecture for next-generation networks by introducing programmable control, open interfaces, and AI-driven network orchestration [1]. Through the Service Man-agement and Orchestration (SMO) framework, the Non-Real-Time RAN Intelligent Controller (Non-RT RIC), the Near-Real-Time RIC (Near-RT RIC), and standardized interfaces, network intelligence can be deployed across disaggregated O-RAN Central Unit (O-CU) and O-RAN Distributed Unit (O-DU) entities operating under heterogeneous implementa-tions and administrative domains [2]. This architectural evo-lution creates an important opportunity for supporting public-safety Mission Critical Services (MCX) over shared mobile infrastructure [3, 4]. However, programmability alone does 
+
+This work of Jingqing Wang and Wenchi Cheng was supported in part by the National Natural Science Foundation of China under Grant 62341132 and the Natural Science Basic Research Program of Shaanxi under Grant 2024JC-YBQN-0642. Jingqing Wang and Wenchi Cheng are with the State Key Laboratory of Integrated Services Networks, Xidian University, Xi’an, China (e-mails: jqwangxd@xidian.edu.cn; wccheng@xidian.edu.cn). 
+
+not provide service assurance. Open interfaces make a RAN configuration observable and controllable, but not necessarily certifiably supportable for a critical service. This distinction is particularly important for MCX. Con-trol and group-voice bearers require bounded delivery de-lay and a low probability of terminal non-delivery. Real-time video is additionally sensitive to packet-delay varia-tion while status-update traffic requires information freshness. Finite-blocklength transmission further couples payload rate, blocklength, and reliability [5]. Consequently, delivered rate, delay, jitter, age of information (AoI) [6, 7], and reliabil-ity represent different, service-dependent quality-of-service (QoS) dimensions rather than interchangeable manifestations of average throughput [8–10]. Their interactions are cen-tral to hyper-reliable and hyper-low-latency communications (HRLLC) [11–13]. In a shared RAN, these requirements are coupled to ordinary mobile services. Reserving additional resources may improve MCX supportability, but can substan-tially reduce non-MCX utility or starve a protected subset of ordinary users. An MCX assurance mechanism must therefore certify service-specific risks while explicitly constraining the collateral degradation imposed on non-MCX traffic. Although O-RAN provides the architectural mechanisms needed to act on this problem, it introduces a capability-semantic gap. E2 measurements describe what an E2 node reports, while its advertised RAN functions specify what the Near-RT RIC may observe and control. Different E2 nodes may expose different measurement granularity, reporting periods, control actions, and actuation delays. These raw observations and action sets do not directly quantify the service that an executable configuration can support. At the admission epoch of an MCX flow, the Near-RT RIC must select a profile specifying the connectivity mode, participating domains, local execution policy, and reserved resources. The central challenge, therefore, is to determine the level of service a candidate profile can guarantee within a finite MCX mis-sion window [14], accounting for real-time E2 telemetry and selection-actuation delays. Addressing this requires a unified capability coordinate system through which heterogeneous E2 configurations can be compared and safely selected. The mission window in this question is not merely the periodic execution interval of the Near-RT RIC. It is the finite commitment window over which an admitted MCX profile and its service certificate must remain valid. After admission, slot-level scheduling, hybrid automatic repeat request (HARQ), link adaptation, and other local decisions may continue to adapt within the selected O-CU/O-DU policy, but the certified profile cannot be freely replaced without invalidating the capa-arXiv:2608.25442v1 [cs.NI] 26 Aug 2026 2
+
+bility. Moreover, profile-selection runtime, E2 control-message delivery, processing, and distributed O-CU/O-DU actuation consume a non-negligible portion of a short mission window. During this transient, service is governed by the pre-actuation policy rather than the newly selected one. The service available over the complete mission window therefore depends jointly on the E2-conditioned initial state, the finite control transient, and the post-actuation execution policy. Existing RAN key performance indicators cannot directly answer this finite-horizon question because they are pri-marily descriptive rather than forward-looking and action-conditioned. From a theoretical perspective, effective capacity provides a risk-sensitive abstraction for statistical delay provi-sioning [15, 16]. However, conventional effective capacity is defined through the asymptotic log-moment rate of a stationary and ergodic service process. Its steady-state limit suppresses dependence on the initial E2-observed condition and assigns a vanishing contribution to a finite control transient. This approximation is appropriate when the operational horizon is much longer than the channel mixing time, congestion-burst duration, mobility interval, infrastructure-recovery time, and control-actuation delay. It can, however, overestimate or underestimate the service available when the MCX commit-ment window is comparable to these timescales. The required abstraction should therefore retain the risk-sensitive interpre-tation of effective capacity over the actual mission horizon, explicitly incorporate the selection-and-actuation transient, and recover conventional effective capacity as the horizon grows. Existing studies provide complementary components of such an abstraction. Finite-horizon scheduling has been in-vestigated for wireless networked control systems [14], while finite-blocklength and mission-effective-capacity formulations characterize communication reliability and dependability [17]. In O-RAN, resource allocation has been studied under network-slicing constraints [18], and stochastic network cal-culus has been used to support latency-tail-sensitive orchestra-tion [19]. ColO-RAN and ns-O-RAN further provide valuable foundations for learning-based xApps, closed-loop control, and system-level O-RAN experimentation [20, 21]. Packet duplication and multi-connectivity can improve delivery relia-bility by exploiting spatial diversity, although their benefit de-pends on resource consumption and correlated radio or infras-tructure failures [22]. These studies establish the foundations for programmable control, statistical QoS provisioning, and connectivity diversity. However, they do not jointly provide an E2-conditioned and actuation-aware finite-horizon capability contract that carries simultaneous finite-sample service and multi-QoS certificates and can be consumed by a Near-RT RIC while protecting ordinary traffic in a shared O-RAN. To bridge this gap, we develop an E2-conditioned finite-horizon effective-capacity (FH-EC) framework for public-safety MCX over shared O-RAN. Specifically, first, we de-velop an E2-conditioned and actuation-aware finite-horizon service model for MCX over shared O-RAN. Second, we establish the long-horizon consistency of the proposed FH-EC under a finite E2-control transient and a primitive post-actuation Markov-additive kernel. Third, we develop a contract-preserving O-RAN profile-orchestration framework. 
+
+> Fig. 1. Shared Open 6G RAN architecture for E2-conditioned FH-EC service profile orchestration.
+
+Coupled MATLAB/ns-3 system-level evaluation results evalu-ate the capability model and assess the effects of the proposed E2-conditioned finite-horizon multi-QoS orchestration. The rest of this paper is organized as follows. Section II builds the O-RAN MCX service model. Section III derives E2-conditioned FH-EC expressions. Section IV establishes the FH-EC-driven MCX profile orchestration in O-RAN. Section V validates and assesses the system performance. Section VI concludes the paper. II. O-RAN MCX S ERVICE MODEL 
+
+A. Network Architecture and Information Model 
+
+As illustrated in Fig. 1, the considered O-RAN architecture comprises an SMO/Non-RT RIC, a logical Near-Real-Time RIC coordination plane, one or more O-CU-CP/O-CU-UP en-tities, and multiple O-DU/O-RAN Radio Unit (O-RU) nodes. The O-CU-UP hosts the user-plane Packet Data Convergence Protocol (PDCP) functions, while Radio link Control (RLC), MAC, HARQ, and slot-level scheduling are executed at the O-DUs [23, 24]. Let I = {1, . . . , I } be the logical E2 control domains. Domain i ∈ I contains the O-DU/E2-node set, denoted by 
+
+Bi, where B = ∪i∈I Bi and Bi ∩ B j = ∅, i 6 = j, and B is the set of O-DUs. Different E2 nodes may expose different measurements, control functions, and actuation delays. We characterize the E2 exposure profile, denoted by Ξi, of domain 
+
+i by 
+
+Ξi , (hKPM  
+
+> i
+
+, ARC  
+
+> i
+
+, T KPM  
+
+> i
+
+, τ act 
+
+> i,l
+
+) (1) where hKPM  
+
+> i
+
+is the domain-specific Key Performance Measure-ment (KPM) observation and aggregation map, ARC  
+
+> i
+
+is the set of RAN-control commands exposed to the orchestrator, T KPM 
+
+> i
+
+is the KPM reporting period, and τ act  
+
+> i,l
+
+is the delay from issuing a control command to its effective application. Let Tsl and Tx
+
+denote the O-DU scheduling-slot duration and the Near-RT RIC orchestration interval, respectively with Tsl ≪ Tx. We define tl = lT x as the beginning of Near-RT orchestration epoch l, and let kl = ⌊tl/T sl ⌋ as the corresponding slot index. 3
+
+The observation delay, denoted by δobs  
+
+> i,l
+
+, measured in slots is given as follows: 
+
+δobs  
+
+> i,l
+
+= ⌈ τ obs 
+
+> i,l
+
+Tsl 
+
+⌉. (2) Let zi[k] denote the physical state of domain i, and let hKPM 
+
+> i
+
+be its E2SM-KPM observation and aggregation map. Then, the latest E2-exposed observation, denoted by ˆzi[l], available at tl is modeled as: ̂
+
+zi[l] = hKPM 
+
+> i
+
+(zi[kl − δobs  
+
+> i,l
+
+]) + νi[l] (3) where νi[l] represents measurement noise, time/frequency aggregation error, quantization, compression, and unreported-state uncertainty. The information available to the orchestrator, denoted by FE2  
+
+> l
+
+, consists of the time-stamped E2 observations and past exposed control outcomes. An MCX flow s is admitted at orchestration epoch ls, whose beginning time is tls = t0
+
+> s
+
+. At admission, the Near-RT RIC selects one persistent profile a, which is given as follows: 
+
+a = (ma, Ia,̟ s,a , bs,a , τ act 
+
+> s,a
+
+) , (4) where ma ∈ { SC , DP } is the connectivity mode, Ia is the participating E2-domain set, ̟ s,a is the fixed O-CU/O-DU execution-policy tuple, bs,a is the reserved-resource vector, and τ act  
+
+> s,a
+
+is the profile-actuation delay. Once admitted, the profile identifier and its resource reservation remain unchanged over a finite operational window, denoted by Ts, given by 
+
+Ts = [ t0 
+
+> s
+
+, t 0 
+
+> s
+
++ ∆ s) (5) where ∆s is the mission horizon, which is given by 
+
+∆s = KsTsl , Ks ∈ Z+ (6) Slot-level scheduling, HARQ, and link adaptation may still adapt to local observations according to the fixed local policy contained in ̟ s,a .Let Tsel [ls] denote the runtime required by the Near-RT RIC to complete profile selection for flow s at its admission epoch 
+
+ls. The runtime is upper bounded as 0 ≤ Tsel [ls] ≤ T max sel . For candidate profile a, the total control-to-effect delay, denoted by τ ctl 
+
+> s,a
+
+, is defined as follows: 
+
+τ ctl  
+
+> s,a
+
+, T max sel + τ act  
+
+> s,a
+
+, (7) where τ act  
+
+> s,a
+
+includes the E2 control-message delivery, pro-cessing, and distributed O-CU/O-DU actuation delay. The corresponding number of pre-actuation slots and the effective slot of profile a are, respectively, given as follows: 
+
+
+
+dctl 
+
+> s,a
+
+,
+
+⌈ τ ctl 
+
+> s,a
+> Tsl
+
+⌉
+
+;
+
+keff 
+
+> s,a
+
+, kls + dctl 
+
+> s,a
+
+.
+
+(8) Only profiles satisfying dctl  
+
+> s,a
+
+< K s are eligible for admis-sion. During the interval [kls , k eff 
+
+> s,a
+
+), the target profile has not yet become effective. We denote the corresponding pre-actuation policy by ̟ pre  
+
+> s
+
+. For a newly admitted MCX flow, ̟ 
+
+> pre
+> s
+
+provides no guaranteed payload service, whereas for an explicitly supported reconfiguration it may represent the incumbent policy. From slot keff  
+
+> s,a
+
+onward, the selected policy ̟ 
+
+> s,a
+
+remains unchanged until the end of the mission window. 
+
+B. Finite-Horizon SC/DP Radio Service 
+
+Let S = SM ∪ S N and SM ∩ S N = ∅, where SM and 
+
+SN denote the MCX and non-MCX flow sets. An MCX bearer may represent a control stream, a video stream, or a data/status-update stream [25]. Packet n of flow s arrives at the RAN ingress at time gs,n 
+
+and contains Ls,n information bits. The number of arriving bits, denoted by As[k], in slot k is given as follows: 
+
+As[k] = ∑  
+
+> n:gs,n ∈[kT sl ,(k+1) Tsl )
+
+Ls,n . (9) Let χWb [k] ∈ [0 , 1] and χPb [k] ∈ [0 , 1] denote the available bandwidth and power fractions of O-DU b. Let ωb,f [k] and 
+
+pb,f [k] denote the bandwidth and transmit power allocated by O-DU b to flow f ∈ S in slot k. The per-slot constraints are listed as follows: 
+
+∑ 
+
+> f∈S
+
+ωb,f [k] ≤ χWb [k]Wb;
+
+∑ 
+
+> f∈S
+
+pb,f [k] ≤ χPb [k]P max  
+
+> b
+
+, (10) where Wb and P max  
+
+> b
+
+are the nominal bandwidth and maximum transmit power of O-DU b, respectively. After accounting for pilot and control overhead, the number of channel uses, denoted by nb,f [k], assigned to flow f is modeled as follows: 
+
+nb,f [k] = ⌊ηbωb,f [k]Tsl ⌋ (11) where ηb ∈ (0 , 1) is the usable time-frequency fraction. For ωb,f [k] > 0, the effective SINR, denoted by γb,f [k], is modeled as follows: 
+
+γb,f [k] = pb,f [k]gb,f [k]
+
+N0ωb,f [k] + Ib,f [k] (12) where gb,f [k] is the effective channel power gain, N0 is the noise power spectral density, and Ib,f [k] is the aggregate co-channel interference. Assuming quasi-static channel conditions over one codeword, under the finite-blocklength normal ap-proximation, the achievable coding rate, denoted by Rb,f [k],in bits per channel use is modeled as: 
+
+Rb,f [k] ≈
+
+[
+
+log 2 (1 + γb,f [k]) −
+
+√
+
+V (γb,f [k]) 
+
+nb,f [k] Q−1(ǫb,f [k]) 
+
+]+
+
+(13) where ǫb,f [k] denotes the target decoding error probability, 
+
+Q−1(·) is the inverse Gaussian Q-function, and V (γb,f [k]) is the channel dispersion, which is defined as follows: 
+
+V (γb,f [k]) = 
+
+[
+
+1 − 1(1 + γb,f [k]) 2
+
+]
+
+(log 2 e)2. (14) Define the scheduled information payload, denoted by 
+
+Lb,f [k], as follows: 
+
+Lb,f [k] = nb,f [k]Rb,f [k] (15) The decoding-success indicator is defined as ξb,f [k] ∈ { 0, 1},with Pr {ξb,f [k] = 1 |γb,f [k], n b,f [k]} = 1 − ǫb,f [k]. (16) 4
+
+Therefore, we denote the successfully decoded leg-level ser-vice, denoted by ˜Sb,f [k], as follows: 
+
+˜Sb,f [k] = ξb,f [k]Lb,f [k]. (17) The lower-layer queue, RLC, and HARQ processes map 
+
+˜Sb,s [k] to packet-completion times. Each MCX bearer is anchored at one transmitting-side O-CU-UP/PDCP entity. Let T out  
+
+> s
+
+denote the terminal-outcome timeout. Let dlink  
+
+> b,s,n,u
+
+be the completion time of packet n at receiver u through O-DU b, as induced by the lower-layer queue/HARQ process. Let Cs,n (a) be the O-DU set used by candidate a. It is a singleton for SC and contains at least two O-DUs for DP. The completion time, denoted by das,n,u , at receiver u is given as follows: 
+
+das,n,u = min   
+
+> b∈C s,n (a)
+
+dlink  
+
+> b,s,n,u
+
+(18) Then, the group-completion time, denoted by das,n , is given as follows: 
+
+das,n = inf 
+
+{
+
+t : 1
+
+|U s|
+
+∑
+
+> u∈U s
+
+1 {das,n,u ≤ t} ≥ ζs
+
+}
+
+, (19) where ζs is the required receiver-completion fraction and Us
+
+is the target receiver set. The bearer-level group-completion indicator, denoted by Y as,n , is defined as follows: 
+
+Y as,n = 1 {das,n ≤ gs,n + T out 
+
+> s
+
+} . (20) Thus, the unique-payload service is given by 
+
+Ss,a [k] = ∑
+
+> n
+
+Ls,n 1 {das,n ∈ [kT sl , (k + 1) Tsl )} . (21) DP consumes resources on every selected leg but contributes each successfully delivered payload only once. Thus, a du-plicated packet consumes resources on all selected links but contributes its payload to Ss,a [k] only once. The first suc-cessfully received copy determines the packet delivery time, which is also consistent with standard packet-delay-variation measurement practice. 
+
+C. Finite-Horizon Multi-QoS and Coexistence Requirements 
+
+For each MCX flow s ∈ S M , its service requirements are summarized by: 
+
+qs , (κs, ∆s, r min  
+
+> s
+
+, D max  
+
+> s
+
+, J max  
+
+> s
+
+, A max  
+
+> s
+
+, T out  
+
+> s
+
+, βs, ǫs, ζ s
+
+)
+
+(22) where κs is the service class, rmin  
+
+> s
+
+is the minimum supported payload rate, Dmax  
+
+> s
+
+, Jmax  
+
+> s
+
+, and Amax  
+
+> s
+
+are the RAN-side delay, packet-delay-variation, and AoI thresholds, respectively, βs
+
+contains the tolerated within-window violation fractions, and 
+
+ǫs is the violation-budget vector, which are given by 
+
+{
+
+βs = [βDs , β Js , β As , β Es
+
+]T ;
+
+ǫs = [ǫRs , ǫ Ds , ǫ Js , ǫ As , ǫ Es
+
+]T . (23) where βqs (q ∈ Q s) and ǫqs (q ∈ Q s)+ are the tolerated within-window violation and the violation-budget for delay, jitter, AoI, and reliability, Qs ⊆ { D, J, A, E } contains the QoS dimensions active for service s, and Q+ 
+
+> s
+
+= {R} ∪ Q s denotes the active risk-index set, where R denotes the delivered-rate violation. Setting βqs = 0 recovers a zero-tolerance. A positive 
+
+βqs permits a small application-specific fraction of within-window violations. For a successfully delivered packet, its RAN-side delay, denoted by Das,n , is given as follows: 
+
+Das,n = das,n − gs,n . (24) Let P∆ 
+
+> s
+
+denote the set of consecutive successfully delivered packet pairs in source sequence order and n− be the preceding successfully delivered packet in source sequence order. For 
+
+(n−, n ) ∈ P ∆ 
+
+> s
+
+, define the packet-delay-variation magnitude, denoted by Jas,n , as follows: 
+
+Jas,n =
+
+∣∣∣Das,n − Das,n −
+
+∣∣∣ . (25) For a status-update flow, let 
+
+uas (t) = max {gs,n : Y as,n = 1 , d as,n ≤ t} (26) be the generation time of the freshest update delivered by time 
+
+t. The instantaneous AoI, denoted by AoI as (t), is defined as follows: 
+
+AoI as (t) = t − uas (t). (27) The value of uas (t0
+
+> s
+
+) is initialized by the freshest update delivered before the finite horizon. Define the fully observed packet set, denoted by N out  
+
+> s
+
+, as follows: 
+
+N out  
+
+> s
+
+= {n : t0 
+
+> s
+
+≤ gs,n ≤ t0 
+
+> s
+
++ ∆ s − T out 
+
+> s
+
+} , (28) The arrival-time definition of N out  
+
+> s
+
+avoids outcome-dependent right censoring. Define the successful delivered subset, de-noted by N succ  
+
+> s,a
+
+, within the finite operational window as follows: 
+
+N succ  
+
+> s,a
+
+= {n ∈ N out  
+
+> s
+
+: Y as,n = 1 } . (29) Then, the realized delivered rate and terminal non-delivery ratio are given, respectively, as follows: 
+
+
+
+Ra, ∆ 
+
+> s
+
+= 1∆s
+
+∑
+
+> k∈K s
+
+Ss,a [k]; 
+
+ZEs,a = 1  
+
+> |N out
+> s|
+
+∑ 
+
+> n∈N out
+> s
+
+(1 − Y as,n 
+
+) , (30) where Ks , {kls , k ls +1 , . . . , k ls +Ks −1} is the mission-slot index set. The remaining mission metrics are given as follows: 
+
+
+
+ZDs,a = 1  
+
+> |N succ
+> s,a |
+
+∑ 
+
+> n∈N succ
+> s,a
+
+1{Das,n > D max  
+
+> s
+
+};
+
+ZJs,a = 1 
+
+> |P ∆
+> s|
+
+∑
+
+> (n−,n )∈P ∆
+> s
+
+1
+
+{
+
+|Das,n − Das,n − | > J max 
+
+> s
+
+}
+
+;
+
+ZAs,a = 1∆s
+
+> t0
+> s+∆ s
+
+∫
+
+> t0
+> s
+
+1 {AoI as (t) > A max  
+
+> s
+
+} dt. 
+
+(31) If an active delay or jitter metric has no evaluable sample, the corresponding trajectory is conservatively counted as a mission violation. The finite-horizon service requirements are given as follows: {
+
+Pr {R∆ 
+
+> s,a
+
+< r min  
+
+> s
+
+|F E2 
+
+> ls
+
+} ≤ ǫRs ;
+
+Pr {Zqs,a > β qs |F E2 
+
+> ls
+
+} ≤ ǫqs, q ∈ Q s
+
+(32) 5
+
+where ls is the orchestration epoch containing t0
+
+> s
+
+. Furthermore, we define the joint finite-horizon multi-QoS violation event, denoted by VMQ s , as follows: 
+
+VMQ s = {R∆ 
+
+> s,a
+
+< r min 
+
+> s
+
+} ∪ ⋃
+
+> q∈Q s
+
+{Zqs,a > β qs
+
+} . (33) For non-MCX flow n, define its conditional mean delivered rate, denoted by rn[l], over Near-RT epoch l as follows: 
+
+rn[l] = 1
+
+Tx
+
+E
+
+[ ∑
+
+> k∈K l
+
+Sn[k]
+
+∣∣∣∣FE2 
+
+> l
+
+]
+
+(34) where Sn[k] is the unique payload bits for non-MCX flow n
+
+in slot k and Kl is the slot set associated with Near-RT epoch 
+
+l. The aggregate non-MCX utility, denoted by UN [l], is given as follows: 
+
+UN [l] = ∑
+
+> n∈S N
+
+ωn log 
+
+(
+
+1 + rn[l]
+
+rref 
+
+)
+
+(35) where rref > 0 is a normalization rate and ωn > 0 is a service weight. Let U 0 
+
+> N
+
+[l] > 0 denote the reference utility under the same traffic, channel, mobility, and infrastructure realization, but with MCX-specific reservation and prioritization disabled. The coexistence loss, denoted by LN [l], is given as: 
+
+LN [l] = 
+
+[U 0 
+
+> N
+
+[l] − UN [l]]+
+
+U 0 
+
+> N
+
+[l] (36) where (x)+ , max {0, x } and the shared-network protection requirement is LN [l] ≤ ρmax , where ρmax ∈ [0 , 1) .III. E2-C ONDITIONED FINITE -H ORIZON EFFECTIVE 
+
+CAPACITY 
+
+A. Finite-Horizon Service Capability 
+
+Let Spre  
+
+> s,a
+
+[k] ≥ 0 denote the backlogged potential service available to flow s during the pre-actuation phase, and let 
+
+Spost  
+
+> s,a
+
+[k] ≥ 0 denote the backlogged potential service after candidate profile a becomes effective. For a newly admitted flow, we conservatively set Spre  
+
+> s,a
+
+[k] = 0 unless a default service contract is explicitly modeled. The cumulative actuation-aware potential service, denoted by S∆s
+
+> s,a
+
+, over the complete mission horizon is defined as follows: 
+
+S∆s 
+
+> s,a
+
+,
+
+> keff
+> s,a −1
+
+∑
+
+> k=kls
+
+Spre  
+
+> s,a
+
+[k] +  
+
+> kls +Ks−1
+
+∑
+
+> k=keff
+> s,a
+
+Spost  
+
+> s,a
+
+[k]. (37) 
+
+Definition 1 (E2-conditioned actuation-aware FH-EC): For QoS exponent θs > 0, the conditional service transform, denoted by MFH  
+
+> s,a
+
+(θs), is defined as follows: 
+
+MFH  
+
+> s,a
+
+(θs) , E
+
+[
+
+exp 
+
+(
+
+−θsS∆s
+
+> s,a
+
+)∣ ∣∣FE2  
+
+> ls
+
+,̟ s,a 
+
+]
+
+. (38) The corresponding E2-conditioned finite-horizon effective ca-pacity, denoted by CFH  
+
+> s,a
+
+(θs) is defined as: 
+
+CFH  
+
+> s,a
+
+(θs) , − 1
+
+θs∆s
+
+log MFH  
+
+> s,a
+
+(θs). (39) Note that Definition 1 presents a finite-horizon conditional log-moment measure of the service process. Unlike conven-tional effective capacity, it does not replace the conditional service distribution by its long-term stationary limit [15, 16]. Instead of replacing the infinite-horizon limit by an arbitrary observation window, the proposed FH-EC preserves the oper-ational horizon as a mission parameter and retains the initial conditional distribution induced by E2 exposure. 
+
+Definition 2: (E2-conditioned finite-horizon effective band-width) For θs > 0, the finite-horizon effective bandwidth, denoted by BFH  
+
+> s
+
+(θs), is defined as follows: 
+
+BFH  
+
+> s
+
+(θs) , 1
+
+θs∆s
+
+log E[exp( θsAs(ls, ∆s)) ∣∣ FE2 
+
+> ls
+
+] (40) where As(ls, ∆s) is the cumulative arrival process over the same horizon, which is given by 
+
+As(ls, ∆s) =  
+
+> kl+Ks−1
+
+∑
+
+> k=kl
+
+As[k]. (41) Assume that, conditioned on FE2  
+
+> l
+
+, the exogenous arrival process and future potential-service innovations are indepen-dent. For any backlog surplus threshold qth  
+
+> s
+
+≥ 0, the Chernoff inequality yields: Pr 
+
+{
+
+As(ls, ∆s) − S∆s 
+
+> s,a
+
+≥ qth 
+
+> s
+
+∣∣FE2  
+
+> l
+
+,̟ s,a 
+
+}
+
+≤ exp [−θsqth  
+
+> s
+
++θs∆s
+
+(BFH  
+
+> s
+
+(θs)−CFH 
+
+> s,a
+
+(θs))] . (42) A sufficient condition for controlling the finite-window service deficit exponent is given as follows: 
+
+BFH  
+
+> s
+
+(θs) ≤ CFH 
+
+> s,a
+
+(θs). (43) To guarantee a prescribed service-deficit probability, denoted by ǫsd s ∈ (0 , 1) , a sufficient feasibility condition is given as follows: 
+
+BFH  
+
+> s
+
+(θs) + log(1 /ǫ sd s )
+
+θs∆s
+
+≤ CFH 
+
+> s,a
+
+(θs) + qth 
+
+> s
+
+∆s
+
+. (44) Thus, Eq. (43) preserves the traditional EC interpretation, whereas Eq. (44) supplies an explicit finite-window probability margin. To obtain a computable representation of Eq. (38), let 
+
+Xs,a [k] = ({Zs,a,ℓ [k]}ℓ∈L a , Z cm  
+
+> s,a
+
+[k], H s,a [k]) ∈ X s,a , (45) denote a finite-state abstraction of the domain condition, where 
+
+Zs,a,ℓ [k] and Zcm  
+
+> s,a
+
+[k] are the radio/service state over leg l and transport, O-CU-UP, shared power, or common-mode failure state, respectively, La is the duplication-leg index set, and 
+
+Hs,a [k] is the HARQ/retransmission phase. The state can jointly represent quantized channel quality, interference/load level, O-DU availability, retransmission phase, and other vari-ables governing the service process. Finite-state Markov chan-nel models are a standard abstraction for temporally correlated wireless channels [26]. The current conditional state distribution, denoted by 
+
+αs,a [l], is given as follows: 
+
+αs,a [l] = [Pr {Xs,a [kl] = m∣∣FE2 
+
+> l
+
+}] Ms,a  
+
+> m=1
+
+. (46) 6
+
+For phase r ∈ {pre , post }, we define the phase-dependent service-weighted transition kernel, denoted by [Grs,a [k]( θs)] 
+
+> uv
+
+, as follows: 
+
+[Grs,a [k]( θs)] 
+
+> uv
+
+, E
+
+[
+
+exp 
+
+(
+
+−θsSrs,a [k]
+
+)
+
+× 1{Xs,a [k + 1] = v}
+
+∣∣∣∣Xs,a [k] = u, FE2 
+
+> ls
+
+̟ rs,a 
+
+]
+
+, (47) where ̟ post  
+
+> s,a
+
+≡̟ s,a and ̟ pre  
+
+> s,a
+
+≡̟ pre  
+
+> s
+
+. For compactness, we define the following time-ordered product: 
+
+> −→ b
+
+∏
+
+> k=a
+
+G[k] , G[a]G[a + 1] · · · G[b]. (48) Define the pre-actuation kernel product, denoted by Hpre  
+
+> s,a
+
+(θs),and post-actuation kernel product, denoted by Hpost  
+
+> s,a
+
+(θs),respectively, as follows: 
+
+
+
+Hpre  
+
+> s,a
+
+(θs) ,
+
+> →keff
+> s,a −1
+
+∏
+
+> k=kls
+
+Gpre  
+
+> s,a
+
+[k]( θs); 
+
+Hpost  
+
+> s,a
+
+(θs) , 
+
+> →kls +Ks−1
+
+∏
+
+> k=keff
+> s,a
+
+Gpost  
+
+> s,a
+
+[k]( θs).
+
+(49) An empty product is defined as the identity matrix. Then, the exact actuation-aware FH-EC for the adopted finite-state Markov-additive model is therefore given as: 
+
+CFH  
+
+> s,a
+
+(θs) = − 1
+
+θs∆s
+
+log 
+
+[
+
+αTs,a [ls] Hpre  
+
+> s,a
+
+(θs) Hpost  
+
+> s,a
+
+(θs) 1
+
+]
+
+.
+
+(50) 
+
+Proposition 1 (Long-horizon consistency) Fix profile a
+
+and exponent θs > 0. For a sequence of mission horizons 
+
+∆s = KsTsl , let dKs denote the number of pre-actuation slots and Hpre  
+
+> Ks
+
+be the corresponding pre-actuation kernel product. Suppose that: 1) sup Ks dKs ≤ dmax < ∞;2) After actuation, the service-weighted kernel is time homogeneous and primitive: 
+
+Gpost  
+
+> s,a
+
+[k]( θs) = G∞
+
+> s,a
+
+(θs), k ≥ keff 
+
+> s,a
+
+; (51) 3) If vs,a is the positive Perron right eigenvector of 
+
+G∞
+
+> s,a
+
+(θs), then there exist constants 0 < c − ≤ c+ < ∞ such that 
+
+c− ≤ αTs,a [ls]Hpre  
+
+> Ks
+
+(θs)vs,a ≤ c+, ∀Ks. (52) Then, the long-horizon effective capacity, denoted by C∞
+
+> s,a
+
+(θs),is obtained as follows: 
+
+C∞
+
+> s,a
+
+(θs) , lim  
+
+> Ks→∞
+
+CFH  
+
+> s,a
+
+(θs) = − 1
+
+θsTsl 
+
+log ρ(G∞
+
+> s,a
+
+(θs)) .
+
+(53) where ρ(·) denotes the spectral radius. 
+
+Proof: The proof of Proposition 1 is in Appendix A. 
+
+Remark 1: Proposition 1 shows that the finite E2 selection-and-actuation transient affects short mission windows but contributes only a vanishing O(dctl 
+
+> s,a
+
+/K s) term in the long-horizon regime. Consequently, the proposed FH-EC retains the conventional effective-capacity limit without ignoring the service loss before an E2 action becomes effective. Assume that the admitted MCX traffic satisfies the following finite-window arrival envelope: 
+
+As(ls, ∆s) ≤ σs + rs∆s, (54) where σs is the maximum admitted burst and rs is the sus-tained payload rate. For any service-deficit threshold qth  
+
+> s
+
+≥ 0,by applying Markov’s inequality, we have 
+
+Pr 
+
+{
+
+As(ls, ∆s) − S∆s 
+
+> s,a
+
+≥ qth  
+
+> s
+
+| F E2 
+
+> ls
+
+,̟ s,a 
+
+}
+
+≤ exp [−θs(qth  
+
+> s
+
+− σs) + θs∆s
+
+(rs − CFH  
+
+> s,a
+
+(θs))] . (55) 
+
+Definition 3: (Finite-horizon supportable admitted rate) 
+
+For a prescribed service-deficit probability ǫsd s , candidate a
+
+supports any rate not larger than the finite-horizon supportable admitted rate, denoted by rFH  
+
+> s,a
+
+, which is given as follows: 
+
+rFH  
+
+> s,a
+
+=
+
+[
+
+CFH  
+
+> s,a
+
+(θs) + qth  
+
+> s
+
+− σs
+
+∆s
+
+− log(1 /ǫ sd s )
+
+θs∆s
+
+]+
+
+. (56) 
+
+B. Capability Characterization under Connectivity Diversity 
+
+The objective is not to design a new duplication mechanism, but to quantify heterogeneous connectivity options through the proposed FH-EC primitive. For a fixed E2-executable policy ̟
+
+> s,a
+
+, we define the delivered-rate risk and the dimension-specific multi-QoS risk, respectively, as follows: 
+
+{
+
+pR, FH  
+
+> s,a
+
+, Pr {R∆ 
+
+> s,a
+
+< r s,a 
+
+∣∣FE2  
+
+> l
+
+,̟ s,a 
+
+} ;
+
+pq, FH  
+
+> s,a
+
+, Pr {Zqs,a > β qs
+
+∣∣FE2  
+
+> l
+
+,̟ s,a 
+
+} . (57) where rs,a ≥ rmin  
+
+> s
+
+is the finite-horizon delivered-rate target. The associated multi-QoS risk vector, denoted by pFH 
+
+> s,a
+
+, is given by 
+
+pFH  
+
+> s,a
+
+=
+
+[
+
+pR, FH  
+
+> s,a
+
+, {pq, FH 
+
+> s,a
+
+}
+
+> q∈Q s
+
+]T
+
+. (58) An exact Markov recursion could in principle be constructed by augmenting the state with accumulated violation counters, the number of evaluable packets or packet pairs, and the accumulated AoI violation time. However, this would produce a high-dimensional state whose size grows with the mission horizon and packet count. We therefore estimate Eq. (57) from complete finite-horizon delivery trajectories rather than claiming a low-dimensional exact recursion. 
+
+1) Lower Confidence Bound on Finite-Horizon Capability: 
+
+Let cl = g(FE2 
+
+> l
+
+) ∈ C denote the finite E2-context label, where the context map g, the finite context set C, and the candidate-policy library are fixed using an independent cali-bration dataset Dtr before Dcal is accessed. For a concurrent profile-selection vector ¯x, let es,a ( ¯ x, c ) ∈ E exec  
+
+> c
+
+denote the finite execution-class label experienced by profile a of flow 
+
+s in context cell c. The execution class records the active MCX service composition, aggregate resource contract, par-ticipating radio legs, fixed O-CU/O-DU policies, calibrated interference/load envelope, and common-mode failure class. The finite execution-class set Eexec  
+
+> c
+
+is fixed before calibration. Define the calibration key as  , (a, c, e, θ s, qs) ∈ J , where 
+
+qs contains the service class, mission horizon, and all active delivered-rate, delay, jitter, AoI, and terminal non-delivery requirements. The finite calibration library J is fixed before 
+
+Dcal is accessed. 7
+
+Let W denote a complete mission trajectory generated under calibration key . Then, the exact cell-and-execution-class-conditioned FH-EC is given by 
+
+CFH  
+
+> 
+
+, − 1
+
+θs∆s
+
+log E
+
+[
+
+exp 
+
+(
+
+−θsS∆s
+
+> 
+
+)
+
+| cls = c, e s,a = e
+
+]
+
+.
+
+(59) For q ∈ Q + 
+
+> s
+
+, define 
+
+pq, FH  
+
+> 
+
+, Pr {Vq | cls = c, e s,a = e} , (60) where 
+
+VR = {R∆s 
+
+> s,a
+
+< r tgt 
+
+> s
+
+} , Vq = {Zqs,a > β qs
+
+} , q ∈ Q s.
+
+(61) Suppose that N independent complete mission trajectories are available for profile , producing accumulated potential services S(1)  
+
+> 
+
+(∆ s), . . . , S (N) 
+
+> 
+
+(∆ s). We define 
+
+Y (n) 
+
+> 
+
+= exp 
+
+(
+
+−θsS(n) 
+
+> 
+
+(∆ s)
+
+)
+
+∈ (0 , 1] (62) and ̂
+
+μ = 1
+
+NN
+
+∑
+
+> n=1
+
+Y (n) 
+
+> 
+
+. (63) For a confidence budget αC ∈ (0 , 1) , by applying Hoeffding’s inequality, we have [27] 
+
+Pr 
+
+> cal
+
+E[Y] ≤̂ μ +
+
+√
+
+log(1 /α C )2N
+
+ ≥ 1 − αC . (64) Because − log( ·) is decreasing, a valid lower confidence bound on the finite-horizon capability is 
+
+CFH  
+
+> 
+
+= − 1
+
+θs∆s
+
+log 
+
+min 
+
+1,̂ μ +
+
+√
+
+log(1 /α C )2N
+
+ . (65) Hence, we have 
+
+Pr 
+
+> cal
+
+{CFH  
+
+> 
+
+≥ CFH 
+
+> 
+
+} ≥ 1 − αC . (66) 
+
+2) Statistically Calibrated Executable Profiles: The exact finite-horizon capability and operational risks in φs,a [l] are generally unknown and must be inferred from finite data. To separate policy construction from statistical validation, the context partition, candidate-policy library, and all model hyperparameters are fixed using a training set, denoted by Dtr 
+
+before the independent calibration set Dcal is accessed. Define the simultaneous profile-validity event, denoted by 
+
+Eprof , as follows: 
+
+Eprof , ⋂
+
+> ∈J
+
+{CFH  
+
+> 
+
+≥ CFH  
+
+> 
+
+, pq, FH  
+
+> 
+
+≤ pq, FH  
+
+> 
+
+, ∀q ∈ Q +
+
+> 
+
+} .
+
+(67) where pq is the exact Clopper–Pearson upper confidence limit, which is given as follows: 
+
+pq =
+
+{ 1, K,q = N;Beta −1(1 −α,q ; K,q +1 , N  − K,q ) , K,q < N ,
+
+(68) where Beta −1(·) is the beta distribution, α,q is the one-sided confidence budget, and K,q is the observed number of type-q
+
+mission-window violations. Assigning the one-sided confidence-failure budgets, we have 
+
+∑
+
+> ∈J
+
+αC + ∑
+
+> q∈Q +
+> 
+
+α,q 
+
+ ≤ αprof . (69) By applying the individual one-sided coverage guarantees and the union bound, we obtain 
+
+Pr  
+
+> cal
+
+{E prof } ≥ 1 − αprof . (70) Because Eprof holds simultaneously over the entire finite library J , subsequently selecting a calibrated profile after observing the current E2-context cell does not incur an ad-ditional post-selection confidence penalty. This guarantee is conditional on the calibrated context and execution class; it is not a pointwise guarantee for every raw realization of FE2 
+
+> l
+
+within the same context cell. 
+
+3) Confidence-Calibrated E2-Executable Profiles: For cal-ibration key , we define the confidence-calibrated executable profile, denoted by φ, as follows: 
+
+φ , (, m a, Ia, bs,a ,̟ s,a , C FH  
+
+> 
+
+, pFH  
+
+> 
+
+, τ ctl 
+
+> s,a
+
+) , (71) where 
+
+pFH  
+
+> 
+
+=
+
+[
+
+pR, FH  
+
+> 
+
+, {pq, FH 
+
+> 
+
+}
+
+> q∈Q s
+
+]T
+
+. (72) Let AE2  
+
+> s
+
+[l] denote the executable candidate set. At the admission epoch ls, let cls denote the calibrated E2-context cell and let Cs,a denote the set of context cells for which profile a has been calibrated. The capability-feasible profile set, denoted by ΦFH  
+
+> s
+
+[l], representing the finite candidate set, is given as follows: 
+
+ΦFH  
+
+> s
+
+[ls] ,
+
+{
+
+φ : a ∈ A E2  
+
+> s
+
+[ls], cls ∈ C s,a ,dctl  
+
+> s,a
+
+< K s, rFH  
+
+> s,a
+
+≥ rmin  
+
+> s
+
+,BFH  
+
+> s
+
+(θs) ≤ CFH  
+
+> s,a
+
+(θs),BFH  
+
+> s
+
+(θs) + log(1 /ǫ sd  
+
+> s
+
+)
+
+θs∆s
+
+≤ CFH  
+
+> s,a
+
+(θs) + qth 
+
+> s
+
+∆s
+
+,pq, FH  
+
+> s,a
+
+≤ ǫqs, q ∈ Q + 
+
+> s
+
+,τ ctl  
+
+> s,a
+
+≤ min {Tx, ∆s}
+
+}
+
+. (73) IV. FH-EC-D RIVEN MCX P ROFILE ORCHESTRATION IN 
+
+O-RAN 
+
+A. Joint Profile Selection Under Shared Resources 
+
+At orchestration epoch l, partition the active MCX flows into the following sets: 
+
+{
+
+SM [l] = Slock  
+
+> M
+
+[l] ∪ S new  
+
+> M
+
+[l]; 
+
+Slock  
+
+> M
+
+[l] ∩ S new  
+
+> M
+
+[l] = ∅, (74) where Slock  
+
+> M
+
+[l] contains previously admitted flows whose mis-sion windows have not expired, and Snew  
+
+> M
+
+[l] contains flows requesting admission at epoch l. For every s ∈ S lock  
+
+> M
+
+[l], let 
+
+alock  
+
+> s
+
+denote its profile selected at admission. The correspond-ing profile-selection variable is not re-optimized during Ts.8
+
+The aggregate resource contract, denoted by block [l], of the locked flows is given as follows: 
+
+block [l] , ∑ 
+
+> s∈S lock
+> M[l]
+
+bs,a lock  
+
+> s
+
+. (75) For each new flow s ∈ S new  
+
+> M
+
+[l], define the eligible nonzero candidate set, denoted by A+ 
+
+> s
+
+[l], as follows: 
+
+A+ 
+
+> s
+
+[l] , {a : φ ∈ ΦFH  
+
+> s
+
+[l]} . (76) A zero profile a = 0 is added only for a new flow, with 
+
+bs, 0 = 0 and Vs, 0 = 0 . Hence, we have As[l] = A+ 
+
+> s
+
+[l] ∪ { 0},
+
+s ∈ S new  
+
+> M
+
+[l]. The zero profile denotes admission rejection and cannot be used to withdraw a previously certified mission-horizon contract. Let cl denote the calibrated E2-context cell at epoch l. The context descriptor includes the active MCX service composi-tion used to construct the profile library. Let 
+
+Bav [l] = [ Bav  
+
+> 1
+
+[l], . . . , B av  
+
+> R
+
+[l]] T ∈ RR 
+
+> +
+
+(77) denote the resource vector available at epoch l, after account-ing for O-DU degradation and resources reserved outside the considered orchestration problem. Define Gc as the finite set of aggregate MCX resource contracts attainable in context cell 
+
+c. We have 0 ∈ G c. Fix a non-MCX allocation rule ψN that is used during both calibration and runtime execution. For an aggregate MCX contract b ∈ G c, let rψN
+
+> n,c
+
+(b) denote the true conditional mean rate of non-MCX flow n when b is enforced in context cell c and ψN allocates the residual resources. We define the corresponding non-MCX utility, denoted by 
+
+U ψN
+
+> N,c
+
+(b), as follows: 
+
+U ψN
+
+> N,c
+
+(b) , ∑
+
+> n∈S N
+
+ωn log 
+
+(
+
+1 + rψN
+
+> n,c
+
+(b)
+
+rref 
+
+)
+
+. (78) Let U 0N,c denote the context-matched reference utility with MCX-specific reservation and prioritization disabled. The policy-induced coexistence-supportable set, denoted by BψN
+
+> N,c
+
+,is given by 
+
+BψN 
+
+> N,c
+
+,
+
+{
+
+b ∈ G c : U ψN
+
+> N,c
+
+(b) ≥ (1 − ρmax )U 0N,c ,rψN
+
+> n,c
+
+(b) ≥ rN 
+
+> n
+
+, n ∈ S prot N
+
+}
+
+. (79) Since ψN provides an explicit feasible non-MCX allocation, we have 
+
+BψN 
+
+> N,c
+
+⊆ B coex N,c ∩ G c (80) where Bcoex N,c is the exact set that satisfies the non-MCX requirements given the existence of a feasible residual policy. For each context cell c and aggregate MCX contract b ∈ G c,let 
+
+{
+
+R(j)
+
+> n,c
+
+(b)
+
+}Nc, b 
+
+> j=1
+
+be independent calibration realizations of the epoch-level delivered rate of non-MCX flow n under the fixed residual-resource policy ψN . Assume that 
+
+0 ≤ R(j)
+
+> n,c
+
+(b) ≤ rmax  
+
+> n
+
+, (81) where rmax  
+
+> n
+
+is a known physical upper bound. The sample mean, denoted by ̂ rn,c (b), is derived as follows: ̂
+
+rn,c (b) = 1
+
+Nc, b
+
+> Nc, b
+
+∑
+
+> j=1
+
+R(j)
+
+> n,c
+
+(b). (82) For a one-sided confidence budget α−
+
+> n,c, b
+
+, Hoeffding’s inequal-ity gives the following lower confidence bound (LCB): 
+
+rn,c (b) = 
+
+̂ rn,c (b) − rmax 
+
+> n
+
+√
+
+log(1 /α −
+
+> n,c, b
+
+)2Nc, b
+
+
+
+> +
+
+. (83) Likewise, let {R0,(j) 
+
+> n,c
+
+}N 0 
+
+> c
+> j=1
+
+denote the context-matched reference-rate realizations with MCX-specific reservation and prioritization disabled. We define ̂
+
+r0 
+
+> n,c
+
+= 1
+
+N 0 
+
+> cN0
+> c
+
+∑
+
+> j=1
+
+R0,(j) 
+
+> n,c
+
+(84) and the upper confidence bound (UCB) as follows: 
+
+r0 
+
+> n,c
+
+= min 
+
+rmax  
+
+> n
+
+,̂ r0 
+
+> n,c
+
++ rmax 
+
+> n
+
+√
+
+log(1 /α 0
+
+> n,c
+
+)2N 0
+
+> c
+
+ . (85) Since the utility function is coordinate-wise increasing, define 
+
+
+
+UN,c (b) = ∑ 
+
+> n∈S N
+
+ωn log 
+
+(
+
+1 + rn,c (b)
+
+> rref
+
+)
+
+;
+
+U0 
+
+> N,c
+
+= ∑ 
+
+> n∈S N
+
+ωn log 
+
+(
+
+1 + r0
+
+> n,c
+> rref
+
+)
+
+. (86) Assign the confidence budgets such that 
+
+∑
+
+> c
+
+[ ∑
+
+> n∈S N
+
+α0 
+
+> n,c
+
++ ∑
+
+> b∈G c
+
+∑
+
+> n∈S N
+
+α−
+
+> n,c, b
+
+]
+
+≤ αN . (87) We define the simultaneous non-MCX validity event, denoted by EN , as follows: 
+
+EN , ⋂
+
+> c
+
+[ ⋂
+
+> b∈G c
+
+⋂
+
+> n∈S N
+
+{rψN 
+
+> n,c
+
+(b) ≥ rn,c (b)}
+
+∩ ⋂
+
+> n∈S N
+
+{r0 
+
+> n,c
+
+≤ r0
+
+> n,c
+
+} ]
+
+.
+
+(88) By Hoeffding’s inequality and the union bound, we obtain 
+
+Pr 
+
+> cal
+
+{E N } ≥ 1 − αN . (89) Thus, the finite-sample calibration-safe set, denoted by ̂ Gsafe  
+
+> c
+
+,is derived as follows: ̂
+
+Gsafe  
+
+> c
+
+,
+
+{
+
+b ∈ G c : UN,c (b) ≥ (1 − ρmax )U 0
+
+> N,c
+
+,rn,c (b) ≥ rNn , n ∈ S prot 
+
+> N
+
+}
+
+.
+
+(90) The origin-anchored calibration-safe MCX budget, denoted by 
+
+bMc , is selected as follows: 
+
+bMc ∈ arg max 
+
+> b∈G c
+
+wTb
+
+s.t. {b ∈ G c : 0  b  b} ⊆ ̂ Gsafe 
+
+> c
+
+(91) 9
+
+where w  0 is the resource-box weight. If no nonzero budget satisfies Eq. (91), the zero budget is used. On EN , we have 
+
+{b ∈ G c : 0  b  bMc
+
+} ⊆ B ψN 
+
+> N,c
+
+⊆ B coex  
+
+> N,c
+
+. (92) Hence, the runtime constraint bM(x)  bM 
+
+> cl
+
+is a calibration-supported inner restriction of the exact coexistence region over the finite set of attainable profile contracts. 
+
+B. Joint Profile-Selection Problem and Finite-Library Profile Selection 
+
+For every confidence-screened nonzero profile, we define the conservative FH-EC surplus as follows: 
+
+∆CFH  
+
+> 
+
+, CFH  
+
+> 
+
+(θs) − BFH  
+
+> s
+
+(θs) ≥ 0. (93) The secondary profile value, denoted by Vs, , is given by 
+
+Vs, = ωs∆CFH  
+
+> 
+
+− λb
+
+∥∥∥˜bs,a 
+
+∥∥∥1
+
+− λτ τ ctl 
+
+> s,a
+
+, (94) where ˜bs,a is the component-wise normalized resource vector. Thus, λb penalizes resource consumption rather than profile reconfiguration. For every new flow s ∈ S new  
+
+> M
+
+[l] and a ∈As[l], let xs, [l] ∈ { 0, 1} indicate profile selection. For every candidate profile, define 
+
+xs, [l] ,
+
+
+
+1, s ∈ S lock  
+
+> M
+
+[l],xs, [l], s ∈ S new  
+
+> M
+
+[l],
+
+0, otherwise .
+
+(95) Define the total MCX contract after admitting the new flows as: 
+
+bM (x; l) = ∑
+
+> s
+
+∑
+
+> ∈J
+
+b xs, [l]. (96) To prioritize MCX admission over secondary resource effi-ciency, we define 
+
+˜Vs, , Γ ωadm  
+
+> s
+
+1{a 6 = 0 } + Vs, , (97) where Γ > 0 is selected sufficiently large so that admission priority dominates the secondary profile value and ωadm  
+
+> s
+
+is the admission priority. Equivalently, Eq. (97) may be implemented as a lexicographic two-stage objective. Let Hl denote the precomputed set of minimal forbidden profile combinations at epoch l. A profile combination belongs to Hl if its induced execution class is absent from the calibrated library J , or if it violates a stored resource, interference, load, policy, or common-mode-failure envelope. The FH-EC profile orchestration problem is formulated as follows: 
+
+P1 [l] : max 
+
+> {xs, [l]}
+
+∑ 
+
+> s∈S new
+> M[l]
+
+∑
+
+> ∈J
+
+˜Vs, xs, [l] (98a) 
+
+s.t. ∑
+
+> a∈A s[l]
+
+xs, [l] = 1 , s ∈ S new  
+
+> M
+
+[l], (98b) 
+
+bM (x; l)  Bav [l], (98c) 
+
+bM (x; l)  BMcl , (98d) 
+
+∑
+
+> (s, )∈H
+
+xs, [l] ≤ | H| − 1, H ∈ H l, (98e) 
+
+xs, [l] ∈ { 0, 1}. (98f) where Bav [l] is the component-wise guaranteed lower enve-lope over the next finite operational window. Problem P1 [l] is a finite 0-1 linear program because all candidate-dependent capability, risk, delay, and resource terms are precomputed constants. Constraint Eq. (98c) enforces instantaneous physical-resource availability, whereas Eq. (98d) restricts the total MCX contract to the calibration-safe inner region for non-MCX services. Previously admitted mission-horizon contracts remain fixed and appear through block [l]. Al-gorithm 1 summarizes the actuation-aware FH-EC MCX pro-file orchestration in O-RAN. The proposed orchestration sep-arates capability generation from real-time decision making. FH-EC estimation and certificate construction are performed offline, while the online Near-RT RIC only solves a finite-dimensional profile selection problem. Therefore, the real-time complexity is determined by the number of executable profiles rather than the instantaneous radio state space. 
+
+C. Simultaneous Post-Selection Validity of Finite-Library O-RAN Service Contracts Definition 4 (Calibration-compatible O-RAN execution): 
+
+For a feasible profile-selection vector x returned by P1 [l],let 
+
+s(x, l ) , (as, c l, e s,a s (x, c l), θ s, qs) (99) denote the runtime calibration key of selected nonzero profile 
+
+as. The execution is calibration compatible if: 1) s(x, l ) ∈ J for every selected nonzero profile; 2) The stored O-CU/O-DU policy, participating radio legs, resource contract, and profile identifier are preserved over the complete mission window, and the realized observation age, actuation delay, load, interference, and infrastructure state remain within the corresponding calibrated execution-class envelope; 3) Conditioned on calibration key , the complete calibration trajectories {W (n) 
+
+> 
+
+}N 
+
+> n=1
+
+and an independent future mission trajectory W run  
+
+> 
+
+are identically distributed, and the calibration trajectories are mutually independent. If any runtime invariant in condition 2) is violated, the corresponding statistical certificate is declared invalid and the profile is rejected or transferred to a separately calibrated fallback class. 
+
+Theorem 1 (Simultaneous post-selection validity of finite-library O-RAN service contracts): Consider any post-calibration orchestration epoch l. Suppose that: 1) The E2-context map, finite execution-class partition, candidate-policy library, service requirements, profile screen-ing rules, residual non-MCX policy ψN , and all hyperparam-eters are fixed before Dcal is accessed; 2) The calibration-runtime exchangeability condition in Def-inition 4 holds for every calibration key  ∈ J ;3) The confidence-failure budgets satisfy: 
+
+∑
+
+> ∈J
+
+αC + ∑
+
+> q∈Q +
+> 
+
+α,q 
+
+ ≤ αprof , (100) 10 
+
+Algorithm 1 Actuation-Aware FH-EC MCX Profile Orches-tration  
+
+> 1:
+
+Offline profile construction:  
+
+> 2:
+
+Fix the E2-context partition, finite execution-class map, and E2-executable policy library.  
+
+> 3:
+
+Construct pre- and post-actuation service kernels.  
+
+> 4:
+
+Compute the actuation-aware FH-EC in Eq. (50).  
+
+> 5:
+
+Obtain simultaneous capability LCBs and operational-risk UCBs.  
+
+> 6:
+
+Construct bMc , the calibrated execution-class library, and the forbidden-hyperedge sets {H l}. 
+
+> 7:
+
+Online admission and orchestration at epoch l: 
+
+> 8:
+
+Receive the latest E2 information FE2  
+
+> l
+
+. 
+
+> 9:
+
+Identify the calibrated context cell cl. 
+
+> 10:
+
+Retain the locked profiles of Slock  
+
+> M
+
+[l]. 
+
+> 11:
+
+Retrieve, rather than re-estimate, the confidence-screened profile sets for Snew  
+
+> M
+
+[l]. 
+
+> 12:
+
+Solve P1 [l] in Eq. (98).  
+
+> 13:
+
+Issue the E2 control actions associated with the selected profiles.  
+
+> 14:
+
+Verify the induced execution-class label and monitor the stored policy, resource, load, interference, and actuation-delay envelopes throughout the mission window.  
+
+> 15:
+
+After actuation, lock each admitted profile until its mission window expires.  
+
+> 16:
+
+Release its reserved resources at the end of the mission window. and the non-MCX budgets satisfy the simultaneous condition; 4) P1 [l] enforces the physical-resource constraint, the calibration-safe non-MCX budget, profile locking, and the forbidden-hyperedge constraints, and returns only calibration-compatible profile combinations. With calibration confidence at least (1 − αprof − αN ), every selected nonzero profile as simultaneously satisfies: 
+
+
+
+CFH  
+
+> s(x,l )
+
+≥ CFH 
+
+> s(x,l )
+
+;
+
+pq, FH  
+
+> s(x,l )
+
+≤ pq, FH  
+
+> s(x,l )
+
+≤ ǫqs, q ∈ Q + 
+
+> s
+
+;
+
+bM (x; l)  bav [l]; 
+
+U ψN
+
+> N,c l
+
+(bM (x; l))≥ (1 − ρmax )U 0 
+
+> N,c l
+
+;
+
+rψN
+
+> n,c l
+
+(bM (x; l)) ≥ rNn , n ∈ S prot  
+
+> N
+
+.
+
+(101) The conditional joint multi-QoS mission risk of each selected MCX flow is bounded as follows: 
+
+Pr 
+
+> run
+
+{VMQ  
+
+> s
+
+| cls = cl, e s,a s = es,a s (x, c l)} ≤ ǫRs + ∑
+
+> q∈Q s
+
+ǫqs.
+
+(102) A prescribed joint mission-risk target ǫMQ  
+
+> s
+
+is satisfied when-ever the following inequality holds: 
+
+ǫRs + ∑
+
+> q∈Q s
+
+ǫqs ≤ ǫMQ  
+
+> s
+
+. (103) 
+
+Proof: The proof of Theorem 1 is in Appendix B.                
+
+> TABLE I SIMULATION PARAMETERS
+> Parameter Value Logical E2 domains 4O-DUs per domain 3Slot duration Tsl 1 ms Mission horizon ∆s0.1–5 s QoS exponent θ10 −3–10 −1
+> PHY BLER 10 −5
+> PDCP duplication legs 2E2 observation age 1–500 ms Actuation-delay bound/range 1–20 slots SC/DP legs 1/2
+
+V. P ERFORMANCE EVALUATIONS 
+
+A. Simulation Setup and Baselines 
+
+We evaluate the proposed FH-EC-driven MCX orchestration framework in a shared O-RAN scenario. The network simulta-neously supports mission-critical MCX services and ordinary mobile services over shared radio and transport resources. The wireless service process is modeled as a finite-state Markov-additive process. The service state captures both temporal channel variations and correlated connectivity failures among duplicated transmission legs. Unless otherwise specified, the major simulation parameters are listed in Table I. The finite-horizon capability calculation, confidence-calibrated profile library, non-MCX-safe budget, and mixed-integer profile selector are implemented in MATLAB. Packet generation, queueing, link adaptation, HARQ, infrastructure impairment, and end-to-end packet delivery are implemented in ns-3 with 5G-LENA [28–30]. 5G-LENA provides an end-to-end NR system-level simulation framework and has been calibrated against 3GPP reference scenarios. Three E2 exposure configurations are considered. The rich configuration exposes per-flow or fine-grained load, channel-quality, queue, delivery, and node-availability information together with the broadest simulated action set. The mod-erate configuration exposes aggregated measurements and a reduced set of resource and association actions. The sparse configuration exposes only cell-level measurements and coarse association control. The following schemes use the same radio resources and packet-level simulator.  
+
+> •
+
+Static-QPP : A fixed MCX reservation and strict-priority scheduler, with its reservation tuned on the training set.  
+
+> •
+
+LT-EC : The same finite candidate policies and test-time selector, but the finite-horizon capability coordinate is replaced by a stationary long-term EC estimate.  
+
+> •
+
+FH-SC : The proposed finite-horizon profile construction and orchestration with DP disabled.  
+
+> •
+
+SNC-Delay : An ORANUS-inspired delay-tail provision-ing scheme using the same radio deployment and traffic traces, but without explicit jitter, AoI, and terminal-error constraints [19].  
+
+> •
+
+Proposed E2-FH : The complete E2-conditioned finite-profile framework with adaptive SC/DP selection and the calibration-safe non-MCX resource budget. 11         
+
+> Mission horizon
+> 012345
+> Effective capacity (Mbit/s)
+> 22.5 33.5 44.5 55.5
+> FH model, favorable Packet-level, favorable FH model, degraded Packet-level, degraded Long-term EC
+> Fig. 2. Finite-horizon capability vs. mission horizon ∆s(s).
+
+Observation age, τobs (ms) 
+
+0 100 200 300 400 500 
+
+> E2 capability loss
+
+00.5 11.5 22.5 3 Rich exposure Moderate exposure Sparse exposure   
+
+> Fig. 3. E2 capability loss vs. observation age.
+> •
+
+Full-State Oracle : A reference controller with current full-state information, zero observation and actuation delay, and access to complete simulated candidate set. 
+
+B. Results and Discussion 
+
+For each mission horizon ∆s, independent service trajecto-ries are generated according to the Markov-additive service model. Figure 2 compares the analytical finite-horizon ca-pability in Eq. (39), with the direct packet-level estimation and conventional long-term effective capacity as functions of the mission horizon ∆s under favorable and degraded initial E2-conditioned states. The stationary long-term EC is included as the reference. The model follows the packet-level exponential service transform over the tested horizons. We can observe from Fig. 2 that at short horizon ∆s=1, the favorable and degraded curves differ by about 0.88 Mbit/s, confirming that the initial E2-conditioned state cannot be replaced by a stationary average. As shown in Fig. 2, as the horizon increases, the relative gap between finite-horizon and conventional EC decreases, providing numerical support for Proposition 1. Fig. 2 also shows that FH-EC captures the transient service capability within short mission windows, while gradually converging to the conventional EC when the horizon becomes sufficiently long. O-RAN introduces additional uncertainty through E2 ob-servation latency and control actuation delay. Fig. 3 evaluates               
+
+> Simultaneous nonzero profiles
+> 0246810
+> Max. test risk/stored upper bound
+> 0.8 11.2 1.4 1.6 1.8 Isolated Concurrent, no contract Contract-preserving Stored-bound boundary
+> Fig. 4. Largest one-sided test upper confidence limit vs. stored profile upper bound.
+> Number of active MCX users
+> 10 20 30 40 50 60
+> Upper-bounded confidence limit
+> 00.2 0.4 0.6 0.8 11.2 1.4 Rate Delay Jitter AoI Non-delivery Requirement boundary
+> Fig. 5. Normalized one-sided risk upper confidence bound vs. number of active MCX users.
+
+the impact of E2 exposure on the finite-horizon capability as the observation age τ obs varies. We can observe from Fig. 3 that the E2 capability loss increases as the observation age increases. As shown in Fig. 3, rich exposure produces the smallest loss because it retains the most informative observation map and the largest executable action set. We can observe from Fig. 3 that outdated E2 information reduces the available MCX capability because the selected profile may no longer match the current network state. Figure 4 plots the largest one-sided test upper confidence limit among its active operational risks over the corresponding stored profile upper bound to verify the contract-preserving composability assumption. This ratio implies a bound-validity diagnostic. The isolated execution first checks each profile individually. Concurrent execution without enforcing the char-acterized contracts exceeds the stored bound when more profiles are active. Under contract-preserving execution, the ratio remains no larger than one. Any profile combination that still exceeds its stored bound is excluded by an incompatibility constraint or recalibrated as a joint profile tuple. Figure 5 plots the normalized one-sided risk upper confi-dence limit of each active delivered-rate, delay, jitter, AoI, and terminal non-delivery risk divided by its requirement with varying numbers of active MCX users. A value no larger than one means that the corresponding pre-existing requirement 12 
+
+Number of active MCX users       
+
+> 10 20 30 40 50 60
+> Non-MCX utility loss (%)
+> 0510 15 20 25
+> Protected-user rate (Mbit/s)
+> 345678910
+> Proposed, loss Static-QPP, loss
+> ρmax
+> Proposed, protected rate Static-QPP, protected rate Rate requirement
+> Fig. 6. Non-MCX utility loss and protected-user rate vs. number of active MCX users.
+
+Retained O-DU resource fraction       
+
+> 00.2 0.4 0.6 0.8 1
+> Largest supportable MCX load
+> 10 15 20 25 30 35 40 45
+> FH-SC Always-DP Adaptive SC/DP Full-state oracle
+> Fig. 7. Maximum admissible MCX load vs. the retained resource fraction of the degraded O-DU.
+
+is satisfied. We can observe from Fig. 5 that the proposed method satisfies all active dimensions up to 50 simultaneous MCX users. It verifies that the improvement is not obtained by reducing delay while silently violating AoI, jitter, or terminal non-delivery requirements. Figure 6 presents the corresponding non-MCX utility loss and the delivered rate of protected ordinary users. At the proposed method’s largest supportable MCX load, the utility loss is below ρmax . Static-QPP either violates the protection conditions at high MCX load or reserves excess resources at low load, whereas the proposed method adapts the selected contracts within bM 
+
+> cl
+
+. This validates the safe-budget construc-tion in Eq. (91) and Theorem 1. In addition, Fig. 7 plots the largest supportable admissible MCX load as one O-DU is pro-gressively degraded while comparing with SC-only, always-DP, and the adaptive SC/DP selection. We can observe from Fig. 7 that always-DP improves delivery diversity under severe independent degradation but admits fewer flows under normal operation because every copy consumes radio resources. VI. C ONCLUSIONS 
+
+We developed an E2-conditioned finite-horizon effective capacity orchestration framework that provides a unified capa-bility abstraction for executable O-RAN configurations. Par-ticularly, we first derived a correlation-aware Markov-additive service model to characterize heterogeneous connectivity op-tions. We then proposed the FH-EC expression under finite-blocklength transmission. The resulting FH-EC capability was transformed into confidence-calibrated service profiles, en-abling trustworthy profile selection and realization through the Near-RT RIC. Based on the FH-EC capability abstraction, we developed an orchestration framework incorporating con-tract certification, shared-resource protection, and capability-aware profile selection. Coupled MATLAB/ns-3 evaluations supported the analytical finite-horizon characterization and demonstrated the effects of E2 observation age, actuation delay, concurrent profile execution, and O-DU degradation. APPENDIX APROOF OF PROPOSITION 1For notational simplicity, we define 
+
+
+
+d , dctl 
+
+> s,a
+
+;
+
+H , Hpre  
+
+> s,a
+
+(θs); 
+
+G , G∞
+
+> s,a
+
+(θs); 
+
+α , αs,a [ls].
+
+(104) Using Eq. (50), we have 
+
+CFH  
+
+> s,a
+
+(θs) = − 1
+
+θsKsTsl 
+
+log [αT HG Ks−d1] . (105) Since G is primitive, the Perron–Frobenius theorem guar-antees a positive spectral radius ρ, positive right and left Perron eigenvectors v and u, and the normalization uT v = 1 .Moreover, we have 
+
+Gn = ρnvu T + o(ρn), n → ∞ . (106) Therefore, we can obtain 
+
+αT HG Ks−d1 = ρKs−d (αT Hv ) ( uT 1) [1 + o(1)] . (107) The coefficient in Eq. (107) is strictly positive because of 
+
+uT 1 > 0. By taking the logarithm, we have 
+
+log [αT HG Ks−d1]
+
+= ( Ks − d) log ρ + log [( αT Hv ) ( uT 1)] + o(1) . (108) Substituting Eq. (108) into Eq. (105), using d/K s → 0, and letting Ks → ∞ , we obtain 
+
+lim  
+
+> Ks→∞
+
+CFH  
+
+> s,a
+
+(θs) = − 1
+
+θsTsl 
+
+log ρ, (109) which completes the proof of Proposition 1. APPENDIX BPROOF OF THEOREM 1Define the simultaneous calibration event E , Eprof ∩ E N .From the simultaneous profile-calibration result, we have 
+
+Pr cal {E prof } ≥ 1 − αprof , and Pr cal {E N } ≥ 1 − αN . By the union bound, we obtain 
+
+Pr  
+
+> cal
+
+{E} ≥ 1 − αprof − αN . (110) On Eprof , the capability lower bound and all operational-risk upper bounds hold simultaneously for every calibration 13 
+
+key  ∈ J . By Definition 4 and the forbidden-hyperedge constraints, every nonzero profile selected by P1 [l] induces a calibration key s(x, l ) ∈ J . Consequently, we have 
+
+CFH  
+
+> s(x,l )
+
+≥ CFH 
+
+> s(x,l )
+
+, (111) and 
+
+pq, FH  
+
+> s(x,l )
+
+≤ pq, FH 
+
+> s(x,l )
+
+, q ∈ Q + 
+
+> s
+
+. (112) Because these inequalities hold simultaneously over the entire finite library, selecting the calibration key after observing the current E2-context cell and solving P1 [l] does not introduce an additional post-selection confidence penalty. The profile-screening conditions then imply 
+
+pq, FH  
+
+> s(x,l )
+
+≤ ǫqs, q ∈ Q + 
+
+> s
+
+. (113) Constraint in Eq. (98c) directly proves bM (x; l)  bav [l]. On 
+
+EN , the simultaneous non-MCX rate bounds, the definition of the calibration-safe set, and constraint Eq. (98d) give 
+
+U ψN
+
+> N,c l
+
+(bM (x; l)) ≥ (1 − ρmax )U 0 
+
+> N,c l
+
+, (114) and 
+
+rψN
+
+> n,c l
+
+(bM (x; l)) ≥ rN, prot  
+
+> n
+
+, n ∈ S prot  
+
+> N
+
+. (115) Finally, by applying the union bound to the delivered-rate and active dimension-specific operational violation events, we have 
+
+Pr 
+
+> run
+
+{VMQ  
+
+> s
+
+| cls = cl, e s,a s = es,a s (x, c l)}
+
+≤ pR, FH  
+
+> s(x,l )
+
++ ∑
+
+> q∈Q s
+
+pq, FH  
+
+> s(x,l )
+
+≤ ǫRs + ∑
+
+> q∈Q s
+
+ǫqs. (116) Combining this result with Eq. (110) proves Theorem 1. REFERENCES [1] B. Agarwal, R. Irmer, D. Lister, and G.-M. Muntean, “Open RAN for 6G networks: Architecture, use cases and open issues,” IEEE Communications Surveys & Tutorials , vol. 28, pp. 2881–2924, 2026. [2] B. Brik, H. Chergui, L. Zanzi, F. Devoti, A. Ksentini, M. S. Siddiqui, X. Costa-P´ erez, and C. Verikoukis, “Explainable AI in 6G O-RAN: A tutorial and survey on architecture, use cases, challenges, and future research,” IEEE Communications Surveys & Tutorials , vol. 27, no. 5, pp. 2826–2859, 2025. [3] 3rd Generation Partnership Project, “Mission critical services common requirements (MCCoRe); stage 1,” 3GPP TS 22.280, ver. 19.7.0, Release 19, Jan. 2026. [4] B. Karaman, I. Basturk, F. Kara, E. Zeydan, E. A. Beyazit, S. Taskin, E. Bj¨ ornson, and H. Yanikomeroglu, “On-demand HAPS-assisted com-munication system for public safety in emergency and disaster response,” 
+
+IEEE Communications Magazine , vol. 63, no. 12, pp. 54–61, 2025. [5] Y. Polyanskiy, H. V. Poor, and S. Verdu, “Channel coding rate in the finite blocklength regime,” IEEE Transactions on Information Theory ,vol. 56, no. 5, pp. 2307–2359, 2010. [6] R. D. Yates, Y. Sun, D. R. Brown, S. K. Kaul, E. Modiano, and S. Ulukus, “Age of information: An introduction and survey,” IEEE Journal on Selected Areas in Communications , vol. 39, no. 5, pp. 1183– 1210, 2021. [7] A. Jaiswal, A. Chattopadhyay, and A. Varma, “Age-of-information min-imization via opportunistic sampling by an energy harvesting source,” 
+
+IEEE Transactions on Cognitive Communications and Networking ,vol. 10, no. 6, pp. 2296–2310, 2024. [8] J. Wang, W. Cheng, and H. Vincent Poor, “Statistical delay and error-rate bounded QoS provisioning for AoI-driven 6G satellite-terrestrial integrated networks using FBC,” IEEE Transactions on Wireless Com-munications , vol. 23, no. 10, pp. 15 540–15 554, 2024. [9] W. Cheng, Y. Xiao, S. Zhang, and J. Wang, “Adaptive finite blocklength for ultra-low latency in wireless communications,” IEEE Transactions on Wireless Communications , vol. 21, no. 6, pp. 4450–4463, 2022. [10] J. Wang, W. Cheng, and W. Zhang, “AI-enabled multi-QoS provisioning for 6G HRLLC,” IEEE Communications Magazine , pp. 1–7, 2026. [11] ITU-R, “Framework and overall objectives of the future development of IMT for 2030 and beyond,” Recommendation ITU-R M.2160-0 , Nov. 2023. [12] Z. Sheng, P. Zhu, J. Li, D. Wang, and X. You, “Toward deterministic 6G HRLLC: A multi-agent DRL-based traffic scheduling method in HRLLC and TSN converged networks,” IEEE Transactions on Wireless Communications , vol. 25, pp. 15 054–15 068, 2026. [13] Y. Huang, Y. Jiang, F.-C. Zheng, P. Zhu, and D. Wang, “Energy-efficient resource orchestration for URLLC in cell-free RANs via GNNs with re-liability enforcement,” IEEE Transactions on Wireless Communications ,vol. 25, pp. 14 166–14 182, 2026. [14] O. Ayan, S. Hirche, A. Ephremides, and W. Kellerer, “Optimal finite horizon scheduling of wireless networked control systems,” IEEE/ACM Transactions on Networking , vol. 32, no. 2, pp. 927–942, 2024. [15] D. Wu and R. Negi, “Effective capacity: a wireless link model for support of quality of service,” IEEE Transactions on Wireless Com-munications , vol. 2, no. 4, pp. 630–643, 2003. [16] J. Wang, W. Cheng, and W. Zhang, “Performance boundary analyses for statistical multi-QoS framework over 6G SAGINs,” IEEE Transactions on Wireless Communications , vol. 24, no. 5, pp. 4329–4343, 2025. [17] I. Muhammad, H. Alves, N. H. Mahmood, O. L. A. L´ opez, and M. Latva-aho, “Mission effective capacity–a novel dependability metric: A study case of multiconnectivity-enabled URLLC for IIoT,” IEEE Transactions on Industrial Informatics , vol. 18, no. 6, pp. 4180–4188, 2022. [18] M. Karbalaee Motalleb, V. Shah-Mansouri, S. Parsaeefard, and O. L. Alcaraz L´ opez, “Resource allocation in an open RAN system using net-work slicing,” IEEE Transactions on Network and Service Management ,vol. 20, no. 1, pp. 471–485, 2023. [19] O. Adamuz-Hinojosa, L. Zanzi, V. Sciancalepore, A. Garcia-Saavedra, and X. Costa-P´ erez, “ORANUS: Latency-tailored orchestration via stochastic network calculus in 6G O-RAN,” in IEEE INFOCOM 2024 - IEEE Conference on Computer Communications , 2024, pp. 61–70. [20] M. Polese, L. Bonati, S. D’Oro, S. Basagni, and T. Melodia, “ColO-RAN: Developing machine learning-based xApps for open RAN closed-loop control on programmable experimental platforms,” IEEE Transac-tions on Mobile Computing , vol. 22, no. 10, pp. 5787–5800, 2023. [21] A. Lacava, M. Bordin, M. Polese, R. Sivaraj, T. Zugno, F. Cuomo, and T. Melodia, “ns-O-RAN: Simulating O-RAN 5G systems in ns-3,” in 
+
+Proceedings of the 2023 Workshop on ns-3 , 2023, pp. 35–44. [22] J. Rao and S. Vrzic, “Packet duplication for URLLC in 5G: Architectural enhancements and performance analysis,” IEEE Network , vol. 32, no. 2, pp. 32–40, 2018. [23] M. Polese, L. Bonati, S. D’Oro, S. Basagni, and T. Melodia, “Under-standing O-RAN: Architecture, interfaces, algorithms, security, and re-search challenges,” IEEE Communications Surveys & Tutorials , vol. 25, no. 2, pp. 1376–1411, 2023. [24] J. Pan, J. Wang, Z. Yun, Z. Xiao, Y. Ouyang, W. Cheng, and W. Zhang, “MAC revivo: Artificial intelligence paves the way,” 2024, arXiv:2410.15820. [25] 3rd Generation Partnership Project, “Common functional architecture to support mission critical services; stage 2,” 3GPP TS 23.280 V19.10.1, May 2026. [26] H. S. Wang and N. Moayeri, “Finite-state Markov channel-a useful model for radio communication channels,” IEEE Transactions on Ve-hicular Technology , vol. 44, no. 1, pp. 163–171, 1995. [27] W. Hoeffding, “Probability inequalities for sums of bounded random variables,” Journal of the American Statistical Association , vol. 58, no. 301, pp. 13–30, 1963. [28] N. Patriciello, S. Lag´ en, B. Bojovi´ c, and L. Giupponi, “An E2E simulator for 5G NR networks,” Simulation Modelling Practice and Theory ,vol. 96, p. 101933, 2019. [29] K. Koutlia, B. Bojovi´ c, Z. Ali, and S. Lag´ en, “Calibration of the 5G-LENA system level simulator in 3GPP reference scenarios,” Simulation Modelling Practice and Theory , vol. 119, p. 102580, 2022. [30] J. Luis Herrera, S. Montebugnoli, D. Scotece, L. Foschini, and P. Bellav-ista, “A tutorial on O-RAN deployment solutions for 5G: From simu-lation to emulated and real testbeds,” IEEE Communications Surveys & Tutorials , vol. 28, pp. 1709–1748, 2026.

@@ -1,0 +1,214 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-30T19:34:12.202646+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2608.25562v1",
+      "source": "arxiv",
+      "title": "Giant strongly biconnected components of directed networks: a generating function approach",
+      "abstract": "Strongly connected components (SCCs) characterize modular structure in directed networks but are fragile to single node failures. We study strongly biconnected components (SBCs), which are the set of nodes in which every node pair remains mutually reachable after the removal of any single node, as a more robust notion of connectivity. Using a generating function formalism, we derive the size of the giant SBC and analyze its percolation behavior under random node and link removal. We show that the giant SBC emerges at the same threshold as the giant SCC but grows more slowly due to stricter connectivity requirements. We also applied our theoretical framework to real-world biological networks including gene regulatory networks and neural connectome. Our framework provides insight into the interplay between connectivity, redundancy, and robustness in complex directed systems.",
+      "authors": [
+        "Minsoo Yang",
+        "Reinhard Laubenbacher",
+        "Byungjoon Min"
+      ],
+      "primary_category": "physics.soc-ph",
+      "categories": [
+        "physics.soc-ph",
+        "q-bio.MN"
+      ],
+      "published": "2026-08-26T09:15:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.25562v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "robust connectivity of directed networks against single node/link failures",
+      "llm_evidence_cn": "有向网络在节点/链路失效下的鲁棒连通性",
+      "llm_evidence": "有向网络在节点/链路失效下的鲁棒连通性",
+      "canonical_evidence": "有向网络在节点/链路失效下的鲁棒连通性",
+      "llm_tldr_en": "Presents a generating function formalism to derive the size of giant strongly biconnected components, showing they emerge at the same threshold as SCCs but more fragile to node/link removal, providing a theoretical basis for network resilience analysis.",
+      "llm_tldr_cn": "本文针对有向网络中强连通分量对单点故障脆弱的问题，研究强双连通分量（SBC）这一更强鲁棒连通概念。利用生成函数形式推导巨型SBC的大小，并分析随机节点和链路移除下的渗流行为。结果表明巨型SBC与巨型SCC在相同阈值出现但增长更慢，为衡量网络抗毁性提供理论基础，并应用于基因调控等真实生物网络。",
+      "llm_tldr": "本文针对有向网络中强连通分量对单点故障脆弱的问题，研究强双连通分量（SBC）这一更强鲁棒连通概念。利用生成函数形式推导巨型SBC的大小，并分析随机节点和链路移除下的渗流行为。结果表明巨型SBC与巨型SCC在相同阈值出现但增长更慢，为衡量网络抗毁性提供理论基础，并应用于基因调控等真实生物网络。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.25383v1",
+      "source": "arxiv",
+      "title": "Traffic-Adaptive Per-Hop Multipath Routing in Multi-Hop UAV Networks",
+      "abstract": "In uncrewed aerial vehicle (UAV)-relayed mobile edge computing (MEC) networks, computation tasks generate traffic with diverse latency requirements and data sizes. Routing decisions therefore need to adapt to both traffic characteristics and changing network conditions. Compared with single-path routing, multipath routing is better suited to such heterogeneous traffic because it provides multiple forwarding options and enables flexible traffic splitting. However, conventional multipath routing usually splits traffic over predefined end-to-end paths, making it difficult to respond quickly to link fluctuations and topology changes in UAV networks. To address this issue, we propose a traffic-adaptive per-hop multipath routing method for multi-hop UAV networks, in which each UAV dynamically distributes traffic among multiple candidate next hops. We formulate the routing problem to improve the on-time packet delivery ratio while reducing the packet loss ratio, and model it as a decentralized partially observable Markov decision process (Dec-POMDP). To solve this problem, we develop a multi-agent reinforcement learning (MARL) algorithm, termed Multi-Agent Proximal Policy Optimization with Dirichlet Modeling (MAPPO-DM). MAPPO-DM follows the centralized-training-and-decentralized-execution framework and models continuous traffic-splitting actions using a Dirichlet distribution. Simulation results show that MAPPO-DM outperforms the baseline methods and maintains robust performance under various network conditions.",
+      "authors": [
+        "Zhenyu Zhao",
+        "Tiankui Zhang",
+        "Xiaoxia Xu",
+        "Yuanpeng Zheng",
+        "Junjie Li",
+        "Wenjuan Xing"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-26T05:17:10+00:00",
+      "link": "https://arxiv.org/pdf/2608.25383v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Improves network resilience in MEC via traffic-adaptive per-hop multipath routing",
+      "llm_evidence_cn": "通过流量自适应逐跳多路径路由提升MEC网络的韧性",
+      "llm_evidence": "通过流量自适应逐跳多路径路由提升MEC网络的韧性",
+      "canonical_evidence": "通过流量自适应逐跳多路径路由提升MEC网络的韧性",
+      "llm_tldr_en": "UAV-relayed MEC networks face dynamic topology and diverse traffic. This work proposes traffic-adaptive per-hop multipath routing, enabling flexible traffic splitting and rapid response to link fluctuations, thus enhancing network resilience and meeting diverse latency requirements.",
+      "llm_tldr_cn": "无人机中继的移动边缘计算网络中，计算任务流量具有多样化时延需求和大小，且链路波动与拓扑变化频繁，传统端到端多路径路由难以快速响应。论文提出一种流量自适应的逐跳多路径路由方法，依据每条链路的实时状况灵活分配流量，从而在链路波动时快速调整路径，提升网络韧性与时延保障能力。该方法为边缘网络在动态环境下的可靠传输提供了有效方案。",
+      "llm_tldr": "无人机中继的移动边缘计算网络中，计算任务流量具有多样化时延需求和大小，且链路波动与拓扑变化频繁，传统端到端多路径路由难以快速响应。论文提出一种流量自适应的逐跳多路径路由方法，依据每条链路的实时状况灵活分配流量，从而在链路波动时快速调整路径，提升网络韧性与时延保障能力。该方法为边缘网络在动态环境下的可靠传输提供了有效方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.21866v1",
+      "source": "arxiv",
+      "title": "Reliability-Aware Scheduling for Digital Twin Maintenance",
+      "abstract": "In Industrial Internet of Things systems, learning-enabled Digital Twins (DTs) support remote monitoring by using data reported by distributed devices to maintain digital representations of physical processes. When uplink resources are limited, a base station cannot collect new observations from every device at every communication slot and must decide which devices should transmit. This decision becomes challenging when the physical process changes after the DT models have already been trained. In such cases, recent observations alone may not keep the DT accurate, because the learned model may no longer match the underlying process. This paper studies how to schedule observation requests so that the DT maintained at the base station remains close to the true physical process. We define the Ensemble Disagreement Indicator (EDI) as an uncertainty measure computed at the base station from the spread among estimates produced by independently trained DT predictors. Building on EDI, we propose R-VoU, a reliability-aware value-of-update scheduler that prioritizes the observations expected to most improve the DT by reducing a cost based on uncertainty and predicted DT error. The DT is further adjusted online using the difference between received observations and current predictions. Experiments on process manufacturing data show that, under limited communication budgets, R-VoU achieves the lowest combined cost and DT estimation error among the compared schedulers that use only information available before each scheduling decision.",
+      "authors": [
+        "Milica Jankov",
+        "Carlo Fischione"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-22T09:22:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.21866v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Reliability-aware scheduling of limited uplink resources for digital twin maintenance, transferable to edge resource orchestration",
+      "llm_evidence_cn": "面向数字孪生维护的可靠性感知调度，可迁移到边缘资源编排",
+      "llm_evidence": "面向数字孪生维护的可靠性感知调度，可迁移到边缘资源编排",
+      "canonical_evidence": "面向数字孪生维护的可靠性感知调度，可迁移到边缘资源编排",
+      "llm_tldr_en": "Studies how to schedule observation transmissions under limited uplink so the digital twin at the base station remains close to the true physical process, proposing a reliability-aware scheduling approach.",
+      "llm_tldr_cn": "在工业物联网中，数字孪生的准确性依赖有限的观测数据，而物理过程发生变化会使预训练模型失准。该文提出可靠性感知调度方法，在资源受限条件下决定设备上报观测数据的时机，使基站维护的数字孪生尽量贴近真实过程。实验证实所提调度方案能显著降低数字孪生偏差，为边缘侧可靠数字孪生维护与资源编排提供了有效支持。",
+      "llm_tldr": "在工业物联网中，数字孪生的准确性依赖有限的观测数据，而物理过程发生变化会使预训练模型失准。该文提出可靠性感知调度方法，在资源受限条件下决定设备上报观测数据的时机，使基站维护的数字孪生尽量贴近真实过程。实验证实所提调度方案能显著降低数字孪生偏差，为边缘侧可靠数字孪生维护与资源编排提供了有效支持。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.21773v1",
+      "source": "arxiv",
+      "title": "Privacy Preserving Semantic Communications in Wireless Edge Networks with Vision Language Models",
+      "abstract": "Semantic communication has emerged as a promising paradigm for next-generation wireless systems by transmitting high-level semantic features rather than raw bits. However, collaborative devices and multimodal transmission increase privacy risks because sensitive information may leak through inter-device semantic fusion and cross-modal representations. To address this issue, we propose a privacy-preserving semantic communication framework for wireless edge networks. Leveraging a vision-language model (VLM), the framework extracts textual semantics from images and identifies privacy-sensitive entities using a privacy database maintained only at the edge server. Before image transmission, each device removes the identified private regions while preserving useful semantic content. The server then reconstructs the removed regions from the received masked images using textual embeddings and VLM-based semantic priors. To protect textual information, we design an encrypted semantic-channel transceiver using physical-layer keys generated from reciprocal wireless channels, without pre-shared keys. We also introduce a semantic information bottleneck to suppress redundant information across multiple devices. The framework is evaluated against a strong model-aware adversary that can intercept wireless transmissions and access edge-device model parameters but not server-side data. Simulation results show that the proposed method reduces privacy leakage by more than 50% compared with a semantic communication scheme without privacy protection, while the authorized server achieves a 48% improvement in perceptual reconstruction quality over the adversary. The estimated mutual information between transmitted representations approaches 0 bit, indicating effective suppression of cross-device semantic redundancy.",
+      "authors": [
+        "Haoran Chang",
+        "Mingzhe Chen",
+        "Qianqian Zhang"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "eess.SP"
+      ],
+      "published": "2026-08-22T04:42:08+00:00",
+      "link": "https://arxiv.org/pdf/2608.21773v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "semantic communication framework for wireless edge networks, processing data near the edge server",
+      "llm_evidence_cn": "面向无线边缘网络的语义通信框架，在边缘服务器附近处理数据",
+      "llm_evidence": "面向无线边缘网络的语义通信框架，在边缘服务器附近处理数据",
+      "canonical_evidence": "面向无线边缘网络的语义通信框架，在边缘服务器附近处理数据",
+      "llm_tldr_en": "Proposes a privacy-preserving semantic communication framework for wireless edge networks that uses a vision-language model to identify and remove private entities before transmission, reducing leakage during device fusion.",
+      "llm_tldr_cn": "本文针对无线边缘网络中多设备语义融合导致隐私泄露的问题，提出一种基于视觉语言模型（VLM）的隐私保护语义通信框架。边缘服务器维护隐私数据库，在设备发送图像前识别并移除敏感实体，从而在多模态传输中降低跨设备语义融合和跨模态表征带来的隐私风险。该框架在保障语义通信效率的同时增强了边缘网络的隐私安全性，为端边协同提供了新范式。",
+      "llm_tldr": "本文针对无线边缘网络中多设备语义融合导致隐私泄露的问题，提出一种基于视觉语言模型（VLM）的隐私保护语义通信框架。边缘服务器维护隐私数据库，在设备发送图像前识别并移除敏感实体，从而在多模态传输中降低跨设备语义融合和跨模态表征带来的隐私风险。该框架在保障语义通信效率的同时增强了边缘网络的隐私安全性，为端边协同提供了新范式。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25442v1",
+      "source": "arxiv",
+      "title": "E2-Conditioned Finite-Horizon Effective Capacity for Public-Safety MCX over Shared O-RAN",
+      "abstract": "Supporting public-safety Mission Critical Services (MCX) over a shared Open radio access network (O-RAN) requires service assurance over finite incident horizons, while ordinary mobile traffic competes for the same resources and heterogeneous E2 domains expose different observations, control actions, and actuation latencies. Existing RAN key performance indicators are retrospective, whereas conventional effective capacity characterizes an asymptotic stationary regime and therefore suppresses both the initial E2-observed condition and the finite selection-to-actuation transient. To solve this problem, in this paper we develop an E2-conditioned finite-horizon effective capacity (FH-EC) framework for public-safety MCX over shared O-RAN. Specifically, we first establish a finite-horizon O-RAN MCX-based service model that incorporates E2-observed network states, control actuation latency, and correlation-aware connectivity diversity. Based on this model, we derive an FH-EC formulation that characterizes the executable service capability within a finite mission horizon. Furthermore, we transform FH-EC into confidence-calibrated capability profiles and develop an MCX orchestration framework with contract certification, shared-resource protection, and FH-EC-driven profile selection at the Near-RT RAN Intelligent Controller (RIC). Coupled MATLAB/ns-3 evaluations demonstrate the predicted short-horizon state and actuation effects and show that adaptive connectivity selection improves MCX supportability under O-DU degradation while satisfying the configured multi-QoS and non-MCX protection requirements.",
+      "authors": [
+        "Jingqing Wang",
+        "Wenchi Cheng"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-26T06:55:23+00:00",
+      "link": "https://arxiv.org/pdf/2608.25442v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "finite-horizon effective capacity framework for service assurance and resource management in shared O-RAN",
+      "llm_evidence_cn": "面向共享O-RAN有限事件时域的业务保障与资源管理，开发有限时域有效容量框架",
+      "llm_evidence": "面向共享O-RAN有限事件时域的业务保障与资源管理，开发有限时域有效容量框架",
+      "canonical_evidence": "面向共享O-RAN有限事件时域的业务保障与资源管理，开发有限时域有效容量框架",
+      "llm_tldr_en": "This paper develops an E2-conditioned finite-horizon effective capacity (FH-EC) framework for public-safety mission-critical services over shared O-RAN, improving service assurance under finite incident horizons and heterogeneous E2 domain conditions.",
+      "llm_tldr_cn": "公共安全关键任务在共享O-RAN上运行需要面对有限事件时域内的服务保障，而传统有效容量基于渐近平稳假设，忽略了初始E2观测条件和选择到执行之间的暂态。论文提出E2条件化的有限时域有效容量(FH-EC)框架，显式建模E2域的初始状态与有限事件时域的资源竞争。该框架比传统RAN指标更能刻画短时服务保障能力，为共享网络中的资源分配与韧性评估提供了新的容量分析工具。",
+      "llm_tldr": "公共安全关键任务在共享O-RAN上运行需要面对有限事件时域内的服务保障，而传统有效容量基于渐近平稳假设，忽略了初始E2观测条件和选择到执行之间的暂态。论文提出E2条件化的有限时域有效容量(FH-EC)框架，显式建模E2域的初始状态与有限事件时域的资源竞争。该框架比传统RAN指标更能刻画短时服务保障能力，为共享网络中的资源分配与韧性评估提供了新的容量分析工具。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
