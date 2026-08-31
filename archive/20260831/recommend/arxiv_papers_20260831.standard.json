@@ -1,0 +1,95 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-31T19:27:05.850219+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2608.28313v1",
+      "source": "arxiv",
+      "title": "Multi-tier Flexible Graph Connectivity",
+      "abstract": "Motivated by non-uniform edge failures in network design, we introduce a multi-tier model of flexible graph connectivity. In k-tier Flexible Graph Connectivity (k-tier FGC), the input is an undirected graph G=(V, E) with non-negative edge costs, along with a classification of the edges into nested tiers T_1 subseteq T_2 subseteq ... subseteq T_k = E and non-negative integral tier requirements q_1 <= q_2 <= ... <= q_k. A non-empty proper subset R of vertices is safe if it is safe along one of the tiers, i.e., there exists i in [k] such that |delta(R) cap T_i| >= q_i. The goal is to find a minimum cost subset F subseteq E of edges such that the subgraph (V, F) has no unsafe cuts. The case of k=1 corresponds to the min-cost p-edge-connected spanning subgraph problem which is APX-hard. We design approximation algorithms for every fixed constant k for three variants of k-tier FGC: (i) for k-tier FGC, we design an LP-based logarithmic approximation, (ii) for min-cardinality k-tier FGC, we design a combinatorial approximation whose factor depends only on the tier requirements q_1 and q_k, and (iii) for k-tier Flexible Multi-Graph Connectivity, where we are allowed to use multiple copies of each edge while paying the cost of the edge for each chosen copy of the edge, we design an LP-based 2-approximation.",
+      "authors": [
+        "Karthekeyan Chandrasekaran",
+        "Raymond Jiang",
+        "Krishna Kalathur"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS"
+      ],
+      "published": "2026-08-28T13:25:07+00:00",
+      "link": "https://arxiv.org/pdf/2608.28313v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "network design model accounting for non-uniform edge failures to guarantee connectivity",
+      "llm_evidence_cn": "面向非均匀边故障的网络设计模型，保证连通性",
+      "llm_evidence": "面向非均匀边故障的网络设计模型，保证连通性",
+      "canonical_evidence": "面向非均匀边故障的网络设计模型，保证连通性",
+      "llm_tldr_en": "Introduces k-tier Flexible Graph Connectivity, a network design model for non-uniform edge failures, and studies minimum-cost edge subsets with no unsafe cuts, capturing resilience via nested tiers.",
+      "llm_tldr_cn": "针对实际网络中的非均匀链路故障，论文提出k层灵活图连通性（k-tier FGC）模型。该模型将边按故障概率分为嵌套层级，并定义安全割条件，目标是寻找最小成本边集使网络无危险割。这一框架将p边连通等经典问题推广到多层容错场景，为设计抗故障网络提供了新的理论工具。",
+      "llm_tldr": "针对实际网络中的非均匀链路故障，论文提出k层灵活图连通性（k-tier FGC）模型。该模型将边按故障概率分为嵌套层级，并定义安全割条件，目标是寻找最小成本边集使网络无危险割。这一框架将p边连通等经典问题推广到多层容错场景，为设计抗故障网络提供了新的理论工具。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.28173v1",
+      "source": "arxiv",
+      "title": "Resource Allocation for Cloud Radar Networks with Communication Constraints",
+      "abstract": "Distributed radar sensing exploits spatial diversity to resolve occlusions and improve estimation accuracy. Realizing these gains, however, relies on the transmission of high-dimensional radar data to a Fusion Center (FC). This imposes significant demands on the wireless network, especially in dense, dynamic, and interference-prone environments like factories, where resilience and latency are critical. This paper studies the resource allocation problem in a capacity-constrained two-hop cloud radar network. We propose a buffered access protocol where sensors perform local spectral windowing to reduce data rates before transmitting measurements to the FC via intermediate Edge Servers (ESs). The resource allocation is formulated as a mixed-integer optimization problem aimed at minimizing the aggregate Cramer-Rao Lower Bound (CRLB) of the target parameters subject to fronthaul and backhaul capacity constraints. We develop an iterative solution algorithm based on Big-M formulation and Successive Convex Approximation (SCA). The proposed framework efficiently identifies the most informative sensor subsets and optimizes time-frequency resource assignments, ensuring high-fidelity sensing within stringent communication budgets.",
+      "authors": [
+        "Christian Eckrich",
+        "Abdelhak M. Zoubir",
+        "Vahid Jamali"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-08-28T10:39:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.28173v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "allocates resources in a two-hop cloud radar network with edge servers under resilience and latency constraints",
+      "llm_evidence_cn": "在含边缘服务器的两跳云雷达网络中，在韧性与延迟约束下分配资源",
+      "llm_evidence": "在含边缘服务器的两跳云雷达网络中，在韧性与延迟约束下分配资源",
+      "canonical_evidence": "在含边缘服务器的两跳云雷达网络中，在韧性与延迟约束下分配资源",
+      "llm_tldr_en": "Studies resource allocation for capacity-constrained two-hop cloud radar networks, proposing a buffered access protocol with local spectral windowing and mixed-integer optimization to meet resilience and latency requirements.",
+      "llm_tldr_cn": "该论文研究通信受限的两跳云雷达网络资源分配问题。由于雷达数据传回融合中心会占用大量无线带宽，作者提出带缓冲的接入协议，让传感器先进行本地频谱加窗降低数据率，再经边缘服务器转发。资源分配建模为混合整数优化，在工厂等密集动态环境中保障韧性与延迟要求。",
+      "llm_tldr": "该论文研究通信受限的两跳云雷达网络资源分配问题。由于雷达数据传回融合中心会占用大量无线带宽，作者提出带缓冲的接入协议，让传感器先进行本地频谱加窗降低数据率，再经边缘服务器转发。资源分配建模为混合整数优化，在工厂等密集动态环境中保障韧性与延迟要求。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

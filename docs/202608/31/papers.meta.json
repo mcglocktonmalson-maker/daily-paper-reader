@@ -1,0 +1,39 @@
+{
+  "label": "2026-08-31",
+  "date": "2026-08-31",
+  "generated_at": "2026-08-31T19:29:03",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202608/31/2608.28313v1-multi-tier-flexible-graph-connectivity",
+      "section": "deep",
+      "title_en": "Multi-tier Flexible Graph Connectivity",
+      "authors": "Karthekeyan Chandrasekaran, Raymond Jiang, Krishna Kalathur",
+      "date": "2026-08-28",
+      "pdf": "https://arxiv.org/pdf/2608.28313v1",
+      "score": "8.0",
+      "evidence": "面向非均匀边故障的网络设计模型，保证连通性",
+      "tldr": "网络设计常面临非均匀边故障，本文据此提出多层灵活图连通性(k-tier FGC)模型，将边划分为嵌套层级并赋予递增需求，通过安全割定义可行性。对任意固定常数k，针对三个变体给出近似算法：基于LP的O(log n)近似、最小基数情形的依赖q1和qk的组合近似、以及允许选多条边的多图变体的2-近似。这些结果将经典p-边连通问题推广至层级容错场景，为设计抗故障网络提供了统一框架和实用算法。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Motivated by non-uniform edge failures in network design, we introduce a multi-tier model of flexible graph connectivity. In k-tier Flexible Graph Connectivity (k-tier FGC), the input is an undirected graph G=(V, E) with non-negative edge costs, along with a classification of the edges into nested tiers T_1 subseteq T_2 subseteq ... subseteq T_k = E and non-negative integral tier requirements q_1 <= q_2 <= ... <= q_k. A non-empty proper subset R of vertices is safe if it is safe along one of the tiers, i.e., there exists i in [k] such that |delta(R) cap T_i| >= q_i. The goal is to find a minimum cost subset F subseteq E of edges such that the subgraph (V, F) has no unsafe cuts. The case of k=1 corresponds to the min-cost p-edge-connected spanning subgraph problem which is APX-hard. We design approximation algorithms for every fixed constant k for three variants of k-tier FGC: (i) for k-tier FGC, we design an LP-based logarithmic approximation, (ii) for min-cardinality k-tier FGC, we design a combinatorial approximation whose factor depends only on the tier requirements q_1 and q_k, and (iii) for k-tier Flexible Multi-Graph Connectivity, where we are allowed to use multiple copies of each edge while paying the cost of the edge for each chosen copy of the edge, we design an LP-based 2-approximation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/31/2608.28173v1-resource-allocation-for-cloud-radar-networks-with-communication-constraints",
+      "section": "quick",
+      "title_en": "Resource Allocation for Cloud Radar Networks with Communication Constraints",
+      "authors": "Christian Eckrich, Abdelhak M. Zoubir, Vahid Jamali",
+      "date": "2026-08-28",
+      "pdf": "https://arxiv.org/pdf/2608.28173v1",
+      "score": "7.0",
+      "evidence": "在含边缘服务器的两跳云雷达网络中，在韧性与延迟约束下分配资源",
+      "tldr": "分布式雷达感知依赖高维数据传输，在容量受限的工厂无线环境下面临严峻挑战。针对两跳云雷达网络，提出带缓冲的接入协议，利用本地频谱加窗降低数据率，并以混合整数规划最小化聚合CRLB。结合大M法与SCA迭代求解，高效选择关键传感器子集并优化时频资源，在严格通信预算下实现高保真感知。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Distributed radar sensing exploits spatial diversity to resolve occlusions and improve estimation accuracy. Realizing these gains, however, relies on the transmission of high-dimensional radar data to a Fusion Center (FC). This imposes significant demands on the wireless network, especially in dense, dynamic, and interference-prone environments like factories, where resilience and latency are critical. This paper studies the resource allocation problem in a capacity-constrained two-hop cloud radar network. We propose a buffered access protocol where sensors perform local spectral windowing to reduce data rates before transmitting measurements to the FC via intermediate Edge Servers (ESs). The resource allocation is formulated as a mixed-integer optimization problem aimed at minimizing the aggregate Cramer-Rao Lower Bound (CRLB) of the target parameters subject to fronthaul and backhaul capacity constraints. We develop an iterative solution algorithm based on Big-M formulation and Successive Convex Approximation (SCA). The proposed framework efficiently identifies the most informative sensor subsets and optimizes time-frequency resource assignments, ensuring high-fidelity sensing within stringent communication budgets.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-08-30</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-31</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 5 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 2 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>3</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>1</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>1</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-30 19:37:21 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-31 19:29:00 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读5篇论文，聚焦网络强连通分量与无人机多跳路由两大核心。</p>
-<p>最值得关注：提出生成函数方法解析大规模有向网络强连通结构，及面向多跳无人机网络的流量自适应逐跳多路径路由策略。</p>
-<p>普通读者可优先了解这两项方法，后续可关注其在实际网络运维与低空通信场景中的落地验证。</p>
+<p>今日精读1篇、速读1篇，聚焦图连通性与云雷达资源分配两大方向。</p>
+<p>最值得关注的是《Multi-tier Flexible Graph Connectivity》（8.0分），其多层灵活图连通模型可提升网络设计鲁棒性；速读文章则探讨云雷达网络在通信约束下的资源调度。</p>
+<p>建议普通读者优先精读高分图连通性论文，理解其分层思想后，再结合云雷达场景对比资源分配策略。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">2 篇</strong>
+    <strong class="dpr-home-dashboard-count">1 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Giant strongly biconnected components of directed networks: a generating function approach">Giant strongly biconnected components of directed networks: a generating function approach</span></li><li><span class="dpr-home-dashboard-paper-title" title="Traffic-Adaptive Per-Hop Multipath Routing in Multi-Hop UAV Networks">Traffic-Adaptive Per-Hop Multipath Routing in Multi-Hop UAV Networks</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Multi-tier Flexible Graph Connectivity">Multi-tier Flexible Graph Connectivity</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -86,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">3 篇</strong>
+    <strong class="dpr-home-dashboard-count">1 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Reliability-Aware Scheduling for Digital Twin Maintenance">Reliability-Aware Scheduling for Digital Twin Maintenance</span></li><li><span class="dpr-home-dashboard-paper-title" title="Privacy Preserving Semantic Communications in Wireless Edge Networks with Vision Language Models">Privacy Preserving Semantic Communications in Wireless Edge Networks with Vision Language Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="E2-Conditioned Finite-Horizon Effective Capacity for Public-Safety MCX over Shared O-RAN">E2-Conditioned Finite-Horizon Effective Capacity for Public-Safety MCX over Shared O-RAN</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Resource Allocation for Cloud Radar Networks with Communication Constraints">Resource Allocation for Cloud Radar Networks with Communication Constraints</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>3</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
 </section>
 </div>
 

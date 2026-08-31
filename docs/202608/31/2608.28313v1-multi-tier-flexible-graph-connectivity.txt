@@ -1,0 +1,1631 @@
+Title: Multi-tier Flexible Graph Connectivity
+
+URL Source: https://arxiv.org/pdf/2608.28313v1
+
+Published Time: Mon, 31 Aug 2026 00:59:46 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# Multi-tier Flexible Graph Connectivity ∗
+
+Karthekeyan Chandrasekaran Raymond Jiang Krishna Kalathur 
+
+Abstract 
+
+Motivated by non-uniform edge failures in network design, we introduce a multi-tier model of flexible graph connectivity. In k-tier Flexible Graph Connectivity ( k-tier FGC), the input is an undirected graph G = ( V, E ) with non-negative edge costs, along with a classification of the edges into nested tiers T1 ⊆ T2 ⊆ . . . ⊆ Tk = E and non-negative integral tier requirements 
+
+q1 ≤ q2 ≤ . . . ≤ qk. A cut ∅̸ = R ⊊ V is safe if it is safe along one of the tiers, i.e., there exists 
+
+i ∈ [k] such that |δ(R) ∩ Ti| ≥ qi. The goal is to find a minimum-cost subset F ⊆ E of edges such that the subgraph ( V, F ) has no unsafe cuts. The case of k = 1 corresponds to the min-cost 
+
+q1-edge-connected spanning subgraph problem, which is APX-hard. We design approximation algorithms for every fixed constant k for three variants of k-tier FGC: (i) for k-tier FGC, we design an LP-based logarithmic approximation, (ii) for min-cardinality k-tier FGC, we design a combinatorial approximation whose factor depends only on the tier requirements q1 and qk, and (iii) for k-tier Flexible Multi-Graph Connectivity, where we are allowed to use multiple copies of each edge while paying the cost of the edge for each chosen copy of the edge, we design an LP-based 2-approximation. 
+
+# 1 Introduction 
+
+Network design is a fundamental area of combinatorial optimization with applications in commu-nication, transportation, and infrastructure planning. The typical network design problem asks for a minimum-cost subgraph that satisfies certain connectivity requirements. A long line of work has produced powerful techniques—e.g., augmenting paths, LP duality, and matroid theory towards fast algorithms for polynomial-time problems such as shortest path, min-cost flow, and min-cost spanning tree, as well as combinatorial augmentation, primal-dual methods, and iterative rounding towards approximation algorithms for NP-hard problems such as min-cost Steiner tree and min-cost 
+
+k-edge-connected spanning subgraph (denoted min-cost k-ECSS) [18, 17, 15, 10]. Classical models, however, treat all edges uniformly: every edge in the network is equally likely to be attacked and hence, connectivity and fault-tolerance requirements are imposed by treating all edges to be at the same failure-level. Real-world networks rarely satisfy the uniform failure model. Some links are owned and maintained by the network operator while others are leased; some are protected by redundancy while others are exposed; some are wired and others are wireless. This motivates the study of non-uniform failure models, in which different classes of edges are subject to failure at different rates. Adjiashvili, Hommelsheim, and M¨ uhlenthaler [1] introduced ( p, q )-Flexible Graph Connectivity problem (denoted ( p, q )-FGC) to model non-uniform failure models: the input consists of a graph 
+
+G = ( V, E ) whose edges are partitioned into “safe” and “unsafe” edges, and the goal is to buy a minimum-cost subset F ⊆ E of edges such that for every choice of at most q unsafe edges F ′ ⊆ F ,   
+
+> ∗Grainger College of Engineering, Univ. of Illinois, Urbana-Champaign, Urbana, IL 61801. Email: {karthe, ryjiang2, kk17 }@illinois.edu . Supported in part by NSF grant CCF-2402667.
+
+1arXiv:2608.28313v1 [cs.DS] 28 Aug 2026 the subgraph ( V, F \ F ′) is p-edge-connected. While ( p, q )-FGC neatly captures a single dichotomy between safe and unsafe edges, many applications involve a richer hierarchy: edges carry graded tiers of vulnerability, and the operator may demand different levels of connectivity against failures restricted to different tiers. For instance, an operator may require high connectivity when only the least robust edges can fail, but can tolerate weaker connectivity when the adversary is allowed to attack a broader class that includes more robust edges. This calls for non-uniform failure models that go beyond the safe/unsafe dichotomy and can express multiple tiers of failure scenarios. Motivated towards addressing multi-tiered failure scenarios, we consider the k-tier Flexible Graph Connectivity problem .
+
+k-tier Flexible Graph Connectivity ( k-tier FGC). Given. An undirected graph G = ( V, E ) with non-negative edge costs c : E → R≥0, a nested family of edge-tiers T = ( T1, T 2, . . . , T k) where T1 ⊆ T2 ⊆ . . . ⊆ Tk = E, and non-negative integral tier requirement vector Q = ( q1, q 2, . . . , q k) ∈ Zk 
+
+> ≥0
+
+where q1 ≤ q2 ≤ . . . ≤ qk.
+
+Definition. A cut ∅̸ = R ⊊ V is ( T , Q)-safe if there exists i ∈ [k] such that |δ(R) ∩ Ti| ≥ qi
+
+and unsafe otherwise. The graph G is ( T , Q)-FGC if every cut ∅̸ = R ⊊ V is ( T , Q)-safe in G.
+
+Goal. A minimum-cost subset F ⊆ E such that the subgraph ( V, F ) is ( T , Q)-FGC. We observe that verifying whether a given candidate F ⊆ E is feasible for k-tier FGC is itself non-trivial: one must check that for each cut R whether at least one of the k tier inequalities hold. We show that this reduces to a multi-objective minimum-cut problem (see Lemma 1.5) and is hence, polynomial-time solvable for every fixed constant k. We oberve that multi-objective minimum-cut is NP-hard if the number of objectives is part of input [2]. We restrict our focus to fixed constants 
+
+k throughout this work since feasibility is efficiently verifiable only in this regime. We also assume throughout that the input instance is feasible. Multi-tier FGC subsumes several classical and recent network-design problems. The case of 
+
+k = 1 corresponds to min-cost q1-ECSS: we observe that a cut is safe if and only if it has at least q1
+
+edges in T1 = E. The case of k = 2 corresponds to ( q1, q 2 − q1)-FGC: here T1 plays the role of safe edges and T2 − T1 plays the role of unsafe edges. Multi-tier FGC therefore unifies and substantially generalizes both classical edge-connectivity and the recent flexible-connectivity problems. Following motivations make it especially compelling: Firstly, it directly captures graded, non-uniform failure scenarios that arise in practice but lie outside existing models. Secondly, the very few-tier cases (k = 1 , 2) already generalize a host of well-studied problems into a single framework. Thirdly, many of the existing techniques for 1 and 2 tier-FGC for small values of tier-requirements—uncrossability arguments and cover small cuts—do not appear to extend to larger number of tiers (e.g., k = 3), suggesting that progress on k-tier FGC will likely lead to new structural and algorithmic insights. The case of k = 1 corresponds to min-cost q1-ECSS which is APX-hard already for q1 = 2 [9], while Jain’s seminal 2-approximation for survivable network design [15] applies to min-cost 
+
+q1-ECSS for all q1. The case of k = 2 corresponds to ( p, q )-FGC which has been intensively studied since its introduction in 2020. A sequence of works has improved the approximation factor for (p, q )-FGC for various parameter regimes [1, 4, 6, 7, 5, 20, 13, 3, 21]. Most relevant to our work, Ibrahimpur and V´ egh [13] recently obtained an O(log n)-approximation for ( p, q )-FGC for all p and 
+
+q via an LP-relaxation and an independent rounding analysis, where n is the number of vertices in the input graph. Our first result gives a log-approximation for k-tier FGC. 
+
+Theorem 1.1. There exists a polynomial-time randomized algorithm for k-tier FGC that returns, with probability at least 1/3, a feasible solution with approximation factor O(k2 log n).
+
+2We recall that k is a fixed constant and hence, the approximation factor in Theorem 1.1 is 
+
+O(log n). Our algorithm for Theorem 1.1 is LP-based. Our LP is a weakening of the Ibrahimpur-V´ egh LP for ( p, q )-FGC. We weaken it since it enables a simpler and easy-to-generalize analysis without losing on the logarithmic approximation factor. We also exhibit an instance with an integrality gap of 2 k for our LP. We next consider the minimum-cardinality version of the problem, where all edge costs are unit. For p-ECSS, the cardinality version has much better approximation factor than the cost version: [8, 10] give (1 + O(1 /p ))-approximation. We let αp denote the best-known approximation ratio for min-cardinality p-ECSS. For min-cardinality ( p, q )-FGC, Nutov [20] gave a combinatorial (αp + 2 q/p )-approximation. We generalize Nutov’s ideas to the multi-tier setting: 
+
+Theorem 1.2. There is a polynomial-time (αq1 + 2( qk − q1)/q 1)-approximation for min-cardinality 
+
+k-tier FGC, where αq1 is the best known approximation ratio for min-cardinality p-ECSS. 
+
+Next, we consider the multi-use model of the problem termed k-tier Flexible Multigraph Con-nectivity problem (denoted k-tier FMGC). Here, for the same inputs, the problem seeks a non-negative integral vector x ∈ ZE 
+
+> ≥0
+
+minimizing P 
+
+> e∈E
+
+cexe such that for every ∅̸ = R ⊊ V , there exists 
+
+i ∈ [k] with x(δ(R) ∩ Ti) ≥ qi. This relaxes the constraint on each edge, allowing multiplicity. For the case of k = 1, namely min-cost p-edge connected spanning multigraph (denoted p-ESCM), a (1 + O(1 /p ))-approximation is known and this is the best possible approximation factor [12, 19]. For the case of k = 2, namely ( p, q )-Flexible Multigraph Connectivity (denoted ( p, q )-FMGC), Sim-mons’ [22] designed a 2-approximation via the cut-based formulation for min-cost spanning tree. We extend Simmons’ approach to k-tier FMGC. 
+
+Theorem 1.3. There is a polynomial-time 2-approximation for k-tier FMGC. 
+
+We note that after the conference publication of [13], Ibrahimpur and V´ egh independently also proved Theorem 1.1 in their journal publication [14]. Our model and results were discovered simul-taneously and independently after the conference publication and before the journal publication of Ibrahimpur and V´ egh’s work. 
+
+1.1 Feasibility Verification 
+
+In this section, we reduce the problem of verifying whether all cuts are safe to a multiobjective min-cut problem. We begin with a definition of the multiobjective min-cut problem. 
+
+Multiobjective Global Min Cut. Given. An undirected graph G = ( V, E ) with non-negative edge costs c1, c 2, . . . , c k : E → R≥0.
+
+Goal. min ∅̸ =R⊆V max i∈[k] ci(δ(R)). We need the following result on multiobjective global min-cut. 
+
+Lemma 1.4 ([2]) . There exists an algorithm that runs in time O(mn 2k) to solve multiobjective global min-cut, where m is the number of edges and n is the number of vertices in the input graph. Moreover, if the optimum value λ of the multiobjective global min-cut is strictly positive, then 
+
+|{∅̸ = R ⊊ V : max i∈[k] ci(δ(R)) = λ}| = O(n2k), and all non-empty proper subsets R ⊂ V with 
+
+max i∈[k] ci(δ(R)) = λ can be enumerated in time O(mn 2k).
+
+Lemma 1.5. There exists an algorithm that takes as input an undirected graph G = ( V, E ) with edge-tiers T = ( T1, T 2, . . . , T k) where T1 ⊆ T2 ⊆ . . . ⊆ Tk = E and non-negative integral edge-tier requirements Q = ( q1, q 2, . . . , q k) where q1 ≤ q2 ≤ . . . ≤ qk, and runs in time |E|| V |O(k) to verify whether G is (T , Q)-FGC. 
+
+3Proof. If q1 = 0, then G has no ( T , Q)-unsafe cuts. Henceforth, we assume that q1 > 0. We observe that G = ( V, E ) has no ( T , Q)-unsafe cuts if and only if max 
+
+> i∈[k]
+
+n |δ(R)∩Ti|
+
+> qi
+
+o
+
+≥ 1 for each subset ∅̸ = R ⊊ V . Thus, G has no ( T , Q)-unsafe cuts iff min  
+
+> ∅̸ =R⊊V
+
+max 
+
+> i∈[k]
+
+n |δ(R)∩Ti|
+
+> qi
+
+o
+
+≥ 1. For each 
+
+i ∈ [k], we define ci(e) : E → R≥0 as 
+
+ci(e) := 
+
+( 1 
+
+> qi
+
+if e ∈ Ti,
+
+0 otherwise .
+
+Then, verifying whether min  
+
+> ∅̸ =R⊊V
+
+max 
+
+> i∈[k]
+
+n |δ(R)∩Ti|
+
+> qi
+
+o
+
+≥ 1 holds can be done by solving the multi-objective global min-cut problem on graph G = ( V, E ) with edge costs c1, c 2, . . . , c k : E → R≥0. Hence, the result follows by Lemma 1.4. 
+
+# 2 Logarithmic Approximation 
+
+In this section, we prove Theorem 1.1. For this, we formulate an IP for k-tier FGC, show that the LP-relaxation is solvable in polynomial time, and design a randomized rounding algorithm. For an input instance ( G = ( V, E ), c : E → R≥0, T = ( T1, T 2, . . . , T k), Q = ( q1, q 2, . . . , q k)), let 
+
+Si := Ti\Ti−1 for every i ∈ { 1, 2, . . . , k } where T0 := ∅. We observe that S1, . . . , S k is a partition of E. For each i ∈ [k] and ∅̸ = R ⊊ V , we define δTi (R) := δ(R) ∩ Ti and δSi (R) := δ(R) ∩ Si. In addition, we define for every a ∈ R, a+ := max {a, 0}.We consider the following IP: min X
+
+> e∈E
+
+cexe (k-tier-IP) 
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj − | J ∩ Tj |)+
+
+ · x(δTi (R) − J) ≥
+
+> k
+
+Y
+
+> i=1
+
+(qi − | J ∩ Ti|)+ (1) 
+
+∀ pairs ( J, R ) where J ⊆ δ(R) and ∅̸ = R ⊊ V
+
+0 ≤ xe ≤ 1 ∀ e ∈ Exe ∈ Z ∀ e ∈ E. 
+
+We show that k-tier-IP formulates k-tier FGC in Lemma 2.1 below. 
+
+Lemma 2.1. k-tier-IP formulates k-Tier FGC. Proof. We first show that the indicator vector of every feasible solution F ⊆ E satisfies constraint (1) for ( J, R ) for every ∅̸ = R ⊊ V and J ⊆ δ(R). Let F ⊆ E such that ( V, F ) is ( T , Q)-FGC. Let 
+
+∅̸ = R ⊊ V and J ⊆ δ(R). If qi − | J ∩ Ti| ≤ 0 for some i ∈ [k], then RHS of (1) is 0 while LHS of (1) is non-negative owing to the non-negativity constraints on x and therefore, the constraint holds. Thus, we may assume that qi −| J ∩Ti| > 0 for every i ∈ [k]. Since ( V, F ) is ( T , Q)-FGC, there exists 
+
+t ∈ [k] such that |δTt (R) ∩ F | ≥ qt. Consequently, we have that |(δTt (R) ∩ F ) − J| ≥ qt − | J ∩ Tt|.Hence, |(δTt (R)∩F )−J|  
+
+> qt−| J∩Tj|
+
+≥ 1 and therefore, 
+
+> k
+
+X
+
+> i=1
+
+|(δTi (R) ∩ F ) − J)|
+
+qi − | J ∩ Ti| ≥ |(δTt (R) ∩ F ) − J|
+
+qt − | J ∩ Tt| ≥ 1. (2) 4Multiplying both sides of (2) by Qki=1 (qi − | J ∩ Ti|), we obtain 
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj − | J ∩ Tj |)
+
+ · | (δTi (R) ∩ F ) − J)| ≥ Y
+
+> j∈[k]
+
+(qj − | J ∩ Tj |),
+
+and hence, the indicator vector of F satisfies constraint (1). Next we show that if F ⊆ E is such that ( V, F ) is not ( T , Q)-FGC, then the indicator vector 
+
+x of F violates constraint (1) for some tuple ( J, R ) where ∅̸ = R ⊊ V and J ⊆ δ(R). Since (V, F ) is not ( T , Q)-FGC, there exists ∅̸ = R ⊊ V such that |δTi (R) ∩ F | < q i for all i ∈ [k]. Let 
+
+J := δ(R) ∩ F . For this choice of x and ( J, R ), the LHS of (1) is 0 while the RHS of (1) is positive, showing violation of constraint (1). We show that the LP-relaxation of k-tier-IP is solvable in polynomial time in Section 2.1—see Lemma 2.3. We design a rounding algorithm and analyze its approximation factor in Section 2.2— see Lemma 2.12. Theorem 1.1 follows by Lemmas 2.1, 2.3, and 2.12. We discuss the integrality gap of our LP-relaxation and compare it to Ibrahimpur-V´ egh’s LP-relaxation for ( p, q )-FGC in Section 2.3. We need the following result on the number of approximate min-cuts. 
+
+Theorem 2.2 ([16]) . Let G = ( V, E ) with non-negative edge capacities c : E → R≥0 and let 
+
+λ := min {c(δ(R)) : ∅̸ = R ⊊ V }. For every α ≥ 1, we have that 
+
+|{ R : ∅̸ = R ⊊ V, c (δ(R)) ≤ αλ }| = O(|V |2α).
+
+Moreover, {R : ∅̸ = R ⊊ V, c (δ(R)) ≤ αλ } can be enumerated in polynomial time. 
+
+For the rest of this section, we fix the input graph G = ( V, E ), tiers T = ( T1, T 2, . . . , T k)where T1 ⊆ T2 ⊆ . . . ⊆ Tk = E, non-negative integral tier requirements Q = ( q1, q 2, . . . , q k) where 
+
+q1 ≤ q2 ≤ . . . ≤ qk.
+
+2.1 Efficient solvability of the LP 
+
+We assume that qi ≤ | E| for all i ∈ [k] since the problem is infeasible otherwise. The following is the main result of this section. 
+
+Lemma 2.3. For every fixed constant k, the LP relaxation of k-tier-IP can be solved in polynomial time. 
+
+We note that the number of constraints in the LP relaxation of k-tier-IP is exponential in |V |.We will show that there exists an efficient separation oracle for the LP relaxation of k-tier-IP and use the Ellipsoid method to solve the LP. 
+
+Definition 2.4 (Capacity Function) . Let x ∈ [0 , 1] E . Let Qi := Q 
+
+> j∈[k]\{ i}
+
+qj for every i ∈ [k]. For each i ∈ [k] and each e ∈ Si, let 
+
+ux(e) := 
+
+
+
+> k
+
+X
+
+> j=i
+
+Qj
+
+ · xe.
+
+We first observe the following relationship for the capacity of a cut δ(R), where R is a nonempty proper subset of vertices. 5Proposition 2.5. Let x ∈ [0 , 1] E . Then, for every ∅̸ = R ⊊ V , we have that 
+
+ux(δ(R)) = 
+
+> k
+
+X
+
+> i=1
+
+Qi · x(δTi (R)) . (3) 
+
+Proof. We have that 
+
+ux(δ(R)) = 
+
+> k
+
+X
+
+> i=1
+
+
+
+> k
+
+X
+
+> j=i
+
+Qj
+
+ · x(δSi (R)) =
+
+> k
+
+X
+
+> j=1
+> j
+
+X
+
+> i=1
+
+(Qj · x(δSi (R))) (changing order of summation) =
+
+> k
+
+X
+
+> j=1
+
+QjjX
+
+> i=1
+
+x(δSi (R)) =
+
+> k
+
+X
+
+> j=1
+
+Qj · x(δTj (R)) ,
+
+where the last equation is by definition of Si for every i ∈ [k]. As a first step towards separating over the entire family of constraints (1) over all ( J ⊆ δ(R), R ⊆
+
+2V − {∅ , V }) tuples, we solve the separation problem over the family of constraints (1) for a fixed 
+
+R ∈ 2V − {∅ , V }. The following lemma shows that for a given ∅̸ = R ⊆ V and x ∈ [0 , 1] E , there exists a polynomial time algorithm to verify whether x satisfies constraint (1) for ( J, R ) for every 
+
+J ⊆ δ(R) and if not, then return a set J ⊆ δ(R) such that (1) is violated for ( J, R ). The run-time of the algorithm in the following lemma is polynomial for constant k.
+
+Lemma 2.6. There exists an algorithm that takes x ∈ [0 , 1] E and ∅̸ = R ⊊ V as input and runs in time O(|E|k+2 ) to verify if there exists J ⊆ δ(R) such that 
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj − | J ∩ Tj |)+
+
+ · x(δTi (R) − J) −
+
+> k
+
+Y
+
+> i=1
+
+(qi − | J ∩ Ti|)+ < 0. (4) 
+
+and if so, then return such a J.Proof. Suppose J ⊆ δ(R) is such that qi ≤ | J ∩ Ti| for some i ∈ [k]. Then the LHS of (4) is Q
+
+> j∈[k]\{ i}
+
+(qj − | J ∩ Tj |)+
+
+
+
+x(δTi (R) − J) ≥ 0 by non-negativity of x. Thus, it suffices to solve the following optimization problem: arg min  
+
+> J⊆δ(R): |J∩δTi(R)|<q i∀i∈[k]
+
+
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj − | J ∩ Tj |)+
+
+ · x(δTi (R) − J) −
+
+> k
+
+Y
+
+> i=1
+
+(qi − | J ∩ Ti|)+
+
+ .
+
+(5) We note that for a subset J ⊆ δ(R) and i ∈ [k], we have |J ∩ Ti| = Pim=1 |J ∩ Sm|. We have that a set J∗ ⊆ δ(R) is an optimum solution to the optimization problem in (5) if and only if J∗ is 6a minimizer of the following problem: min    
+
+> ai∈[min {qi,|δSi(R)|} ]∀i∈[k]:
+> Pji=1 ai<q j∀j∈[k]
+
+min 
+
+> J⊆δ(R):
+> |J∩Si|=ai∀i∈[k]
+
+( kX
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+qj −
+
+> j
+
+X
+
+> m=1
+
+am
+
+! · x(δTi (R) − J) −
+
+> k
+
+Y
+
+> i=1
+
+qi −
+
+> j
+
+X
+
+> m=1
+
+am
+
+! ) 
+
+.
+
+(6) The number of possible choices for ( a1, . . . , a k) with ai ∈ [min {qi, |δSi (R)|} ] for each i ∈ [k] so that Pji=1 ai < q j for all j ∈ [k] is at most Qki=1 qi.After fixing ( a1, · · · , a k), Qki=1 
+
+
+
+qi − Pjm=1 am
+
+
+
+is a constant. Thus, for each choice of ( a1, · · · , a k), it suffices to solve the following optimization problem. arg min 
+
+> J⊆δ(R):
+> |J∩Si|=ai
+> ∀i∈[k]
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj −
+
+> j
+
+X
+
+> m=1
+
+am)
+
+ ·
+
+ X 
+
+> e∈δTi(R)\J
+
+xe
+
+ . (7) We will now show that (7) is solvable in time O(|E|2) for every ( a1, . . . , a k). Fix a choice of (a1, . . . , a k) and denote αi := Q
+
+> j∈[k]\{ i}
+
+(qj − Pjm=1 am). Then, (7) is equivalent to min 
+
+> J⊆δ(R):
+> |J∩Si|=ai
+> ∀i∈[k]
+> k
+
+X
+
+> i=1
+
+αi ·
+
+ X 
+
+> e∈δTi(R)\J
+
+xe
+
+ = min 
+
+> J⊆δ(R):
+> |J∩Si|=ai
+> ∀i∈[k]
+> k
+
+X
+
+> i=1
+
+αi ·
+
+
+
+> i
+
+X
+
+> m=1
+
+X 
+
+> e∈δSm (R)\J
+
+xe
+
+
+
+= min 
+
+> J⊆δ(R):
+> |J∩Si|=ai
+> ∀i∈[k]
+> k
+
+X
+
+> i=1
+> i
+
+X
+
+> m=1
+
+αi · X 
+
+> e∈δSm (R)\J
+
+xe
+
+
+
+= min 
+
+> J⊆δ(R):
+> |J∩Si|=ai
+> ∀i∈[k]
+> k
+
+X
+
+> i=1
+
+
+
+> k
+
+X
+
+> m=i
+
+αm
+
+!
+
+·
+
+ X 
+
+> e∈δSi(R)\J
+
+xe
+
+
+
+=
+
+> k
+
+X
+
+> i=1
+
+
+
+> k
+
+X
+
+> m=i
+
+αm
+
+!
+
+· min 
+
+> J⊆δ(R):
+> |J∩Si|=ai
+
+ X 
+
+> e∈δSi(R)\J
+
+xe
+
+
+
+=
+
+> k
+
+X
+
+> i=1
+
+
+
+> k
+
+X
+
+> m=i
+
+αm
+
+!
+
+· min  
+
+> Ji⊆δSi(R):
+> |Ji|=ai
+
+ X
+
+> e∈(δ(R)∩Si)\Ji
+
+xe
+
+ .
+
+The third equation is by swapping the order of sums from the second equation. The last two equations are because Si ∩ Sj = ∅ for every distinct i, j ∈ [k]. Let i ∈ [k]. We now focus on the following problem: arg min  
+
+> Ji⊆δSi(R):
+> |Ji|=ai
+
+ X 
+
+> e∈δSi(R)\Ji
+
+xe
+
+ . (8) We observe that the optimum is achieved by the subset J that consists of the ai edges in δSi (R)that have the largest xe value. Hence, we can sort all edges in δSi (R) in decreasing order and find 7the optimum set Ji. Therefore, (8) can be solved in O(|δSi (R)| log |δSi (R)|) time for each i ∈ [k]. Because Si ∩Sj = ∅ for every distinct i, j ∈ [k], (7) can be solved in O(Pki=1 (|δSi (R)| log |δSi (R)|)) = 
+
+O(|δ(R)| log |δ(R)|) time. Consequently, (4) can be solved in O(( Qki=1 qi)|δ(R)| log |δ(R)|) time. Since qi ≤ | E| for every i ∈ [k] and |δ(R)| ≤ | E|, the run-time is O(|E|k+2 ). Lemma 2.6 by itself does not enable efficient separation over the family of constraints (1) since the number of possible subsets R is exponential in |V |. To address this issue, we will rely on the global min-cut value of ( G, u x) to determine whether a given point x satisfies all constraints of the LP-relaxation and if not, then find a violated constraint. The following lemma establishes two ranges of the global min-cut value in ( G, u x) where the separation problem is easy: the first range leads to a constraint violated by x, and the second range certifies that x satisfies all constraints of the LP-relaxation of k-tier-IP. 
+
+Lemma 2.7. Let x ∈ [0 , 1] E . We have the following: 1. Let ∅̸ = R ⊊ V such that ux(δ(R)) < Qki=1 qi. Then, x violates constraint (1) for (J = ∅, R ).2. Let ∅̸ = R ⊊ V such that ux(δ(R)) ≥ k Qki=1 qi. Then, x satisfies constraint (1) for (J, R ) for every J ⊆ δ(R).Proof. We prove the two parts below. 1. Suppose we have ∅̸ = R ⊊ V such that ux(δ(R)) < Qki=1 qi. Let J = ∅. Then, using Proposition 2.5, the LHS of constraint (1) is 
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+qj
+
+ · x(δTi (R)) = 
+
+> k
+
+X
+
+> i=1
+
+Qi · x(δTi (R)) = ux(δ(R)) . (9) In addition, the RHS of constraint (1) is Qki=1 (qi − | J ∩ Ti|)+ = Qki=1 qi. Because ux(δ(R)) <
+
+Qki=1 qi, it follows that x violates constraint (1) for ( J = ∅, R ). 2. Let ∅̸ = R ⊊ V such that ux(δ(R)) ≥ k Qki=1 qi. Let J ⊆ δ(R) be a subset of δ(R). We show that x satisfies constraint (1) for ( J, R ). If there exists i ∈ [k] such that qi ≤ | J ∩ Ti|,then the RHS of (1) for ( J, R ) is equal to 0 and hence, the constraint is satisfied due to non-negativity of all variables. Consequently, we may assume that qi > |J ∩ Ti| for all i ∈ [k]. If x(δTi (R)) < q i for all i ∈ [k], then by Proposition 2.5, we have that 
+
+ux(δ(R)) = 
+
+> k
+
+X
+
+> i=1
+
+Qi · x(δTi (R)) <
+
+> k
+
+X
+
+> i=1
+> k
+
+Y
+
+> j=1
+
+qj = k
+
+> k
+
+Y
+
+> j=1
+
+qj ,
+
+a contradiction to the assumption on R. Hence, there exists m ∈ [k] such that x(δTm (R)) ≥
+
+8qm. Then, we have that LHS of (1) for ( J, R ) = 
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj − | J ∩ Tj |)
+
+ · x(δTi (R)\J)
+
+≥
+
+ Y
+
+> j∈[k]\{ m}
+
+(qj − | J ∩ Tj |)
+
+ · x(δTm (R)\J) (since x ≥ 0) =
+
+ Y
+
+> j∈[k]\{ m}
+
+(qj − | J ∩ Tj |)
+
+ · (x(δTm (R)) − x(J ∩ Tm)) (since J ⊆ δ(R)) 
+
+≥
+
+ Y
+
+> j∈[k]\{ m}
+
+(qj − | J ∩ Tj |)
+
+ · (x(δTm (R)) − | J ∩ Tm|)(since x ≤ 1) 
+
+≥
+
+ Y
+
+> j∈[k]\{ m}
+
+(qj − | J ∩ Tj |)
+
+ · (qm − | J ∩ Tm|)= RHS of (1) for ( J, R ).
+
+We now solve the separation problem for the family of constraints (1) using Lemmas 2.6 and 2.7, and thereby prove Lemma 2.3. 
+
+Proof of Lemma 2.3. We note that the number of constraints in the LP-relaxation of k-tier-IP is exponential in |V |. By the result of Gr¨ otschel, Lov´ asz, and Schrijver [11], in order to optimize over a polyhedron, it suffices to solve the separation problem. We will design a polynomial-time separation oracle for the LP-relaxation: given x, we need to verify whether x satisfies all constraints in (1) and if not, return a violated constraint. We use Algorithm 1 for our separation oracle. 
+
+Algorithm 1 Separation Oracle  
+
+> 1:
+
+Input: A vector x ∈ [0 , 1] E 
+
+> 2:
+
+R∗ ← arg min {ux(δ(R)) : ∅̸ = R ⊊ V } and λ ← ux(δ(R∗))  
+
+> 3:
+
+if λ < Qki=1 qi then  
+
+> 4:
+
+return (J = ∅, R = R∗) ▷ Violated inequality found  
+
+> 5:
+
+else  
+
+> 6:
+
+for all ∅̸ = R ⊊ V such that ux(δ(R)) ≤ k Qki=1 qi do  
+
+> 7:
+
+J ← optimum solution of problem (4) with inputs x and R 
+
+> 8:
+
+if optimum objective value of (4) is negative then  
+
+> 9:
+
+return (J, R ) ▷ Violated inequality found  
+
+> 10:
+
+end if  
+
+> 11:
+
+end for  
+
+> 12:
+
+end if  
+
+> 13:
+
+return x satisfies all constraints 9We will now prove the correctness of Algorithm 1. First, suppose that x satisfies constraint (1) for ( J, R ) for every J ⊆ δ(R) and ∅̸ = R ⊆ V . We will show that the algorithm returns that 
+
+x satisfies all constraints. Because x satisfies constraint (1) for ( J, R ) for every J ⊆ δ(R) and 
+
+∅̸ = R ⊆ V , by the first part of Lemma 2.7, we have that λ ≥ Qki=1 qi and hence, the algorithm will not return in Step 3. Furthermore, for a fixed ∅̸ = R ⊆ V , the optimum objective value of (4) is negative if and only if x violates constraint (1) for ( J, R ) for some J ⊆ R. Because x satisfies constraint (1) for ( J, R ) for every J ⊆ δ(R) and ∅̸ = R ⊊ V , the algorithm will not return in Step 8 for every choice of R considered in Step 5. Therefore, the algorithm returns that x satisfies all constraints. Next, suppose that there exists J′ ⊆ δ(R′) and ∅̸ = R′ ⊊ V such that x violates constraint (1) for ( J′, R ′). We show that the algorithm returns some subset ( J, R ) such that x violates constraint (1) for ( J, R ). We have two cases based on the value of λ, where λ := min {ux(δ(R)) : ∅̸ = R ⊊ V }.In the first case, suppose λ < Qki=1 qi. Let R∗ ∈ arg min {ux(δ(R)) : ∅̸ = R ⊊ V }. Then, by the first part of Lemma 2.7, we have that x violates constraint (1) for ( J = ∅, R ∗), and the algorithm correctly returns this in Step 3. In the second case, suppose λ ≥ Qki=1 qi. Because x violates constraint (1) for ( J′, R ′), by the second part of Lemma 2.7, we have that ux(δ(R′)) < k Qki=1 qi.Therefore, R′ is explored by the algorithm in Step 5. Furthermore, the optimum objective value of (4) with input R′ and x is negative since J′ is a feasible solution to the minimization problem given by (4) with negative objective value. Thus, the optimum solution J for the minimization problem given by (4) with R and x as inputs also has negative objective value, and hence, the tuple ( J, R ′)returned by the algorithm in Step 8 is a tuple for which x violates (1). We now bound the runtime of Algorithm 1. We note that we can compute the global min-cut of the capacitated graph ( G, u x) in polynomial time. Furthermore, if the min-cut is less than Qki=1 qi,then Algorithm 1 terminates and returns a violated inequality. Therefore, λ ≥ Qki=1 qi, meaning every cut R ∈ R is a k-approximate min-cut. By Theorem 2.2, the number of k-approximate min-cuts is O(|V |2k) and hence, the number of sets R explored by the algorithm in Step 5 is O(|V |2k). Furthermore, for each R that is explored in Step 5, the minimization problem in (4) can be solved in O(|E|2k+2 ) time by Lemma 2.6. Hence, the run-time of the algorithm is O(|V |2k|E|2k+2 ), which is polynomial for constant k.Since there exists a polynomial-time separation oracle and the feasible region is in [0 , 1] E and is hence bounded, we can apply the Ellipsoid method [11] to solve the LP relaxation of ( k-tier-IP) in polynomial time. 
+
+2.2 Approximation Algorithm 
+
+In order to prove Theorem 1.1, we design an independent randomized rounding algorithm for an optimum solution to the LP relaxation of ( k-tier-IP). We show that the algorithm returns a feasible solution with cost that is O(k2 log n)-factor of the optimal cost of the LP relaxation of ( k-tier-IP) with constant probability. Our rounding algorithm is described in Algorithm 2. Let F be the set of edges returned by Algorithm 2. We now show that F is feasible (i.e., ( V, F )is ( T , Q)-FGC) with high probability. 
+
+Definition 2.8. A set ∅̸ = R ⊊ V is deficient if |δF (R) ∩ Ti| < q i for all i ∈ [k]. 
+
+Lemma 2.9. Let ∅̸ = R ⊊ V . Then, R is deficient with probability at most n−20 k.Proof. Let Ye be the indicator variable denoting whether e ∈ F . Let AR := A ∩ δ(R), BR := 
+
+B ∩ δ(R). For i ∈ [k], define ZTi := P 
+
+> e∈BR∩Ti
+
+Ye. Taking J := AR, the inequality for ( J, R ) in 10 Algorithm 2 k-Tier FGC Approximation Algorithm  
+
+> 1:
+
+Input: A feasible solution x to the LP-relaxation of k-tier-IP  
+
+> 2:
+
+Output: A subset F ⊆ E of edges  
+
+> 3:
+
+A ← { e ∈ E : (100 k2 log n)xe ≥ 1} 
+
+> 4:
+
+B ← E \ A 
+
+> 5:
+
+B′ ← ∅  
+
+> 6:
+
+for each edge e ∈ B do  
+
+> 7:
+
+Sample e with probability (100 k2 log n)xe 
+
+> 8:
+
+if e is sampled then  
+
+> 9:
+
+B′ ← B′ ∪ { e} 
+
+> 10:
+
+end if  
+
+> 11:
+
+end for  
+
+> 12:
+
+F ← A ∪ B′ 
+
+> 13:
+
+return Fk-tier-IP is 
+
+> k
+
+X
+
+> i=1
+
+ Y
+
+> j∈[k]\{ i}
+
+(qj − | AR ∩ Tj |)+
+
+ · x(( δ(R) − AR) ∩ Ti) ≥
+
+> k
+
+Y
+
+> i=1
+
+(qi − | AR ∩ Ti|)+.
+
+If there exists i ∈ [k] such that |AR ∩ Ti| ≥ qi, then |δF (R) ∩ Ti| ≥ | AR ∩ Ti| ≥ qi, and hence, R
+
+is deficient with probability zero. Henceforth, we assume that |AR ∩ Ti| < q i for all i ∈ [k]. Then, the inequality above implies that there exists i ∈ [k] such that x(BR ∩ Ti) ≥ 1 
+
+> k
+
+(qi − | AR ∩ Ti|). By definition of y, we have that y(BR ∩ Ti) ≥ (100 k log n)( qi − | AR ∩ Ti|) := μ1. We note that 
+
+E[ZTi ] = y(BR ∩ Ti). So, 
+
+P r [|δF (R) ∩ Tj | < q j ∀j ∈ [k]] ≤ P r [|δF (R) ∩ Ti| < q i]= P r [|BR ∩ F ∩ Ti| < q i − | AR ∩ Ti|]= P r [ZTi < q i − | AR ∩ Ti|]
+
+≤ P r [ZTi < μ/ 3] 
+
+≤ exp( −(20 k log n)( p − | AR ∩ S|)) (by Chernoff bound) 
+
+≤ exp( −20 k log n)= n−20 k.
+
+We recall that ( G, u x) is the graph with edge capacities ux : E → R≥0 defined by ux(e) := Pkj=i
+
+Q 
+
+> ℓ∈[k]\{ j}
+
+qℓ]
+
+
+
+· xe for each e ∈ Si for each i ∈ [k]. We now upper bound the probability that high capacity cuts in ( G, u x) are deficient. 
+
+Lemma 2.10. Let ∅̸ = R ⊊ V such that ux(δ(R)) ≥ ℓ Qki=1 qi for some ℓ ≥ 2k. Then, R is deficient with probability at most n−10 ℓ.Proof. We assume |AR ∩ Ti| < q i for all i ∈ [k] because the claim holds otherwise. By Proposition 2.5, we have that ux(δ(R)) = Pki=1 
+
+Q 
+
+> j∈[k]\{ i}
+
+qj
+
+
+
+· x(δ(R) ∩ Ti). Since ux(δ(R)) ≥ ℓ · Qki=1 qi, there exists an index j ∈ [k] such that x(( δ(R) ∩ Tj )) ≥ ℓq j 
+
+> k
+
+. Since x(AR ∩ Tj ) < q j and ℓ ≥ 2k, we have 11 that x(BR ∩ Tj ) ≥ ℓq j 
+
+> 2k
+
+. This implies that E[ZTj ] = y(BR ∩ Tj ) ≥ 50 ℓ log n · qj . Let μ1 = 50 ℓ log n · qj .Thus, 
+
+P r [XR = 1] ≤ P r [|δF (R) ∩ Tj | < q j ]
+
+≤ P r [|BR ∩ Tj ∩ F | < q j ]
+
+≤ P r [ZTj ≤ qj ]
+
+≤ P r [ZTj < μ 1/3] 
+
+≤ exp( −10 · ℓ log n · pj )
+
+≤ exp( −10 · ℓ log n)= n−10 ℓ.
+
+Having established upper bounds on the probability that a given subset R ⊊ V is deficient, we now show that none of the sets are deficient with high probability. 
+
+Lemma 2.11. Algorithm 2 returns a subset F ⊆ E such that (V, F ) is feasible with probability 
+
+1 − n−O(1) .Proof. For F to be infeasible, there must be a deficient cut ∅ ⊆ R ⊊ V . We partition the nontrivial cuts in the capacitated graph of Hx := ( G, u x) as C<2k ∪ C 2k ∪ C 2k+1 ∪ . . . , where 
+
+C<2k := 
+
+(
+
+∅̸ = R ⊊ V : ux(δ(R)) ∈
+
+" kY
+
+> i=1
+
+qi, 2k ·
+
+> k
+
+Y
+
+> i=1
+
+qi
+
+!) 
+
+and 
+
+Cℓ := 
+
+(
+
+∅̸ = R ⊊ V : ux(δ(R)) ∈
+
+"
+
+ℓ ·
+
+> k
+
+Y
+
+> i=1
+
+qi, (ℓ + 1) ·
+
+> k
+
+Y
+
+> i=1
+
+qi
+
+!) 
+
+∀ ℓ ∈ { 2k, 2k + 1 , . . . }.
+
+By substituting J = ∅ into constraint (1), we obtain that the minimum cut in Hx is at least Qki=1 qi. Using Theorem 2.2, we have that |C <2k| = O(n4k). For ∅̸ = R ⊊ V , let ZR be the random variable that indicates if R is deficient. By Lemma 2.9, we have that P[ZR = 1] ≤ n−20 k for every subset R ⊊ V . Thus, X
+
+> R∈C <2k
+
+P[ZR = 1] = O(n−16 k).
+
+For ℓ ∈ { 2k, 2k + 1 , 2k + 2 , . . . }, Theorem 2.2 implies that |C ℓ| = O(n2ℓ+2 ). By Lemma 2.10, we have that P[ZR = 1] ≤ n−10 ℓ for each R ∈ C ℓ. Thus, for every integer ℓ ≥ 2k, we have 
+
+X
+
+> R∈C ℓ
+
+P[ZR = 1] = O(n−8ℓ+2 ) = O(n−2ℓ).
+
+Overall, we get that 
+
+P[F is infeasible] = X 
+
+> R:∅̸ =R⊊V
+
+P[ZR = 1] = X
+
+> R∈C <2k
+
+P[ZR = 1] + 
+
+> ∞
+
+X
+
+> ℓ=2 k
+
+X
+
+> R∈C ℓ
+
+P[ZR = 1] = O(n−2) + 
+
+> ∞
+
+X
+
+> ℓ=2 k
+
+O(n−2ℓ) = n−O(1) .
+
+12 Lemma 2.12. Algorithm 2 returns a subset F such that with constant probability, F is feasible and c(F ) ≤ (200 k2 log n) P 
+
+> e∈E
+
+cexe.Proof. Let cost( x) := P 
+
+> e∈E
+
+cexe and F be the set of edges returned by Algorithm 2. Then 
+
+E[c(F )] ≤ 100 k2 log n cost( x). By, Markov’s Inequality, we have that P(c(F ) ≥ (200 k2 log n)cost( x)) ≤
+
+P(c(F ) ≥ 2E[c(F )]) ≤ 12 . By Lemma 2.11, F is feasible w.h.p, which implies that F is a feasible solution to k-tier FGC and c(F ) ≤ (200 k2 log n)cost( x) with probability at least 13 for n sufficiently large. 
+
+2.3 Strength of the LP-relaxation of k-tier-IP 
+
+We will compare the LP-relaxation of our IP for ( p, q )-FGC to that of Ibrahimpur-V´ egh’s IP. Next, we show that the LP-relaxation of k-tier-IP has an integrality gap of at least 2 k.Our IP formulation k-tier-IP for k = 2 closely resembles the IP formulation of Ibrahimpur and V´ egh for ( p, q )-FGC [13]. For completeness, we explicitly state k-tier-IP for k = 2 below (where 
+
+p = q1, q = q2 − q1, S = T1 and U = T2 \ T1): min X
+
+> e∈E
+
+cexe (2-tier-IP) (p − | J ∩ S|)+ · x(δ(R) − J) + ( p + q − | J|)+ · x(δS (R) − J)
+
+≥ (p − | J ∩ S|)+ · (p + q − | J|)+ ∀ J ⊆ δ(R), ∅̸ = R ⊊ Vxe ∈ { 0, 1} ∀ e ∈ E
+
+The IP formulation given by Ibrahimpur and V´ egh [13] is the following: min X
+
+> e∈E
+
+cexe (2-tier-IV-IP) (p − | J ∩ S|)+ · x(δ(R) − J) + ( q − | J ∩ U |)+ · x(δS (R) − J)
+
+≥ (p − | J ∩ S|)+ · (p + q − | J|)+ ∀ J ⊆ δ(R), ∅̸ = R ⊊ Vxe ∈ { 0, 1} ∀ e ∈ E
+
+We note that the only difference between 2-tier-IP and 2-tier-IV-IP is that for 2-tier-IP, the coeffi-cient for the x(( δ(R) − J) ∩ S) term is ( p + q − | J|)+ whereas for 2-tier-IV-IP, the corresponding coefficient is ( q − | J ∩ U |)+.
+
+Proposition 2.13. The LP relaxation of 2-tier-IP is weaker than the LP relaxation of 2-tier-IV-IP. Moreover, there exists an instance where the objective value of the LP relaxation of 2-tier-IP is strictly smaller than the LP relaxation of 2-tier-IV-IP. Proof. Let x be a feasible solution to the the LP relaxation of 2-tier-IV-IP. We show that x is a feasible solution to the LP relaxation of 2-tier-IP. For ∅̸ = R ⊊ V and J ⊆ δ(R), consider the constraint in 2-tier-IP corresponding to ( J, R ). If p < |J ∩ S| then ( p − | J ∩ S|)+ · (p + q − | J|)+ = 0 and hence, x satisfies the constraint in 2-tier-IP for ( J, R ). So, we assume p > |J ∩ S|.If q > |J ∩U |, then ( p+q−| J|)+ = ( p−| J ∩S|)+( q−| J ∩U |) > (q−| J ∩U |)+ and hence, x satisfies the constraint in 2-tier-IP for ( J, R ). If q ≤ | J ∩U |, then we have ( p+q −| J|)+ ≥ 0 = ( q −| J ∩U |)+,and hence, x satisfies the constraint in 2-tier-IP for ( J, R ). 13 We now exhibit an instance where the objective value of the LP relaxation of 2-tier-IP is strictly smaller than the LP relaxation of 2-tier-IV-IP. Consider the instance G = ( V, E ) with V = {v1, v 2},
+
+E = S = {{ v1, v 2}} , U = ∅, p = 1, q = 0, and cost c({v1, v 2}) = 1, . The only non-trivial constraint for 2-tier-IP and 2-tier-IV-IP corresponds to ( J = ∅, R = {v1}). For 2-tier-IP, this constraint is 
+
+x{v1,v 2} ≥ 12 and for 2-tier-IV-IP, this constraint is x{v1,v 2} ≥ 1. Thus, the LP relaxation of 2-tier-IP has optimal cost 12 while the LP relaxation of 2-tier-IV-IP has optimal cost 1. We now establish a lower bound of 2 k on the integrality gap of the LP-relaxation of k-tier-IP. 
+
+Lemma 2.14. The LP relaxation of k-tier-IP has an integrality gap of at least 2k(1 − 1/|V |).Proof. Consider the instance with graph G = Cn, tiers T1 = T2 = · · · = Tk = E, costs c : E → R≥0
+
+given by c(e) = 1 for all e ∈ E, and tier requirements q1 = q2 = · · · = qk = 1. The optimal solution to IP k-tier-IP is a spanning path and hence has cost n − 1. We show below that xe = 1 /(2 k) for every e ∈ E is a feasible solution to the LP-relaxation of k-tier-IP and hence, the optimal objective value of the LP-relaxation is at most n/ 2k. This leads to the stated integrality gap. We now show that x is feasible to the LP-relaxation of k-tier-IP. For all j ∈ [k], we observe that (qj − | J ∩ Tj |)+ = 0 for |J| ≥ 1. Thus, if |J| ≥ 1 and ∅̸ = R ⊊ V , inequality (1) corresponding to (J, R ) is trivially satisfied. Thus, the only non-trivial inequalities in (1) are of the form ( J = ∅, R ). Fix a subset ∅̸ = R ⊊ V and let F be the family of connected components in G[R]. Each connected component of G[R] has a unique pair of edges in δ(R). The inequality corresponding to ( J = ∅, R )holds since kX
+
+> i=1
+
+x(δTi (R)) = k · x(δ(R)) ≥ 2k|F| /2k ≥ 1.
+
+# 3 Min Cardinality k-tier FGC 
+
+In this section, we design a ( αq1 + 2( qk − q1)/q 1)-approximation for min-cardinality k-tier FGC and prove Theorem 1.2. We will first define a series of useful constructs that will be used in our algorithm. 
+
+Definition 3.1 (Set Families and Covers) . Let G = ( V, E ) with nested family T = ( T1, T 2, . . . , T k)and requirements Q = ( q1, q 2, . . . , q k) ∈ Zk
+
+> ≥0
+
+, where T1 ⊆ T2 ⊆ . . . ⊆ Tk = E and q1 ≤ q2 ≤ . . . ≤ qk.Let F ⊆ E.1. We define Q1 
+
+> q1
+
+:= ( q1, q 1 . . . , q 1) and for every i ∈ [k]\{ 1} and j ∈ [qi − qi−1], we define the following: 
+
+Qij := ( q1, q 2, . . . , q i−1, q i−1 + j, q i−1 + j, q i−1 + j, . . . , q i + j) and 
+
+Hij (F ) := ∅̸ = R ⊊ V : R is ( T , Qij−1)-safe in ( V, F ) and ( T , Qij )-unsafe in ( V, F ) .
+
+2. Let C ⊆ 2V \ {∅ , V }. An F -excluding C-cover is a subset C ⊆ E \ F with |δ(R) ∩ C| ≥ 1 for every R ∈ C . An inclusion-wise minimal F -excluding C-cover is an F -excluding C-cover C if 
+
+C \ { e} is not an F -excluding C-cover for every e ∈ C.We have the following observations based on the above definitions. 
+
+Proposition 3.2. Let G = ( V, E ), F ⊆ E, and C ⊆ 2V \ {∅ , V }. Every inclusion-wise minimal 
+
+F -excluding C-cover is acyclic. 
+
+14 Proof. Let C be an inclusion-wise minimal F -excluding C-cover. For the sake of contradiction, suppose C contains a cycle C′. Fix an arbitrary edge e in the cycle C′. Then, for every R ∈ C such that e ∈ δ(R), there exists e′ ∈ C′ − e such that e′ ∈ δ(R). Thus, C − e is also an F -excluding 
+
+C-cover, a contradiction to the inclusion-wise minimal property of C.
+
+Lemma 3.3. Let G = ( V, E ) with nested family T = ( T1, T 2, . . . , T k) and requirements Q =(q1, q 2, . . . , q k) ∈ Zk
+
+> ≥0
+
+, where T1 ⊆ T2 ⊆ . . . ⊆ Tk = E and q1 ≤ q2 ≤ . . . ≤ qk. Let F ⊆ E. For every R ∈ Hij (F ), the following two properties hold: 1. |δTa (R) ∩ F | < q a for all a ∈ [i − 1] , |δTb (R) ∩ F | ≤ qi−1 + j − 1 for all b ∈ { i, i + 1 , . . . , k },2. |δ(R)∩F | = qi−1 +j −1 and moreover, there exists b ∈ { i, i +1 , . . . , k } such that |δTb (R)∩F | =
+
+qi−1 + j − 1.Proof. Let R ∈ Hij (F ). Since R is ( T , Qij )-unsafe in ( V, F ), we have that |δTa (R) ∩ F | < q a for all 
+
+a ∈ [i−1] and |δTb (R)∩F | < q i−1 +j for all b ∈ { i, i +1 , . . . , k }. This implies the first property. Also, 
+
+R is ( T , Qij−1)-safe in ( V, F ). Since |δTa (R) ∩ F | < q a for all a ∈ [i − 1], it follows that there exists 
+
+b ∈ { i, i + 1 , . . . , k } such that |δTb (R) ∩ F | ≥ qi−1 + j − 1. Since T1 ⊆ T2 ⊆ . . . ⊆ Tk = E, this implies that qi−1 + j − 1 = |δTb (R) ∩ F | ≤ | δTk (R) ∩ F | < q i−1 + j, and hence, |δ(R) ∩ F | = qi−1 + j − 1. We now show that for a subset F ⊆ E such that ( V, F ) is ( T , Qij−1)-FGC, all sets in the family 
+
+Hij (F ) can be enumerated in polynomial time and moreover an F -excluding Hij (F ) cover can be computed in polynomial time. 
+
+Proposition 3.4. There exists an algorithm that takes as input a graph G = ( V, E ) with nested family T = ( T1, T 2, . . . , T k), requirements Q = ( q1, q 2, . . . , q k) ∈ Zk
+
+> ≥0
+
+, where T1 ⊆ T2 ⊆ . . . ⊆ Tk = E
+
+and q1 ≤ q2 ≤ . . . ≤ qk for some fixed constant k, i ∈ [k] \ { 1}, j ∈ [pi], and F ⊆ E such that (V, F )
+
+is (T , Qij−1)-FGC, and runs in polynomial time to verify if there exists an F -excluding Hij (F )-cover and if so, compute a minimal F -excluding Hij (F )-cover. Proof. We will show below that the family Hij (F ) can be enumerated in time O(|E|2|V |2k). After enumerating all these sets, we can verify whether E \ F is an F -excluding Hij (F )-cover in time 
+
+O(|E|3|V |2k) by verifying whether |δ(R) ∩ (E \ F )| ≥ 1 for every R ∈ Hij (F ). If so, then we can compute an inclusionwise minimal F -excluding Hij (F )-cover by iteratively verifying whether each edge of E \F is necessary to maintain the F -excluding Hij (F )-cover property. The time per iteration is O(|E|3|V |2k) and hence, the overall time is O(|E|4|V |2k). We now show that the family Hij (F ) can be enumerate in time O(|E|| V |2k). We consider the graph G with k edge-capacities u1, u 2, . . . , u k : E → R≥0 given by 
+
+ua(e) := 
+
+ 
+
+> 1
+> qa
+
+if e ∈ Ta ∩ F, a ∈ [i − 1] , 
+
+> 1
+> qi−1+j−1
+
+if e ∈ Ta ∩ F, a ∈ { i, i + 1 , . . . , k },
+
+0 otherwise. We now show the following two properties: 1. the multiobjective min-cut value in graph G with edge capacities u1, u 2, . . . , u k is at least 1, i.e., min ∅̸ =R⊊V max a∈[k] ua(δ(R)) ≥ 1 and 2. if R ∈ Hij (F ), then R is a multiobjective min-cut in graph G with edge capacities u1, u 2, . . . , u k
+
+with the objective value being exactly 1, i.e., max a∈[k] ua(δ(R)) = 1. 15 Firstly, suppose ∅̸ = R ⊊ V such that R̸ ∈ Hij (F ). Since ( V, F ) is ( T , Qij−1)-FGC but R̸ ∈ Hij (F ), it follows that R is ( T , Qij )-safe in ( V, F ). Hence, either there exists a ∈ [i − 1] such that ua(δ(R)) ≥ 1or there exists b ∈ { i, i + 1 , . . . , k } such that ub(δ(R)) > 1 and consequently, max a∈[k] ua(δ(R)) ≥ 1. Next, suppose R ∈ Hij (F ). By Lemma 3.3, we have that ua(δTa (R)) < 1 for all a ∈ [i − 1], 
+
+ub(δTb (R)) ≤ 1 for all b ∈ { i, i + 1 , . . . , k }, and uk(δTk (R)) = 1, and hence, max a∈[k] ua(δ(R)) = 1. From these two, it follows that min ∅̸ =R⊊V max a∈[k] ua(δ(R)) ≥ 1 and moreover, if R ∈ Hij (F ), then max a∈[k] ua(δ(R)) = 1. Therefore, in order to enumerate Hij (F ), we verify whether min ∅̸ =R⊊V max a∈[k] ua(δ(R)) = 1 and if so, then it suffices to enumerate all multiobjective min-cuts in graph G with edge capacities 
+
+u1, u 2, . . . , u k and verify whether R ∈ Hij (F ) for each such enumerated cut R. By Lemma 1.4, the number of multiobjective min-cuts in a graph G with k edge capacity functions is O(|V |2k) and they can all be enumerated in time O(|E|| V |2k). The time to verify whether a given ∅̸ = R ⊊ V is in Hij (F ) is O(k|E|). Hence, the time to enumerate Hij (F ) is O(|E|2|V |2k). We now prove Theorem 1.2. 
+
+Proof of Theorem 1.2. We consider the following algorithm: 
+
+Algorithm 3 Unit Cost k-Tier FGC Algorithm  
+
+> 1:
+
+Input: G = ( V, E ), T1 ⊆ T2 ⊆ . . . ⊆ Tk = E, 0 = q0 ≤ q1 ≤ q2 ≤ . . . ≤ qk 
+
+> 2:
+
+Output: A subset F ⊆ E of edges  
+
+> 3:
+
+C1 
+
+> q1
+
+← αq1 -approximate solution to max-sized q1-ECSS on instance ( V, E ) 
+
+> 4:
+
+F ← C1 
+
+> q1
+> 5:
+
+for i = 2 to k do  
+
+> 6:
+
+for j = 1 to qi − qi−1 do  
+
+> 7:
+
+Cij ← inclusion-wise minimal F -excluding Hij (F )-cover  
+
+> 8:
+
+F ← F ∪ Cij 
+
+> 9:
+
+end for  
+
+> 10:
+
+end for  
+
+> 11:
+
+return F
+
+We note that F -excluding Hij (F )-cover exists for every choice of F since we may assume that the input is feasible and hence, G itself is ( T , Q)-FGC. We now prove the correctness of Algorithm 3 by showing that ( V, F ) is ( T , Q)-FGC. For each 
+
+i ∈ [k]\{ 1}, we define Ci 
+
+> 0
+
+:= Ci−1 
+
+> qi−1−qi−2
+
+. First, we show for each i ∈ [k], after adding Ciqi−qi−1 to F ,the subgraph ( V, F ) is ( T , Qiqi−qi−1 )-FGC by induction on i. For the base case of i = 1, C1 
+
+> q1
+
+is a 
+
+q1-ECSS subgraph of ( V, E ), which is ( T , Q1 
+
+> q1
+
+)-FGC. Suppose the induction hypothesis is true for 
+
+i ≥ 1. We prove the inductive statement for i + 1 next. For this, we prove that for each j ∈ { 0} ∪ [qi+1 − qi], after adding Ci+1  
+
+> j
+
+to F , the subgraph (V, F ) is ( T , Qi+1  
+
+> j
+
+)-FGC. We will prove this by induction on j. For the base case of j = 0, we have that after adding Ci+1 0 to F with Ci+1 0 = Ciqi−qi−1 , the subgraph ( V, F ) is ( T , Qiqi−qi−1 )-FGC by the induction hypothesis on i, which is equivalent to the subgraph ( V, F ) being ( T , Qi+1 0 )-FGC by part 1 of definition 3.1. Suppose the induction hypothesis is true for j ≥ 0. We prove the inductive statement for j + 1 next. After adding Ci+1  
+
+> j
+
+to F from the inductive hypothesis on j, the subgraph (V, F ) is ( T , Qi+1  
+
+> j
+
+)-FGC. If the subgraph ( V, F ) is ( T , Qi+1 
+
+> j+1
+
+)-FGC, then we are done. Suppose that the subgraph ( V, F ) is not ( T , Qi+1 
+
+> j+1
+
+)-FGC. Consequently, there exists ∅̸ = R ⊊ V such that R
+
+is ( T , Qi+1 
+
+> j+1
+
+)-unsafe in ( V, F ), and hence Hi+1 
+
+> j+1
+
+(F ) is nonempty. Let R ∈ Hi+1 
+
+> j+1
+
+(F ). Then, by the 16 second part of Lemma 3.3, |δ(R) ∩ F | = qi + j. In addition, by construction, |δ(R) ∩ Ci+1 
+
+> j+1
+
+| ≥ 1, meaning |δ(R) ∩ (F ∪ Ci+1 
+
+> j+1
+
+)| ≥ qi + j + 1. Therefore, R is ( T , Qi+1 
+
+> j+1
+
+)-safe in ( V, F ∪ Ci+1 
+
+> j+1
+
+), and this is true for all R ∈ Hi+1 
+
+> j+1
+
+(F ), meaning the graph ( V, F ∪ Ci+1 
+
+> j+1
+
+) is ( T , Qi+1 
+
+> j+1
+
+)-FGC, completing the inner induction on j. Applying this conclusion for j = qi+1 − qi proves the outer induction statement for 
+
+i + 1. We now bound the approximation factor of Algorithm 3. Let F ∗ ⊆ E be an optimum solution and let OP T = |F ∗|. Because ( V, F ∗) must also be q1-ECSS, for each v ∈ V , we have that 
+
+deg F ∗ (v) ≥ q1. Thus, by the handshaking lemma, OP T ≥ q1|V | 
+
+> 2
+
+. Because C1 
+
+> q1
+
+is an αq1 -approximate solution to max-sized q1-ECSS on ( V, E ), |C1 
+
+> q1
+
+| ≤ αq1 · OP T . For all i ∈ [k] \ { 1} and j ∈ [qi − qi−1], since Cij is forest by Proposition 3.2, we have that 
+
+|Cij | ≤ | V | − 1 < |V | ≤ 2OP T q1
+
+.
+
+Thus, summing over all i ∈ [k] \ { 1} and j ∈ [qi − qi−1], we obtain 
+
+|F | = |C1| +
+
+> k
+
+X
+
+> i=2
+> qi−qi−1
+
+X
+
+> j=1
+
+|Cij | < α q1 · OP T +
+
+> k
+
+X
+
+> i=2
+
+2( qi − qi−1)
+
+q1
+
+· OP T =
+
+
+
+αq1 + 2( qk − q1)
+
+q1
+
+
+
+· OP T, 
+
+giving us the desired approximation ratio. By Proposition 3.4, finding an inclusion-wise minimal F -excluding Hij (F )-cover can be done in polynomial-time for each i ∈ [k] \ { 1} and j ∈ [qi − qi−1]. In addition, finding an α-approximate 
+
+q1-ECSS also takes polynomial-time, thus proving the result. 
+
+# 4 k-tier FMGC 
+
+In this section, we obtain a 2-approximation for k-tier FMGC and prove Theorem 1.3. We recall that in k-tier FMGC, the input is a graph G = ( V, E ) with non-negative edge costs c : E → R≥0,a nested family of edge-tiers T1 ⊆ T2 ⊆ . . . T k = E, and non-negative integral tier requirements 
+
+q1 ≤ q2 ≤ . . . q k. The goal is to find a non-negative integral vector x ∈ ZE 
+
+> ≥0
+
+minimizing P 
+
+> e∈E
+
+cexe
+
+such that for every ∅̸ = R ⊊ V , there exists i ∈ [k] with x(δ(R) ∩ Ti) ≥ qi. We assume throughout that q1 > 0, otherwise x = 0 is an optimum solution. For an input instance ( G = ( V, E ), c : E → R≥0, T = ( T1, T 2, . . . , T k), Q = ( q1, q 2, . . . , q k)), let 
+
+Si := Ti \ Ti−1 for every i ∈ { 1, 2, . . . , k } with T0 := ∅. We observe that S1, . . . , S k is a partition of 
+
+E. We consider the following IP: min X
+
+> e∈E
+
+cexe (IP FMGC-rel )s.t. 
+
+> k
+
+X
+
+> i=1
+
+x(δSi (R)) 
+
+qi
+
+≥ 1 ∀∅̸ = R ⊊ Vxe ≥ 0 ∀e ∈ Ex ∈ ZE .
+
+We note that IP FMGC-rel does not formulate k-tier FMGC (see Simmons’ thesis [22] for an example for the case of k = 2). However, we show that every feasible solution to k-tier FMGC is feasible for IP FMGC-rel —see Lemma 4.1. 17 Lemma 4.1. Let x ∈ ZE be a feasible solution for k-tier FMGC. Then, x is feasible to (IP FMGC-rel ).Proof. Let ∅̸ = R ⊊ V . Since x is feasible for k-tier FMGC, there eixsts j ∈ [k] such that 
+
+x(δTj (R)) ≥ qj . Since 
+
+T1 ⊆ T2 ⊆ . . . ⊆ Tk and 
+
+q1 ≤ q2 ≤ . . . ≤ qk,
+
+we have that, 
+
+> k
+
+X
+
+> i=1
+
+x(δSi (R)) 
+
+qi
+
+≥ x(δTj (R)) 
+
+qj
+
++
+
+> k
+
+X
+
+> i=j+1
+
+x(δSi (R)) 
+
+qi
+
+≥ x(δTj (R)) 
+
+qj
+
+≥ 1.
+
+We have the following proposition concerning the LP-relaxation of IP FMGC-rel .
+
+Proposition 4.2. The LP-relaxation of IP FMGC-rel can equivalently be written as follows: 
+
+min 
+
+> k
+
+X
+
+> i=1
+
+X
+
+> e∈Si
+
+(qi · ce)ye (LP FMGC-rel )
+
+y(δ(R)) ≥ 1 ∀ ∅̸ = R ⊊ Vye ≥ 0 ∀ e ∈ E. 
+
+Moreover, for we := qice for each e ∈ Si for each i ∈ [k], the minimum w-weight of a spanning tree in G is at most twice the optimum objective value of the above LP. Proof. The LP-relaxation of IP FMGC-rel is equivalent to LP FMGC-rel by a transformation of variables: set ye = xe/q i for each e ∈ Si for each i ∈ [k]. Moreover, for we := qice for each e ∈ Si for each 
+
+i ∈ [k], the minimum w-weight of a spanning tree in G is at most twice the optimum objective value of the above LP since the integrality gap of the cut-based LP-relaxation for min-cost spanning tree is at most 2 [23, Theorem 22.9]. We now prove Theorem 1.3. 
+
+Proof of Theorem 1.3. We consider the following algorithm. Let we := qice for each e ∈ Si for each 
+
+i ∈ [k]. Find a minimum w-weight spanning tree T ′ in G and return the vector x ∈ ZE , where 
+
+xe := 
+
+(
+
+qi if e ∈ Si ∩ T ′ for some i ∈ [k],
+
+0 if e ∈ E \ T ′.
+
+The runtime of the algorithm is the time to find a min-weight spanning tree which is polynomial. Next, we show that the vector x returned by the algorithm is feasible for k-tier FMGC. Let ∅̸ =
+
+R ⊊ V . Since T ′ is a spanning tree, there exists e ∈ T ′ ∩ δ(R). Without loss of generality, let 
+
+e ∈ Si. Then, by definition xe = qi. Therefore, x(δTi (R)) ≥ xe = qi and hence, x is feasible. Next, we bound the cost of the solution x. Let OPT denote the optimum objective value of the instance, IP-opt FMGC-rel denote the optimum objective value of IP FMGC-rel for the same instance, 18 and LP-opt FMGC-rel denote the optimum objective value of the LP-relaxation of IP FMGC-rel for the same instance. Then, 
+
+X
+
+> e∈E
+
+cexe =
+
+> k
+
+X
+
+> i=1
+
+X
+
+> e∈Si
+
+cexe (12) =
+
+> k
+
+X
+
+> i=1
+
+X
+
+> e∈Si
+
+(qi · ce)1 e∈F
+
+≤ 2LP-opt FMGC-rel (by Proposition 4.2) 
+
+≤ 2IP-opt FMGC-rel 
+
+≤ 2OPT . (by Lemma 4.1) 
+
+# 5 Conclusion 
+
+Part of the contributions of this work are conceptual: namely, the introduction of a multi-tier network design model and relating it to the multi-objective graph min-cut problem. Our k-tier Flexible Graph Connectivity problem is a multi-tier generalization of the ( p, q )-FGC problem and it captures non-uniform failure scenarios with nested tiers of edge vulnerability. We gave three approximation results for fixed constant k, all of which are inspired by previous work for ( p, q )-FGC with additional simplifications that help in dealing with the generalized model. These results demonstrate that multi-tier FGC, despite being a richer model, admits approximation guarantees that meaningfully extend those known for classical p-ECSS and ( p, q )-FGC. More broadly, k-tier FGC opens a new direction in network design by offering a single framework that unifies edge-connectivity and two-tier flexible connectivity problems into a hierarchical connectivity problem. The most pressing open question is whether the dependence on k and n in the approximation factor of Theorem 1.1 can be reduced or eliminated in exchange for a dependence on tier require-ments. If k is part of the input, then feasibility verification is already likely to be co-NP-hard (based on connections to multi-objective graph min-cut which is strongly NP-hard when the number of objectives is part of input). For p-ECSS, there exists a constant approximation and for ( p, q )-FGC, Ibrahimpur and V´ egh [13] designed an O(log n)-approximation. For k-tier FGC, it is natural to ask whether an approximation that depends only on tier requirements is achievable for every fixed constant k, and whether our LP relaxation could serve as a stepping stone for such a result; we have shown that the integrality gap of our LP is at least 2 k and is O(k2 log n). Progress on these questions is likely to require new structural insights into the interaction between multiobjective min-cuts and may shed light on related multi-objective optimization problems. 
+
+# References 
+
+[1] D. Adjiashvili, F. Hommelsheim, and M. M¨ uhlenthaler. Flexible graph connectivity. Mathe-matical Programming , 192:409–441, 2022. [2] A. Armon and U. Zwick. Multicriteria global minimum cuts. Algorithmica , 46(1):15–26, 2006. [3] I. Bansal. A global analysis of the primal-dual method for edge augmentation problems. In 
+
+Integer Programming and Combinatorial Optimization , pages 58–71, 2025. 19 [4] I. Bansal, J. Cheriyan, L. Grout, and S. Ibrahimpur. Improved approximation algorithms by generalizing the primal-dual method beyond uncrossable functions. Algorithmica , 86(8):2575– 2604, 2024. [5] I. Bansal, J. Cheriyan, S. Khanna, and M. Simmons. Improved Approximation Algorithms for Capacitated Network Design and Flexible Graph Connectivity. In 52nd International Colloquium on Automata, Languages, and Programming (ICALP) , pages 20:1–20:20, 2025. [6] S. Boyd, J. Cheriyan, A. Haddadan, and S. Ibrahimpur. Approximation algorithms for flexible graph connectivity. Mathematical Programming , 204:493–516, 2024. [7] C. Chekuri and R. Jain. Approximation algorithms for network design in non-uniform fault models. Mathematical Programming , 2025. [8] J. Cheriyan and R. Thurimella. Approximating minimum-size k-connected spanning subgraphs via matching. SIAM Journal on Computing , 30(2):528–560, 2000. [9] C. G. Fernandes. A better approximation ratio for the minimum size k-edge-connected span-ning subgraph problem. Journal of Algorithms , 28:105–124, 1998. [10] H. N. Gabow, M. X. Goemans, E. Tardos, and D. P. Williamson. Approximating the smallest k-edge connected spanning subgraph by lp-rounding. Networks , 53(4):345–357, 2009. [11] M. Gr¨ otschel, L. Lov´ asz, and A. Schrijver. The ellipsoid method and its consequences in combinatorial optimization. Combinatorica , 1(2):169–197, 1981. [12] E. Hershkowitz, N. Klein, and R. Zenklusen. Ghost value augmentation for k-edge-connectivity. 
+
+SIAM Journal on Computing , 2025. [13] S. Ibrahimpur and L. V´ egh. An O(logn )-Approximation Algorithm for ( p, q )-Flexible Graph Connectivity via Independent Rounding. In Integer Programming and Combinatorial Opti-mization , pages 312–325, 2025. [14] S. Ibrahimpur and L. V´ egh. An O(log n)-approximation algorithm for ( p, q )-flexible graph connectivity via independent rounding. Mathematical Programming , 2026. [15] K. Jain. A factor 2 approximation algorithm for the generalized Steiner network problem. 
+
+Combinatorica , 21(1):39–60, 2001. [16] D. R. Karger. Global min-cuts in rnc, and other ramifications of a simple min-out algorithm. In Proceedings of the 4th annual ACM-SIAM Symposium on Discrete Algorithms , pages 21–30, 1993. [17] S. Khuller and B. Raghavachari. Improved approximation algorithms for uniform connectivity problems. Journal of Algorithms , 32:434–450, 1996. [18] S. Khuller and U. Vishkin. Biconnectivity approximations and graph carvings. Journal of the ACM , 41(2):214–235, 1994. [19] N. Kumar and C. Swamy. Almost tight additive guarantees for k-edge-connectivity. In Proceed-ings of IEEE 66th Annual Symposium on Foundations of Computer Science (FOCS) , pages 205–219, 2025. 20 [20] Z. Nutov. Improved approximation algorithms for covering pliable set families and flexible graph connectivity. In Workshop on Approximation and Online Algorithms (WAOA) , pages 151–166, 2025. [21] Z. Nutov. Tight Analysis of the Primal-Dual Method for Edge-Covering Pliable Set Families. In 50th International Symposium on Mathematical Foundations of Computer Science (MFCS 2025) , pages 82:1–82:14, 2025. [22] M. Simmons. Cover small cuts and flexible graph connectivity problems. Master’s thesis, University of Waterloo, Waterloo, ON, Canada, 2025. [23] V. V. Vazirani. Approximation Algorithms . Springer Berlin Heidelberg, 2001. 21
