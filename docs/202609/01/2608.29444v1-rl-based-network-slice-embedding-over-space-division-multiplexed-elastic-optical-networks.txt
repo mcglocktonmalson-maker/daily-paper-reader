@@ -1,0 +1,325 @@
+Title: RL-based Network Slice Embedding over Space Division Multiplexed Elastic Optical Networks
+
+URL Source: https://arxiv.org/pdf/2608.29444v1
+
+Published Time: Tue, 01 Sep 2026 01:12:24 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# RL-based Network Slice Embedding over Space Division Multiplexed Elastic Optical Networks 
+
+Divya Khanure ∗, Riti Gour †, Congzhou Li ∗, and Jason P. Jue ∗
+
+> ∗
+
+Department of Computer Science The University of Texas at Dallas, Richardson, Texas 75080, USA  
+
+> †
+
+Department of Aviation and Technology, San Jose State University, San Jose, California 95192, USA Email:{divya.khanure, congzhou.li, jjue}@utdallas.edu, riti.gour@sjsu.edu 
+
+Abstract —Network slicing over space-division-multiplexed elastic optical networks (SDM-EONs) requires jointly managing spectrum, spatial cores, and compute resources, a coupling that many existing studies ignore by treating compute placement inde-pendently from routing and spectrum decisions. This disconnect can cause the spectrum to be allocated along a path, only for the request to fail due to insufficient compute resources along the path, or may result in compute resources being allocated without consideration for spectrum resource availability on the path between compute nodes. We propose a path-constrained reinforcement learning framework that addresses compute node selection and RMCSA, being aware of both resources, restricting the RL agent’s action space to nodes along k-shortest paths between request endpoints. Training incorporates reward shap-ing to improve robustness under high load. We propose PPO-Full (Proximal Policy Optimization-Full), which jointly selects compute nodes and routing paths via a multi-dimensional action space, against distance-based heuristics, a greedy baseline, and a decoupled VONE-DRL baseline on a 24-node USNET topology under hotspot traffic conditions. Results demonstrate consistent improvements in acceptance rate over all baselines at high load, with gains becoming more pronounced as traffic intensity increases. 
+
+Index Terms —Network Slicing, Slice Embedding, RMCSA, Reinforcement Learning, Elastic Optical Networks, Hotspot Traffic, Multi-dimensional Action Space. 
+
+Supporting high-bandwidth heterogeneous services over a shared optical infrastructure has driven growing interest in network slicing over space-division-multiplexed elastic op-tical networks (SDM-EONs), where slice embedding demands simultaneous management of spectrum, spatial cores, and compute resources, a joint dependency that many RMCSA formulations overlook [1]. In SDM-EONs, spectrum assign-ment must satisfy contiguity and continuity requirements, core selection must account for inter-core crosstalk, and compute placement must respect node capacity limitations, making joint optimization computationally intractable. Prior work has largely decoupled compute placement from routing and spectrum assignment, producing suboptimal mappings under dynamic conditions [2]–[4]. Furthermore, slice em-bedding studies enforce strict one-to-one virtual-to-substrate node mappings that limit compute utilization. Coordinated and co-location-aware strategies in broader VNE research have shown improved acceptance ratios [5], [6], but such principles have not been widely incorporated into SDM-EON slicing frameworks. Building on our prior heuristic-based work [7], which proposed Direct Path-Driven Slice Mapping (DPSM) and Waypoint-Assisted Multi-Segment Slice Mapping (WMSM), this paper incorporates reinforcement learning into the re-source allocation process. DPSM assigns compute to the first feasible node along the path; its extended version targets a node near the path midpoint to balance segment lengths. WMSM decomposes requests into shorter independently pro-visioned segments via compute-capable waypoints; WMSM-F extends this by jointly minimizing path length and segment imbalance. While these heuristics perform well, their deter-ministic rules cannot adapt to dynamic traffic, motivating the present work, which retains WMSM-F as a greedy baseline and replaces fixed allocation logic with a learned RL policy. We propose PPO-Full, a Proximal Policy Optimization (PPO) based approach for slice embedding in SDM-EONs that jointly optimizes compute node selection and RMCSA by restricting the agent’s action space to nodes along k-shortest paths, making allocation decisions aware of both compute and spectrum resources simultaneously. PPO-Full is evaluated against distance-based heuristics, WMSM-F, and a decoupled VONE-DRL baseline [8] on a 24-node USNET topology under hotspot traffic conditions. The main contributions are:  
+
+> •
+
+A PPO-based slice embedding approach (PPO-Full) that jointly optimizes compute node and routing path selection via a multi-dimensional action space 
+
+MultiDiscrete([ C, K]) , where C denotes the number of candidate compute nodes and K the number of candidate routing paths. This couple computes placement with RMCSA within a single learned policy, enabling the agent to simultaneously reason about compute avail-ability and spectrum efficiency. In our implementation, 
+
+C = K = 3 , giving MultiDiscrete([3,3]) . A node-only reranking variant (PPO-Rank) with path fixed to k = 3 was also explored as an ablation to quantify the value of path selection freedom, confirming that joint node-path selection provides measurable benefit.  
+
+> •
+
+A candidate-aware observation space that encodes per-arXiv:2608.29444v1 [cs.NI] 29 Aug 2026 candidate compute availability and segment spectrum state, enabling the agent to make informed joint compute-spectrum placement decisions. The agent selects from 
+
+k = 3 pre-computed shortest paths, chosen empirically after sweeping k ∈ { 2, 3, 4, 5}, and a variable set of candidate compute nodes filtered by compute feasibility and ranked by path distance, with the top-Nc candidates considered per request.  
+
+> •
+
+A consecutive co-location scheme for VNF placement, where multiple consecutive VNF demands {fi, . . . , f j }
+
+may be co-located on a single physical compute node, and all valid consecutive partitions of F VNFs across 1– F nodes are attempted exhaustively. A quantitative analysis of co-location impact is deferred to an extended journal version due to page constraints. The remainder of this paper is organized as follows. Section II reviews related work. Section III presents the system model. Section IV describes the proposed framework. Section V presents numerical results. Section VI concludes the paper. I. B ACKGROUND LITERATURE 
+
+Early VNE formulations by Gong and Zhu [3] and Wang and Hu [2] improved spectral efficiency but were limited to single-core architectures without compute-aware placement. Multi-core fiber introduced RMCSA research with IC-XT constraints: Zhang et al. [9], Jin et al. [10], and Tang et al. [11] proposed crosstalk-aware SDM-EON embedding, while Heera et al. [12], [13] introduced congestion-aware RMCSA heuristics, that is, all treating compute placement as independent from optical allocation. RL has emerged as a promising alternative for optical resource allocation. Chen et al. [14] proposed DeepRMSA for RMSA in single-core EONs, Pinto-Ríos et al. [15] extended DRL to MCF-EONs, and Xu et al. [16] combined GCN with deep RL for topology-aware RMSA. However, none incorporate compute placement, limiting applicability to joint compute-spectrum slice embedding. On the VNE side, Wang et al. [5] and Chowdhury et al. [6] proposed co-location and coordinated node-link map-ping strategies. Gu et al. [4] applied deep RL to RAN slice migration at higher architectural layers, while Doherty et al. [8] applied masked DRL to VONE over single-core EONs with decoupled agents, which we adapt as a baseline. Our prior work [7] addressed heuristic-based SDM-EON slice embedding with compute-spectrum coordination, the present work replaces deterministic heuristics with a path-constrained RL agent, as summarized in Table I. II. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+We model an SDM-EON as a graph G = ( V, E ), where each link supports |Φe| spatial cores with f spectrum slots each, and a subset Vc ⊆ V of compute-capable nodes with finite capacity. Cores are grouped by spatial adjacency to mitigate inter-core crosstalk.                                     
+
+> TABLE I COMPARISON OF RELATED WORKS BY SDM-EON, COORDINATION ,
+> CO -LOCATION ,AND SOLUTION TYPE
+> Reference(s) SDM-EON Coord. Co-loc. Solution Type(s)
+> [10]–[13], [17], [18] ✓✗✗ILP, Heuristic [4], [6] ✗✗✓RL, Heuristic [5] ✗✓✓Heuristic [2], [3] ✗✗✗ILP, Heuristic [14]–[16] ✗✗✗RL [8] ✗✗✗RL [7] ✓✓✓Heuristic
+> Proposed ✓✓✓Heuristic + RL
+
+A. Definitions and Operational Semantics 
+
+Compute & OEO Semantics. Compute capacity is ex-pressed in normalized units representing VNF execution. Each request places |F | VNFs with independent demands, co-located or distributed across path nodes. Deploying a VNF triggers OEO conversion, terminating the incoming lightpath, and relaxing spectrum continuity to within each segment only, allowing decomposition into shorter independently pro-visioned parts. Each request r = ( s, d, b req , F ), where F = {f1, f 2, ..., f n}
+
+is accepted when VNFs are placed at feasible compute nodes and spectrum is provisioned on all resulting segments, with routing, spectrum, and compute decisions coupled sequen-tially. 
+
+B. Cost Model 
+
+The average provisioning cost per accepted VNR is defined as: 
+
+Cri =
+
+P 
+
+> v∈Vc
+
+cv,r i Ccompute + P 
+
+> e∈E
+
+γe,r i Cspectrum 
+
+accepted VNRs , (1) where cv,r i is the sum of compute units actually allocated across all VNFs at node v, γe,r i is the total spectrum slots used across all RMCSA path segments for request ri, and 
+
+Ccompute = Cspectrum = 1 .0 (equal weighting). This metric captures the average total resources, that is, compute units plus spectrum slots, consumed per successfully provisioned VNR. A lower value indicates more resource-efficient allocation, a method that accepts the same requests but routes them more efficiently will incur lower cost. The overall objective is to minimize this average cost while maximizing the acceptance rate. 
+
+C. Constraints 
+
+The slice mapping must satisfy the following constraints, else the request is blocked:  
+
+> •
+
+(C1) Modulation reach: The total path length for a segment must satisfy P 
+
+> e∈Pkri
+
+De ≤
+
+Dmax 
+
+ M kri
+
+ , ∀ri, ∀k, where Pri is the selected path, De is the distance of link e, and Dmax (Mri )
+
+is the maximum transmission reach for modulation format Mri . Three modulation formats are supported: 16-QAM ( ≤500 km, 1 slot/Gbps), QPSK ( ≤1000 km, 2 slots/Gbps), and BPSK ( ≤2000 km, 4 slots/Gbps).  
+
+> •
+
+(C2) Spectrum contiguity: Each request ri occupies a contiguous slot set Γri,e,ϕ = {sri , s ri +1 , . . . , s ri +fri −
+
+1}, ∀ri, ∀e ∈ P kri , where fri = breq × η(Mri ) is the number of slots per Gbps for the chosen modulation format.  
+
+> •
+
+(C3) Spectrum continuity: Identical contiguous slots are assigned on all links along a path: Γri,e,ϕ =Γri,e ′,ϕ , ∀e, e ′ ∈ Pri . Continuity across different seg-ments k is not required due to OEO conversion at compute waypoints.  
+
+> •
+
+(C4) Compute feasibility: c(j) 
+
+> v,r i
+
+≥ fj , ∀ri, such that 
+
+P
+
+> ri
+
+
+
+c(1)  
+
+> v,r i
+
++ c(2)  
+
+> v,r i
+
++ · · · + c(n)
+
+> v,r i
+
+
+
+≤ Ccomp  
+
+> v
+
+, ∀v ∈ Vc,where c(j) 
+
+> v,r i
+
+is the compute allocated to VNF j of request 
+
+ri at node v, and Ccomp  
+
+> v
+
+is the node capacity.  
+
+> •
+
+(C5) Core-group selection (crosstalk avoidance): Each request is assigned a core ϕri ∈ Gk, where Gk de-notes a non-adjacent core group (e.g., G1 = {1, 3, 5},
+
+G2 = {2, 4, 6}, G3 = {7}), ensuring P 
+
+> k
+
+gri,k = 1 , with 
+
+gri,k = 1 if Gk is used by ri and 0 otherwise. 
+
+D. Performance Metrics 
+
+Acceptance rate measures the fraction of successfully pro-visioned requests. Spectrum utilization is U =  
+
+> P
+> i
+> P
+> eγe,r i
+> N
+
+,where N is total network slots (links × cores × slots/core). 
+
+Provisioning cost is the cumulative cost associated with com-pute units plus spectrum slots consumed. Spectrum fragmen-tation uses the external fragmentation index [19]: Fex (l, c ) = 1 − Bmax /F total , where Bmax is the largest contiguous free block and Ftotal is the total free slots, averaged across cores as Flink (l) = 1
+
+> C
+
+PCc=1 Fex (l, c ).The slice embedding problem is NP-hard, generalizing RSA (reducible to wavelength assignment [20]) and VNE (equivalent to subgraph isomorphism [21]), with modulation reach, inter-core crosstalk, and compute placement, adding multidimensional bin-packing complexity [22], making exact optimization intractable and motivating the RL-based ap-proach proposed here. PPO-Full’s inference time per request (≈135 μs for the policy forward pass on CPU) is compa-rable to the more complex heuristics such as Equidistant (≈1,115 μs) and VONE-DRL ( ≈1,256 μs), with the com-putational cost of training incurred offline only. III. P ROPOSED FRAMEWORK 
+
+PPO-Full is proposed for network slice embedding in SDM-EONs, generating a small set of candidate compute nodes ranked by path distance and using a learned PPO policy to jointly select a compute node and a routing path. Restricting the candidate set to C = 3 nodes and K = 3 pre-computed shortest paths strikes a practical balance between decision quality and action space tractability: a larger candidate set exponentially increases the number of joint node-path combi-nations the agent must explore, leading to slower convergence and sparser rewards, while K = 3 retains sufficient diversity to cover the dominant trade-offs between compute proxim-ity, path length, and spectrum availability. K was selected empirically after sweeping K ∈ { 2, 3, 4, 5}, with K = 3 
+
+offering the best trade-off between candidate diversity and action space tractability. PPO-Full jointly selects a compute node and a routing path via MultiDiscrete([C,P]) ,yielding C ×K = 9 joint node-path combinations per decision step. A node-only variant (PPO-Rank) with path fixed to k = 3 
+
+was explored as an ablation, confirming that joint node-path selection provides measurable benefit over node reranking alone (results not included in the paper due to space con-straints). VNF demands are partitioned consecutively across compute nodes starting from the RL-selected anchor node, with remaining VNF groups greedily assigned to the nearest feasible nodes. PPO-Full is evaluated against distance-based heuristics, a greedy baseline, and a decoupled VONE-DRL baseline described at the end of this section. 
+
+A. Action Space 
+
+PPO-Full operates over C = 9 candidate compute nodes ranked by total path distance distance (s, n ) + distance (n, d )
+
+from the K = 3 pre-computed shortest paths and filtered by compute feasibility, reducing node selection from O(|Vc|) to 
+
+O(C). It uses MultiDiscrete([3,3]) , jointly selecting a compute node and a routing path, yielding 9 joint node-path combinations per decision step. 
+
+B. Observation Space 
+
+PPO-Full observes a normalized feature vector constructed per arrival event, comprising: request features ( s, d, breq ,
+
+f1 . . . f F ), network utilization, and network fragmentation (2 + F + 2 values), and per-candidate features, which are, compute availability ratio, normalized distances to source and destination, segment utilization, maximum free block, and fragmentation for each of the two resulting segments (9 values per candidate). For C = 3 compute node candidates, 
+
+K = 3 path candidates, and F = 4 VNFs, this yields a 
+
+(2 + F + 2) + C × 9 = 35 -dimensional observation vector. 
+
+C. Reward Shaping 
+
+The reward function incentivizes acceptance while penaliz-ing spectrum-inefficient allocations: 
+
+R =
+
+(5.0 + 2 .0 ×
+
+
+
+1 − min( S, 200) 200 
+
+
+
+accepted 
+
+−5.0 blocked (2) where S is the total number of spectrum slots consumed by the accepted request. The acceptance reward is augmented by a slot-efficiency bonus that decreases linearly with spectrum usage, reaching zero for allocations consuming 200 or more slots. This encourages the agent to prefer compact, spectrum-efficient placements without explicitly penalizing fragmen-tation, simplifying the reward signal compared to multi-term formulations while retaining the incentive for resource-efficient provisioning. D. PPO Agent and Hyperparameters 
+
+PPO-Full is implemented using PPO [23] via 
+
+stable-baselines3 with an Multi-Layer Perceptron (MLP) policy with two hidden layers with 256 neurons in each layer (net_arch=[256,256] ), well-suited for discrete action spaces under non-stationary traffic. Hyperparameters are summarized in Table II. The best checkpoint is selected based on mean acceptance rate evaluated every 50,000 steps at λ ∈ { 15 , 30 , 50 }.                      
+
+> TABLE II PPO H YPERPARAMETERS
+> Hyperparameter Value Hyperparameter Value
+> Learning rate 3×10 −4Clip range 0.2 Batch size 256 Entropy coefficient 0.01 Steps per update 2048 Training timesteps 1,000,000 Epochs per update 10 Parallel environments 4Discount γ0.99 GAE λ0.95
+
+Algorithm 1 PPO-Full Allocation 
+
+Input: (s, d, b req , f 1 . . . f F ), C = 3 candidate nodes C, K =3 paths Psd , policy πθ
+
+Output: Allocation decision, spectrum and compute assign-ment Build observation o from network state, request features, and per-candidate segment features Query policy: a ← πθ (o); decode a as (n1, p ) — anchor node and path index Partition {f1 . . . f F } consecutively from n1;
+
+if any VNF group cannot be placed then return Blocked 
+
+end if 
+
+Decompose path: s → n1 → [n2, . . . ] → d
+
+for each segment (u, w ) do 
+
+Select modulation M from D(u, w ); compute n = breq ×
+
+η(M )
+
+Allocate n slots on (u, w ) using core group order 
+
+{0, 2, 4} → { 1, 3, 5} → { 6}
+
+if fails then return Blocked 
+
+end if end for 
+
+Reserve compute units at all placed nodes; update state 
+
+return Accepted E. Baseline Approaches 
+
+All baselines use first-fit spectrum allocation across core groups, differing only in compute node selection. 
+
+1) Distance-Based Greedy Heuristics: Compute nodes are ranked by distance score relative to request endpoints using two strategies: Endpoint-Biased (proximity to source or destination) and Equidistant (minimizing |d(s, v ) − d(v, d )|
+
+for balanced path decomposition). The top-5 candidates are attempted in order, with VNFs assigned to the first feasible node pair and spectrum allocated via first-fit on resulting segments. 
+
+2) Greedy Heuristic Baseline (WMSM-F): 
+
+WMSM-F [7] selects compute waypoints by jointly minimizing path length and segment imbalance 
+
+δW : min W
+
+P|W|  
+
+> i=0
+
+d(wi, w i+1 ) + λ · δW
+
+
+
+, where 
+
+δW = max i d(wi, w i+1 ) − min i d(wi, w i+1 ), with first-fit spectrum allocation and blocking if no feasible configuration exists. 
+
+3) Adapted VONE-DRL Baseline: Inspired by Doherty et al. [8], who apply masked DRL to VONE over single-core EONs with separate node and link mapping agents. Both agents are adapted to the 4-VNF chain setting (the node agent selects the anchor compute node and the link agent handles per-segment RMCSA) and share the same hyperparameters and training budget as PPO-Full, ensuring a fair comparison under identical computational constraints. IV. N UMERICAL EVALUATION 
+
+A. Simulation Setup 
+
+Simulations use a 24-node USNET topology with 42 bidi-rectional links (30–200 km), 7 cores per fiber, and 120 slots per core (840 slots/link). Spectrum follows one guard slot and core group search order {0, 2, 4} → { 1, 3, 5} → { 6}. Modu-lation is distance-adaptive: 16-QAM ( ≤500 km, 1 slot/Gbps), QPSK ( ≤1000 km, 2 slots/Gbps), and BPSK ( ≤2000 km, 4 slots/Gbps). VNF hosting is enabled on 22 of 24 nodes, with each compute node having 150 compute units. Requests arrive as a Poisson process with λ ∈ { 5, 10 , . . . , 75 }, request holding time is exponentially distributed ( μ = 0 .5), and each request specifies a bandwidth breq ∼ U (1 , 20) Gbps and F = 4 
+
+VNFs, each requiring fi ∼ U(2 , 10) normalized compute units. To stress-test performance under realistic traffic asym-metry, 30% of requests are hotspot traffic with source drawn uniformly from nodes {0, 5, 12 } and a random destination, while the remaining 70% have uniformly random source-destination pairs. Hotspot nodes {0, 5, 12 } were selected as geographically distributed high-degree nodes in the USNET topology, and the 30% hotspot fraction reflects traffic concen-tration patterns commonly observed in metro and backbone networks [24], where a small subset of nodes generates a disproportionate share of demand. Performance is evaluated over 10,000 requests across 5 independent seeds. Five strategies are evaluated: (1) PPO-Full : the proposed approach jointly selecting the compute node and the routing path, (2) Endpoint-Biased : distance-based heuristic ranking nodes by proximity to the source or destination, (3) Equidis-tant : distance-based heuristic ranking nodes by equidistance from source and destination, and (4) WMSM-F : the greedy waypoint-based baseline from [7], and (5) VONE-DRL : the decoupled RL baseline adapted from Doherty et al. [8]. All heuristic baselines apply first-fit spectrum allocation on the resulting path segments. 
+
+B. Results and Discussion 
+
+Fig. 1 shows the acceptance rate under 30% hotspot traf-fic. PPO-Full maintains the highest acceptance throughout, reaching ≈80% at λ = 75 , compared to ≈76% for WMSM-F, ≈74% for Endpoint-Biased and VONE-DRL, and ≈70% for Equidistant. PPO-Full’s advantage widens progressively with load, confirming that joint node-path optimization adapts more effectively to hotspot-induced traffic concentration than deterministic strategies. VONE-DRL’s low acceptance despite near-zero VONE blocking reveals that its decoupled design wastes spectrum resources on inefficient routing. Fig. 2 shows VONE blocking. VONE-DRL exhibits near-zero VONE blocking as its greedy chain placement always finds a feasible compute node, but at the cost of poor spectrum efficiency. WMSM-F suffers the highest VONE blocking ( ≈19%) as its distance-minimizing waypoint se-lection exhausts compute at hotspot-adjacent nodes, while PPO-Full achieves the lowest non-trivial VONE blocking (≈12%), demonstrating that learned node selection adapts more effectively to concentrated hotspot demand. Fig. 3 shows RMCSA blocking. VONE-DRL performs worst ( ≈26% at λ = 75 ), confirming its decoupled link mapping agent makes spectrum-inefficient decisions. WMSM-F achieves the lowest RMCSA blocking ( ≈5%) through com-pact waypoint segments, while PPO-Full ( ≈8%) outperforms Endpoint-Biased ( ≈13%) and Equidistant ( ≈18%). Fig. 4 shows provisioning cost per VNR. VONE-DRL incurs the highest cost ( ≈85 at low load, declining to ≈71 at λ = 75 ), while PPO-Full maintains the lowest throughout (≈59–67). Equidistant remains consistently high ( ≈72–79) due to longer midpoint-biased segments, and WMSM-F rises steeply at high load as it is forced onto longer waypoint paths under congestion. Fig. 5 shows VONE-DRL produces the highest fragmentation ( ≈0.14 at λ = 75 ), while PPO-Full achieves low fragmentation ( ≈0.06), comparable to Endpoint-Biased, and WMSM-F achieves the lowest ( ≈0.05). How-ever, WMSM-F’s lower fragmentation is an artefact of its higher blocking rate, that is, fewer accepted requests leave larger contiguous free spectrum regions, rather than reflecting any genuine spectrum-management advantage. Fig. 6 shows VONE-DRL reaches the highest utilization ( ≈36%) despite lower acceptance, confirming excessive per-VNR spectrum consumption, while PPO-Full maintains ≈29%, comparable to WMSM-F. PPO-Full’s higher fragmentation and utilization relative to WMSM-F reflect a deliberate trade-off: the RL agent accepts more requests by routing more aggressively, which produces higher fragmentation as a consequence of higher throughput rather than inefficient spectrum use. V. C ONCLUSION 
+
+This paper proposed PPO-Full, a PPO-based approach for network slice embedding in SDM-EONs that jointly optimizes     
+
+> Fig. 1. Acceptance Rate vs. Arrival rates.
+> Fig. 2. Blocking Rate for Slice Embedding vs. Arrival rates.
+> Fig. 3. Blocking Rate for RMCSA vs. Arrival rates.
+> Fig. 4. Average Provisional Cost per VNR vs. Arrival rates.
+
+compute node selection and RMCSA over K candidate nodes and paths selected via a multi-dimensional action space. Eval-uated against Endpoint-Biased, Equidistant, WMSM-F, and VONE-DRL [8] on a 24-node USNET topology under hotspot Fig. 5. Fragmentation vs. Arrival rates. 
+
+Fig. 6. Spectrum Utilization vs. Arrival rates. 
+
+traffic, PPO-Full consistently achieved the highest acceptance and lowest per-VNR cost across all load levels. WMSM-F’s lower fragmentation and RMCSA blocking are artefacts of conservative blocking rather than genuine spectrum efficiency, while VONE-DRL’s decoupled design produced the worst RMCSA blocking despite near-zero compute blocking, con-firming that joint compute-spectrum optimization is essential under realistic heterogeneous traffic. Future work will explore spectrum-aware path generation and removal of the K restric-tion through pointer networks or graph attention mechanisms. ACKNOWLEDGMENT 
+
+This work was supported in part by the National Science Foundation under Grant No. CNS-2008856. REFERENCES [1] B. C. Chatterjee, N. Sarma, and E. Oki, “Routing and spectrum allocation in elastic optical networks: A tutorial,” vol. 17, no. 3, 2015. [Online]. Available: https://doi.org/10.1109/COMST.2015.2431731 [2] Y. Wang and Q. Hu, “A path growing approach to optical virtual network embedding in slice networks,” Journal of Lightwave Technology , vol. 39, no. 8, pp. 2253–2262, 2021. [3] L. Gong and Z. Zhu, “Virtual optical network embedding (vone) over elastic optical networks,” Journal of Lightwave Technology , vol. 32, no. 3, pp. 450–460, Feb. 2014. [4] J. Gu, M. Zhu, Y. Wang, X. Cai, Y. Cai, J. Zhang, M. Lei, B. Hua, P. Gu, and G. Zhao, “Resource-efficient and qos guaranteed 5g ran slice migration in elastic metro aggregation networks using heuristic-assisted deep reinforcement learning,” Journal of Optical Communications and Networking , vol. 15, no. 11, pp. 854–870, 2023. [5] D. Wang, W. Zhang, H. He, and C. Liu, “Node-fusion: Topology-aware virtual network embedding algorithm for repeatable virtual network mapping over substrate nodes,” IEEE Access , vol. 9, pp. 142 581– 142 592, 2021. [6] N. M. M. K. Chowdhury, M. R. Rahman, and R. Boutaba, “Virtual network embedding with coordinated node and link mapping,” in 
+
+Proceedings of IEEE INFOCOM , 2009, pp. 783–791. [7] D. Khanure, R. Gour, C. Li, and J. P. Jue, “Network slice embedding over space division multiplexed elastic optical networks,” 2026. [Online]. Available: https://arxiv.org/abs/2604.11936 [8] M. Doherty, Y. Zhang, and A. Beghelli, “Masked deep reinforcement learning for virtual network embedding on elastic optical networks,” in 
+
+Proceedings of the 2023 International Conference on Optical Network Design and Modeling (ONDM) . Coimbra, Portugal: IEEE, 2023. [9] Q. Zhang, X. Zhang, X. Gong, and L. Guo, “Crosstalk-avoid virtual optical network embedding over elastic optical networks with hetero-geneous multi-core fibers,” Journal of Lightwave Technology , vol. 40, no. 24, pp. 7687–7700, 2022. [10] T. Jin, S. Yin, and S. Huang, “A dynamic vone algorithm considering topology for hybrid services in sdm-eon,” in 2023 Opto-Electronics and Communications Conference (OECC) , 2023, pp. 1–6. [11] F. Tang, Y. Li, G. Shen, and G. N. Rouskas, “Minimizing inter-core crosstalk jointly in spatial, frequency, and time domains for scheduled lightpath demands in multi-core fiber-based elastic optical networks,” 
+
+Journal of Lightwave Technology , vol. 38, no. 20, pp. 5595–5607, 2020. [12] B. S. Heera, A. Sharma, V. Lohani1, and Y. N. Singh, “Routing, modulation, core and spectrum assignment techniques for crosstalk management in multi-core fiber based spatially multiplexed elastic optical networks.” Photonic Network Communications , vol. 48, pp. 35– 50, 2024. [13] B. S. Heera, S. Petale, Y. N. Singh, and S. Subramaniam, “Rmcsa algorithm for congestion-aware and service latency aware dynamic service provisioning in software-defined sdm-eons,” 2024. [Online]. Available: https://arxiv.org/abs/2412.10685 [14] X. Chen, B. Li, R. Proietti, H. Lu, Z. Zhu, and S. J. B. Yoo, “DeepRMSA: A deep reinforcement learning framework for routing, modulation and spectrum assignment in elastic optical networks,” Jour-nal of Lightwave Technology , vol. 37, no. 16, pp. 4055–4067, 2019. [15] J. Pinto-Ríos, B. Dumas Feris, C. Vásquez, G. Saavedra, D. Bórquez-Paredes, N. Jara, R. Olivares, S. Amjad, A. Leiva, and C. Mas-Machuca, “Resource allocation in multicore elastic optical networks: A deep reinforcement learning approach,” Complexity , vol. 2023, p. 4140594, 2023. [16] L. Xu, Y.-C. Huang, Y. Xue, and X. Hu, “Deep reinforcement learning-based routing and spectrum assignment of EONs by exploiting GCN and RNN for feature extraction,” Journal of Lightwave Technology , vol. 40, no. 15, pp. 4945–4955, 2022. [17] V. Kumar, J. Halder, A. Mitra, E. Oki, and B. C. Chatterjee, “Inter-core and inter-mode crosstalk-avoided virtual network embedding in spectrally-spatially elastic optical networks,” in 2022 IEEE 23rd In-ternational Conference on High Performance Switching and Routing (HPSR) , 2022, pp. 125–130. [18] L. Zhang, N. Ansari, and A. Khreishah, “Anycast planning in space division multiplexing elastic optical networks with multi-core fibers,” 
+
+IEEE Communications Letters , vol. 20, pp. 1983–1986, 2016. [19] P. Wright, M. C. Parker, and A. Lord, “Minimum- and maximum-entropy routing and spectrum assignment for flexgrid elastic optical networking,” IEEE/OSA Journal of Optical Communications and Net-working , vol. 7, no. 1, pp. A66–A72, 2015. [20] B. C. Chatterjee, N. Sarma, and E. Oki, “Routing and spectrum allocation in elastic optical networks: A tutorial,” IEEE Communications Surveys & Tutorials , vol. 17, no. 3, p. 1776–1800, 2015. [21] N. M. M. K. Chowdhury and R. Boutaba, “A survey of network virtualization,” Computer Networks , vol. 54, no. 5, p. 862–876, 2010. [22] A. P. Bianzino, C. Chaudet, D. Rossi, and J. Rougier, “A survey of green networking research,” IEEE Communications Surveys & Tutorials ,vol. 14, no. 1, p. 3–20, 2012, discusses NP-hardness of multi-resource allocation problems. [23] T. Tanaka, “Reinforcement-learning-based path planning in multilayer elastic optical networks [invited],” Journal of Optical Communications and Networking , vol. 16, no. 1, pp. A68–A77, 2024. [24] A. Akella, A. Bharambe, M. Reiter, and S. Seshan, “Detecting DDoS attacks on ISP networks,” in Proceedings of the ACM SIGMOD Work-shop on Management and Processing of Data Streams , 2003.

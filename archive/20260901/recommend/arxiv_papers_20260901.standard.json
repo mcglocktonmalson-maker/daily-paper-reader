@@ -1,0 +1,218 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-01T19:43:55.865524+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2608.29255v1",
+      "source": "arxiv",
+      "title": "A-MADiff: Attention-Guided Multi-Agent DRL with Diffusion Policies for Memory-Aware Task Orchestration in Mobile AIGC Networks",
+      "abstract": "Artificial Intelligence-Generated Content (AIGC) services employ Generative AI (GenAI) models to automatically generate diverse content. Mobile AIGC networks host GenAI models on edge-located AIGC Service Providers (ASPs) to deliver low-latency and personalized AIGC services for mobile users. However, AIGC inference tasks typically occupy GPU memory until task completion, causing GPU memory exhaustion at serving ASPs and triggering out-of-memory failures rather than merely increasing service latency. Existing studies on AIGC task orchestration have largely overlooked GPU memory feasibility constraints. To address this issue, we develop a cooperative multi-agent orchestration framework, in which each edge node is equipped with a scheduling agent to route tasks to local ASPs or neighboring edge nodes. Since scheduling agents make decisions based only on local observations, while peer offloading couples their resource states and long-term utilities, we formulate the orchestration process as a cooperative Decentralized Partially Observable Markov Decision Process (Dec-POMDP). To solve the Dec-POMDP, we propose an \\underline{A}ttention-guided \\underline{M}ulti-\\underline{A}gent deep reinforcement learning algorithm with \\underline{Diff}usion policies (A-MADiff) under the centralized training with a decentralized execution paradigm. A-MADiff employs diffusion-based decentralized actors to generate multi-modal preferences over feasible orchestration actions, and an attention-guided centralized critic to estimate per-agent values from cross-agent states under GPU memory heterogeneity. Numerical results demonstrate that A-MADiff significantly improves the cumulative reward over the state-of-the-art baseline.",
+      "authors": [
+        "Chongzhi Wu",
+        "Zhengtao Li",
+        "Jiawen Kang",
+        "Jinbo Wen",
+        "Xiaohuan Li",
+        "Maomao Zhang",
+        "Ekram Hossain"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.LG"
+      ],
+      "published": "2026-08-29T13:19:44+00:00",
+      "link": "https://arxiv.org/pdf/2608.29255v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "memory-aware multi-agent task orchestration at edge AIGC service providers to prevent OOM failures",
+      "llm_evidence_cn": "边缘AIGC服务提供商上内存感知的多智能体任务编排，防止内存耗尽故障",
+      "llm_evidence": "边缘AIGC服务提供商上内存感知的多智能体任务编排，防止内存耗尽故障",
+      "canonical_evidence": "边缘AIGC服务提供商上内存感知的多智能体任务编排，防止内存耗尽故障",
+      "llm_tldr_en": "Proposes attention-guided multi-agent DRL with diffusion policies for memory-aware task orchestration at edge ASPs, preventing GPU OOM failures while delivering low-latency AIGC services.",
+      "llm_tldr_cn": "移动AIGC网络中，边缘AIGC服务提供商的GPU内存在任务完成前一直被占用，导致内存耗尽和任务失败。提出A-MADiff：一种注意力引导的多智能体深度强化学习框架，结合扩散策略进行内存感知的任务编排，在满足低时延个性化服务的同时避免OOM故障。实验证明了其有效性和优越性。",
+      "llm_tldr": "移动AIGC网络中，边缘AIGC服务提供商的GPU内存在任务完成前一直被占用，导致内存耗尽和任务失败。提出A-MADiff：一种注意力引导的多智能体深度强化学习框架，结合扩散策略进行内存感知的任务编排，在满足低时延个性化服务的同时避免OOM故障。实验证明了其有效性和优越性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.27713v1",
+      "source": "arxiv",
+      "title": "DART-FL: Burst-Aware Multitask Federated Learning under Dynamic Inference Demand at the Edge",
+      "abstract": "Edge intelligence systems increasingly require model training and online inference to coexist on resource-constrained devices, while inference demand can vary substantially across tasks over time. This creates two coupled challenges: sufficient computation must be reserved for inference to maintain service-level objectives (SLOs), while the remaining training capacity should adapt to task-specific demand so that frequently requested tasks can improve earlier during training.   We propose an SLO-aware, demand-driven multitask federated learning framework (DART-FL) that jointly adapts the inference-training resource split and task-level training emphasis. At each scheduling interval, DART-FL uses the inference backlog and profiled service capacity to determine the minimum resource allocation required for inference. The remaining training capacity is then distributed across tasks using a queue-aware DPP-inspired scheduler, and the resulting task allocations are mapped to dynamic loss weights. This allows tasks experiencing higher inference demand to receive greater training emphasis in earlier communication rounds. Clients train a shared backbone with task-specific heads, and the complete multitask model is aggregated through FedAvg.   We evaluate DART-FL using Stanford Cars and Oxford Flowers 102 under both synthetic and real Alibaba trace-derived workloads. Results show that DART-FL dynamically adapts the inference-training resource split to time-varying inference demand and shifts the learning progress of high-demand tasks toward their burst periods, improving model accuracy when those tasks are frequently requested while maintaining comparable long-term multitask performance.",
+      "authors": [
+        "Yiming Xie",
+        "Pinrui Yu",
+        "Geng Yuan",
+        "Xue Lin",
+        "Ningfang Mi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-27T21:03:33+00:00",
+      "link": "https://arxiv.org/pdf/2608.27713v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "edge intelligence systems; inference-training resource split; service-level objectives",
+      "llm_evidence_cn": "边缘智能系统；推断与训练资源分配；服务级目标",
+      "llm_evidence": "边缘智能系统；推断与训练资源分配；服务级目标",
+      "canonical_evidence": "边缘智能系统；推断与训练资源分配；服务级目标",
+      "llm_tldr_en": "Proposes DART-FL, an SLO-aware demand-driven multitask federated learning framework that jointly adapts inference-training resource split and task-level training emphasis at the edge under bursty dynamic inference demand.",
+      "llm_tldr_cn": "边缘智能设备需要在资源受限条件下同时进行模型训练与在线推理，而推理需求随时间动态变化。DART-FL提出一种SLO感知、需求驱动的多任务联邦学习框架，在每个调度周期根据推理积压和任务需求联合调整推理与训练的资源划分及训练侧重。该框架在满足服务级目标的同时，使高频任务更早获得性能提升，为边缘资源调度与联邦学习协同提供了有效方案。",
+      "llm_tldr": "边缘智能设备需要在资源受限条件下同时进行模型训练与在线推理，而推理需求随时间动态变化。DART-FL提出一种SLO感知、需求驱动的多任务联邦学习框架，在每个调度周期根据推理积压和任务需求联合调整推理与训练的资源划分及训练侧重。该框架在满足服务级目标的同时，使高频任务更早获得性能提升，为边缘资源调度与联邦学习协同提供了有效方案。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.29103v1",
+      "source": "arxiv",
+      "title": "CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing",
+      "abstract": "Stateful serverless (Function-as-a-Service) environments, whose workers host state servers, are increasingly used for stream processing. A stream application is a pipeline of operators, where each operator forwards intermediate data downstream through a chained request. As input rates fluctuate, the system should adjust operator parallelism and place instances across workers to sustain the incoming rate. Existing approaches do so without fully accounting for chained-request overhead, leading them to misestimate the required number of workers. Too few leave the cluster unable to keep up with the input rate, while too many route a larger fraction of chained requests across worker boundaries, increasing end-to-end latency.   We propose CLASP, a scaling and scheduling strategy for stream processing in stateful serverless environments. At runtime, CLASP estimates execution cost and chained-request cost from observed metrics. Under a capacity model that covers the two costs, it adjusts operator parallelism and packs operators onto the fewest workers that can sustain the target input rate. Once a scaling decision is made, CLASP migrates each operator's state together with its instances, thereby minimizing execution pause time. Experiments show that CLASP improves throughput by up to 3.3x and reduces median end-to-end latency by up to 76% compared with state-of-the-art scaling strategies.",
+      "authors": [
+        "Tianyu Qi",
+        "Maria A. Rodriguez",
+        "Rajkumar Buyya"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-29T07:19:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.29103v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "operator placement and scaling for chained requests analogous to SFC resource orchestration",
+      "llm_evidence_cn": "链式请求的算子放置与扩缩容，与服务功能链的资源编排类似",
+      "llm_evidence": "链式请求的算子放置与扩缩容，与服务功能链的资源编排类似",
+      "canonical_evidence": "链式请求的算子放置与扩缩容，与服务功能链的资源编排类似",
+      "llm_tldr_en": "Adjusts operator parallelism and placement in serverless stream processing while accounting for chained-request overhead, avoiding worker misestimation and reducing latency.",
+      "llm_tldr_cn": "针对无服务器流处理中的链式请求，提出CLASP框架，在调整算子并行度和实例放置时显式考虑跨worker链式请求开销，以避免估计错误导致的过少或过多worker，从而在保持吞吐的同时降低端到端时延。该方法对服务功能链的资源编排有借鉴意义。",
+      "llm_tldr": "针对无服务器流处理中的链式请求，提出CLASP框架，在调整算子并行度和实例放置时显式考虑跨worker链式请求开销，以避免估计错误导致的过少或过多worker，从而在保持吞吐的同时降低端到端时延。该方法对服务功能链的资源编排有借鉴意义。",
+      "llm_tags": [
+        "query:sfc-edge"
+      ],
+      "matched_query_tag": "query:sfc-edge",
+      "matched_query_text": "resource orchestration for service function chains in edge computing",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.31021v1",
+      "source": "arxiv",
+      "title": "Semi-Autonomous Prosthesis Control Empowered by 5G and Mobile Edge Computing",
+      "abstract": "Prosthetic hands equipped with cameras can use computer vision to plan grasps automatically, reducing cognitive effort. However, running modern vision models on wearable devices is impractical due to power and processing constraints. We present the first prototype of a 5G-connected mobile edge computing (MEC)-enabled semi-autonomous prosthetic hand, which streams RGB-D images to an edge server for real-time grasp planning. Thirteen able-bodied participants performed pick-and-place tasks under six conditions: manual EMG control, on-device inference, wired Ethernet connectivity, and three 5G connectivity configurations (private 20 MHz network, private 100 MHz network, and a commercial 5G link) to the server. All network-based conditions performed similarly, achieving task times around 8.6 s (34% faster than manual control), failure rates of 20-38%, and 62% lower overall workload. On-device processing performed the worst with 10.3 s task time and a 76% failure rate due to slow embedded inference (3 fps vs. 6-20 fps over the network). Network latencies remained below 180 ms for private 5G and 270 ms for commercial 5G. All 5G configurations, including bandwidth-constrained and commercially variable networks, matched wired Ethernet performance while significantly outperforming both manual control and local processing, establishing 5G edge-offloading as a practical path to deploying compute-intensive prosthesis control.",
+      "authors": [
+        "Ozan Karaali",
+        "Hossam Farag",
+        "Strahinja Dosen",
+        "Cedomir Stefanovic"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-08-31T16:03:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.31021v1",
+      "tags": [
+        "keyword:edge-sfc"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "mobile edge computing (MEC)-enabled semi-autonomous prosthetic hand; edge server for real-time grasp planning",
+      "llm_evidence_cn": "移动边缘计算赋能的半自主假肢；边缘服务器实时抓取规划",
+      "llm_evidence": "移动边缘计算赋能的半自主假肢；边缘服务器实时抓取规划",
+      "canonical_evidence": "移动边缘计算赋能的半自主假肢；边缘服务器实时抓取规划",
+      "llm_tldr_en": "Presents first 5G-connected MEC-enabled semi-autonomous prosthetic hand that streams RGB-D images to an edge server for real-time grasp planning, evaluated with 13 participants under six conditions.",
+      "llm_tldr_cn": "智能假肢在穿戴设备上难以运行现代视觉模型，本文首次实现基于5G与移动边缘计算（MEC）的半自主假肢原型，将RGB-D图像传输至边缘服务器实时规划抓取动作。13名受试者完成抓放任务，对比手动肌电控制、设备端推理、有线和三种5G配置。结果显示网络化方案均取得良好性能，证明边缘计算可将计算密集型任务卸载至网络边缘，为资源受限的医疗设备提供可靠的低延迟智能支持。",
+      "llm_tldr": "智能假肢在穿戴设备上难以运行现代视觉模型，本文首次实现基于5G与移动边缘计算（MEC）的半自主假肢原型，将RGB-D图像传输至边缘服务器实时规划抓取动作。13名受试者完成抓放任务，对比手动肌电控制、设备端推理、有线和三种5G配置。结果显示网络化方案均取得良好性能，证明边缘计算可将计算密集型任务卸载至网络边缘，为资源受限的医疗设备提供可靠的低延迟智能支持。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.29444v1",
+      "source": "arxiv",
+      "title": "RL-based Network Slice Embedding over Space Division Multiplexed Elastic Optical Networks",
+      "abstract": "Network slicing over space-division-multiplexed elastic optical networks (SDM-EONs) requires jointly managing spectrum, spatial cores, and compute resources, a coupling that many existing studies ignore by treating compute placement independently from routing and spectrum decisions. This disconnect can cause the spectrum to be allocated along a path, only for the request to fail due to insufficient compute resources along the path, or may result in compute resources being allocated without consideration for spectrum resource availability on the path between compute nodes. We propose a path-constrained reinforcement learning framework that addresses compute node selection and RMCSA, being aware of both resources, restricting the RL agent's action space to nodes along $k$-shortest paths between request endpoints. Training incorporates reward shaping to improve robustness under high load. We propose PPO-Full (Proximal Policy Optimization-Full), which jointly selects compute nodes and routing paths via a multi-dimensional action space, against distance-based heuristics, a greedy baseline, and a decoupled VONE-DRL baseline on a 24-node USNET topology under hotspot traffic conditions. Results demonstrate consistent improvements in acceptance rate over all baselines at high load, with gains becoming more pronounced as traffic intensity increases.",
+      "authors": [
+        "Divya Khanure",
+        "Riti Gour†",
+        "Congzhou Li",
+        "Jason P. Jue"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-08-29T21:15:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.29444v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "jointly managing spectrum, spatial cores, and compute resources; compute node selection and RMCSA",
+      "llm_evidence_cn": "联合管理频谱、空间核心与计算资源；计算节点选择与路由、频谱、芯核分配",
+      "llm_evidence": "联合管理频谱、空间核心与计算资源；计算节点选择与路由、频谱、芯核分配",
+      "canonical_evidence": "联合管理频谱、空间核心与计算资源；计算节点选择与路由、频谱、芯核分配",
+      "llm_tldr_en": "Proposes a path-constrained RL framework for compute node selection and routing, modulation, spectrum, and core assignment in SDM-EONs, jointly considering compute and spectrum resources to avoid request failures.",
+      "llm_tldr_cn": "网络切片在空分复用弹性光网络中需联合管理频谱、空间核心与计算资源，现有研究常独立处理导致资源分配失败。本文提出路径约束强化学习框架，同时感知计算与频谱资源，将计算节点选择与RMCSA统一求解。该框架避免了频谱分配后因计算不足而失败的问题，为网络切片与资源编排提供了智能化的联合优化方法，可推广至服务功能链的多维资源部署场景。",
+      "llm_tldr": "网络切片在空分复用弹性光网络中需联合管理频谱、空间核心与计算资源，现有研究常独立处理导致资源分配失败。本文提出路径约束强化学习框架，同时感知计算与频谱资源，将计算节点选择与RMCSA统一求解。该框架避免了频谱分配后因计算不足而失败的问题，为网络切片与资源编排提供了智能化的联合优化方法，可推广至服务功能链的多维资源部署场景。",
+      "llm_tags": [
+        "query:sfc-edge"
+      ],
+      "matched_query_tag": "query:sfc-edge",
+      "matched_query_text": "resource orchestration for service function chains in edge computing",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "date": "20260901",
+  "date_label": "",
+  "generated_at": "2026-09-01 19:47:32 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.29255v1",
+      "route": "202609/01/2608.29255v1-a-madiff-attention-guided-multi-agent-drl-with-diffusion-policies-for-memory-aware-task-orchestration-in-mobile-aigc-networks",
+      "title": "A-MADiff: Attention-Guided Multi-Agent DRL with Diffusion Policies for Memory-Aware Task Orchestration in Mobile AIGC Networks",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "边缘AIGC服务提供商上内存感知的多智能体任务编排，防止内存耗尽故障",
+      "first_seen_at": "2026-09-01 19:47:32 UTC",
+      "updated_at": "2026-09-01 19:47:32 UTC"
+    },
+    {
+      "paper_id": "2608.27713v1",
+      "route": "202609/01/2608.27713v1-dart-fl-burst-aware-multitask-federated-learning-under-dynamic-inference-demand-at-the-edge",
+      "title": "DART-FL: Burst-Aware Multitask Federated Learning under Dynamic Inference Demand at the Edge",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "边缘智能系统；推断与训练资源分配；服务级目标",
+      "first_seen_at": "2026-09-01 19:47:32 UTC",
+      "updated_at": "2026-09-01 19:47:32 UTC"
+    },
+    {
+      "paper_id": "2608.31021v1",
+      "route": "202609/01/2608.31021v1-semi-autonomous-prosthesis-control-empowered-by-5g-and-mobile-edge-computing",
+      "title": "Semi-Autonomous Prosthesis Control Empowered by 5G and Mobile Edge Computing",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "移动边缘计算赋能的半自主假肢；边缘服务器实时抓取规划",
+      "first_seen_at": "2026-09-01 19:47:32 UTC",
+      "updated_at": "2026-09-01 19:47:32 UTC"
+    },
+    {
+      "paper_id": "2608.29103v1",
+      "route": "202609/01/2608.29103v1-clasp-chained-request-aware-scaling-and-operator-placement-for-serverless-stream-processing",
+      "title": "CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "链式请求的算子放置与扩缩容，与服务功能链的资源编排类似",
+      "first_seen_at": "2026-09-01 19:47:32 UTC",
+      "updated_at": "2026-09-01 19:47:32 UTC"
+    },
+    {
+      "paper_id": "2608.29444v1",
+      "route": "202609/01/2608.29444v1-rl-based-network-slice-embedding-over-space-division-multiplexed-elastic-optical-networks",
+      "title": "RL-based Network Slice Embedding over Space Division Multiplexed Elastic Optical Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "联合管理频谱、空间核心与计算资源；计算节点选择与路由、频谱、芯核分配",
+      "first_seen_at": "2026-09-01 19:47:32 UTC",
+      "updated_at": "2026-09-01 19:47:32 UTC"
+    }
+  ]
+}

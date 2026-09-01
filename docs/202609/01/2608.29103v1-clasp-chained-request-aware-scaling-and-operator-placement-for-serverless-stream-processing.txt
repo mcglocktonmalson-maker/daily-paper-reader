@@ -1,0 +1,449 @@
+Title: CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing
+
+URL Source: https://arxiv.org/pdf/2608.29103v1
+
+Published Time: Tue, 01 Sep 2026 00:32:38 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+# CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing 
+
+## TIANYU QI, MARIA A. RODRIGUEZ, and RAJKUMAR BUYYA, Quantum Cloud Computing and Dis-tributed Systems (qCLOUDS) Lab, School of Computing and Information Systems, The University of Melbourne, Australia 
+
+Stateful serverless (Function-as-a-Service) environments, whose workers host state servers, are increasingly used for stream processing. A stream application is a pipeline of operators, where each operator forwards intermediate data downstream through a chained request. As input rates fluctuate, the system should adjust operator parallelism and place instances across workers to sustain the incoming rate. Existing approaches do so without fully accounting for chained-request overhead, leading them to misestimate the required number of workers. Too few leave the cluster unable to keep up with the input rate, while too many route a larger fraction of chained requests across worker boundaries, increasing end-to-end latency. We propose CLASP, a scaling and scheduling strategy for stream processing in stateful serverless environments. At runtime, CLASP estimates execution cost and chained-request cost from observed metrics. Under a capacity model that covers the two costs, it adjusts operator parallelism and packs operators onto the fewest workers that can sustain the target input rate. Once a scaling decision is made, CLASP migrates each operator’s state together with its instances, thereby minimizing execution pause time. Experiments show that CLASP improves throughput by up to 3.3 × and reduces median end-to-end latency by up to 76% compared with state-of-the-art scaling strategies. CCS Concepts: • Computer systems organization → Cloud computing ; Real-time operating systems ; • Software and its engi-neering → Scheduling .Additional Key Words and Phrases: Serverless, FaaS, Auto-Scaling, Elasticity 
+
+ACM Reference Format: 
+
+Tianyu Qi, Maria A. Rodriguez, and Rajkumar Buyya. 2026. CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing. 1, 1 (September 2026), 22 pages. https://doi.org/10.1145/nnnnnnn.nnnnnnn 
+
+1 Introduction 
+
+Serverless computing has emerged as a compelling cloud execution model, as it offloads infrastructure management to the provider and elastically scales lightweight execution units in response to workload fluctuations [7]. These properties align closely with the requirements of stream processing applications, which demand low-latency execution, elastic scalability, and minimal operational overhead [31]. Driven by this alignment, extensive research has investigated the deployment of streaming applications on serverless platforms, with representative use cases including video processing [2], data analytics [24], and IoT sensor monitoring [11, 16, 38]. 
+
+Authors’ Contact Information: Tianyu Qi, tiqi@student.unimelb.edu.au; Maria A. Rodriguez, marodriguez@unimelb.edu.au; Rajkumar Buyya, rbuyya@ unimelb.edu.au, Quantum Cloud Computing and Distributed Systems (qCLOUDS) Lab, School of Computing and Information Systems, The University of Melbourne, Melbourne, Victoria, Australia. Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org. © 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM. Manuscript submitted to ACM Manuscript submitted to ACM 1arXiv:2608.29103v1 [cs.DC] 29 Aug 2026 2 Qi et al. A stream processing application is modeled as a directed acyclic graph (DAG) of operators, where each operator processes incoming data and forwards results to its downstream operators [17]. In serverless environments, these operators are deployed as ephemeral functions, and inter-operator data transfer is realized through chained function invocations, where each function instance invokes one or more downstream functions upon completing its local processing [21]. We refer to such an invocation, together with the intermediate data it carries, as a chained request. To avoid the latency of forwarding chained requests through a centralized scheduler, distributed scheduling is commonly adopted in serverless DAG applications, where each worker maintains a local scheduler that independently dispatches its locally generated chained requests to the destination workers [9, 32, 42]. Additionally, many operators are intrinsically stateful, relying on the state accumulated from prior events to process incoming data [37]. Since function instances are ephemeral in serverless environments, operator state must be persisted in external storage. To reduce state access time, stateful serverless platforms are commonly used for stream processing, which retain the operator state on the worker nodes [22, 27, 29]. To accommodate fluctuating input rates, recent work has explored elastic scaling in serverless stream processing by tuning each operator’s degree of parallelism (DoP), i.e., the number of concurrently executing function instances per operator [21, 35, 43]. In stateful serverless environments with distributed scheduling, however, determining the required DoP is only part of the scaling problem. Once the DoP of each operator is chosen, the system must also determine how much workload each worker can sustain and how the resulting instances should be placed across workers. Existing approaches typically model worker capacity using the number of available function-instance slots [21, 25], or leave placement to the underlying platform [4, 35, 43]. Such approaches account for the capacity consumed by function execution, but overlook the capacity consumed by processing chained requests. Under distributed scheduling, each worker runs a local scheduler alongside its function instances. When an instance completes, the scheduler determines the destination of each chained request and dispatches it accordingly. Requests whose successors are placed on the same worker incur little dispatch overhead, whereas requests sent to remote workers require additional processing such as serialization and network transmission [26, 39]. We refer to the worker capacity consumed by this scheduling and dispatch activity as the chained-request cost . Because this cost is not captured by DoP or slot-based capacity models, a worker may appear to have available execution capacity even when it is already saturated by the combined execution and chained-request workload. Another question is how many workers to use, which itself involves a trade-off: too few workers cannot sustain the input rate, while spreading the workload across too many forces more chained requests across worker boundaries and inflates end-to-end latency. Placing operator instances into workers so as to minimize the number of workers, while keeping heavily communicating operators together and respecting each worker’s capacity, generalizes the classic operator-placement problem, which is known to be NP-hard [1, 3]. To keep the worker count low, some methods bin-pack instances onto workers according to each worker’s available execution slots [15, 21]. Because slot-based methods do not account for the chained-request cost a new placement induces, they pack more workload onto a worker than it can sustain and consequently provision too few workers. Zhang24 [41] spreads operator instances over more workers than actually required, reducing the workload on each to leave capacity for chained-request cost. However, it controls the spread with user-specified weights and does not quantify the cost of local versus remote chained requests. What is needed is an efficient heuristic method that packs operators onto the fewest workers able to sustain the input rate. Its capacity model must consider execution and chained-request cost together, and must evaluate the chained-request cost under the new placement as operators are assigned. 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 3When scaling the number of workers, operator function instances are migrated across workers, and their co-located state must be redistributed accordingly. Otherwise, state access will frequently cross worker boundaries, leading to high latency [18]. However, existing state-migration schemes are designed for incremental rebalancing rather than for a scaling step. They revisit one operator at a time and relocate part of its state in response to the currently observed imbalance [23, 34], so a cluster-wide change in placement is reached only after many such rounds. Elastic scaling poses a different requirement. Once a new worker count and operator placement have been selected, the system should transition directly to that placement, relocating the affected operator instances and their state in a coordinated migration step. This allows execution to resume with state co-located at the new placement after a single scaling transition, rather than gradually converging through repeated rebalancing rounds. To address these challenges, we propose CLASP, a chained-request-aware elastic scaling and operator placement for stream processing applications in stateful serverless environments. CLASP proactively scales the number of workers to accommodate fluctuating input rates while minimizing the number of workers used. To this end, it continuously monitors worker metrics and uses online regression over historical observations to estimate each worker’s capacity, accounting for both execution workload and chained-request cost. When scaling is triggered, it packs the projected workloads onto workers, accounting for both execution and chained-request costs. Once the scaling decision is made, it dispatches function instances to their assigned workers and seamlessly migrates the operator state and in-flight requests alongside them, minimizing processing interruption. Implemented on Faasm [29], our method achieves performance gains over the FaaSFlow [21] and Zhang24 [41], including a throughput improvement of up to 3.3 × and an end-to-end latency reduction of up to 76%. 
+
+2 Background and Motivation Split Count             
+
+> 1.Word Count (WC)
+> Move Avg Spike Detect
+> 2.Spike Detection (SD)
+> Deseri alize Filter
+> 3.Advertisement Analytics (AA)
+> Projec tion Join Camp aign Transit ion Url Filter
+> 4.Page Load (PL)
+> Join Filter Aggreg ation Sink Parse Filter range
+> 6.Extraction, Transform and Load (ETL)
+> Filter boom Inserti on Join Annot ate Csv2m lPublis hTable insert Sink Parse Split
+> 5. Network Monitor (NWM)
+> Success filter Success parse Aggreg ation Filter Functor Fail filter Fail parse Join
+
+Fig. 1. Benchmark Application Topologies. Stateless operators are shown in light grey and stateful operators in dark grey. 
+
+> Manuscript submitted to ACM
+
+4 Qi et al. In this section, we first present a background on the execution of stream processing applications in serverless environments. We then show that cross-worker chained requests consume non-negligible worker capacity, causing conventional slot-based capacity estimates to overestimate the workload a worker can sustain. Next, we demonstrate that provisioning more workers than necessary increases end-to-end latency, motivating the use of the fewest workers capable of sustaining the input rate. Finally, we show why state must migrate together with operator placement to preserve local state access. 
+
+2.1 Stream Processing in Serverless and Benchmarks 
+
+When running stream processing applications in a serverless environment, each operator is implemented as a function containing the operator’s logic. At runtime, the function is instantiated as one or more function instances, which can execute concurrently across workers; the number of such instances is referred to as the operator’s parallelism. On each worker, these instances run in a pool of executors, where each executor is a slot that executes one function instance at a time. We refer to the total number of slots a worker provides as its maximum executor slots, which bounds how many instances it can run concurrently. Note that this bound characterizes only function-execution concurrency. As we show in Section (2.2), a worker also spends capacity on scheduling and dispatching chained requests, so its executor-slot count does not by itself determine the load it can sustain. Each operator processes incoming tuples. In a serverless setting, a tuple arrives as a request that invokes the operator’s function and carries the tuple as its payload. The data flow between operators is realized through chained requests: upon processing a request, a function instance generates one or more chained requests, each invoking the function of a downstream operator. Under distributed scheduling, the local scheduler determines each chained request’s destination worker and dispatches it there, consuming different amounts of the worker’s capacity depending on whether that destination is local or remote. Operators in stream processing applications can be broadly classified into two categories: stateless and stateful. A stateless operator processes each incoming request according to its predefined logic without retaining any intermediate information. In contrast, a stateful operator maintains intermediate results (i.e., state) that are acted upon and updated when a request is processed [6]. For example, in the count operator of a word count application, the state records how many times each word has been seen so far. In distributed-scheduling stateful serverless environments, each operator is typically bound to a set of workers before any request is routed to it. A local scheduler can therefore dispatch each chained request directly to its destination according to this binding. The state a request acts upon likewise resides on the worker that executes it, so state access stays local [14, 19, 21, 33, 41]. To investigate the performance of stream processing applications in serverless environments, we run experiments on the Faasm [29] stateful serverless platform with a simple bin-packing scheduler based solely on execution workload, and with all state accesses kept local. We evaluate six applications spanning different DAG sizes (2 to 10 operators), topologies (linear and branching), and fractions of executions that access state. Their topologies are shown in Figure 1: 
+
+Word Count (WC) counts the occurrences of each unique word from text sources (2 operators) [5]. 
+
+Spike Detection (SD) maintains a moving window of temperature readings for each sensor ID and uses them to detect whether a newly received event is a spike (2 operators) [5]. 
+
+Advertisement Analytics (AA) maps advertisements to their corresponding campaigns and counts the number of events per campaign within a window (5 operators) [10]. 
+
+Page Load (PL) computes the average page load time per page category by analyzing a stream of log files (6 opera-tors) [36]. 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 5
+
+Network Monitor (NWM) monitors log files and looks for successful logins that were preceded by multiple failed attempts from the same host (10 operators) [13]. 
+
+Extraction, Transform and Load (ETL) processes data streams through filtering, interpolation, and metadata annotation, and then persists the results (10 operators) [30]. WC SD AA PL NWM ETL SYN 0x 2x 4x 6x Throughput (× vs. 1 Worker)  Workers: 5 10 
+
+Fig. 2. Comparison of throughput across cluster sizes (relative to 1 worker). WC SD AA PL NWM ETL SYN 0x 1x 2x 3x 4x 5x P95 Latency (× vs. 1 Worker)  Workers: 5 10 
+
+Fig. 3. Comparison of p95 E2E latency across cluster sizes (relative to 1 worker). WC SD AA PL NWM ETL 0k 1k 2k 3k Throughput (req/s) State: Local Remote 
+
+Fig. 4. Comparison of throughput under different state access circumstances. 
+
+2.2 Chained-Request Cost 
+
+Existing approaches first determine each operator’s degree of parallelism and then assign the resulting instances to workers based on available slots, overlooking the scheduling and communication overhead that chained requests incur across workers [19, 21, 25]. To expose this effect, we run the benchmarks in Figure 1, together with a synthetic application SYN, across different numbers of workers (1, 5 and 10) under an unthrottled input stream, and compare the resulting throughput. SYN is a linear pipeline with ten operators, in which each operator implements identical no-op logic and forwards its requests to the next operator in the chain. Due to SYN’s uniform structure and identical per-operator logic, it is split evenly across the 1, 5, or 10 workers, giving each worker a similar execution workload and communication cost. SYN is designed to eliminate the effect of workload imbalance across workers. As shown in Figure 2, SYN scales markedly sub-linearly: maximum throughput reaches only about 3.7 × that of a single worker at 5 workers, and 5.5 × at 10 workers. It falls well short of the 5 × and 10 × expected under ideal linear scaling. The other applications exhibit a similar sub-linear trend, though the exact degree varies with each application’s pattern. This is because adding workers increases the fraction of chained requests that cross worker boundaries, and remote requests consume more of each worker’s capacity than local ones. Therefore, worker capacity cannot be inferred from executor slots or execution workload alone; it must also account for the cost of dispatching chained requests under the current placement. 
+
+2.3 Over-Provisioning Increases Latency 
+
+Under a light input rate, using more workers than required not only wastes resources but also increases end-to-end latency. This is because spreading the application’s chained requests across more workers forces more of them to be routed between workers, and such inter-worker communication is more costly and time-consuming than local communication [8, 20]. To demonstrate this, we adopt the same benchmarks and experimental setup as in Section (2.2). For each application, the input rate is fixed at the maximum throughput a single worker can sustain, and we measure the resulting end-to-end latency. 
+
+> Manuscript submitted to ACM
+
+6 Qi et al. As shown in Figure 3, the p95 end-to-end latency is consistently lower on the smaller cluster across all applications, as fewer requests cross worker boundaries. For SYN, the p95 end-to-end latency at 10 and 5 workers is 2.3 × and 1.5 ×
+
+that of a single worker, respectively. The effect is most pronounced in WC and SD, which have only two operators each: with little execution time in the pipeline, the added latency of crossing a worker boundary accounts for a larger share of the end-to-end latency. This experiment thus highlights the benefit of using the fewest workers that can still sustain the input rate. 
+
+2.4 State Access Overhead 
+
+When handling a request for a stateful operator in a serverless setting, the executor must retrieve the associated state from storage and, if necessary, apply updates to it. Consequently, both the end-to-end latency of executing a request and the resulting maximum throughput are highly sensitive to the state access time. To expose this effect, we run two baselines with the same bin-packing scheduling strategy but different state-access schemes. In the local-access baseline, an executor retrieves state from the state server on its own worker; in the remote-access baseline, it always retrieves state from the state server on the planner. With the same experimental setup as in Section (2.2), we run the benchmarks in Figure 1 on 10 workers under an unthrottled input stream and compare the resulting throughput. SYN is not included here because it does not access any state. The throughput gap stems from a difference in per-request execution latency. We define the execution latency of an operator as the time from when its executor starts until it completes. In our experimental setup, our measurements show that a stateless operator and a stateful operator with local state access both have an execution latency of around 400 𝜇 s. However, this latency increases to about 1400 𝜇 s for a stateful operator when it accesses the state from a remote server. As shown in Figure 4, the local-access baseline consistently achieves higher throughput than the remote-access baseline, and the gap widens for applications with more frequent state access. Local access yields about a 3.5 × throughput improvement for WC, where 90% of function executions require state access, but only about 1.5 × for PL, where the figure is 20%. This result highlights the importance of migrating state along with the new placement, ensuring that stateful operators retain local state access after replacement. 
+
+3 Related Work 
+
+Vertical Resource Provisioning. Some research focuses on vertically provisioning resources to a single function instance [12, 28]. LatEst [28] uses cgroups to control a serverless instance’s CPU allocation, employing a feedback controller to estimate the resources needed to meet a target tail latency as the incoming load changes. Such vertical tuning is orthogonal to our setting: with each worker’s capacity fixed, sustaining a higher input rate requires adjusting how many workers are used and where operators sit on them, which is what CLASP addresses. 
+
+Parallelism Tuning for Batch Processing. Research has also explored the optimal DoP for operators in batch processing applications, aiming to reduce job completion time or the number of workers used [19, 25, 40, 43]. Ditto [19] targets batch analytics jobs and jointly optimizes the degree of parallelism and function placement using an execution time model that accounts for both computation and data-transfer time, thereby reducing job completion time and cost. Dexter [25] dynamically adjusts the number of executors at per-operator granularity using a combination of historical prediction and hill climbing search to balance performance and cost. Jolteon [43] exploits the convexity of the problem to solve it with gradient descent, finding the resource configuration that minimizes cost or latency under a user-specified bound. However, batch processing executes operators stage by stage, completing the entire batch at one operator before 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 7
+
+> Table 1. A comparison with related work.
+
+Representative Work Scaling Concurrent Exec. OP ECM RM WM SL SM LatEst [28] Vertical ✓
+
+Ditto [19] Horizontal ✓ ✓ ✓
+
+Dexter [25] Horizontal ✓
+
+Jolteon [43] Horizontal ✓
+
+Kraken [4] Horizontal ✓ ✓
+
+StepConf [35] Horizontal ✓ ✓
+
+Fifer [15] Horizontal ✓ ✓ ✓
+
+FaaSFlow [21] Horizontal ✓ ✓ ✓ ✓
+
+Zhang24 [41] Horizontal ✓ ✓ ✓ ✓ ✓
+
+CLASP (Ours) Horizontal ✓ ✓ ✓ ✓ ✓ ✓ ✓      
+
+> Concurrent Exec. : all operators run concurrently vs. stage-by-stage; OP : Operator-to-Worker Placement; ECM : Execution and Chained-Request Cost Model; RM : Runtime Cost Estimation from Observations; WM : Worker Minimization; SL : State-Locality Preserving (i.e., execute each request on the worker that holds the state it acts upon); SM : State Migration
+
+moving to the next, whereas stream processing runs all operators concurrently on continuously arriving data. Because of this, batch processing can keep each operator’s chained requests on the worker that produced it, launching the next operator there once the current stage finishes so that the chained requests are executed locally. In stream processing, downstream operators are already running elsewhere when a chained request is produced, so the request must be routed to them right away rather than held for a later stage. 
+
+Configuration Tuning with Platform-Managed Placement. Some existing works jointly optimize the parallelism and resource configuration of each operator, while leaving instance placement to the underlying serverless platform [4, 35]. StepConf [35] dynamically configures each function instance at runtime, jointly optimizing memory size and function parallelism to minimize cost under an end-to-end SLO. Because placement is delegated to the platform, these approaches cannot evaluate how a candidate placement changes local and remote chained-request costs, nor can they explicitly minimize the number of workers used. 
+
+Configuration Tuning with Self-Managed Placement. Other research first determines the degree of parallelism of each operator, then co-locates heavily-communicating operators into the same worker according to the available worker resource to reduce latency [15, 21, 41]. FaaSFlow [21] profiles each operator’s instance number from auto-scaling whenever the workflow suffers performance degradation or QoS violation, and adopts a critical-path-based greedy grouping strategy that collocates heavily-communicating operators onto fewest workers with sufficient capacity. However, it measures a worker’s capacity only by the number of executors on it, overlooking the chained-request cost and thus causing resource imbalance across workers. Zhang24 [41] predicts each operator’s parallelism using a non-linear performance model that accounts for scheduling overhead and resource contention, and then greedily assigns the resulting instances to workers by scoring both data affinity and load balancing. The data-affinity term reduces remote chained-request transfer, while the load-balancing term spreads executor instances across workers to exploit the available resources of the cluster. However, it does not quantify the cost of local versus remote chained requests, and instead relies on a user-specified weighting between the two scoring terms. CLASP differs from these approaches by estimating execution and chained-request costs directly from runtime observations, and by accounting 
+
+> Manuscript submitted to ACM
+
+8 Qi et al. for both costs as assigning operators into workers, with the aim of minimizing the number of workers used while sustaining the input rate. 
+
+State Migration in Stateful Serverless. Existing state-migration schemes treat relocation as incremental rebalancing rather than as part of a scaling step: they periodically re-examine the current load distribution and move part of a single operator’s state in response to the imbalance they observe [23, 34]. LoLa [34] migrates operator state whenever workload imbalance across workers exceeds a threshold; each trigger relocates part of a single operator’s state, so a cluster-wide realignment is reached only after many rounds. CLASP instead derives a single migration plan from the difference between the old and new placements, moving every operator’s complete state together with its instances in one round. 
+
+4 CLASP Design Planner Worker Scheduling Engine Scheduling Engine State Server Metrics Monitor Executor Pool Incoming Request Queue executor executor executor executor Runtime Statistics ……
+
+Incoming Request Queue 
+
+Placement Controller 
+
+> Fig. 5. Architecture of the designed method.
+
+CLASP operates as a continuous monitor–predict–place–migrate cycle. It first collects runtime metrics and estimates the effective capacity of each worker. When the observed input rate changes sufficiently, it projects the application load onto this capacity, computes a new operator placement, derives the parallelism each operator requires, and migrates operator state together with queued requests to the selected workers. Figure 5 illustrates the architecture that realizes this cycle. The system consists of a single planner and multiple workers, each running independently on its own host. We assume a homogeneous cluster, in which every worker provides the same capacity. The planner runs a placement controller that receives the application from the user 1 ,computes an initial placement of operators onto workers, and distributes it to the scheduling engines on both the planner and the workers 2 . After initialization, input requests enter the planner’s incoming request queue 3 ; the scheduling engine fetches them 4 , selects the destination worker for each request according to the operator placement, and dispatches it to that worker’s incoming request queue 5 . On each worker, the executor pool fetches the requests from its incoming queue and executes them 6 . During the execution of a stateful operator, the executor reads the required state from the local state server 7 . Once execution completes, the executor forwards the resulting chained requests to the local scheduling engine 8 , which dispatches them to the appropriate workers according to the operator placement. A metrics monitor on each worker records runtime metrics and periodically reports them to the runtime statistics module in the planner 9 . Based on these metrics, the scheduling engine scales the number of workers and adjusts the operator-to-worker placement 10 .
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 9
+
+4.1 Metrics Monitor 
+
+To support scaling decisions, the system collects runtime metrics from both the workers and the planner. Each worker monitors its incoming request queue length, the number and latency of executed requests, the chained-request rate between operators, and the rate of chained requests it generates to local and remote workers. The planner then aggregates these per-worker statistics and additionally tracks the length of its own incoming request queue, as well as the system-wide input rate and throughput. All monitored metrics are summarized in Table 2. 
+
+> Table 2. Runtime metrics monitored. Rates are measured per second.
+
+Symbol Description 
+
+Worker 𝑤 𝑄 𝑤 Size of worker 𝑤 ’s incoming request queue 
+
+𝑅 𝑙 𝑤 Rate of local chained requests generated on worker 𝑤 𝑅 𝑟 𝑤 Rate of remote chained requests generated on worker 
+
+𝑤 𝛿 𝑤 Number of distinct remote workers reached by worker 
+
+𝑤 ’s chained requests 
+
+𝑁 𝑤,𝑜 Rate of processed requests of operator 𝑜 on worker 𝑤 
+
+¯𝜏 𝑤,𝑜 Average request execution time of operator 𝑜 on worker 
+
+𝑤 (𝜇 s) 
+
+𝐸 𝑜 →𝑜 𝑠  
+
+> 𝑤
+
+Rate of chained requests generated on worker 𝑤 from operator 𝑜 to its successor 𝑜 𝑠 
+
+Planner 𝑝 𝑄 𝑝 Size of the planner’s incoming request queue 
+
+𝜆 𝑝 System input rate 
+
+Λ System throughput 
+
+4.2 Worker Capacity Model 
+
+To model a worker’s load, we express its total load as the sum of execution and chained-request overheads, where the latter is further broken down into local chained-request rate, remote chained-request rate, and the number of destination workers: 
+
+𝑊 𝑤 =∑︁ 
+
+> 𝑜
+
+𝑁 𝑤,𝑜 · ¯𝜏 𝑤,𝑜 + 𝛼 · 𝑅 𝑙 𝑤 + 𝛽 · 𝑅 𝑟 𝑤 + 𝛾 · 𝛿 𝑤 (1) where Í𝑜 𝑁 𝑤,𝑜 · ¯𝜏 𝑤,𝑜 captures the total execution cost across all operators in 𝑤 , and 𝛼 , 𝛽 , 𝛾 are coefficients weighting the overhead of local chained-request dispatching, remote chained-request dispatching, and the number of distinct remote destination workers, respectively. Since these coefficients may vary across deployments, we estimate them online from runtime observations, as described in the following section. 
+
+4.2.1 Online Coefficient Estimation. The scaling policy requires estimates of the maximum worker capacity 𝑊 and the overhead coefficients 𝛼, 𝛽, 𝛾 of Equation (1). None can be measured directly, so we estimate them online from saturated 
+
+workers—those whose incoming queue 𝑄 𝑤 grows persistently (e.g., over three consecutive seconds) or whose queuing delay exceeds a threshold. When a worker saturates, its arrival rate exceeds the rate at which it can process requests; the load it actually sustains, 𝑊 𝑤 , then equals its maximum capacity, i.e. 𝑊 𝑤 =𝑊 . Since the cluster is homogeneous, 
+
+> Manuscript submitted to ACM
+
+10 Qi et al. 
+
+𝑊 , 𝛼, 𝛽, 𝛾 are shared across workers, so saturated samples from all workers are pooled into a single online regression, raising the effective sampling rate and averaging out per-worker noise. 
+
+Estimating the coefficients. Writing the aggregate execution cost as 𝐸 𝑤 = Í𝑜 𝑁 𝑤,𝑜 ¯𝜏 𝑤,𝑜 , a saturated worker satisfies 
+
+𝐸 𝑤 = 𝑊 − 𝛼𝑅 𝑙 𝑤 − 𝛽𝑅 𝑟 𝑤 − 𝛾𝛿 𝑤 . Differencing two consecutive saturated observations cancels the constant 𝑊 and leaves one linear constraint on the coefficients, 
+
+Δ𝐸 (𝑘 ) = − 𝛼 Δ𝑅 𝑙, (𝑘 ) − 𝛽 Δ𝑅 𝑟, (𝑘 ) − 𝛾 Δ𝛿 (𝑘 ) + 𝜀 (𝑘 ) , (2) where 𝜀 (𝑘 ) absorbs measurement noise and slow drift in 𝑊 , and Δ(·) (𝑘 ) = (·) (𝑘 ) − (·) (𝑘 −1) . Since 𝑅 𝑙 𝑤 , 𝑅 𝑟 𝑤 , and 𝛿 𝑤 differ by orders of magnitude in their typical values, we normalize each variable by a fixed per-term scaling constant reflecting its magnitude before forming the regression, and rescale the recovered coefficients back to their original units afterward. We then solve for 𝜽 = [𝛼, 𝛽, 𝛾 ]⊤ via recursive least squares (RLS) with forgetting factor 𝜌 ∈ ( 0, 1): each observation updates 𝜽 in 𝑂 (1) time, and the estimator tracks drift across workload and deployment changes. 
+
+Recovering the Maximum Worker Capacity. Differencing identifies 𝛼, 𝛽, 𝛾 but eliminates 𝑊 , which is required by the scaling policy. Once 𝜽 is fixed, each saturated observation directly recovers a single-observation estimate b𝑊 of the maximum worker capacity, 
+
+b𝑊 (𝑘 ) = 𝐸 (𝑘 ) 
+
+> 𝑤
+
++ 𝛼 𝑅 𝑙, (𝑘 ) 
+
+> 𝑤
+
++ 𝛽 𝑅 𝑟, (𝑘 ) 
+
+> 𝑤
+
++ 𝛾 𝛿 (𝑘 ) 
+
+> 𝑤
+
+. (3) To suppress per-observation noise, we smooth these estimates with an exponential moving average, yielding the smoothed maximum worker capacity ¯ 𝑊 :¯𝑊 ← ( 1 − 𝜂 ) ¯𝑊 + 𝜂 b𝑊 (𝑘 ) . (4) This smoothed value ¯ 𝑊 is then used when deciding the number of workers. 
+
+4.3 Worker Scaling and Operator Scaling 
+
+During scaling, the choice of worker count must balance two competing pressures (§2): too few workers saturate under load and inflate end-to-end latency, whereas too many incur additional inter-worker communication overhead and waste resources. Using the monitored metrics and the estimated maximum worker capacity ¯ 𝑊 , the planner continuously checks whether the worker pool can sustain the current input rate, and scales out or in to use the fewest workers that suffice. Rather than determining each operator’s degree of parallelism (DoP) independently, our method assigns operators to workers based on their processing cost and communication pattern, and then derives each operator’s parallelism from the resulting placement. 
+
+4.3.1 Load Derivation. As shown in Table 2, each worker reports the per-operator processed counts 𝑁 𝑤,𝑜 , the average execution times ¯ 𝜏 𝑤,𝑜 , and the inter-operator chained-request rates 𝐸 𝑜 →𝑜 𝑠  
+
+> 𝑤
+
+. In the planner, the placement controller aggregates these across workers into each operator’s total processed rate 𝑁 𝑜 , average execution time ¯ 𝜏 𝑜 , and per-edge request rate 𝐸 𝑜 →𝑜 𝑠 .These metrics are observed while the system sustains a source rate Λ (the measured throughput), whereas placement must be computed for a target rate 𝜆 𝑝 (the current input rate the system must sustain). We therefore project the observed 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 11 rates from the source rate to the target rate by the scaling factor 
+
+𝑠 = 𝜆 𝑝 
+
+Λ , (5) giving ˜𝑁 𝑜 = 𝑠 𝑁 𝑜 , ˜𝐸 𝑜 →𝑜 𝑠 = 𝑠 𝐸 𝑜 →𝑜 𝑠 . (6) The average execution time ¯ 𝜏 𝑜 is taken from the observed metrics and left unscaled. Each operator’s projected processing demand is then ˜𝐷 𝑜 = ˜𝑁 𝑜 ¯𝜏 𝑜 , (7) which, together with the projected chained-request rates ˜ 𝐸 𝑜 →𝑜 𝑠 , forms the input to the placement in the next section. 
+
+4.3.2 Reverse-Topology Operator Placement. With the projected load, we place operators onto workers via bin-packing, allowing the number of workers used to emerge from the packing. For an operator, the workload consists of independent requests that can be executed on different workers, so its demand ˜ 𝐷 𝑜 may be split across workers. We represent a placement as Φ = {𝜙 𝑜,𝑤 }. Here, 𝜙 𝑜,𝑤 ≥ 0 is the share of ˜ 𝐷 𝑜 assigned to worker 𝑤 , so that Í𝑤 𝜙 𝑜,𝑤 = ˜𝐷 𝑜 .The fraction of operator 𝑜 placed on worker 𝑤 is then 𝜎 𝑜 (𝑤 ) = 𝜙 𝑜,𝑤 / ˜𝐷 𝑜 . Following the observed routing pattern, a chained-request invocation from 𝑜 on 𝑤 to its successor 𝑜 𝑠 stays local with probability 𝜎 𝑜 𝑠 (𝑤 ) and goes remote otherwise. Substituting into the capacity model of Equation (1), the load of worker 𝑤 under placement Φ is 
+
+𝐿 𝑤 (Φ) =∑︁ 
+
+> 𝑜
+
+𝜙 𝑜,𝑤 + 𝛾 𝛿 𝑤 (Φ)+∑︁  
+
+> (𝑜 →𝑜 𝑠 )
+
+˜𝐸 𝑜 →𝑜 𝑠 𝜎 𝑜 (𝑤 )× 𝛼 𝜎 𝑜 𝑠 (𝑤 ) + 𝛽  1 − 𝜎 𝑜 𝑠 (𝑤 ) ,
+
+(8) where 𝛿 𝑤 (Φ) counts the distinct remote workers that 𝑤 ’s outgoing chained requests reach. Guided by this load model, we place operators onto workers subject to the maximum worker capacity, 𝐿 𝑤 (Φ) ≤ ¯𝑊 
+
+for all 𝑤 . The bin-packing co-locates heavily communicating operators to reduce remote chained requests, while using as few workers as possible. 
+
+Reverse-topological order. When placing an operator on a worker, the transmission cost of its chained requests is unknown, since its successor operators may not yet be placed. Visiting operators in reverse-topological order removes this dependency: each operator is placed only after all its successors, so this cost is known at the time of placement. We realize this order with a depth-first traversal starting from the sink operators. At each operator, the traversal prioritizes the outgoing edge with the highest chained-request rate, encouraging operators with intensive communication to be placed together. An operator is placed only after all its successors have been placed. If a successor is still unplaced, we skip the operator for now, place the remaining successors first, and return to it afterward. ABDEC 10 87610 
+
+> Fig. 6. DAG of an example application; the number on each edge denotes its chained-request rate.
+> Manuscript submitted to ACM
+
+12 Qi et al. For the application in Figure 6, the placement starts from 𝐸 , followed by 𝐶 and 𝐵 . When the traversal reaches 𝐴 , it is postponed because its successor 𝐷 is not yet placed, and the algorithm proceeds to 𝐷 instead. Once 𝐷 is placed, 𝐴 is finally placed as well. 
+
+Per-operator placement. On our homogeneous cluster, where every worker has the same capacity ¯𝑊 , we place operators using a next-fit bin-packing strategy: an operator fills the current worker, and a new worker is opened only when the current one cannot hold its remaining demand, so the placement uses as few as this heuristic yields. We place operator 𝑜 into worker 𝑤 ’s remaining capacity 𝑤 rem . When a worker is first opened, 𝑤 rem = ¯𝑊 ; each placed operator then consumes part of it. Since 𝑜 ’s successors are already placed, we know which workers its chained requests reach, which gives the fan-out cost 𝛾 𝑔 𝑤 of placing operator 𝑜 on 𝑤 . Here, 𝑔 𝑤 is the number of new remote workers that 
+
+𝑜 adds to 𝑤 ’s existing connections; remote workers that 𝑤 already connected to through previously placed operators incur no extra fan-out cost. The incremental load incurred by assigning one unit of operator 𝑜 ’s demand to worker 𝑤 is 
+
+𝑚 𝑤 = 1 + 𝛼 𝜎 𝑜 𝑠 (𝑤 ) + 𝛽  1 − 𝜎 𝑜 𝑠 (𝑤 ). The maximum amount of 𝑜 that fits on 𝑤 then follows directly: 
+
+𝜙 max  
+
+> 𝑜,𝑤
+
+= 𝑤 𝑟𝑒𝑚 − 𝛾 𝑔 𝑤 
+
+𝑚 𝑤 
+
+. (9) We then update 𝑤 ’s remaining capacity accordingly, opening a new worker if 𝑜 ’s demand is not fully placed. If the cluster has already reached its worker limit, we stop opening new workers and instead use the placement that sustains the highest throughput on the workers we have. We find this placement with a binary search over the input rate, using the maximum throughput of a single worker multiplied by the number of available workers as the initial upper bound. The search terminates once the interval narrows below a coarse tolerance (e.g., 50 requests/s). This placement needs to be computed only once and is cached for reuse whenever the cluster reaches its worker limit again. 
+
+Parallelism. Once the placement Φ is fixed, each operator’s parallelism 𝑃 𝑜 (its number of parallel executing function instances) is derived from it. Let 𝑃 cur tot and 𝑃 tot denote the current and projected total numbers of instances across all operators. CLASP first scales this total by the scaling factor 𝑠 used for the load derivation, 
+
+𝑃 tot = 𝑠 · 𝑃 cur tot . (10) It then allocates the projected instances across operators in proportion to each operator’s processing demand, 
+
+𝑃 𝑜 = 𝑃 tot · 𝑁 𝑜 ¯𝜏 𝑜 
+
+Í𝑜 ′ 𝑁 𝑜 ′ ¯𝜏 𝑜 ′
+
+. (11) Finally, each operator’s 𝑃 𝑜 instances are distributed across workers according to its allocated shares 𝜙 𝑜,𝑤 .In the initial placement, all operators run on a single worker, and all executor slots 𝑃 max on the worker are allocated across operators in proportion to each operator’s share of the processing demand (observed during the warm-up phase), 
+
+𝑃 𝑜 = 𝑃 max · 𝑁 𝑜 ¯𝜏 𝑜 
+
+Í𝑜 ′ 𝑁 𝑜 ′ ¯𝜏 𝑜 ′
+
+. (12) 
+
+4.4 State Migration 
+
+After a scaling decision, both the state and the unprocessed requests waiting in the incoming request queue must be migrated according to the new placement, so that each operator continues to execute on the worker that holds the state it acts upon. The migration step is illustrated with an example in Figure 7. First, the placement controller in the planner compares the new placement with the existing one. From this comparison, the planner derives a migration plan that specifies, for each worker, which peers to send state and requests to and which to receive them from 1 . It 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 13 Planner Worker A Worker B 
+
+Reschedule Wait Messages Migrate data Resume processing Completion message Broadcast 
+
+# Worker C 
+
+Drain executors                           
+
+> Fig. 7. State migration sequence with three workers. Setup: the new placement requires 𝐴 to send data to 𝐵 and 𝐶 , and 𝐵 to send data to 𝐶 ;𝐶 only receives. Execution: 𝐴 receives from no worker, so it resumes immediately after sending its data; 𝐵 resumes once
+> 𝐴 ’s data arrives; and 𝐶 , by the time it finishes draining, has already received data from both 𝐴 and 𝐵 , so it too resumes without extra waiting. 𝐴 and 𝐵 resume before 𝐶 , without a global synchronization barrier.
+
+then broadcasts this plan to all workers 2 . Upon receiving the plan, each worker first waits for its currently running executions to complete 3 . Then, following the new placement, it computes the destination of each state object in its local state server and each request still waiting in its queue, and dispatches them to the corresponding workers 4 .After dispatching, the worker waits until it has received all the state and requests destined for it 5 . This wait is local: the migration plan already specifies, for each worker, which peers will send data to it, so a worker simply waits until it has received data from all of them, independently of any other worker. Once this condition is met, the worker resumes normal request processing 6 and sends the completion message to the planner 7 .This design keeps the planner out of the migration itself: it only computes and broadcasts the plan, while all state and request transfers happen directly between workers. Since each worker’s resume condition is local, the migration is fully decentralized, with no global synchronization barrier and no central coordinator that could bottleneck the transfers. 
+
+5 Performance Evaluation 
+
+Implementation. CLASP is built on top of Faasm [29] and extends it with three key features: (i) an incoming request queue on both the planner and each worker, (ii) a distributed scheduling engine on each worker, and (iii) a metrics monitor on each worker. In our system, all chained requests scheduled to the local worker are stored and transferred through shared memory to reduce communication latency. 
+
+5.1 Experiment Setup 
+
+5.1.1 Serverless Baselines and Testbed. All experiments are conducted on an 11-node Kubernetes cluster. One planner node runs on an 16-core AMD EPYC 2.30 GHz machine with 64 GB of RAM, while each of the ten worker nodes runs on a 8-core AMD EPYC 2.30 GHz machine with 32 GB of RAM. The maximum number of concurrent executors per 
+
+> Manuscript submitted to ACM
+
+14 Qi et al. 1 5 5 1 5 10 10 5 1 10 10 1
+
+Host Transition 010 20 30 40 50 60 70 Duration (ms) Planner Migration Duration 1 5 5 1 5 10 10 5 1 10 10 1
+
+Host Transition Worker Migration Duration WC SD AA PL NWM ETL 
+
+> Fig. 8. Comparison of migration time across different worker transitions and applications.
+
+worker node is set to 10. We compare our method against two baselines. The first is FaaSFlow [21]. It profiles each operator’s parallelism based on its invocation rate, and then greedily packs heavily-communicating operators onto workers with sufficient slots. The second is Zhang24 [41], which predicts each operator’s parallelism with a non-linear performance model accounting for scheduling overhead and resource contention, and assigns the resulting instances to workers by scoring both data affinity (favoring placements that keep chained requests local rather than remote) and load balancing. Since all methods rely on runtime statistics to evaluate the resources required by each operator and map them effectively to workers, we first run a 10,000-request warm-up phase. Based on the statistics collected, we then remap the operators and begin recording performance. For our method, 𝛼 , 𝛽 and 𝛾 are updated online at runtime; we initialize them to 38 .5, 275 and 51500, the values that the online estimator converges to across applications and cluster sizes in Section (5.3), so that it starts close to its steady state. For Zhang24, the weights of data affinity and load balancing are each set to 0.5. For all methods, state and request migration follows the same procedure as CLASP in Section (4.4). Scaling is triggered under two conditions: when the input rate changes consistently for 2 seconds, or when the current throughput fails to match the input rate for 3 seconds. 
+
+5.1.2 Evaluation Metrics and Benchmark Applications. Our primary goal is to sustain the input rate with the minimum number of workers. We define throughput as the number of requests processed end-to-end (i.e., by all operators) per second. We also examine the impact on end-to-end latency, where end-to-end latency refers to the time it takes for a request and all of its subsequent chained requests to be processed by the entire pipeline, encompassing both scheduling and execution time. Each experiment was run five times, with each run lasting ten minutes. The results presented in this paper are the average of these five runs. 
+
+5.2 Migration Cost 
+
+This experiment evaluates the migration cost described in Section 4.4. Before migrating, we run each application for 100 seconds to let the state fill up, and then trigger scaling across six worker transitions: 1 → 5, 5 → 10, 1 → 10, and their reverses. We measure the resulting migration time for each application, distinguishing two durations. The planner duration spans from the moment the planner issues the migration plan to the moment it receives completion messages 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 15 WC SD AA PL NWM ETL 37 38 39 40 Alpha WC SD AA PL NWM ETL 270 280 290 Beta WC SD AA PL NWM ETL 49k 50k 51k 52k Gamma      
+
+> Fig. 9. Estimated coefficients 𝛼 ,𝛽 and 𝛾 for each application. Each box aggregates the converged estimates obtained under worker counts from 1 to 10.
+
+from all workers. The worker duration spans from the moment a worker receives the migration plan to the moment it resumes execution. As shown in Figure 8, the planner duration is typically between 10 and 20 ms, though three factors make it longer. First, across applications, WC has the longest planner duration. Because it counts word frequencies in articles, WC accumulates a large number of unique words (around 40k at migration time), producing a correspondingly large state and therefore a longer migration. Second, scaling up takes longer than scaling down on average. Although both directions involve the same workers, scaling up spreads data across more destination workers, and each destination must wait until it has received data from all its sources. Third, scaling from a single worker (1 →5 and 1 →10) takes longer duration than other scaling up transitions. Since all data is stored on one source worker, that worker must dispatch to every destination, and this concentrated transfer volume prolongs the migration. Across most applications and transitions, workers resume processing within 10 ms, showing that the decentralized migration mechanism introduces only a short execution pause. 
+
+5.3 Online Estimation of the Worker Capacity Model Parameters 
+
+In this section, we estimate the coefficients 𝛼 , 𝛽 , and 𝛾 in Equation (1) under different experimental conditions. To do so, we run each application from 1 to 10 workers under an unthrottled input rate and observe the coefficients to which the online estimator converges. Because 𝑅 𝑙 𝑤 , 𝑅 𝑟 𝑤 , and 𝛿 𝑤 differ by orders of magnitude in their typical value, the regression operates on scaled variables; in this scaled space, we initialize 𝛼 , 𝛽 , and 𝛾 to 100, 1000, and 100000, respectively, and update them online from saturated observations via recursive least squares. As shown in Figure 9, each subplot shows the distribution of the parameter estimates in different applications. The coefficients estimated by the online linear regression average around 𝛼 = 38 .5, 𝛽 = 275, and 𝛾 = 51500, while the average execution time of an operator in our experiments is around 400 𝜇 s. These values reveal the relative cost of executing a request versus dispatching its chained requests, i.e., scheduling them locally and routing them to their destination workers. Since all terms in Equation (1) contribute to the same worker load, the coefficients are directly comparable: dispatching a remote chained request ( 𝛽 = 275) costs slightly less than executing a request ( ∼400 𝜇 s on average). A local chained request ( 𝛼 = 38 .5), by comparison, costs only about one-seventh as much as a remote one, reflecting the overhead of crossing worker boundaries. Opening a chained request to one additional remote worker ( 𝛾 = 51500) is roughly as expensive as executing 130 requests, making fan-out the dominant cost when an operator’s chained requests are scattered across many workers. In our environment, the 
+
+> Manuscript submitted to ACM
+
+16 Qi et al. WC SD AA PL NWM ETL 0k 1k 2k 3k 4k 5k Throughput (req/s) CLASP FaaSFlow Zhang24 
+
+> Fig. 10. Comparison of throughput across different applications.
+
+smoothed maximum worker capacity ¯ 𝑊 estimated is around 850000, estimated via Equation (3)-(4), meaning a worker can run around 2000 requests locally per second without any communication cost. 
+
+5.4 Operator Placement 
+
+In this section, we evaluate our operator placement strategy Section (4.3.2) against the placement strategies of FaaSFlow and Zhang24. We run each application with unthrottled input on 10 workers, and compare their throughput for different methods. As shown in Figure 10, our method achieves higher throughput than both baselines across all applications when running on ten workers. FaaSFlow falls behind because it does not account for the cost of chained requests. Although it reduces the number of remote chained requests by co-locating heavily communicating operators on the same worker, it does not quantify the chained-request cost that each operator imposes when placed onto a worker. As a result, this unaccounted cost leaves the workload imbalanced across workers and reduces throughput. This effect is most pronounced in WC, whose first operator emits more than ten chained requests for each request it processes. Since FaaSFlow does not model the cost of chained requests, it packs more instances of this operator onto a worker than the worker can actually sustain. The worker hosting these instances becomes overloaded, and WC suffers the largest throughput drop. Zhang24 performs worse for a different reason: it spreads each operator’s instances across workers to achieve workload balance. As a result, the instances of an operator’s successor are scattered over many workers, so a single worker may have to send data to nearly every other worker, incurring a heavy fan-out cost. 
+
+5.5 Worker Number Prediction 
+
+In this experiment, we evaluate the accuracy of the worker count predicted by our scaling policy in Section (4.3). After getting the maximum throughput for each application using our method on ten workers, we discretize this maximum into ten input-rate levels, 10%, 20%, ..., 100%. For each application, we measure the maximum throughput sustained under each worker count from 1 to 10. For each input-rate level, we then take the smallest worker count whose maximum 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 17 10 20 30 40 50 60 70 80 90 100 Input Rate (%) 0.0 0.1 0.2 0.3 0.4 Avg Absolute Worker Count Error Scale-up Scale-down 
+
+(a) Comparison of absolute worker count error across different target rate. WC SD AA PL NWM ETL Application 0.0 0.1 0.2 0.3 0.4 
+
+(b) Comparison of absolute worker count error across different applications. 10 20 30 40 50 60 70 80 90 Input Rate Gap (%) 0.0 0.1 0.2 0.3 0.4 
+
+(c) Comparison of absolute worker count error across different input rate gap. Fig. 11. CLASP worker-count prediction error. 0246810 Avg Worker Count 
+
+# OOWC CLASP 10 20 30 40 50 60 70 80 90 100 Input Rate (%) 0.1 
+
+# 0.0 0.1 Count Gap 
+
+Fig. 12. Comparison of worker counts chosen by CLASP versus the observed optimal worker count (OOWC), where the count gap is defined as CLASP - OOWC. 
+
+throughput meets or exceeds that level as the observed optimal worker count (OOWC). We then evaluate every pairwise transition among the ten levels: starting from each source rate, we switch to each of the other nine levels as the target rate, and compare the predicted worker count against the observed optimal worker count at the target rate. 
+
+Manuscript submitted to ACM 18 Qi et al. 10 20 30 40 50 60 70 80 90 100 Input Rate (%) 0246810 Avg Worker Count 
+
+CLASP FaaSFlow Zhang24 
+
+> Fig. 13. Comparison of predicted worker counts under different input rates.
+
+Figure 12 shows the average number of workers scaled under different target input rates, averaged over different applications and source rate. As shown, our method closely tracks the observed optimal worker count with only minor deviation across all target input rates. Figure 11a shows the absolute worker count error under different target rates; in most cases, the scaling worker error is less than 0.2. These two figures show, on average, our method follows the same pattern as the observed optimal worker count, only fluctuating slightly around it. Figure 11b reports the absolute worker count error relative to the observed optimal worker count, for different applications. Across all applications, the absolute worker count error stays below 0.25 workers, indicating that our method performs reliably. Figure 11c reports the absolute worker count error relative to the observed optimal under different input-rate gaps, averaged over different applications and source/target rates. Here the gap is the difference between the source and target rates; since the rates span 10% to 100%, the largest gap is 90%. Our method shows consistently similar error across all gaps, staying below 0.3 workers throughout. This indicates that its accuracy remains stable even under large, abrupt changes in the input rate. Our method scales more accurately when scaling down than when scaling up, though the difference is small. 
+
+5.6 End-to-End Performance 
+
+In this experiment, we examine how the accuracy of the predicted worker count and the operator placement affect application performance. We run each application in two modes, Burst and Gradual. In Burst mode, the input rate jumps randomly between a low range (10%–30%) and a high range (70%–100%), with each stage lasting 5 to 10 seconds. In Gradual mode, the input rate first rises step by step from 10% to 100% in increments of 10%, then falls back from 100% to 10% in decrements of 10%, with each stage lasting 5 to 10 seconds. Although the input rates and stage durations are random, we fix the random seed so that all baselines see the same input-rate pattern. We also ensure that the total input volume over the experiment period is the same for both Burst and Gradual modes. 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 19 WC SD AA PL NWM ETL 0k 0.5k 1k 1.5k 2k 2.5k Throughput (req/s) Burst CLASP FaaSFlow FaaSFlow-SP Zhang24 Zhang24-SP WC SD AA PL NWM ETL Gradual WC SD AA PL NWM ETL 0k 2k 4k 6k 8k Median and P95 Latency (ms) 
+
+> P95 Median
+
+WC SD AA PL NWM ETL 
+
+> Fig. 14. Latency and Throughput Performance across different applications
+
+We compare our approach against four baselines. The first two are FaaSFlow [21] and Zhang24 [41]. However, as discussed in Section (5.4), even with the same number of workers, these baselines differ in throughput because of differences in operator placement. To isolate this factor, we add two more baselines, FaaSFlow-SP and Zhang24-SP: each uses its original scaling method to decide the number of workers, but then adopts the same operator placement as CLASP. This lets us ablate the effect of operator placement. We also run the same worker-count prediction experiment from Section (5.5) on FaaSFlow and Zhang24 to examine how each predicts the worker count under different input rates. As shown in Figure 13, the three methods exhibit clearly different scaling trends. Zhang24 tends to over-provision: it attempts to use all available workers even when processing only 50% of the maximum rate, and its predicted worker count stops growing beyond 60% because it has already reached the maximum number of workers. FaaSFlow’s prediction curve is more linear, because it decides the worker count based solely on the number of processed requests, without accounting for the chained-request cost. Compared with our method, it uses more workers at low input rates but fewer at high input rates. A key characteristic of FaaSFlow is that its worker-count prediction depends heavily on the source rate: for the same target rate, different source rates can lead to very different predictions. This is because FaaSFlow estimates the required worker count by linearly extrapolating from the currently observed throughput. However, even if FaaSFlow 
+
+> Manuscript submitted to ACM
+
+20 Qi et al. under-provisions in one scaling round, it monitors the current metrics and adjusts the worker count in the next round, so it does not stay under-provisioned for the same target rate. As a simplified example, consider an application running on a single worker with a throughput of 100. If the input rate rises to 500, FaaSFlow predicts that 5 workers are needed. After scaling to 5 workers, it observes a throughput of only 250, and therefore revises its prediction to 10 workers for the same target rate. Its prediction is thus poor when the source rate is far from the target rate, and improves as the source rate moves closer to it. Note that the curve for FaaSFlow in Figure 13 averages over both scaling directions, which hides a systematic bias: when scaling up, FaaSFlow consistently uses fewer workers than OOWC, and when scaling down, it consistently uses more. Neither CLASP nor Zhang24 shows this asymmetry between scaling up and scaling down. As shown in Figure 14, in both burst and gradual mode, our method consistently achieves higher throughput and lower latency than FaaSFlow and Zhang24. Our method achieves up to 2 .5× the throughput of FaaSFlow and 3 .3×
+
+that of Zhang24, and reduces median latency by up to 75% relative to FaaSFlow and 76% relative to Zhang24. This improvement comes from both the scaling method and the operator placement. We also compare against FaaSFlow-SP and Zhang24-SP, which share the same placement as CLASP but retain their original scaling methods. Compared with FaaSFlow-SP, our method still consistently achieves better performance, because FaaSFlow-SP tends to under-provision resources at high input rates, which lowers throughput and increases latency. Moreover, FaaSFlow-SP’s throughput is lower in burst mode than in gradual mode, because its prediction accuracy degrades when the source rate is far from the target rate. CLASP does not suffer from this, which shows that our method is robust in both burst and gradual modes. Compared with Zhang24-SP, our method achieves similar throughput across benchmarks, and the error bars are small and comparable for both, because both always provision enough resources to match the input rate and process all incoming requests. However, our method sustains this throughput with fewer workers. Both latencies are computed over all requests in a run. The input rate varies across levels during a run, so the pooled distribution mixes requests from every level. Latency is highest at the top input rate. The p95 is therefore dominated by requests issued at that level. There, both methods use all ten workers under the same placement, so their p95 latencies are close. The median behaves differently. It also reflects the lower and intermediate rates. At those rates, Zhang24-SP over-provisions, and the extra workers add inter-worker communication cost. 
+
+6 Conclusions and Future Work 
+
+We proposed CLASP, an elastic scaling and scheduling framework tailored for stream processing applications in stateful serverless environments. CLASP builds a worker capacity model that jointly captures execution cost and chained-request costs, and uses this model to schedule operators onto workers so as to minimize the number of workers used while sustaining the input rate. In addition, CLASP provides a migration strategy that migrates operator state and pending requests according to the new placement, minimizing the processing pause caused by rescheduling. Experimental results show that CLASP improves throughput and reduces end-to-end latency compared with state-of-the-art scaling strategies under both burst and gradual input-rate changes. In future work, we plan to extend CLASP to heterogeneous clusters and to explore SLO-aware scaling objectives beyond minimizing the number of workers. 
+
+Software Availability: The CLASP implementation will be released as open source after the paper is accepted. 
+
+> Manuscript submitted to ACM
+
+Scaling and Placement for Serverless Streaming 21 
+
+References 
+
+[1] Mainak Adhikari, Tarachand Amgoth, and Satish Narayana Srirama. 2019. A Survey on Scheduling Strategies for Workflows in Cloud Environment and Emerging Trends. ACM Comput. Surv. 52, 4, Article 68 (Aug. 2019), 36 pages. doi:10.1145/3325097 [2] Lixiang Ao, Liz Izhikevich, Geoffrey M. Voelker, and George Porter. 2018. Sprocket: A Serverless Video Processing Framework. In Proceedings of the ACM Symposium on Cloud Computing (Carlsbad, CA, USA) (SoCC ’18) . ACM, New York, NY, USA, 263–274. doi:10.1145/3267809.3267815 [3] Anne Benoit, Alexandru Dobrila, Jean-Marc Nicod, and Laurent Philippe. 2013. Scheduling linear chain streaming applications on heterogeneous systems with failures. Future Generation Computer Systems 29, 5 (2013), 1140–1151. [4] Vivek M. Bhasi, Jashwant Raj Gunasekaran, Prashanth Thinakaran, Cyan Subhra Mishra, Mahmut Taylan Kandemir, and Chita Das. 2021. Kraken: Adaptive Container Provisioning for Deploying Dynamic DAGs in Serverless Platforms. In Proceedings of the ACM Symposium on Cloud Computing 
+
+(Seattle, WA, USA) (SoCC ’21) . ACM, New York, NY, USA, 153–167. doi:10.1145/3472883.3486992 [5] Maycon Viana Bordin, Dalvan Griebler, Gabriele Mencagli, Cláudio F. R. Geyer, and Luiz Gustavo L. Fernandes. 2020. DSPBench: A Suite of Benchmark Applications for Distributed Data Stream Processing Systems. IEEE Access 8 (2020), 222900–222917. doi:10.1109/ACCESS.2020.3043948 [6] Paris Carbone, Stephan Ewen, Gyula Fóra, Seif Haridi, Stefan Richter, and Kostas Tzoumas. 2017. State management in Apache Flink®: consistent stateful distributed stream processing. Proc. VLDB Endow. 10, 12 (Aug. 2017), 1718–1729. doi:10.14778/3137765.3137777 [7] Valeria Cardellini, Francesco Lo Presti, Matteo Nardelli, and Gabriele Russo Russo. 2022. Runtime Adaptation of Data Stream Processing Systems: The State of the Art. ACM Comput. Surv. 54, 11s, Article 237 (Sept. 2022), 36 pages. doi:10.1145/3514496 [8] Benjamin Carver, Jingyuan Zhang, Ao Wang, Ali Anwar, Panruo Wu, and Yue Cheng. 2020. Wukong: a scalable and locality-enhanced framework for serverless parallel computing. In Proceedings of the 11th ACM Symposium on Cloud Computing (Virtual Event, USA) (SoCC ’20) . ACM, New York, NY, USA, 1–15. doi:10.1145/3419111.3421286 [9] Xin Chen, Manoj Prabhakar Paidiparthy, Dilma Da Silva, and Liting Hu. 2025. Ekko: Fully Decentralized Scheduling for Serverless Edge Computing. In 2025 IEEE International Parallel and Distributed Processing Symposium (IPDPS) (Milano, Italy). IEEE, Piscataway, NJ, USA, 15–27. doi:10.1109/ IPDPS64566.2025.00011 [10] Sanket Chintapalli, Derek Dagit, Bobby Evans, Reza Farivar, Thomas Graves, Mark Holderbaugh, Zhuo Liu, Kyle Nusbaum, Kishorkumar Patil, Boyang Jerry Peng, and Paul Poulosky. 2016. Benchmarking streaming computation engines: Storm, flink and spark streaming. In 2016 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW) (Chicago, IL, USA). IEEE, Piscataway, NJ, USA, 1789–1792. doi:10.1109/IPDPSW.2016.138 [11] Claudio Cicconetti, Marco Conti, and Andrea Passarella. 2021. A Decentralized Framework for Serverless Edge Computing in the Internet of Things. 
+
+IEEE Transactions on Network and Service Management 18, 2 (2021), 2166–2180. doi:10.1109/TNSM.2020.3023305 [12] Jonatan Enes, Roberto R Expósito, and Juan Touriño. 2020. Real-time resource scaling platform for big data workloads on serverless environments. 
+
+Future Generation Computer Systems 105 (2020), 361–379. [13] Buğra Gedik, Scott Schneider, Martin Hirzel, and Kun-Lung Wu. 2014. Elastic Scaling for Data Stream Processing. IEEE Transactions on Parallel and Distributed Systems 25, 6 (2014), 1447–1463. doi:10.1109/TPDS.2013.295 [14] Mohsen Ghorbian, Mostafa Ghobaei-Arani, and Leila Esmaeili. 2024. A survey on the scheduling mechanisms in serverless computing: a taxonomy, challenges, and trends. Cluster Computing 27, 5 (Feb. 2024), 5571–5610. doi:10.1007/s10586-023-04264-8 [15] Jashwant Raj Gunasekaran, Prashanth Thinakaran, Nachiappan C. Nachiappan, Mahmut Taylan Kandemir, and Chita R. Das. 2020. Fifer: Tackling Resource Underutilization in the Serverless Era. In Proceedings of the 21st International Middleware Conference (Delft, Netherlands) (Middleware ’20) .ACM, New York, NY, USA, 280–295. doi:10.1145/3423211.3425683 [16] Adam Hall and Umakishore Ramachandran. 2019. An execution model for serverless functions at the edge. In Proceedings of the International Conference on Internet of Things Design and Implementation (Montreal, Quebec, Canada) (IoTDI ’19) . ACM, New York, NY, USA, 225–236. doi:10.1145/ 3302505.3310084 [17] Martin Hirzel, Robert Soulé, Scott Schneider, Buğra Gedik, and Robert Grimm. 2014. A catalog of stream processing optimizations. ACM Computing Surveys (CSUR) 46, 4 (2014), 1–34. [18] Zhuo Huang, Yijie Liu, Yucheng Xu, Hao Fan, Kun Wang, Hanxiang Huang, and Song Wu. 2026. HyDuo: A Low-Latency and Cost-Efficient Storage System for Stateful Serverless Applications. IEEE Transactions on Services Computing 19, 4 (2026), 2815–2828. doi:10.1109/TSC.2026.3704762 [19] Chao Jin, Zili Zhang, Xingyu Xiang, Songyun Zou, Gang Huang, Xuanzhe Liu, and Xin Jin. 2023. Ditto: Efficient Serverless Analytics with Elastic Parallelism. In Proceedings of the ACM SIGCOMM 2023 Conference (New York, NY, USA) (ACM SIGCOMM ’23) . ACM, New York, NY, USA, 406–419. doi:10.1145/3603269.3604816 [20] Yiming Li, Laiping Zhao, Zhiyuan Su, Guowei Liu, Wenhao Huang, Kang Chen, Zhaolin Duan, Jingjie Zong, Wenxin Li, Deze Zeng, et al. 2026. iRoute: Local Routing Table-based Workflow Management in Serverless Computing. In Proceedings of the 21st European Conference on Computer Systems (Edinburgh, Scotland, UK) (EuroSys ’26) . ACM, New York, NY, USA, 144–159. [21] Zijun Li, Yushi Liu, Linsong Guo, Quan Chen, Jiagan Cheng, Wenli Zheng, and Minyi Guo. 2022. FaaSFlow: enable efficient workflow execution for function-as-a-service. In Proceedings of the 27th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (Lausanne, Switzerland) (ASPLOS ’22) . ACM, New York, NY, USA, 782–796. doi:10.1145/3503222.3507717 [22] Djob Mvondo, Mathieu Bacou, Kevin Nguetchouang, Lucien Ngale, Stéphane Pouget, Josiane Kouam, Renaud Lachaize, Jinho Hwang, Tim Wood, Daniel Hagimont, Noël De Palma, Bernabé Batchakui, and Alain Tchana. 2021. OFC: an opportunistic caching system for FaaS platforms. In Manuscript submitted to ACM 22 Qi et al. 
+
+Proceedings of the Sixteenth European Conference on Computer Systems (Online Event, United Kingdom) (EuroSys ’21) . ACM, New York, NY, USA, 228–244. doi:10.1145/3447786.3456239 [23] Matteo Nardelli and Gabriele Russo Russo. 2024. Function Offloading and Data Migration for Stateful Serverless Edge Computing. In Proceedings of the 15th ACM/SPEC International Conference on Performance Engineering (London, United Kingdom) (ICPE ’24) . ACM, New York, NY, USA, 247–257. doi:10.1145/3629526.3649293 [24] Stefan Nastic, Thomas Rausch, Ognjen Scekic, Schahram Dustdar, Marjan Gusev, Bojana Koteska, Magdalena Kostoska, Boro Jakimovski, Sasko Ristov, and Radu Prodan. 2017. A Serverless Real-Time Data Analytics Platform for Edge Computing. IEEE Internet Computing 21, 4 (2017), 64–71. doi:10.1109/MIC.2017.2911430 [25] Anna Maria Nestorov, Diego Marrón, Alberto Gutierrez-Torre, Chen Wang, Claudia Misale, Alaa Youssef, David Carrera, and Josep Lluís Berral. 2024. Dexter: A performance-cost efficient resource allocation manager for serverless data analytics. In Proceedings of the 25th International Middleware Conference (Hong Kong, China) (Middleware ’24) . ACM, New York, NY, USA, 117–130. [26] Shixiong Qi, Leslie Monis, Ziteng Zeng, Ian-Chin Wang, and K. K. Ramakrishnan. 2024. SPRIGHT: High-Performance eBPF-Based Event-Driven, Shared-Memory Processing for Serverless Computing. IEEE/ACM Transactions on Networking 32, 3 (2024), 2539–2554. doi:10.1109/TNET.2024.3366561 [27] Francisco Romero, Gohar Irfan Chaudhry, Íñigo Goiri, Pragna Gopa, Paul Batum, Neeraja J. Yadwadkar, Rodrigo Fonseca, Christos Kozyrakis, and Ricardo Bianchini. 2021. Faa$T: A Transparent Auto-Scaling Cache for Serverless Applications. In Proceedings of the ACM Symposium on Cloud Computing (Seattle, WA, USA) (SoCC ’21) . ACM, New York, NY, USA, 122–137. doi:10.1145/3472883.3486974 [28] Yannis Sfakianakis, Manolis Marazakis, Christos Kozanitis, and Angelos Bilas. 2022. LatEst: Vertical elasticity for millisecond serverless execution. In 2022 22nd IEEE International Symposium on Cluster, Cloud and Internet Computing (CCGrid) (Taormina, Italy). IEEE, Piscataway, NJ, USA, 879–885. doi:10.1109/CCGrid54584.2022.00105 [29] Simon Shillaker and Peter Pietzuch. 2020. Faasm: Lightweight isolation for efficient stateful serverless computing. In 2020 USENIX Annual Technical Conference (USENIX ATC 20) . USENIX Association, Berkeley, CA, USA, 419–433. https://www.usenix.org/conference/atc20/presentation/shillaker [30] Anshu Shukla, Shilpa Chaturvedi, and Yogesh Simmhan. 2017. Riotbench: An iot benchmark for distributed stream processing systems. Concurrency and Computation: Practice and Experience 29, 21 (2017), e4257. [31] Won Wook Song, Taegeon Um, Sameh Elnikety, Myeongjae Jeon, and Byung-Gon Chun. 2023. Sponge: Fast Reactive Scaling for Stream Processing with Serverless Frameworks. In 2023 USENIX Annual Technical Conference (USENIX ATC 23) (Boston, MA, USA). USENIX Association, Berkeley, CA, USA, 301–314. https://www.usenix.org/conference/atc23/presentation/song [32] Keming Wang, Liaoliao Feng, Ligang He, Chenlin Huang, Fengyuan Yu, and Tao Xie. 2025. Octopus: decentralized workflow-granular scheduling for serverless workflow. In Proceedings of 45th IEEE International Conference on Distributed Computing Systems (IEEE ICDCS 2025) (Glasgow, United Kingdom). IEEE, Piscataway, NJ, USA, 637–647. [33] Pengwei Wang, Yi Li, Chao Fang, Yichen Zhong, and Zhijun Ding. 2025. Optimizing Serverless Performance Through Game Theory and Efficient Resource Scheduling. IEEE Trans. Comput. 74, 6 (2025), 1990–2002. doi:10.1109/TC.2025.3547158 [34] Yanyan Wen, Guangping Xu, Jianshe Wang, and Wei Hao. 2024. Low-Latency State Management for Real-Time Tasks in Edge Serverless. In 2024 IEEE International Symposium on Parallel and Distributed Processing with Applications (ISPA) (Kaifeng, China). IEEE, Piscataway, NJ, USA, 10–17. doi:10.1109/ISPA63168.2024.00010 [35] Zhaojie Wen, Qiong Chen, Yipei Niu, Zhen Song, Quanfeng Deng, and Fangming Liu. 2024. Joint Optimization of Parallelism and Resource Configuration for Serverless Function Steps. IEEE Transactions on Parallel and Distributed Systems 35, 4 (2024), 560–576. doi:10.1109/TPDS.2024.3365134 [36] Le Xu, Boyang Peng, and Indranil Gupta. 2016. Stela: Enabling Stream Processing Systems to Scale-in and Scale-out On-demand. In 2016 IEEE International Conference on Cloud Engineering (IC2E) (Berlin, Germany). IEEE, Piscataway, NJ, USA, 22–31. doi:10.1109/IC2E.2016.38 [37] Zichuan Xu, Lizhen Zhou, Weifa Liang, Qiufen Xia, Wenzheng Xu, Wenhao Ren, Haozhe Ren, and Pan Zhou. 2023. Stateful Serverless Application Placement in MEC With Function and State Dependencies. IEEE Trans. Comput. 72, 9 (2023), 2701–2716. doi:10.1109/TC.2023.3262947 [38] Xuyi Yao, Ningjiang Chen, Xuemei Yuan, and Pingjie Ou. 2023. Performance optimization of serverless edge computing function offloading based on deep reinforcement learning. Future Generation Computer Systems 139 (2023), 74–86. [39] Minchen Yu, Tingjia Cao, Wei Wang, and Ruichuan Chen. 2025. Pheromone: Restructuring Serverless Computing With Data-Centric Function Orchestration. IEEE Transactions on Networking 33, 1 (2025), 226–240. doi:10.1109/TNET.2024.3480031 [40] Xiaofei Yue, Song Yang, Liehuang Zhu, Stojan Trajanovski, Fan Li, and Xiaoming Fu. 2025. Exploiting Wide-Area Resource Elasticity With Fine-Grained Orchestration for Serverless Analytics. IEEE Transactions on Networking 33, 1 (2025), 398–413. doi:10.1109/TNET.2024.3486788 [41] Xiaozheng Zhang, Xu Wang, Jing Shang, Zhiwen Xiao, and Rong Gu. 2024. Efficient Serverless Stream Processing based on High-level Programming and Parallelism AutoTunig. In 2024 IEEE International Conference on High Performance Computing and Communications (HPCC) (Wuhan, China). IEEE, Piscataway, NJ, USA, 474–481. doi:10.1109/HPCC64274.2024.00070 [42] Yuqiu Zhang and Hans-Arno Jacobsen. 2025. Decentralized and Policy-Aware Serverless Orchestration for the Federated Web. In Companion Proceedings of the ACM on Web Conference 2025 (Sydney NSW, Australia) (WWW ’25) . ACM, New York, NY, USA, 1539–1543. doi:10.1145/3701716. 3715573 [43] Zili Zhang, Chao Jin, and Xin Jin. 2024. Jolteon: Unleashing the Promise of Serverless for Serverless Workflows. In 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24) (Santa Clara, CA, USA). USENIX Association, Berkeley, CA, USA, 167–183. https: //www.usenix.org/conference/nsdi24/presentation/zhang-zili-jolteon Manuscript submitted to ACM
