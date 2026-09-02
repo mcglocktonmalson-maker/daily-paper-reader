@@ -1,0 +1,186 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-02T19:53:18.123353+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2609.00877v1",
+      "source": "arxiv",
+      "title": "Prediction-Robust Service Deployment with Capacity-Aware Edge Admission",
+      "abstract": "Edge platforms instantiate executable services close to users to reduce request-serving cost, but each instance incurs a one-time deployment cost and remains useful only for a finite time-to-live (TTL). The resulting online decision is both prediction-sensitive and capacity-coupled: an optimistic forecast can waste deployment cost, whereas a delayed decision misses the burst it is intended to serve. We study this problem under a common TTL cost model and propose CAPSUM, a capacity-aware admission policy with an elastic specialization, CAPSUM-E. In the local elastic setting, every node-service trace is exactly a variable-price Bahncard instance. This reduction lets CAPSUM-E inherit PFSUM's tight prediction-error-dependent ratio, including $2/(1+β)$ consistency and $1/β$ robustness for $β>0$. A redirect-aware variant preserves the same local deployment schedule. For finite-capacity nodes, CAPSUM combines size-scaled break-even tests, a utilization-dependent shadow price, and evidence-density eviction; we prove capacity feasibility, scale invariance, and exact agreement with CAPSUM-E under an elastic configuration. We implement an exact local offline dynamic program and compare against direct common-model baselines and documented source-derived adapters for EDP-A, OREO, and uEDC-L. Experiments cover controlled prediction error, three synthetic demand regimes, a causal predictor on a public Globus Compute trace, and joint scaling to 1,024 nodes and 10,000 services. Under the common model, CAPSUM reduces normalized cost by 33.7-42.9% relative to the best source-derived adapter across the synthetic regimes and by 45.5% on the sampled trace.",
+      "authors": [
+        "Hailiang Zhao",
+        "Ziqi Wang",
+        "Yifei Zhang",
+        "Mingyi Liu",
+        "Xinkui Zhao",
+        "Kingsum Chow",
+        "Shuiguang Deng"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-09-01T08:09:53+00:00",
+      "link": "https://arxiv.org/pdf/2609.00877v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "capacity-aware online admission for deploying edge services with TTL under prediction uncertainty and resource limits",
+      "llm_evidence_cn": "面向有限资源与预测不确定性的边缘服务TTL部署的容量感知在线准入",
+      "llm_evidence": "面向有限资源与预测不确定性的边缘服务TTL部署的容量感知在线准入",
+      "canonical_evidence": "面向有限资源与预测不确定性的边缘服务TTL部署的容量感知在线准入",
+      "llm_tldr_en": "CAPSUM proposes capacity-aware admission policies for edge service deployment with TTL, coupling prediction robustness with capacity constraints and achieving tight prediction-error-dependent competitive ratios.",
+      "llm_tldr_cn": "边缘平台在靠近用户处实例化服务时面临两层难题：每个实例有一次部署成本和有限TTL，而在线决策既依赖预测又受容量限制。乐观预测浪费部署开销，过于保守又会错过要服务的突发流量。本文针对TTL成本模型提出CAPSUM及其弹性扩展CAPSUM-E，在局部弹性场景下将每个节点-服务迹转化为可变价格Bahncard实例，从而继承PFSUM的紧预测误差竞争比2/(1+β)。结果显示该策略能在容量约束下稳健处理预测不准确问题。该成果为边缘服务与资源编排提供了有理论保证的准入控制方法。",
+      "llm_tldr": "边缘平台在靠近用户处实例化服务时面临两层难题：每个实例有一次部署成本和有限TTL，而在线决策既依赖预测又受容量限制。乐观预测浪费部署开销，过于保守又会错过要服务的突发流量。本文针对TTL成本模型提出CAPSUM及其弹性扩展CAPSUM-E，在局部弹性场景下将每个节点-服务迹转化为可变价格Bahncard实例，从而继承PFSUM的紧预测误差竞争比2/(1+β)。结果显示该策略能在容量约束下稳健处理预测不准确问题。该成果为边缘服务与资源编排提供了有理论保证的准入控制方法。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2609.01082v1",
+      "source": "arxiv",
+      "title": "Update for Decisions, Not Freshness: Goal-Oriented Status Updating and Selective Offloading at the Network Edge",
+      "abstract": "In an edge--cloud collaborative edge-computing environment, an edge node (EN) must decide whether each user task should be executed locally, forwarded to a remote service (or cloud) node (SN), or rejected. The EN observes its local state directly but receives the SN state only through an intermittently refreshed cache. Status updating and task control therefore form an asynchronous closed loop under partial observability. Freshness-driven schemes, including those based on Age of Information (AoI), do not directly value an update by its effect on subsequent task decisions. We propose CoSMO (Co-design of Semantic-state Management and Offloading), a cooperative event-driven reinforcement learning (RL) framework that coordinates semantic status management and selective offloading through realized task utility. CoSMO learns a compact representation of the heterogeneous SN service state. At the SN, a recurrent semi-Markov double deep Q-network (Double DQN) agent jointly selects send/no-send and the next decision interval. At the EN, a task-terminal off-policy value-learning agent makes hierarchical gate--route decisions from local observations and stale remote semantics. The agents maintain separate observations and value targets but share the same realized task-utility stream, without centralized execution. Across the evaluated workload families, CoSMO's reported relative improvement in on-time completion rate over the best-performing competing method averages 18.6%--21.2%. For capacity-aware decision accuracy across the three strict-overload points, the corresponding reported gains average 17.6%--$17.9%.",
+      "authors": [
+        "Jianpeng Qi",
+        "Qiyang Zhang",
+        "Chao Liu",
+        "Jing Sun",
+        "Yimei Liu",
+        "Yanwei Yu",
+        "Yingjie Wang",
+        "Wei Ni"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.MA",
+        "cs.NI"
+      ],
+      "published": "2026-09-01T11:13:50+00:00",
+      "link": "https://arxiv.org/pdf/2609.01082v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "edge node assigns user tasks to local or remote cloud execution under partial observability",
+      "llm_evidence_cn": "边缘节点在部分可观测条件下为用户任务分配本地或云端资源",
+      "llm_evidence": "边缘节点在部分可观测条件下为用户任务分配本地或云端资源",
+      "canonical_evidence": "边缘节点在部分可观测条件下为用户任务分配本地或云端资源",
+      "llm_tldr_en": "Proposes CoSMO, a cooperative event-driven reinforcement learning framework for edge nodes to jointly optimize task offloading decisions and state-cache updates under partial observability. It evaluates status updates by their effect on subsequent decisions rather than freshness, improving use of limited edge resources.",
+      "llm_tldr_cn": "边缘-云协作环境中，状态更新和任务控制彼此耦合，而按信息新鲜度AoI驱动更新的方案并不直接优化后续任务决策。本文提出CoSMO，将边缘节点的本地执行、云端转发或拒绝选择与云端状态缓存更新联合建模，并采用合作式事件驱动强化学习求解部分可观测背景下的异步闭环问题。该框架以更新对任务决策的影响来衡量更新价值，能够更高效地利用有限的边缘计算与通信资源。",
+      "llm_tldr": "边缘-云协作环境中，状态更新和任务控制彼此耦合，而按信息新鲜度AoI驱动更新的方案并不直接优化后续任务决策。本文提出CoSMO，将边缘节点的本地执行、云端转发或拒绝选择与云端状态缓存更新联合建模，并采用合作式事件驱动强化学习求解部分可观测背景下的异步闭环问题。该框架以更新对任务决策的影响来衡量更新价值，能够更高效地利用有限的边缘计算与通信资源。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2609.00442v1",
+      "source": "arxiv",
+      "title": "DRLM: Deep Reinforcement Learning-Based LLM Query Orchestration in Edge Environments",
+      "abstract": "Large language model (LLM) services increasingly process heterogeneous queries with diverse latency, accuracy, and resource requirements. While edge deployment reduces response time, the heterogeneity of devices and the diversity of model families, parameter scales, and quantization levels make efficient LLM query orchestration challenging. This paper introduces DRLM, a Deep Reinforcement Learning-based LLM query orchestration framework in edge environments. DRLM integrates two lightweight predictors: (i) a class-conditioned quality estimator that maps queries to semantic categories and infers model performance, and (ii) a feature-driven latency predictor that estimates inference time across model-device configurations. These predictions, combined with system state, feed a factorized Proximal Policy Optimization (PPO) agent that performs state-aware orchestration decisions. To enable data-driven orchestration, we construct a large-scale benchmarking dataset with 223 835 measurements spanning 1258 queries, 6 query classes, 8 model families (32 deployed instances), 5 quantization levels, and heterogeneous edge devices. Evaluation on a 64-node edge cluster and comparison with three baselines and two state-of-the-art methods show that DRLM reduces inference latency by up to 51% and queuing delay by up to 67 %, while incurring at most 8% accuracy loss. It improves latency under increasing workloads up to 61.4%, demonstrating robust and stable orchestration.",
+      "authors": [
+        "Reza Farahani",
+        "Zoha Azimi Ourimi",
+        "Mario Colosi",
+        "Lauri Loven",
+        "Christian Timmerer",
+        "Schahram Dustdar"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-08-31T22:26:56+00:00",
+      "link": "https://arxiv.org/pdf/2609.00442v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Deep RL based LLM query orchestration in edge environments; assigns heterogeneous query requests to model-device configurations under edge resource, latency, and accuracy constraints",
+      "llm_evidence_cn": "边缘环境中基于深度强化学习的查询编排，在异构设备和资源受限条件下将请求分配至服务模型与设备配置",
+      "llm_evidence": "边缘环境中基于深度强化学习的查询编排，在异构设备和资源受限条件下将请求分配至服务模型与设备配置",
+      "canonical_evidence": "边缘环境中基于深度强化学习的查询编排，在异构设备和资源受限条件下将请求分配至服务模型与设备配置",
+      "llm_tldr_en": "Solves LLM query orchestration in edge environments by integrating lightweight quality and latency predictors into deep reinforcement learning, assigning requests to model-device configurations to balance accuracy, latency, and limited edge resources.",
+      "llm_tldr_cn": "边缘环境中的LLM服务需应对异构查询、设备多样性和资源约束，高效率地进行查询编排。论文提出DRLM，将类别条件质量估计器和特征驱动时延预测器与深度强化学习结合，统一决定请求被分配到何种模型和何种设备配置。该方法利用两类轻量预测器捕捉模型性能和推断时延，在资源受限的边缘节点上实现精度、时延与资源效率的权衡。它为边缘智能服务的资源编排提供了一种通用的深度强化学习框架。",
+      "llm_tldr": "边缘环境中的LLM服务需应对异构查询、设备多样性和资源约束，高效率地进行查询编排。论文提出DRLM，将类别条件质量估计器和特征驱动时延预测器与深度强化学习结合，统一决定请求被分配到何种模型和何种设备配置。该方法利用两类轻量预测器捕捉模型性能和推断时延，在资源受限的边缘节点上实现精度、时延与资源效率的权衡。它为边缘智能服务的资源编排提供了一种通用的深度强化学习框架。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.01457v1",
+      "source": "arxiv",
+      "title": "Just Talk Once: Communication-Efficient Split Federated LLM Fine-Tuning on Edge Devices",
+      "abstract": "Large language model (LLM) fine-tuning is increasingly shifting toward data generated on edge devices, where memory, computation, bandwidth, and connectivity constraints make conventional federated learning difficult to sustain. Split federated fine-tuning (SFT) improves client-side efficiency by offloading most model parameters and computation to the server but requires step-by-step bidirectional communication loop across the split interface and forces continuous client involvement throughout training. In this paper, we present L-shaped SFT, a split fine-tuning framework that removes this bidirectional bottleneck. Our key insight is that weight tying in modern LLMs enables server-side hidden activations to be directly supervised using target embeddings, allowing the training loss to be computed on the server without returning server outputs to the client. To further eliminate the need for continuous client participation, based on L-shaped SFT, we introduce one-shot SFT, in which clients upload activations once and then go offline while the server continues optimization over cached representations. We implement our design in a real system testbed with heterogeneous edge clients, including commercial smartphones and NVIDIA developer boards. Experiments demonstrate that our schemes significantly reduce communication costs and client online time compared with existing SFT baselines.",
+      "authors": [
+        "Jiaxiang Geng",
+        "Xianhao Chen",
+        "Bing Luo"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-09-01T16:00:29+00:00",
+      "link": "https://arxiv.org/pdf/2609.01457v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "split federated LLM fine-tuning on edge devices; edge-side computation with communication constraints",
+      "llm_evidence_cn": "面向边缘设备的分裂式联邦大模型微调，涉及边缘侧计算与通信约束",
+      "llm_evidence": "面向边缘设备的分裂式联邦大模型微调，涉及边缘侧计算与通信约束",
+      "canonical_evidence": "面向边缘设备的分裂式联邦大模型微调，涉及边缘侧计算与通信约束",
+      "llm_tldr_en": "Existing split federated fine-tuning on edge devices suffers bidirectional communication bottleneck and continuous client involvement. L-shaped SFT exploits weight tying in modern LLMs so server-side hidden activations can be directly supervised, removing the step-by-step loop and substantially reducing communication overhead.",
+      "llm_tldr_cn": "现有分裂式联邦微调虽降低边缘客户端负载，但每步训练都要求客户端与服务端双向通信，且客户端须持续参与，难以适应带宽和连接受限环境。本文提出L型分裂微调框架，利用现代大语言模型的权重共享使服务端隐藏激活可直接被监督，从而消除逐步骤双向通信瓶颈。结果表明该方法能有效降低通信开销并减轻客户端持续参与负担，让边缘设备上的大模型高效微调更可行。",
+      "llm_tldr": "现有分裂式联邦微调虽降低边缘客户端负载，但每步训练都要求客户端与服务端双向通信，且客户端须持续参与，难以适应带宽和连接受限环境。本文提出L型分裂微调框架，利用现代大语言模型的权重共享使服务端隐藏激活可直接被监督，从而消除逐步骤双向通信瓶颈。结果表明该方法能有效降低通信开销并减轻客户端持续参与负担，让边缘设备上的大模型高效微调更可行。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

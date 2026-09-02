@@ -1,0 +1,805 @@
+Title: Prediction-Robust Service Deployment with Capacity-Aware Edge Admission
+
+URL Source: https://arxiv.org/pdf/2609.00877v1
+
+Published Time: Wed, 02 Sep 2026 00:56:50 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> 1
+
+# Prediction-Robust Service Deployment with Capacity-Aware Edge Admission 
+
+Hailiang Zhao, Ziqi Wang, Yifei Zhang, Mingyi Liu, Xinkui Zhao, Kingsum Chow, and Shuiguang Deng 
+
+Abstract —Edge platforms instantiate executable services close to users to reduce request-serving cost, but each instance incurs a one-time deployment cost and remains useful only for a finite time-to-live (TTL). The resulting online decision is both prediction-sensitive and capacity-coupled: an optimistic forecast can waste deployment cost, whereas a delayed decision misses the burst it is intended to serve. We study this problem under a common TTL cost model and propose CAPSUM, a capacity-aware admission policy with an elastic specialization, CAPSUM-E. In the local elastic setting, every node-service trace is exactly a variable-price Bahncard instance. This reduction lets CAPSUM-E inherit PFSUM’s tight prediction-error-dependent ratio, including 2/(1 + 
+
+β) consistency and 1/β robustness for β > 0. A redirect-aware variant preserves the same local deployment schedule. For finite-capacity nodes, CAPSUM combines size-scaled break-even tests, a utilization-dependent shadow price, and evidence-density eviction; we prove capacity feasibility, scale invariance, and exact agreement with CAPSUM-E under an elastic configuration. We implement an exact local offline dynamic program and compare against direct common-model baselines and documented source-derived adapters for EDP-A, OREO, and uEDC-L. Experiments cover controlled prediction error, three synthetic demand regimes, a causal predictor on a public Globus Compute trace, and joint scaling to 1,024 nodes and 10,000 services. Under the common model, CAPSUM reduces normalized cost by 33.7–42.9% relative to the best source-derived adapter across the synthetic regimes and by 45.5% on the sampled trace. 
+
+Index Terms —Edge service deployment, edge computing, learning-augmented algorithms, online algorithms, and competi-tive analysis. 
+
+I. I NTRODUCTION 
+
+Edge platforms increasingly host stateless microservices and serverless functions close to users. A nearby instance can avoid a wide-area round trip and reduce the per-request resource cost, whereas a cold instance must first fetch an image, initialize its run-time, and reserve execution state. These effects make edge deploy-ment a rent-or-buy decision: paying an up-front instantiation cost is worthwhile only if the requests served during the instance’s useful lifetime recover that cost. Contemporary systems make this decision amid geographic demand shifts, short-lived hotspots, and heterogeneous service footprints. Consequently, a placement chosen from a global average popularity can be economically wrong at an individual edge node even when the global forecast is accurate. 
+
+H. Zhao, Z. Wang, Y. Zhang, X. Zhao, and K. Chow are with the School of Software Technology, Zhejiang University, Ningbo 315048, China (e-mail: hliangzhao@zju.edu.cn; wangziqi0312@zju.edu.cn; zhangyifei@zju.edu.cn; zhaoxinkui@zju.edu.cn; kingsum.chow@zju.edu.cn). M. Liu is with the Faculty of Computing, Harbin Institute of Technology, Harbin 150001, China (e-mail: lmy@hit.edu.cn). S. Deng is with the College of Computer Science and Technology, Zhejiang University, Hangzhou 310027, China (e-mail: dengsg@zju.edu.cn). 
+
+Figure 1 illustrates the setting. A crowd of AR users may create a local burst at e1, and then move towards e2 before an instance at e1 expires. Sending all requests to the origin avoids an unnecessary deployment but repeatedly incurs the origin-serving cost during the burst. In contrast, deploying whenever a predictor signals demand can pay for an instance after a false alarm or just as the demand leaves the node. Deploying only after observing the burst is also inadequate: the past workload cannot be served retroactively by the newly created instance. The decision must therefore be local in space, forward looking in time, and safe when the forecast is wrong. The literature has made substantial progress on joint service placement, task scheduling, and resource allocation. These for-mulations typically optimize a coupled, capacity-limited system through centralized optimization or learned policies [1], [2], [3]. They address important orchestration objectives but do not iso-late the online decision that precedes, or accompanies, capacity admission: given an inactive service at one edge, should the node create a T -valid instance despite uncertain future demand? Recent prediction-assisted service-caching and offloading poli-cies likewise exploit time-varying demand [4], but prediction accuracy alone provides no worst-case safeguard. An adversari-ally optimistic forecast can induce a deployment whose realized workload is insufficient to amortize its cost. We first isolate an uncapacitated deployment layer. Its deci-sion object is an executable service instance with a prescribed time-to-live (TTL), rather than a cache item whose paid life-time may be terminated by an unrelated admission. This scope captures serverless warm starts, image prefetching, and elastic edge storage while separating prediction robustness from cache admission, CPU scheduling, and dependency-aware placement. The resulting local decision has an exact economic break-even point: only workload arriving after deployment and before expiry can amortize the instantiation cost. Consequently, aggregating past and predicted workloads into one statistic loses the relevant temporal asymmetry. Section V then introduces finite capacity and explicitly permits early eviction without refunding the sunk instantiation cost. Learning-augmented online algorithms are designed precisely for this setting: they can benefit from accurate advice while re-taining an explicit bound under arbitrary advice [5], [6]. PFSUM, developed for the variable-price Bahncard problem, combines recent observations with a short-horizon workload prediction [7]. We show that its two guards have a direct systems interpreta-tion. The historical guard filters a single unsupported optimistic forecast; the future guard tests whether an instance bought now can still generate sufficient savings during its own TTL. Neither guard alone supplies both properties. arXiv:2609.00877v1 [cs.DC] 1 Sep 2026 2                       
+
+> (a) Geographically shifting demand
+> Origin cloud
+> image registry and fallback
+> Edge e1
+> local zone A
+> Edge e2
+> local zone B
+> Edge e3
+> local zone C image distribution / fallback
+> AR AR AR AR localized request streams
+> (b) TTL rent-or-buy evidence
+> t0: isolated t1: burst at e1t2: move to e2
+> e1workload e2workload next-TTL forecast
+> Origin only
+> no C; repeated wForecast only
+> false alarms incur C
+> Dual evidence
+> past and future each cover C
+> Figure 1. Motivating scenario for decentralized TTL-based edge service deployment. Requests are spatially localized and may move between edge zones before an instantiated service expires. Origin-only service forgoes savings during a burst; forecast-only deployment can incur cost Cafter a false alarm or demand migration; and a history-only policy deploys too late to serve a completed burst. The decision is whether an edge should instantiate a service for TTL
+> Tfrom its local stream and a short-horizon forecast while retaining robustness to prediction error.
+
+The edge setting raises two further questions. First, can every node apply this principle using only local history and local forecasts while retaining a system-wide guarantee? Second, what remains true when a request can be served by a live instance at another edge node? We answer the first through an exact de-composition: under local-only serving and the uncapacitated as-sumption, every node-service stream is an independent Bahncard instance. We answer the second with a redirect-aware extension whose deployment schedule is intentionally unchanged from the analyzable local policy; redirection is used only when that policy would otherwise forward a request to the origin. This separation is essential because an arbitrary coordinator that suppresses a locally justified deployment changes the online policy and cannot inherit the local competitive proof automatically. Our contributions are as follows. 1) We formulate decentralized TTL service deployment with explicit instantiation, lifetime, request-serving, prediction-error, and redirection semantics, and separate the analyz-able elastic layer from finite-capacity admission. 2) We develop CAPSUM-E as a decentralized safety layer and prove an exact PFSUM reduction, local trace equiva-lence, and a tight κ(η) bound. We further derive an offline-cost-weighted aggregate error certificate. Its redirect-aware extension preserves the deployment schedule and is 
+
+κ(η)/β -competitive against the redirectable offline bench-mark for β > 0.3) We extend the method to finite-capacity nodes as CAP-SUM. Its size-scaled dual evidence, local shadow price, and evidence-density eviction make every action capacity feasible; we prove scale invariance and exact agreement with CAPSUM-E in the elastic configuration. The finite-capacity policy is not claimed to inherit the PFSUM ratio. 4) We build a reproducible simulator with an exact local offline dynamic program, direct common-model base-lines, and documented source-derived adapters for EDP-A, OREO, and uEDC-L. The 895-run evaluation mirrors the claims: exact-offline and prediction-error studies test the elastic mechanism, whereas ablation, synthetic-regime, causal-trace, and joint-scale studies test finite-capacity admission. The remainder of this paper is organized as follows. Section II reviews related work. Section III defines the deployment model. Section IV presents CAPSUM-E and its local-model analysis. Section V gives the capacity-aware extension, and Section VI con-siders request redirection. Section VII reports the reproducible evaluation, and Section VIII concludes. II. R ELATED WORK 
+
+The closest research spans edge caching, executable-service placement, and learning-augmented online algorithms. These ar-eas share terminology but not decision semantics: the analyzable instance is committed for a fixed TTL and cannot discount prior requests, whereas finite-capacity cache entries may be evicted early and therefore require a separate model. 
+
+A. Edge Caching and Service Placement 
+
+Collaborative data caching jointly selects storage locations and retrieval paths [8]; context-aware D2D caching adds online learning under storage and energy budgets [9]; and LRU-BaSE distinguishes byte- and object-miss objectives for variable-size content [10]. EDP-A places erasure-coded blocks near request-ing users while preserving recoverability [11]. Mean-field and DRL policies address large caching populations and adaptive content demand [12], [13]. TMC service-caching formulations additionally model shared VM, computation, and bandwidth resources [14], Bayesian pricing [15], cold-start-aware reten-tion [16], and popularity or failure uncertainty [17]. These ob-jectives are capacity coupled; hit rate or forecast accuracy alone does not characterize size-scaled instantiation cost. We therefore compare EDP-A and uEDC-L only in the finite-capacity track using the audited adapters in Section VII. Executable-service systems optimize a broader orchestration problem. TPDS work studies distributed serverless DAG em-bedding, FaaS cost-performance selection, and SLO-aware layer sharing [18], [19], [20]. TSC formulations cover FaaS provision-ing [21], cross-edge container caching and routing [22], hierarchi-cal online MEC control [2], joint caching/offloading and resource allocation [23], and separate data and service placement [3]. Redundant placement addresses service reliability [24], while OREO combines Lyapunov optimization and Gibbs sampling for joint caching and offloading [25]. Learning-based placement can exploit telemetry and graph structure [26], [27], [28], but 3
+
+distributional performance does not imply pathwise safety under arbitrary forecast error. Our elastic model instead isolates when an otherwise feasible local instance should be created; hard resource coupling is handled separately by CAPSUM and is not covered by the elastic theorem. 
+
+B. Learning-Augmented Online Algorithms 
+
+Learning-augmented algorithms quantify both the benefit of accurate advice and safety under arbitrary advice [5], [6], includ-ing results for caching, metric task systems, and parsimonious prediction access [29], [30]. PFSUM treats continuous time and heterogeneous prices in the variable-price Bahncard problem, buying a T -valid discount only when recent and predicted future costs both reach the break-even point [7]. We prove the exact node-service mapping rather than assuming this result transfers to edge orchestration, establish trajectory equivalence for decentral-ized execution, and preserve the trajectory under redirection. The capacity-aware policy remains explicitly outside this separable guarantee. III. P ROBLEM FORMULATION AND SYSTEM MODEL 
+
+A. System Architecture and Scope 
+
+We consider a set of edge nodes N , with N := |N | , and a cat-alog S of stateless, executable services. A service can represent a containerized microservice or a serverless function that must be instantiated before it can serve a request at an edge node. The origin server stores every service and is always available. Time is continuous. 
+
+Assumption 1 (Uncapacitated deployment layer) . An edge node can host every service that it elects to deploy during the horizon of interest. Thus, a deployment of (n, s ) neither evicts nor changes the serving cost of another node-service pair. This assumption deliberately isolates the online deployment decision from cache admission, CPU scheduling, and place-ment under hard capacity constraints. It is appropriate when the deployment layer is elastic or when these resources are provisioned separately. It is also the property that makes the local model separable; a finite-capacity extension is not covered by the guarantees below. 
+
+B. Request and Cost Model 
+
+A finite request sequence is σ = ⟨σ1, . . . , σ L⟩, where σi =(ti, n i, s i, w i) has time ti, ingress node ni ∈ N , requested service si ∈ S, and regular service cost wi > 0. Requests are revealed in strictly increasing time order. The regular cost aggregates the resource and network cost of serving the request from the origin. Instantiating a service at an edge node costs C > 0. If an instance of si is active at ni when σi arrives, the request is served locally at cost βw i, where 0 ≤ β < 1. Otherwise the request is served by the origin at cost wi. Hence (1 − β)wi is the saving delivered by a local instance on request i. The analysis permits heterogeneous positive wi; no bounded-request-cost assumption is required. 
+
+C. Deployment State and Objective 
+
+Definition 2 (Deployment state) . A deployment action (n, s, τ )
+
+instantiates service s at node n at time τ and remains active on 
+
+[τ, τ + T ), where T > 0 is a fixed time-to-live (TTL). A service is active at (n, t ) if one of the algorithm’s deployment actions for 
+
+(n, s ) covers t.Let DA(σ) be the deployment actions made by an online algorithm A. It incurs 
+
+A(σ) = C|D A(σ)| +
+
+> L
+
+X
+
+> i=1
+
+cost A(σi), (1) where 
+
+cost A(σi) = 
+
+(
+
+βw i, if si is active at ni at time ti,wi, otherwise . (2) A deployment may be made immediately before serving a re-quest, so that request receives the discounted cost. Overlapping deployments of the same pair are never useful. Moreover, an offline optimum can, without loss of generality, deploy only immediately before requests for an inactive pair: delaying any other deployment until the next such request cannot increase its cost. The local-service offline benchmark is 
+
+OPT loc (σ) := min 
+
+> D
+
+(
+
+C|D| +
+
+> L
+
+X
+
+> i=1
+
+cost D (σi)
+
+)
+
+, (3) where D ranges over valid TTL deployment schedules and all inactive requests are served by the origin. 
+
+D. Learning-Augmented Information 
+
+For a node-service pair (n, s ), define its total regular workload in an interval I as 
+
+cn,s (σ; I) := X     
+
+> σj∈σ:tj∈I, n j=n, s j=s
+
+wj . (4) Whenever an algorithm encounters a request for an inactive local pair (ni, s i) at time ti, it receives a nonnegative prediction 
+
+ˆcni,s i (σ; [ ti, t i + T )) of the workload in the following TTL window. The predictor is a black box and may be different across nodes. Let IA(σ) be the indices of requests that arrive when (ni, s i)
+
+is inactive under A. Write ˆFi := ˆ cni,s i (σ; [ ti, t i + T )) and Fi := 
+
+cni,s i (σ; [ ti, t i + T )) . The realized error of A is 
+
+ηA(σ) := max 
+
+> i∈I A(σ)
+
+ˆFi − Fi , (5) with max ∅ := 0 . This is the same short-horizon, workload-valued error measure used by PFSUM [7]; it is not a count of mispredicted requests. The economic break-even workload is 
+
+γ := C
+
+1 − β . (6) A deployment at time t can recoup its purchase cost over [t, t +T )
+
+exactly when the regular workload in that interval reaches γ.4
+
+Algorithm 1: CAPSUM-E at node ni upon request σi
+
+Input: σi = ( ti, n i, s i, w i); C > 0, 0 ≤ β < 1, and 
+
+T > 0 
+
+> 1
+
+Update the local sliding-window history for (ni, s i) with 
+
+σi; 
+
+> 2
+
+H ← cni,s i (σ; ( ti − T, t i]) ; 
+
+> 3
+
+if si is active at ni then  
+
+> 4
+
+Serve σi locally at cost βw i; 
+
+> 5
+
+else  
+
+> 6
+
+Query ˆF ← ˆcni,s i (σ; [ ti, t i + T )) ; 
+
+> 7
+
+if H ≥ γ and ˆF ≥ γ then  
+
+> 8
+
+Deploy si at ni for TTL T and pay C; 
+
+> 9
+
+Serve σi locally at cost βw i; 
+
+> 10
+
+else  
+
+> 11
+
+Forward σi to the origin at cost wi;
+
+E. Competitive Criterion and Problem Statement 
+
+For an algorithm A, define 
+
+CR A(η) := sup  
+
+> σ:ηA(σ)≤η
+> OPT loc (σ)>0
+
+A(σ)OPT loc (σ) . (7) An algorithm is δ-consistent if CR A(0) ≤ δ and ϑ-robust if 
+
+CR A(η) ≤ ϑ for every η ≥ 0.Our first objective is a decentralized policy that uses only the local history and local predictions of each (n, s ) pair and attains a tight consistency-robustness trade-off under the local-service model. We then consider a redirectable-service extension in which an inactive local request may be served by a live remote instance. The latter has a stronger offline benchmark and therefore requires a separate analysis. IV. A LGORITHM DESIGN AND THEORETICAL ANALYSIS 
+
+A. Elastic CAPSUM Core 
+
+CAPSUM-E runs the PFSUM purchasing rule independently at every node-service pair. On a request for an inactive local pair, it deploys only when both the workload observed in the preceding TTL window and the predicted workload in the following TTL window reach γ. The historical window includes the current request and all previous requests, whether or not they were served locally. This detail is required by the PFSUM analysis. Figure 2 depicts the resulting node-local execution path and the redirect-aware overlay. The policy requires no inter-node communication. A node can maintain each recent workload with a timestamped queue and a running sum, giving O(1) amortized history-update time per request; the prediction-query cost depends on the deployed predictor. The memory required by exact queues is proportional to the number of locally observed requests in the trailing window, and can be traded for time-bucketed counters if an approximation is acceptable. 
+
+B. Design Rationale 
+
+The two guards have distinct roles. The future guard asks whether an instance purchased now can plausibly amortize its cost during its own validity interval. The past guard prevents the policy from purchasing solely because of an arbitrary optimistic forecast. The windows are deliberately half-open: the current request belongs to both H = c(( t − T, t ]) and the true future workload c([ t, t + T )) , while a request exactly at t + T belongs to neither active interval of an instance bought at t. This convention is identical to the TTL semantics in Definition 2. 
+
+Proposition 3 (Why the historical guard is necessary) . The forecast-only threshold rule that deploys whenever ˆcn,s ([ t, t +
+
+T )) ≥ γ has no bounded competitive ratio under arbitrary predictions. Proof. Consider a single request of cost ε > 0 at time t and let the predictor return ˆc([ t, t + T )) = γ. The policy deploys and pays C + βε , while OPT loc forwards the request and pays ε.Letting ε tend to zero makes the ratio unbounded. In contrast, CAPSUM-E does not deploy because its historical workload is 
+
+H = ε < γ .Past and future workloads are not summed because elapsed requests cannot benefit from an instance bought now. If W is the realized workload in [t, t + T ), deployment changes the interval cost by C − (1 − β)W and breaks even exactly at W = γ. The forecast estimates this unknown W ; the historical guard inde-pendently rejects unsupported optimism. A timestamped queue maintains the half-open historical window in O(1) amortized update time. This separation also explains why a single weighted threshold does not, in general, preserve the two certificates: the historical term can compensate for insufficient post-deployment savings, or the forecast term can compensate for an empty history. Requiring each quantity to cover the same economic threshold preserves the temporal interpretation of both tests. At an inactive decision point, the required state is therefore minimal: an active-until timestamp, the exact sliding-window sum, and one pair-local forecast. No node needs another node’s history, forecast, or active set for the elastic local-service rule. 
+
+C. Exact Reduction to Independent Bahncard Instances 
+
+For the reduction, request (ti, n, s, w i) becomes a Bahncard ticket of price pi = wi; deployment is a card of price C, validity 
+
+T , and discount β. The ticket price is wi, not the saving (1 −β)wi,so prediction and error retain the workload units of (5). For every (n, s ), let σ(n,s ) contain precisely the requests in σ
+
+with ingress node n and service s. Assumption 1 and local-only serving imply CAPSUM-E (σ) = X
+
+> n∈N
+
+X
+
+> s∈S
+
+CAPSUM-E n,s (σ(n,s )), (8) 
+
+OPT loc (σ) = X
+
+> n∈N
+
+X
+
+> s∈S
+
+OPT loc 
+
+> n,s
+
+(σ(n,s )). (9) 
+
+Lemma 4 (PFSUM reduction) . For a fixed pair (n, s ), identify every request (ti, n, s, w i) with a Bahncard request (ti, p i) of price pi = wi. Then the actions and costs of CAPSUM-E n,s 
+
+are exactly those of PFSUM for BP( C, β, T ).Proof. A live local service instance is a valid Bahncard: it costs 
+
+C, remains valid for T , and changes a request price from wi to 5               
+
+> Request at n
+> (t, n, s, w )
+> Pair-local state
+> history queue; expiry
+> Local predictor
+> ˆcn,s ([ t, t +T))
+> Dual-evidence gate
+> H=cn,s (( t−T, t ])
+> deploy iff H, ˆF≥γ
+> Local instance
+> start TTL; cost βw
+> Optional redirect overlay
+> query verified live instances
+> Remote edge
+> nearest live copy
+> Origin
+> fallback cost w
+> deploy no deploy verified fallback node-local safety path
+> Figure 2. Decentralized execution architecture. CAPSUM-E needs only the local stream, local state, and a local forecast. CAPSUM-E+ consults the directory only after the local dual-threshold rule elects not to deploy, so the analytically required local deployment schedule is preserved.
+
+βw i. At every regular request, Algorithm 1 tests c(σ(n,s ); ( ti −
+
+T, t i]) ≥ γ and the predicted T -future cost against the same 
+
+γ = C/ (1 − β), which is precisely the PFSUM rule. PFSUM is defined for continuous time and heterogeneous request prices, so no additional variable-weight extension is needed [7]. 
+
+Proposition 5 (Local trace equivalence) . Fix a request sequence and the predictor response returned at each decision point. A centralized implementation that maintains a separate PFSUM state for every (n, s ) and processes the same requests produces exactly the same deployments, local/origin serving actions, and total cost as the decentralized execution of CAPSUM-E .Proof. The state used to decide a request (ti, n i, s i, w i) consists only of the active-until time, the sliding-window workload, and the predictor response for (ni, s i). By Assumption 1, an action for another pair changes none of these quantities. Induction over the strictly ordered requests therefore gives identical local states before every request and identical actions thereafter. Summing the identical per-request and deployment costs proves the claim. Thus decentralization exactly factorizes the centralized pol-icy; the conclusion fails once one pair changes another pair’s feasibility or service cost. For later use, let ηn,s denote the maximum error in (5) over decision points of the (n, s ) substream. The PFSUM result gives the following function: 
+
+κ(η) = 
+
+
+
+2γ + (2 − β)η
+
+(1 + β)γ + βη , 0 ≤ η ≤ γ, 
+
+(3 − β)γ + η
+
+(1 + β)γ + βη , η > γ. 
+
+(10) 
+
+Lemma 6 (Per-pair guarantee) . For every (n, s ),
+
+CAPSUM-E n,s (σ(n,s )) ≤ κ(ηn,s ) OPT loc 
+
+> n,s
+
+(σ(n,s )). (11) 
+
+The bound is tight for a single pair. Proof. Lemma 4 maps the subproblem exactly to PFSUM. The stated expression and tightness follow from the PFSUM competitive-ratio theorem [7]. 
+
+D. Global Guarantee 
+
+Proposition 7 (Properties of κ). The function κ is continuous and strictly increasing on [0 , ∞). Moreover, κ(0) = 2 /(1 + β),and, for β > 0, lim η→∞ κ(η) = 1 /β .Proof. The branches agree at η = γ; differentiation gives positive numerators (2 + β)(1 − β)γ and (1 − β)2γ. Substitution gives the endpoints; for β = 0 , κ is unbounded. 
+
+Theorem 8 (Local-model consistency and robustness) . Let η := 
+
+ηCAPSUM-E (σ). Then 
+
+CAPSUM-E (σ)OPT loc (σ) ≤ κ(η). (12) 
+
+The bound is tight. Thus, for β > 0, CAPSUM-E is 2/(1 + β)-consistent and 1/β -robust. Proof. Since ηn,s ≤ η, monotonicity, Lemma 6, and (8)–(9) give CAPSUM-E (σ) ≤ X
+
+> n,s
+
+κ(ηn,s )OPT loc  
+
+> n,s
+
+≤ κ(η)OPT loc (σ).
+
+Tightness follows from a tight single-pair instance. 
+
+Corollary 9 (Instance-dependent aggregate certificate) . For a nonempty trace, define λn,s := OPT loc 
+
+> n,s
+
+(σ(n,s ))/OPT loc (σ).Then 
+
+CAPSUM-E (σ)OPT loc (σ) ≤ X
+
+> n∈N
+
+X
+
+> s∈S
+
+λn,s κ(ηn,s ) ≤ κ
+
+
+
+max  
+
+> n,s
+
+ηn,s 
+
+
+
+.
+
+(13) 
+
+Proof. Divide the per-pair sum by OPT loc (σ) and use mono-tonicity with P 
+
+> n,s
+
+λn,s = 1 .The corollary prevents an inaccurate but economically insignif-icant pair from determining the trace-level certificate. 
+
+E. Interpretation of the Guarantee and Its Scope 
+
+Prediction quality enters only through the dimensionless error 
+
+η/γ . Scaling C, all wi, and all predictions by the same positive factor scales γ, online cost, and offline cost equally, leaving decisions and the ratio unchanged. The TTL affects realized workload and forecast difficulty, not the algebraic form of κ.The parameter β has a distinct systems interpretation. When 
+
+β is small, a local instance provides a large per-request saving, 6
+
+but missed deployments under poor forecasts may be far from optimal, as reflected by the 1/β robustness limit. As β approaches one, local and origin service become nearly identical; the ratio approaches one because the deployment decision becomes eco-nomically degenerate, not because a larger β represents a more efficient edge. The result does not claim that a centralized controller cannot improve a practical metric. It states only that, under Assump-tion 1 and local-only serving, central knowledge cannot couple otherwise independent subproblems. When services compete for a finite resource budget, (9) no longer holds and neither the reduction nor the global theorem applies unchanged. V. C APACITY -A WARE LOCAL ADMISSION 
+
+The elastic specialization provides the analytical safety base-line, whereas production edges have finite image-storage, mem-ory, or accelerator reservations. The full CAPSUM policy ex-tends this core with local admission for the coupled setting. It retains the dual-evidence rationale while ensuring capacity feasibility, without extending the separable competitive theorem to a nonseparable model. 
+
+A. Capacity Model and Shadow-Priced Evidence 
+
+Let service s consume an integer size as ≥ 1 and let node n
+
+expose a finite budget Bn. At time t, its active set An(t) must obey X
+
+> s∈A n(t)
+
+as ≤ Bn. (14) We charge a size-as deployment Cs = asC, so its unpriced break-even workload is asγ. Let un(t) be the left-hand side of (14) and define the node-local scarcity price 
+
+λn(t) = γ
+
+ un(t)
+
+Bn
+
+2
+
+. (15) The square is a smooth, monotone engineering choice that keeps the price small at low utilization and raises it near saturation; it is not derived as a dual optimum. An operator may substitute another nonnegative local price curve without changing the feasibility argument below, although empirical behavior may change. On a miss for (n, s ), CAPSUM computes the same historical workload H and forecast ˆF as Algorithm 1. It calls the candidate eligible only if 
+
+H ≥ as(γ + λn(t)) and ˆF ≥ as(γ + λn(t)) . (16) Thus a larger image must justify both its larger instantiation cost and the capacity it consumes. Its evidence density is rn,s =min {H, ˆF }/a s. If there is insufficient free capacity, the node considers active residents in increasing order of their stored admission-evidence density and evicts only residents whose density is strictly below rn,s , stopping once as units are avail-able. The stored density is the value recorded at the resident’s admission and is not refreshed without another request for that pair. Early eviction terminates the remaining paid TTL and yields no refund. If the rule cannot free enough space, the request is forwarded and no deployment cost is paid. The rule uses only node-local state; it neither relies on a global cache map nor hides an infeasible admission. 
+
+B. Safety Properties and Scope 
+
+Proposition 10 (Feasibility and elastic-limit compatibility) .
+
+Assume as ≤ Bn for every service eligible at node n.
+
+CAPSUM maintains (14) after every request. Define the elastic configuration by as = 1 , Bn ≥ |S| , λn(t) = 0 , and no eviction. In this configuration, CAPSUM makes exactly the same deployment decisions as CAPSUM-E for the same forecasts and request sequence. Proof. An admission is made only if the candidate fits in the currently free capacity or if the selected evictions free at least 
+
+as units. All other actions preserve the active set, so induction over request arrivals establishes (14). In the stated elastic con-figuration, the scarcity price is zero and no capacity rejection or eviction can occur. Equation (16) therefore becomes H, ˆF ≥ γ,exactly the CAPSUM-E gate. 
+
+Proposition 11 (Scale invariance) . If C, all workloads, and all forecasts are scaled by any ζ > 0, with other inputs fixed, 
+
+CAPSUM-E , CAPSUM-E+ , and CAPSUM preserve every decision and scale all incurred costs by ζ.Proof. γ, H, ˆF , λn(t), and all evidence densities scale by ζ.Gates and density orderings are unchanged, hence so are active sets and routing; deployment and serving costs scale by ζ.Propositions 10 and 11 establish feasibility, elastic-limit re-duction, and invariance to the workload-cost unit, not a capacity-competitive ratio. Capacity couples node-service pairs and in-validates the decomposition in (9); a competitive guarantee for CAPSUM would require an explicitly capacity-aware offline benchmark and a separate analysis. Section VII therefore evalu-ates CAPSUM only in the finite-capacity track and does not use its results to substantiate Theorem 8. VI. E XTENSION TO THE REDIRECTABLE -S ERVICE MODEL 
+
+A. Redirectable-Service Cost Model 
+
+Suppose that a request arriving at n may be served by an active instance at another node m. Let d be a metric on N , and let α > 0
+
+convert distance to per-unit-workload routing cost. The cost of assigning request σi to mi ∈ N ∪ {⊥} is 
+
+cost redir (σi) = 
+
+
+
+βw i, mi = ni,
+
+(β + αd (ni, m i)) wi, mi ∈ N \ { ni},wi, mi = ⊥.
+
+(17) We assume αd (n, m ) ≤ 1 − β for all n, m , so a verified redirec-tion is never more expensive than origin service. An assignment 
+
+mi ∈ N is feasible only if service si is active at mi at time ti
+
+under the selected deployment schedule; mi = ⊥ denotes origin service. The redirectable offline benchmark jointly chooses valid deployments and feasible assignments: 
+
+OPT redir (σ) := min 
+
+> D,{mi}
+
+(
+
+C|D| +
+
+> L
+
+X
+
+> i=1
+
+cost redir 
+
+> D,{mi}
+
+(σi)
+
+)
+
+.
+
+(18) 7
+
+Algorithm 2: CAPSUM-E+ at node ni upon request σi
+
+Input: σi = ( ti, n i, s i, w i); local predictor; service directory  
+
+> 1
+
+Update the local history of (ni, s i) and set 
+
+H ← cni,s i (σ; ( ti − T, t i]) ; 
+
+> 2
+
+if si is active locally then  
+
+> 3
+
+Serve locally at cost βw i; 
+
+> 4
+
+else  
+
+> 5
+
+Query ˆF ← ˆcni,s i (σ; [ ti, t i + T )) ; 
+
+> 6
+
+if H ≥ γ and ˆF ≥ γ then  
+
+> 7
+
+Deploy si locally for T ; pay C; serve locally;  
+
+> 8
+
+else  
+
+> 9
+
+M ← { m ∈ N : si is verified active at m}; 
+
+> 10
+
+if M̸ = ∅ then  
+
+> 11
+
+m∗ ← arg min m∈M d(ni, m ); redirect to 
+
+m∗; 
+
+> 12
+
+else  
+
+> 13
+
+Forward to the origin; 
+
+B. CAPSUM-E+ : Redirect-Aware Service 
+
+CAPSUM-E+ retains the local deployment decision of Algo-rithm 1. If this decision does not deploy an inactive local service, it queries a service directory and redirects to the nearest verified active instance when one exists; otherwise it uses the origin. This ordering is intentional: it makes the local deployment schedule identical to that of CAPSUM-E, enabling a direct comparison while still exploiting redirection whenever the local policy would pay the origin cost. Its cost is C|D CAPSUM-E+ (σ)| plus the request costs in (17) selected by the algorithm. 
+
+C. Competitive Analysis 
+
+Lemma 12 (Service-cost dominance) . For every request se-quence, CAPSUM-E+ has the same local deployment schedule as CAPSUM-E and 
+
+CAPSUM-E+ (σ) ≤ CAPSUM-E (σ). (19) 
+
+Proof. By induction over request arrivals, the two algorithms have the same local history and the same active state for every pair. They therefore make the same deployment decision at every inac-tive local request. If that decision does not deploy, CAPSUM-E uses the origin, whereas CAPSUM-E+ uses either the origin or a verified remote instance whose cost is no greater by the routing-overhead assumption. Deployment costs are identical. 
+
+Lemma 13 (Relation between offline benchmarks) . For β > 0,
+
+OPT loc (σ) ≤ 1
+
+β OPT redir (σ). (20) 
+
+Proof. Take any feasible redirectable schedule and retain its deployments. Replace every redirected request by origin service, retaining local and origin assignments. For a redirected request, 
+
+wi ≤ (β + αd (ni, m i)) wi/β ; for local and origin requests the same factor is also an upper bound. Deployment costs obey 
+
+C ≤ C/β . The constructed local schedule therefore costs at most 1/β times the redirectable schedule. Minimizing both sides proves the claim. 
+
+Theorem 14 (Redirectable-model guarantee) . For β > 0 and 
+
+η = ηCAPSUM-E+ (σ),
+
+CAPSUM-E+ (σ)OPT redir (σ) ≤ κ(η)
+
+β . (21) 
+
+Consequently, CAPSUM-E+ is 2/(β(1 + β)) -consistent and 
+
+1/β 2-robust with respect to the redirectable offline benchmark. Proof. The decision points, and hence the prediction error, are the same for CAPSUM-E+ and CAPSUM-E. Combine Lemma 12, Theorem 8, and Lemma 13. 
+
+D. Practical Considerations 
+
+The guarantee treats directory lookup and control traffic sep-arately from request-serving cost; their latency and bandwidth should be measured in the prototype evaluation. A stale directory entry must be verified before redirecting, with origin fallback on failure, to retain the service-cost dominance argument. A coordinator that suppresses a locally justified deployment can be a useful engineering heuristic for reducing replicas, but it changes the PFSUM schedule. Such a variant should be reported as a separate heuristic and should not be claimed to satisfy Theorem 14 without a new proof. VII. E XPERIMENTAL RESULTS 
+
+We evaluate CAPSUM-E, the analyzable elastic specializa-tion, separately from finite-capacity CAPSUM, so capacity results are not presented as evidence for the PFSUM guarantee. The same reproducible pipeline generates every table and vector figure from retained per-seed results. 
+
+A. Questions, Workloads, and Metrics 
+
+Q1–Q2 test whether the elastic guard tracks the local offline optimum and remains robust to prediction error. Q3–Q4 compare finite-capacity CAPSUM with audited baselines and explain its cost anatomy. Q5–Q8 examine sensitivity, component ne-cessity, capacity–quality interactions, and scalability, while Q9 tests transfer to a public FaaS trace without forecast leakage. The redirect extension is an analytical schedule-preservation result; all finite-capacity runs exercise the same common redirect overlay and report its remote-serving cost. Synthetic traces contain 72 hours of ordered requests over a 9-node grid and 60 services, with w ∈ [70 , 130] , as = 1 + ( s mod 3) , and stationary, regional flash-crowd, or moving-hotspot de-mand. Background demand is Zipf-distributed (default exponent 1.12); each flash-crowd seed has 10,464 requests. Defaults are 
+
+T = 6 hours, C = 1000 , β = 0 .25 , α = 0 .12 , and Bn = 9 .The main, prediction, bias, and ablation studies use five seeds 
+
+{7, 17 , 29 , 43 , 61 }; sensitivity and interaction points use three. The 895 policy runs span theory, main comparisons, prediction error and bias, ablation, parameter and economic stress, public trace, and one- and two-dimensional scaling; the manifest gives exact per-study counts. Error bars are two-sided 95% Student-t
+
+intervals across seeds (or five chronological trace blocks), and 8
+
+paired policies receive identical event streams and seeded ran-dom choices wherever the algorithms permit. Thus paired gaps suppress trace-generation variance; the intervals quantify run-to-run variation rather than population sampling uncertainty. Trace-block intervals are descriptive because adjacent chronological blocks need not be independent. The primary metric is total deployment, local, remote, and origin cost divided by origin-only cost; Proposition 11 shows that this normalization is independent of the workload-cost unit. We also report edge-service rate, cost composition, deployments, evictions, empirical local ratio, and decision-path time. In every finite-capacity run, a local miss is redirected to the nearest active copy when one exists and otherwise goes to the origin; this common serving overlay does not alter any policy’s placement decisions. The configured α satisfies the routing-cost condition in Section VI. The synthetic studies use the controlled predictor 
+
+ˆF = max {0, F +(2 U −1)(1 −q)γ}, U ∼ Uniform(0 , 1) ,
+
+(22) using a deterministic event-indexed draw. Thus q = 1 is exact and η/γ is controlled in the workload units of Theorem 8; q ∈{1, . 8, . 6, . 4, . 2, 0}. Because this predictor is constructed from the realized future F , it is an oracle-style mechanism for controlled error injection, not a deployable forecaster. The public-trace study instead uses the strictly causal predictor described below. 
+
+B. Implementation and Reproducibility 
+
+The dependency-light Python implementation processes every trace in stable timestamp order and uses explicit tie breaking for deterministic policy decisions. For the elastic theory track, it computes an exact offline optimum independently for every node– service stream. Let j(i) be the first request at or after ti + T and let Di denote optimal suffix cost. A two-pointer scan and suffix workload sums evaluate 
+
+Di = min 
+
+wi + Di+1 , C + β
+
+> j(i)−1
+
+X
+
+> k=i
+
+wk + Dj(i)
+
+ , (23) with DL+1 = 0. The request-time deployment property in Section III makes this dynamic program exact; it is used only for the local uncapacitated ratio and never as a finite-capacity oracle. One driver regenerates the manifest, per-seed rows, tables, and figures; an audit checks counts, cost decomposition, ranges, empirical PFSUM-bound conformance, and the trace checksum. Tests cover TTL boundaries, the dual gate, the dynamic program against brute force, capacity, renewal, prediction, and adapter paths. Decision-path time brackets policy execution with a mono-tonic nanosecond clock; trace generation, the offline oracle, file I/O, and figure construction are excluded. Consequently, the timing results compare controller computation, not network, transfer, or cold-start latency. Each policy–workload run is timed once; seed variation is not a microbenchmark repeat. Runs used CPython 3.12.13 on a 15-core Apple M5 Pro with 48 GB memory. 
+
+C. Baseline Fidelity 
+
+We compare directly against SUM, FSUM, LRU, LFU, and Random in the common TTL model. We also include source-derived adapters motivated by EDP-A [11], OREO [25], and uEDC-L [17], representing popularity-based placement, energy-aware joint caching/offloading, and failure-robust caching. Their native decision objects and objectives differ from executable TTL-bound services, so an exact reproduction cannot simulta-neously preserve the source problem and produce actions in our model. Table I therefore states every heuristic translation. These adapters are auditable comparison points, not native reproduc-tions of the three source systems. The native objectives are not directly comparable. Each adapter instead produces a deployment and routing sequence, to which the common accounting layer applies the same asC, βw , remote, and origin costs. A placement is free only until its paid TTL expires; continuing it after expiry incurs another asC, and early eviction yields no refund. The OREO-derived adapter observes a complete current slot before acting, matching its source informa-tion boundary but giving it more within-slot information than the causal epoch adapters. Epoch-based placement uses only completed past epochs. Every pseudorandom choice is seeded. Direct-baseline definitions and full adapter pseudocode appear in the artifact; adapter parameters are fixed across traces. 
+
+D. Elastic Safety Layer 
+
+At q = 0 .7, Table III gives CAPSUM-E cost 0.789 ± 0.005 
+
+and empirical local-optimum ratio 1.078 ± 0.004 (Q1). SUM is more conservative ( 0.821 ± 0.006 ); FSUM is lower under this moderately accurate advice ( 0.756 ± 0.002 ), as expected from its consistency bias. With exact advice, Figure 7 gives CAPSUM-E cost 0.785; near η/γ = 1 , FSUM rises to 0.940 versus 0.808 for CAPSUM-E, a 14.0% reduction (Q2). SUM is prediction independent. The crossing exposes the expected consistency–robustness trade-off. Signed-error results in Figure 5(b) show that underprediction mainly delays both policies, whereas positive bias creates un-supported FSUM purchases: at 0.75 γ, CAPSUM-E costs 0.810 
+
+versus 0.933 (13.2% lower), matching Proposition 3. 
+
+E. Finite-Capacity Comparison and Cost Anatomy 
+
+Within the common TTL model, CAPSUM has the lowest cost in all three regimes (Table II, Q3): 0.895 ± 0.005 for stationary demand, 0.765 for flash crowds, and 0.726 ± 0.004 for moving hotspots. Its flash-crowd gain over the next-best source-derived adapter is 42.9%; the paired gap to the EDP-A-derived adapter is 0.575 ± 0.005 , with all five seeds favoring CAPSUM. This ranking is for the adapters in Table I, not the source systems’ native objectives. Edge-service rate alone is insufficient: on flash crowds EDP-A serves 76 .5% at an edge but costs 1.340 ± 0.004 , OREO serves 62 .7% but costs 2.989 ± 0.058 , and immediate-admission LRU/LFU/Random obtain 100% only with costs 7.35–8.31. Common accounting exposes repeated instantiations that their native objectives do not minimize. Figure 3(a)–(b) attributes these outcomes (Q4): OREO is deployment-dominated, while EDP-A and uEDC-L trade more 9
+
+Table I DIRECT BASELINES AND EXPLICITLY SCOPED SOURCE -DERIVED ADAPTERS .
+
+Policy Source concept used Common-model implementation Unpreserved native semantics 
+
+EDP-A [11] Popularity order and proximity coverage. Greedily cover prior-epoch demand within 1.01 grid hops. No erasure code, K-block recovery, or remaining-block pass. OREO [25] Slot observation, virtual queue, drift scoring, and Gibbs proposals. One-hour slots; one queue; 80 proposals; V = 4 ; temperature .08; target .58. Replaces native offloading, radio/computation latency, and energy. uEDC-L [17] Popularity/failure uncertainty and redundancy. Score d + .35 |d − d′| + .25 dnbr ; 0/1 knapsack; two-copy repair. Not the source robust program or continuous retrieval recourse. 
+
+Table II FINITE -CAPACITY COMMON -MODEL COMPARISON (MEAN ± 95% S TUDENT -t INTERVAL OVER FIVE SEEDS ). C OST IS NORMALIZED BY ORIGIN -ONLY SERVICE ; LOWER IS BETTER . B EST VALUE IN EACH ROW IS BOLD .
+
+Workload Metric CAPSUM EDP-A OREO uEDC-L LRU LFU Random 
+
+Stationary Norm. cost 0.895 ± 0.005 1.365 ± 0.006 2.910 ± 0.039 1.350 ± 0.005 10.654 ± 0.281 8.795 ± 0.187 11.378 ± 0.240 Edge rate (%) 33.6 ± 1.6 74.6 ± 0.7 67.3 ± 1.6 70.4 ± 0.7 100 .0 ± 0.0 100 .0 ± 0.0 100 .0 ± 0.0
+
+Flash crowd Norm. cost 0.765 ± 0.005 1.340 ± 0.004 2.989 ± 0.058 1.344 ± 0.010 7.556 ± 0.107 7.353 ± 0.093 8.312 ± 0.160 Edge rate (%) 49.7 ± 0.8 76.5 ± 0.4 62.7 ± 1.7 70.4 ± 1.7 100 .0 ± 0.0 100 .0 ± 0.0 100 .0 ± 0.0
+
+Moving hotspot Norm. cost 0.726 ± 0.004 1.233 ± 0.011 2.647 ± 0.083 1.248 ± 0.011 6.613 ± 0.109 6.608 ± 0.137 7.389 ± 0.131 Edge rate (%) 56.8 ± 0.8 75.3 ± 1.5 64.9 ± 2.3 67.5 ± 1.8 100 .0 ± 0.0 100 .0 ± 0.0 100 .0 ± 0.0(a) Workload regimes 
+
+workload normalized total cost 
+
+0.00 0.81 1.61 2.42 3.23 
+
+steady flash mobile    
+
+> CAPSUM EDP-A OREO uEDC-L
+
+(b) Cost composition on flash crowds 
+
+policy share of total cost (%) 
+
+025 50 75 100       
+
+> CAPSUM EDP-A OREO uEDC-L
+> deploy local remote origin
+
+(c) Capacity sensitivity 
+
+capacity units per edge normalized total cost 
+
+0.00 1.02 2.04 3.06 4.08 4 6 9 12 18    
+
+> CAPSUM EDP-A OREO uEDC-L
+
+(d) Decision-path scalability 
+
+number of edge nodes decision time (us/request) 
+
+0.00 9.27 18.53 27.80 37.06 4 9 16 25    
+
+> CAPSUM EDP-A OREO uEDC-L
+
+Figure 3. Summary: (a) demand regimes, (b) flash-crowd cost composition, (c) capacity sensitivity, and (d) decision-path scaling. Curves show seed means. Table III ELASTIC CAPSUM-E VALIDATION AT q = 0 .7 (MEAN ± 95% S TUDENT -t
+
+INTERVAL ; FIVE SEEDS ). B EST VALUE IN EACH COLUMN IS BOLD .
+
+Policy Norm. cost A/OPT loc 
+
+CAPSUM-E 0.789 ± 0.005 1.078 ± 0.004 SUM 0.821 ± 0.006 1.122 ± 0.005 FSUM 0.756 ± 0.002 1.034 ± 0.004 
+
+No deployment 1.000 ± 0.000 1.367 ± 0.007 
+
+deployment for edge coverage; CAPSUM delays admission until workload amortizes both image cost and current capacity price. 
+
+Table IV CAPSUM ABLATION (MEAN NORMALIZED COST ; FIVE SEEDS ). M INIMUM IN EACH COLUMN IS BOLD ; DEPLOYMENT COUNT IS DIAGNOSTIC .
+
+Variant Steady Flash Mobile Flash deploys 
+
+Full 0.895 0.765 0.726 98.4 
+
+History only 0.906 0.796 0.751 147.0 Forecast only 0.891 0.766 0.715 161.6 No shadow price 0.896 0.762 0.722 101.0 
+
+The history-only CAPSUM-H ablation also remains below every source-derived adapter in all three synthetic regimes (Table IV), 10 (a) Globus Compute trace    
+
+> policy normalized total cost (log)
+> 10^-1 10^0 10^1 10^2
+> CAPSUM EDP-A OREO uEDC-L
+
+(b) Joint node--catalog scale       
+
+> nodes / services decision time (us/request, log)
+> 10^0 10^1 10^2 10^3 10^4
+> 25/250 100/1000 400/4000 1024/10000
+> CAPSUM EDP-A OREO uEDC-L
+
+Figure 4. Trace and joint scaling: (a) Globus block mean and descriptive 95% Student-t interval; (b) decision time with about 24,000 requests/configuration and three seeds. Patterns and markers identify methods. (a) CAPSUM ablation      
+
+> workload normalized total cost
+> 0.00 0.24 0.49 0.73 0.98
+> steady flash mobile
+> CAPSUM H-only F-only No-price
+
+(b) Signed forecast bias         
+
+> bias / gamma normalized total cost
+> 0.00 0.25 0.49 0.74 0.99 -0.75 -0.5 -0.25 00.25 0.5 0.75
+> CAPSUM-E SUM FSUM
+
+(c) Capacity-quality interaction 
+
+> 0.765 0.759 0.759
+> 4
+> 0.765 0.757 0.752
+> 9
+> 0.763 0.756 0.751
+> 18 0.2 0.6 1
+> capacity units per edge forecast quality q
+
+(d) Burst intensity       
+
+> burst multiplier normalized total cost
+> 0.00 0.89 1.78 2.68 3.57 0.5 11.5 2
+> CAPSUM EDP-A OREO uEDC-L
+
+Figure 5. Robustness diagnostics: (a) ablation, (b) signed bias, (c) capacity–quality interaction, and (d) burst stress. Bars/curves are seed means. Table V GLOBUS RESULTS OVER FIVE POST -BURN -IN CHRONOLOGICAL BLOCKS .STUDENT -t INTERVALS DESCRIBE TEMPORAL VARIABILITY , NOT SAMPLING UNCERTAINTY .
+
+Policy Norm. cost Edge rate (%) 
+
+CAPSUM 0.725 ± 0.176 53.6 ± 16.8 EDP-A 1.332 ± 0.240 16.8 ± 20.5 OREO 41.380 ± 20.394 36.7 ± 16.2 uEDC-L 7.626 ± 3.195 16.2 ± 19.5 
+
+so the ordering is not solely an artifact of the controlled future oracle. 
+
+F. Public-Trace Validation 
+
+For Q9, we convert the 546.8-MB Globus Compute task table, whose endpoint–function structure best matches (t, n, s, w ) [31]. The script samples 24 uniformly spaced 512-KiB ranges, removes boundary fragments and incomplete records, deduplicates task identifiers, parses 39,764 unique tasks, and retains valid durations among the 32 most active endpoints and 256 functions. Filtering after endpoint/function selection deliberately preserves chronol-ogy and can yield fewer than the nominal maxima. The result has 13,543 requests, 20 endpoints, and 217 functions over 212.9 days. Recorded submissions determine arrival time; fifth/95th-percentile-winsorized duration maps monotonically to w ∈
+
+[70 , 130] , and median argument size maps by rank tercile to 
+
+as ∈ { 1, 2, 3}. One pair of records shares a nanosecond times-tamp; event identifier breaks the tie, and the latter record is advanced to the next representable floating-point time to satisfy the strictly ordered model without changing trace-scale timing. We use T = 7 days and Bn = 24 . A causal predictor extrapolates only the preceding 28 days of pair-local workload. After one-sixth burn-in, five contiguous equal-count blocks are measured. Each block is preceded by up to 28 days of state warm-up, after which accounting counters are reset while the warmed predictor 11 (a) Service TTL                         
+
+> TTL (hours) normalized total cost
+> 0.00 1.00 2.01 3.01 4.02 246812
+> CAPSUM EDP-A OREO uEDC-L
+> (b) Popularity skew
+> Zipf exponent normalized total cost
+> 0.00 0.82 1.65 2.47 3.29 0.8 11.2 1.4
+> CAPSUM EDP-A OREO uEDC-L
+> (c) Deployment price
+> deployment cost C normalized total cost
+> 0.00 1.50 3.00 4.50 6.00 500 1000 2000
+> CAPSUM EDP-A OREO uEDC-L
+> (d) Catalog scalability
+> number of services decision time (us/request)
+> 0.00 3.81 7.63 11.44 15.26 30 60 120 240
+> CAPSUM EDP-A OREO uEDC-L
+
+Figure 6. Sensitivity to (a) TTL, (b) Zipf exponent, (c) deployment price at β = .25 , and (d) catalog size. Points are three-seed means. Forecast degradation       
+
+> realized max error / gamma normalized total cost
+> 0.00 0.25 0.49 0.74 0.99 0.00 0.25 0.50 0.75 1.00
+> CAPSUM-E SUM FSUM
+
+Figure 7. Prediction stress test over six controlled error levels. The x-axis is realized workload-valued error, not a classifier accuracy score. 
+
+and cache state are retained. Predictions at an arrival use only records already observed at that timestamp; neither a future block nor a future record in the current block enters the forecast. CAPSUM costs 0.725 and serves 53 .6% at an edge (Table V, Fig. 4(a)), 45.5% below EDP-A’s 1.332 . OREO costs 41 .380 at 
+
+36 .7% edge service and installs 4,104.0 images/block; uEDC-L costs 7.626 and installs 574.0, versus 13.6 for CAPSUM and 37.4 for EDP-A. Thus edge coverage helps only when deploy-ment cost is amortized. 
+
+G. Component Ablation and Cross-Factor Robustness 
+
+For Q7, removing the forecast guard raises flash-crowd cost from 0.765 to 0.796 and mobility cost from 0.726 to 0.751 
+
+(Table IV, Fig. 5(a)). Forecast-only and no-price variants are slightly cheaper on some accurate traces, quantifying the price of pathwise safety and scarcity awareness; panel (b) shows that the former saving fails under positive bias. For Q8, expanding capacity from 4 to 18 changes cost by only 
+
+0.002 at q = .2 but lowers it from 0.759 to 0.751 at q = 1 (panel (c)). At burst multiplier 2, CAPSUM costs 0.665 and beats the best source-derived adapter by 39.9% (panel (d)), excluding a single-amplitude artifact. 
+
+H. Capacity, TTL, Popularity, and Scale 
+
+Figure 3(c) and Figure 6(a)–(c) answer Q5. Extra capacity can increase EDP-A, OREO, and uEDC-L deployment cost, whereas CAPSUM’s shadow price keeps its curve nearly flat. Longer TTL amortizes deployment (largest gain from two to four hours); greater Zipf skew concentrates workload without changing the flash-crowd ranking. When C rises from 500 to 2000, CAPSUM increases from 0.684 to 0.873 , versus 2.134 , 5.662 , and 2.116 
+
+for EDP-A, OREO, and uEDC-L, respectively. Figures 3(d) and 6(d) answer Q6. Local evidence and knap-sack paths remain below 7 μs/request through 25 nodes; OREO reaches about 34 μs because each Gibbs proposal reevaluates global offloading. Over 30–240 services, CAPSUM changes from 4.64 to 5.27 μs, uEDC-L from 1.13 to 1.88 μs, and OREO from 12 .99 to 14 .39 μs. These are simulator decision times, not network or cold-start latency. The joint sweep (Fig. 4(b)) uses 25/250, 100/1,000, 400/4,000, and 1,024/10,000 node/service pairs, about 24,000 requests, three seeds, one-hour epochs, and Bn = 24 ; α is diameter-normalized and zero-demand EDP-A/uEDC-L entries are omit-ted. At the largest scale, mean times are 50 .38 , 287 .43 , 962 .12 ,and 1,334 .10 μs/request for CAPSUM, uEDC-L, OREO, and EDP-A, exposing global-placement overhead absent from one-dimensional sweeps. 
+
+I. Validity Boundary 
+
+The rankings are scoped. Globus removes the synthetic-arrival limitation but uses a byte-stratified sample with proxy costs and image sizes. Azure lacks edge locations [32], while Alibaba has a shorter, cluster-centric horizon [33]. Simulator time omits 12 
+
+prediction, lookup, transfer, cold start, and redirection; common accounting omits native reliability, energy, and latency objectives. Thus the results characterize the stated TTL model rather than the source systems universally. VIII. C ONCLUSION 
+
+CAPSUM-E decomposes into node-service Bahncard in-stances and inherits PFSUM’s tight κ(η) trade-off; its redirect overlay preserves the local schedule and is κ(η)/β -competitive against the redirectable benchmark. Finite-capacity CAPSUM adds shadow-priced evidence and density eviction with feasibility and scale invariance, but no claimed capacity ratio. Exact-offline and prediction-stress tests target the elastic mechanism; ablation, causal-trace, and scale tests target finite admission. Across 895 common-model runs, CAPSUM has the lowest cost in all three synthetic regimes and the sampled Globus trace. Future work should couple capacity and routing in the offline benchmark and measure transfer, cold-start, prediction, and directory costs in a container deployment. REFERENCES [1] K. Afachao, A. M. Abu-Mahfouz, and G. P. Hanke, “Efficient mi-croservice deployment in the edge-cloud networks with policy-gradient reinforcement learning,” IEEE Access , vol. 12, pp. 133 110–133 123, 2024. [2] A. Du, J. Jia, S. Dustdar, J. Chen, and X. Wang, “Online service placement, task scheduling, and resource allocation in hierarchical collaborative mec systems,” IEEE Transactions on Services Computing ,vol. 18, no. 2, pp. 983–997, 2025. [3] P. Wang, J. Jia, C. Fang, G. Zou, and Z. Ding, “Joint data placement and service deployment in distributed cloud-edge environment,” IEEE Transactions on Services Computing , vol. 18, no. 4, pp. 2129–2142, 2025. [4] J. Yang, K. Yang, X. Dai, Z. Xiao, H. Jiang, F. Zeng, and B. Li, “Service-aware computation offloading for parallel tasks in vec networks,” IEEE Internet of Things Journal , vol. 12, no. 3, pp. 2979–2993, 2025. [5] T. Lykouris and S. Vassilvitskii, “Competitive caching with machine learned advice,” J. ACM , vol. 68, no. 4, Jul. 2021. [Online]. Available: https://doi.org/10.1145/3447579 [6] E. Bamas, A. Maggiori, and O. Svensson, “The primal-dual method for learning augmented algorithms,” in Proceedings of the 34th International Conference on Neural Information Processing Systems , ser. NIPS ’20. Red Hook, NY, USA: Curran Associates Inc., 2020. [7] H. Zhao, X. Tang, P. Chen, and S. Deng, “Learning-augmented algorithms for the bahncard problem,” in Proceedings of the 38th International Conference on Neural Information Processing Systems , ser. NIPS ’24. Red Hook, NY, USA: Curran Associates Inc., 2024. [8] X. Xia, F. Chen, Q. He, J. Grundy, M. Abdelrazek, and H. Jin, “Online collaborative data caching in edge computing,” IEEE Transactions on Parallel and Distributed Systems , vol. 32, no. 2, pp. 281–294, 2021. [9] Q. Xia, Z. Jiao, and Z. Xu, “Online learning algorithms for context-aware video caching in d2d edge networks,” IEEE Transactions on Parallel and Distributed Systems , vol. 35, no. 1, pp. 1–19, 2024. [10] P. Wang, H. Jiang, Y. Liu, Z. Zhao, K. Zhou, and Z. Huang, “Beyond belady to attain a seemingly unattainable byte miss ratio for content delivery networks,” IEEE Transactions on Parallel and Distributed Systems , vol. 35, no. 11, pp. 1949–1963, 2024. [11] R. Luo, J. Zhao, Q. He, F. Chen, S. Wu, H. Jin, and Y. Yang, “Popularity-aware data placement in erasure coding-based edge storage systems,” 
+
+IEEE Transactions on Parallel and Distributed Systems , vol. 36, no. 12, pp. 2733–2746, 2025. [12] H. Feng, S. Guo, D. Liu, and Y. Yang, “Mean-field game theory based optimal caching control in mobile edge computing,” IEEE Transactions on Mobile Computing , vol. 22, no. 11, pp. 6585–6598, 2023. [13] T. Wang, Y. Deng, J. Mao, M. Chen, G. Liu, J. Di, and K. Li, “Towards intelligent adaptive edge caching using deep reinforcement learning,” 
+
+IEEE Transactions on Mobile Computing , vol. 23, no. 10, pp. 9289– 9304, 2024. [14] Z. Xu, L. Zhou, S. C.-K. Chau, W. Liang, H. Dai, L. Chen, W. Xu, Q. Xia, and P. Zhou, “Near-optimal and collaborative service caching in mobile edge clouds,” IEEE Transactions on Mobile Computing , vol. 22, no. 7, pp. 4070–4085, 2023. [15] F. Tütüncüo˘ glu and G. Dán, “Optimal service caching and pricing in edge computing: A bayesian gaussian process bandit approach,” IEEE Transactions on Mobile Computing , vol. 23, no. 1, pp. 705–718, 2024. [16] K. Xiao, S. Yang, F. Li, L. Zhu, X. Chen, and X. Fu, “Making serverless not so cold in edge clouds: A cost-effective online approach,” IEEE Transactions on Mobile Computing , vol. 23, no. 9, pp. 8789–8802, 2024. [17] R. Luo, Z. Zhang, Q. He, M. Xu, F. Chen, X. Dai, S. Wu, and H. Jin, “Cost-effective edge data caching with failure tolerance and popularity awareness,” IEEE Transactions on Mobile Computing , vol. 24, no. 6, pp. 5357–5369, 2025. [18] S. Deng, H. Zhao, Z. Xiang, C. Zhang, R. Jiang, Y. Li, J. Yin, S. Dustdar, and A. Y. Zomaya, “Dependent function embedding for distributed serverless edge computing,” IEEE Transactions on Parallel and Distributed Systems , vol. 33, no. 10, pp. 2346–2357, 2022. [19] C. Lin, N. Mahmoudi, S. Fan, and H. Khazaei, “Fine-grained performance and cost modeling and optimization for faas applications,” IEEE Transactions on Parallel and Distributed Systems , vol. 34, no. 1, pp. 180–194, 2023. [20] D. Cheng, K. Yan, X. Cai, Y. Gong, and C. Hu, “Slo-aware function placement for serverless workflows with layer-wise memory sharing,” 
+
+IEEE Transactions on Parallel and Distributed Systems , vol. 35, no. 6, pp. 1074–1091, 2024. [21] O. Ascigil, A. Tasiopoulos, T. K. Phan, V. Sourlas, I. Psaras, and G. Pavlou, “Resource provisioning and allocation in function-as-a-service edge-clouds,” IEEE Transactions on Services Computing , vol. 15, no. 4, pp. 2410–2424, 2022. [22] C. Chen, M. Herrera, G. Zheng, L. Xia, Z. Ling, and J. Wang, “Cross-edge orchestration of serverless functions with probabilistic caching,” 
+
+IEEE Transactions on Services Computing , 2024. [23] C. Tang, Y. Ding, S. Xiao, Z. Huang, and H. Wu, “Collaborative service caching, task offloading, and resource allocation in caching-assisted mobile edge computing,” IEEE Transactions on Services Computing ,vol. 18, no. 4, pp. 1966–1981, 2025. [24] H. Zhao, S. Deng, Z. Liu, J. Yin, and S. Dustdar, “Distributed redundant placement for microservice-based applications at the edge,” IEEE Transactions on Services Computing , vol. 15, no. 3, pp. 1732–1745, 2022. [25] J. Xu, L. Chen, and P. Zhou, “Joint service caching and task offloading for mobile edge computing in dense networks,” in IEEE INFOCOM 2018 - IEEE Conference on Computer Communications , 2018, pp. 207–215. [26] G. Qiao, S. Leng, S. Maharjan, Y. Zhang, and N. Ansari, “Deep reinforcement learning for cooperative content caching in vehicular edge computing and networks,” IEEE Internet of Things Journal , vol. 7, no. 1, pp. 247–257, 2020. [27] J. Hou, H. Xia, H. Lu, and A. Nayak, “A graph neural network approach for caching performance optimization in ndn networks,” IEEE Access ,vol. 10, pp. 112 657–112 668, 2022. [28] M. Goudarzi, M. Palaniswami, and R. Buyya, “A distributed deep reinforcement learning technique for application placement in edge and fog computing environments,” IEEE Transactions on Mobile Computing ,vol. 22, no. 5, pp. 2491–2505, 2021. [29] A. Antoniadis, C. Coester, M. Eliáš, A. Polak, and B. Simon, “Online metric algorithms with untrusted predictions,” ACM Trans. Algorithms , vol. 19, no. 2, Apr. 2023. [Online]. Available: https: //doi.org/10.1145/3582689 [30] S. Im, R. Kumar, A. Petety, and M. Purohit, “Parsimonious learning-augmented caching,” in International Conference on Machine Learning .PMLR, 2022, pp. 9588–9601. [31] A. Bauer, H. Pan, R. Chard, Y. N. Babuji, J. Bryan, D. Tiwari, I. Foster, and K. Chard, “The Globus Compute dataset: An open function-as-a-service dataset from the edge to the cloud,” Future Generation Computer Systems , vol. 153, pp. 558–574, 2024, dataset available at https://doi.org/ 10.5281/zenodo.10044780. [32] M. Shahrad, R. Fonseca, Í. Goiri, G. Chaudhry, P. Batum, J. Cooke, E. Laureano, C. Tresness, M. Russinovich, and R. Bianchini, “Serverless in the wild: Characterizing and optimizing the serverless workload at a large cloud provider,” in 2020 USENIX Annual Technical Conference (USENIX ATC 20) . USENIX Association, 2020, pp. 205–218, trace available at https://github.com/Azure/AzurePublicDataset. [33] S. Luo, H. Xu, C. Lu, K. Ye, G. Xu, L. Zhang, Y. Ding, J. He, and C. Xu, “Characterizing microservice dependency and performance: Alibaba trace analysis,” in Proceedings of the ACM Symposium on Cloud Computing ,2021, pp. 412–426, trace: Alibaba Cluster Trace v2021.

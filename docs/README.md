@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-01</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-02</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 5 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 4 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>1</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>4</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-01 19:47:32 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-02 19:56:29 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读1篇、速读4篇，聚焦移动AIGC任务编排与边缘智能协同。最值得关注的是注意力引导的多智能体扩散调度框架（A-MADiff，8.0分），以及边缘联邦学习在动态推理需求下的突发感知方案（DART-FL，7.0分）。建议优先浏览A-MADiff中的记忆感知编排思路，并与DART-FL的突发负载应对机制对照参考。</p>
+<p>今日精读2篇、速读2篇，聚焦边缘计算中的服务部署、状态更新与LLM推理优化。最值得关注的是两篇8.0分精读，分别提出容量感知的预测鲁棒部署方案及面向目标决策的状态更新与选择性卸载策略。建议优先精读这两篇论文，理解边缘场景下“预测偏差”与“数据新鲜度”的权衡设计。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">1 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="A-MADiff: Attention-Guided Multi-Agent DRL with Diffusion Policies for Memory-Aware Task Orchestration in Mobile AIGC Networks">A-MADiff: Attention-Guided Multi-Agent DRL with Diffusion Policies for Memory-Aware Task Orchestration in Mobile AIGC Networks</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Prediction-Robust Service Deployment with Capacity-Aware Edge Admission">Prediction-Robust Service Deployment with Capacity-Aware Edge Admission</span></li><li><span class="dpr-home-dashboard-paper-title" title="Update for Decisions, Not Freshness: Goal-Oriented Status Updating and Selective Offloading at the Network Edge">Update for Decisions, Not Freshness: Goal-Oriented Status Updating and Selective Offloading at the Network Edge</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">4 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DART-FL: Burst-Aware Multitask Federated Learning under Dynamic Inference Demand at the Edge">DART-FL: Burst-Aware Multitask Federated Learning under Dynamic Inference Demand at the Edge</span></li><li><span class="dpr-home-dashboard-paper-title" title="Semi-Autonomous Prosthesis Control Empowered by 5G and Mobile Edge Computing">Semi-Autonomous Prosthesis Control Empowered by 5G and Mobile Edge Computing</span></li><li><span class="dpr-home-dashboard-paper-title" title="CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing">CLASP: Chained-Request-Aware Scaling and Operator Placement for Serverless Stream Processing</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DRLM: Deep Reinforcement Learning-Based LLM Query Orchestration in Edge Environments">DRLM: Deep Reinforcement Learning-Based LLM Query Orchestration in Edge Environments</span></li><li><span class="dpr-home-dashboard-paper-title" title="Just Talk Once: Communication-Efficient Split Federated LLM Fine-Tuning on Edge Devices">Just Talk Once: Communication-Efficient Split Federated LLM Fine-Tuning on Edge Devices</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>2</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span></div>
 </section>
 </div>
 
