@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-02</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-03</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 4 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 2 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>2</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>1</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>1</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-02 19:56:29 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-03 19:53:38 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读2篇、速读2篇，聚焦边缘计算中的服务部署、状态更新与LLM推理优化。最值得关注的是两篇8.0分精读，分别提出容量感知的预测鲁棒部署方案及面向目标决策的状态更新与选择性卸载策略。建议优先精读这两篇论文，理解边缘场景下“预测偏差”与“数据新鲜度”的权衡设计。</p>
+<p>今日聚焦2篇边缘智能论文，精读1篇、速读1篇；精读为8.0分《AceSpec》，主攻非对称云边协同下的大模型推理通信效率。最有价值方向是边缘-云端分层分工与通信压缩，可显著降低LLM推理传输开销；速读综述《Intelligent Edge Computing》作背景参考。下一步可针对你的推理场景，重点测试AceSpec的压缩策略与任务切分方法。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">2 篇</strong>
+    <strong class="dpr-home-dashboard-count">1 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Prediction-Robust Service Deployment with Capacity-Aware Edge Admission">Prediction-Robust Service Deployment with Capacity-Aware Edge Admission</span></li><li><span class="dpr-home-dashboard-paper-title" title="Update for Decisions, Not Freshness: Goal-Oriented Status Updating and Selective Offloading at the Network Edge">Update for Decisions, Not Freshness: Goal-Oriented Status Updating and Selective Offloading at the Network Edge</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="AceSpec: An Asymmetric Edge-Cloud Collaborative Framework for Communication-Efficient LLM Inference">AceSpec: An Asymmetric Edge-Cloud Collaborative Framework for Communication-Efficient LLM Inference</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">2 篇</strong>
+    <strong class="dpr-home-dashboard-count">1 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DRLM: Deep Reinforcement Learning-Based LLM Query Orchestration in Edge Environments">DRLM: Deep Reinforcement Learning-Based LLM Query Orchestration in Edge Environments</span></li><li><span class="dpr-home-dashboard-paper-title" title="Just Talk Once: Communication-Efficient Split Federated LLM Fine-Tuning on Edge Devices">Just Talk Once: Communication-Efficient Split Federated LLM Fine-Tuning on Edge Devices</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Intelligent Edge Computing">Intelligent Edge Computing</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>2</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
 </section>
 </div>
 

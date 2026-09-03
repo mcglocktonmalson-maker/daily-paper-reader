@@ -1,0 +1,97 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-03T19:49:53.627643+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2609.02514v1",
+      "source": "arxiv",
+      "title": "AceSpec: An Asymmetric Edge-Cloud Collaborative Framework for Communication-Efficient LLM Inference",
+      "abstract": "Deploying Large Language Models (LLMs) on edge devices typically relies on model compression or split inference. However, compression degrades reasoning capabilities, while split inference suffers from severe Wide Area Network (WAN) communication bottlenecks. Edge-cloud speculative decoding emerges as a promising alternative, leveraging an edge small model to draft tokens for cloud verification. Yet, over volatile WANs, inevitable prediction rejections trigger catastrophic pipeline stalls and network-wide rollbacks, neutralizing collaborative gains. To overcome this, we propose AceSpec, an asymmetric edge-cloud collaborative framework. AceSpec utilizes un-saturated edge compute to proactively construct a probabilistic state cache, effectively transforming network-wide pipeline flushes into $\\mathcal{O}(1)$ local memory lookups. To preserve bandwidth, it employs an asymmetric communication protocol that transmits minimal main-chain indices uplink and compact sparse distributions downlink. Furthermore, we introduce a network-aware, Lagrangian-optimized resource allocation strategy that dynamically maximizes the local cache hit rate. Evaluations demonstrate that AceSpec achieves up to a 3.52$\\times$ throughput speedup and exhibits exceptional bandwidth immunity, sustaining near-peak inference performance even under severely constrained 50 Kbps WAN conditions.",
+      "authors": [
+        "Yida Zhang",
+        "Zhiyong Gao",
+        "Shuaibing Yue",
+        "Jie Li",
+        "Rui Wang"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-09-02T12:18:32+00:00",
+      "link": "https://arxiv.org/pdf/2609.02514v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses unsaturated edge compute to proactively build a probabilistic state that avoids pipeline stalls and network-wide rollbacks over volatile WANs",
+      "llm_evidence_cn": "利用未饱和边缘算力主动构建概率状态，在易变广域网上避免流水线停滞与全网回滚",
+      "llm_evidence": "利用未饱和边缘算力主动构建概率状态，在易变广域网上避免流水线停滞与全网回滚",
+      "canonical_evidence": "利用未饱和边缘算力主动构建概率状态，在易变广域网上避免流水线停滞与全网回滚",
+      "llm_tldr_en": "AceSpec uses asymmetric edge-cloud speculative decoding; unsaturated edge compute proactively builds a probabilistic state to reduce prediction-rejection pipeline stalls and network-wide rollbacks, improving resilience of edge-cloud LLM inference over volatile WANs.",
+      "llm_tldr_cn": "边云协同投机解码中，云端校验拒绝会触发流水线停滞和全网回滚，在易变广域网下抵消协同增益。AceSpec提出非对称边云协同框架，利用未饱和的边缘算力主动构造概率状态，从源头降低拒绝导致的停滞与回滚。该框架在波动广域网上提升了LLM推理的稳定性与通信效率，也展示了边缘计算增强网络服务韧性的有效途径。",
+      "llm_tldr": "边云协同投机解码中，云端校验拒绝会触发流水线停滞和全网回滚，在易变广域网下抵消协同增益。AceSpec提出非对称边云协同框架，利用未饱和的边缘算力主动构造概率状态，从源头降低拒绝导致的停滞与回滚。该框架在波动广域网上提升了LLM推理的稳定性与通信效率，也展示了边缘计算增强网络服务韧性的有效途径。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "How does edge computing enhance network resilience against failures?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2609.00181v1",
+      "source": "arxiv",
+      "title": "Intelligent Edge Computing",
+      "abstract": "The number of edge devices in large-scale edge systems is rapidly increasing. Edge devices have limited processing power, memory, and network bandwidth, making resource utilization and data management during edge query processing challenging. Joins are among the costliest database operations in terms of time and resources. The State-of-the-Art edge query processing, Column Imprint-Hash Join CI-HJ, addresses this challenge using equi-height binning to accelerate hash joins. However, it lacks efficiency in real-time processing and scans unnecessary cachelines. This paper presents Workload Aware Column Imprint-Hash Join WACI-HJ, which uses a workload-aware approach to accelerate hash joins. Predicting the upcoming query workload in advance further improves its suitability for real-time edge query processing. WACI-HJ comprises two phases: WACI-HJ Generation Phase, including Pre-processing, Prediction, and Blocking and Hashing modules to compute bins based on the predicted workload before query arrival, and Query Processing and Resource Utilization, which handles query processing and CPU, RAM, and I/O utilization. Evaluations on a benchmark dataset and a real-world Smart Transportation dataset show a 54% reduction in cachelines read and 10% improved query execution time. The proposed technique is effective for both scaled and skewed data. Although PCR is an indirect measure of energy consumption, the work also directly measures energy consumption through energy-efficiency experiments. WACI-HJ shows 1%, 38%, and 49% gain in CPU, RAM, and I/O, respectively. Optimizing cache usage and query execution speeds up real-time traffic analysis, congestion management, and routing in Smart Transportation. Additionally, this technology can be applied to other domains to accelerate edge query processing.",
+      "authors": [
+        "Kalgi Gandhi",
+        "Minal Bhise"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.AI"
+      ],
+      "published": "2026-08-31T18:04:32+00:00",
+      "link": "https://arxiv.org/pdf/2609.00181v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "edge computing paradigm with resource-constrained edge devices performing real-time query processing",
+      "llm_evidence_cn": "在边缘设备上进行实时查询处理，属于边缘计算范式",
+      "llm_evidence": "在边缘设备上进行实时查询处理，属于边缘计算范式",
+      "canonical_evidence": "在边缘设备上进行实时查询处理，属于边缘计算范式",
+      "llm_tldr_en": "This paper improves edge query processing by introducing a workload-aware column imprint hash join that predicts upcoming workloads to reduce unnecessary cache scans and accelerate joins on resource-limited edge devices.",
+      "llm_tldr_cn": "随着边缘设备数量增加，边缘查询处理面临资源与实时性挑战。针对现有列印记哈希连接在实时处理上的不足，论文提出负载感知的WACI-HJ方法，通过提前预测查询负载来减少缓存行扫描并加速哈希连接，从而提升边缘数据库查询效率。该方法适用于资源受限的大规模边缘系统，为智能边缘计算中的数据管理提供更高效的执行策略。",
+      "llm_tldr": "随着边缘设备数量增加，边缘查询处理面临资源与实时性挑战。针对现有列印记哈希连接在实时处理上的不足，论文提出负载感知的WACI-HJ方法，通过提前预测查询负载来减少缓存行扫描并加速哈希连接，从而提升边缘数据库查询效率。该方法适用于资源受限的大规模边缘系统，为智能边缘计算中的数据管理提供更高效的执行策略。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
