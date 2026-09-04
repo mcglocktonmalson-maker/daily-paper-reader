@@ -1,0 +1,57 @@
+{
+  "date": "20260904",
+  "date_label": "",
+  "generated_at": "2026-09-04 19:49:38 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.28878v1",
+      "route": "202609/04/2608.28878v1-hybrid-offline-online-multi-agent-decision-transformers-for-wireless-resource-management",
+      "title": "Hybrid Offline-Online Multi-Agent Decision Transformers for Wireless Resource Management",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向无线资源管理的全分布式混合离线-在线多智能体决策Transformer",
+      "first_seen_at": "2026-09-04 19:49:38 UTC",
+      "updated_at": "2026-09-04 19:49:38 UTC"
+    },
+    {
+      "paper_id": "2609.03318v1",
+      "route": "202609/04/2609.03318v1-iapetus-content-aware-hierarchical-scheduling-for-collaborative-vit-inference-in-leo-satellite-networks",
+      "title": "Iapetus: Content-Aware Hierarchical Scheduling for Collaborative ViT Inference in LEO Satellite Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "卫星边缘计算中面向协作推理的内容感知分层调度，协调层卸载与令牌压缩",
+      "first_seen_at": "2026-09-04 19:49:38 UTC",
+      "updated_at": "2026-09-04 19:49:38 UTC"
+    },
+    {
+      "paper_id": "2609.03503v1",
+      "route": "202609/04/2609.03503v1-ppo-stgnn-a-proximal-policy-optimization-approach-with-spatio-temporal-graph-neural-networks-for-dag-task-scheduling-in-cloud-edge-end-computing",
+      "title": "PPO-STGNN: A Proximal Policy Optimization Approach with Spatio-Temporal Graph Neural Networks for DAG Task Scheduling in Cloud-Edge-End Computing",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "在算力、带宽和能耗约束下，用PPO结合时空图神经网络将依赖DAG任务调度到云边端异构资源上",
+      "first_seen_at": "2026-09-04 19:49:38 UTC",
+      "updated_at": "2026-09-04 19:49:38 UTC"
+    }
+  ]
+}

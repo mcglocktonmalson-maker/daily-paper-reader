@@ -1,0 +1,887 @@
+Title: Iapetus: Content-Aware Hierarchical Scheduling for Collaborative ViT Inference in LEO Satellite Networks
+
+URL Source: https://arxiv.org/pdf/2609.03318v1
+
+Published Time: Fri, 04 Sep 2026 00:27:20 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Iapetus: Content-Aware Hierarchical Scheduling for Collaborative ViT Inference in LEO Satellite Networks 
+
+# Yan Chen, Yunxiang Zhang, Guanjun Jiang, and Haiquan Wang ∗
+
+Beihang University Beijing, China 
+
+ABSTRACT 
+
+Collaborative inference pools distributed resources to run compute-intensive Vision Transformers (ViTs) in satellite edge computing. Model partitioning enables such collabo-ration by assigning consecutive layer groups to different nodes, but the large volume of intermediate activation data incurs substantial transfer overhead that can erase its benefit. Token compression reduces downstream computation and activation transfer, but its quality impact depends on input content, model depth, and earlier pruning decisions, while layer offloading must adapt to time-varying contact and battery conditions. We present Iapetus, a content-aware hi-erarchical scheduler that screens constellation-wide options to retain a bounded candidate set, then refines each candi-date into a complete token compression and layer offloading trajectory using quality prediction and joint planning. A uni-fied objective balances per-task latency, energy, and quality loss against accumulated workload and battery pressures. We implement Iapetus on an NVIDIA Jetson AGX Orin hardware-in-the-loop testbed and use its validated execution model for constellation-scale trace replay across multiple ViT workloads and constellation settings. At 5 tasks/s, Iape-tus accomplishes 91.6% of released tasks, 26.1 percentage points above MARATD3, the strongest baseline, while re-ducing mean latency and battery draw by 53.0% and 70.8%, respectively, and meeting quality targets. 
+
+KEYWORDS 
+
+satellite edge computing, Vision Transformer, collaborative inference, trajectory planning, hierarchical scheduling 
+
+1 INTRODUCTION 
+
+With the rise of satellite edge computing (SEC), low Earth orbit (LEO) constellations are evolving beyond sensing and relay roles into platforms that process Earth observation (EO) data in orbit [34, 47]. Onboard processing avoids downlink-ing every high-resolution image and enables timely disaster, maritime, and environmental analysis [2, 34]. As onboard intelligence advances, Vision Transformers (ViTs) are attrac-tive backbones for global visual modeling [11, 21], with in-terest in their deployment for in-orbit remote sensing [1, 21]. 
+
+> ∗Corresponding author: Haiquan Wang (whq@buaa.edu.cn).
+
+However, bringing ViTs onboard shifts the bottleneck from downlink to computation and energy: ViT-L/16 contains over 300M parameters and requires approximately 190.7 GFLOPs per inference [42]. Such workloads consume scarce onboard compute and share the satellite’s power budget with com-munication and other spacecraft functions, while inference during eclipse draws from a finite battery whose sustained deep discharge can accelerate aging [13, 27]. A sensing satel-lite may therefore capture a time-sensitive EO task that it cannot finish locally or immediately offload to ground. Collaborative inference helps bridge this resource gap by exploiting compute beyond the sensing satellite. It can take two forms: full offloading sends the raw input to a peer satellite or reachable ground station [27, 47], while model partitioning assigns consecutive layer groups to different nodes [6, 10, 46]. The latter enables finer-grained use of distributed compute, but shifts part of the bottleneck to com-munication at partition boundaries. For convolutional neural networks (CNNs), this overhead is often modest because fea-ture maps shrink with depth. ViTs behave differently: ViT representations retain sequence length and embedding di-mension, making intermediate activations comparable to or larger than the raw input [28]. Transferring these activations over an inter-satellite link (ISL) or ground-satellite link (GSL) can therefore offset the gains from partitioning. In our mea-surement setup (§ 2), the fastest dense split takes 1.33 s, more than twice the 0.64 s local inference latency. Token compres-sion mitigates both costs by reducing subsequent computa-tion and downstream activations, thereby lowering compu-tation, communication, and energy consumption [5, 25]. Fixed or decoupled pruning and layer offloading cannot adapt to heterogeneous inputs and system conditions. EO images vary in texture, spatial structure, and redundancy, so the same pruning aggressiveness can cause different quality degradation across inputs. Under the same pruning setting (§ 2), our measurements show no accuracy loss for Desert scenes but a 21.79 pp loss for Park scenes. A content-agnostic policy may retain unnecessary computation and traffic or prune too aggressively for the application target. Meanwhile, token compression and layer offloading are inherently cou-pled: a layer’s compression decision changes all remaining computation and the payload of later transfers, which can determine whether those transfers fit within finite contact arXiv:2609.03318v1 [cs.DC] 3 Sep 2026 Chen et al. 
+
+windows, while layer offloading determines where and when these costs occur [25]. We therefore formulate each schedul-ing decision as a complete content-aware token compression and layer offloading trajectory rather than independently selecting a compression ratio or a single partitioning point. Existing collaborative inference systems optimize compres-sion and partitioning within predefined execution structures, but do not construct content-aware layer-wise trajectories under time-varying contacts [6, 10, 46]. Terrestrial mobile edge computing (MEC) systems typi-cally assume a small device group or a persistently reachable cloud path [10, 25]. In LEO satellite networks, orbital motion instead exposes each task to finite ISL and GSL windows and multiple satellite or ground candidates [24, 29], while workload and energy state continually change the available resources for inference [27, 47]. Applying this joint adap-tation across these candidates creates a constellation-scale online planning problem. Fine-grained planning would re-quire collecting rapidly changing state across many satellites and evaluating numerous layer-wise decisions, increasing coordination overhead and risking stale information; purely local decisions can miss cross-node dependencies in con-tacts, resources, and layer execution. Prior LEO systems similarly use hierarchical or localized coordination to tame constellation-scale dynamics [7, 24]. This tension calls for scalable coordination that limits global state collection while retaining the local detail needed for feasible execution. These characteristics raise three key challenges. C1: Es-timating cumulative quality effects along an evolving pruning trajectory. Pruning quality depends on input con-tent, model depth, and the accepted pruning prefix, but eval-uating alternatives by inference is too costly online. C2: Constructing feasible token compression and layer offloading trajectories. Each pruning decision reshapes downstream computation and future transfer payloads, while offloading determines where and when these costs occur; the joint trajectory must satisfy finite contacts, battery limits, and deadlines. C3: Scaling trajectory planning across the constellation. Each constellation-level candidate expands into a layer-wise joint trajectory, so flat global planning would require rapidly changing constellation state and a large combinatorial search. Local planning alone, however, can miss dependencies needed for feasible execution. To address these challenges, we present Iapetus, an In-orbit system for Adaptive Pruning and Execution Trajectory planning with Unified Scheduling. Iapetus treats a complete content-aware token compression and layer offloading tra-jectory as its scheduling object for collaborative onboard ViT inference. Content-aware prediction and hybrid planning construct each trajectory, a common Lyapunov score com-pares complete plans, and hierarchical screening bounds the constellation-wide search. The leader associated with the selected plan then commits it once for fixed execution. We implement Iapetus as a trace-driven SEC prototype calibrated with measurements from two NVIDIA Jetson AGX Orin devices [4, 27] and validate its execution model on the corresponding hardware-in-the-loop (HIL) testbed. Using this implementation, we evaluate Iapetus across representa-tive EO workloads and constellation settings. At 5 tasks/s in the default setting, Iapetus achieves a 91.60% task accom-plishment ratio (TAR). Relative to MARATD3, the strongest baseline, this improves TAR by 26.1 percentage points (pp) and reduces mean latency and battery draw by 53.0% and 70.8%, respectively, while meeting task-quality targets. The main contributions are as follows: 
+
+• We characterize why collaborative ViT inference requires planning token compression and layer offloading as a com-plete trajectory under LEO dynamics. Measurements show that dense activations can erase partitioning gains and that pruning sensitivity varies across input content. 
+
+• We develop Iapetus, a Lyapunov-guided hierarchical sched-uler that combines content-aware quality prediction with joint compression and offloading across model layers. Its design screens a bounded set of constellation-level candi-dates before refining them into complete trajectories. 
+
+• We build a trace-driven prototype with an HIL testbed and evaluate it across three ViT backbones, two token com-pression strategies, and two constellation settings. Results demonstrate gains in task accomplishment, latency, and battery draw while meeting quality targets. 
+
+2 MOTIVATION 
+
+This section uses three analyses to expose the design require-ments for collaborative ViT inference in SEC. We first exam-ine the computation and communication trade-off of model partitioning, then study how pruning tolerance varies with image content, and finally show how time-varying condi-tions change the preferred pruning and offloading decisions. 
+
+Measurement methodology. We fine tune ViT-L on AID [38] and use it as the representative workload, with per-layer ex-ecution measured on a Jetson AGX Orin. We compare three execution primitives: local inference at the sensing satellite, full peer offloading of the raw input, and model partitioning that transfers an intermediate activation to a peer satellite. To study token compression, we use ToMe [3], which progres-sively merges similar tokens without retraining; 𝑟 denotes the number of tokens reduced per Transformer block. 1 We report latency and overall accuracy (OA). 2 For the dynamic    
+
+> 1Local, Peer, Dense, and ToMe denote local-only inference, full peer offload-ing, dense cut 1, and ToMe with 𝑟 =8 at cut 23, respectively.
+> 2Peer transfers the raw input; Dense and ToMe transfer FP16 activations with 197 and 13 tokens per model input, including the class token. Iapetus: Content-Aware Hierarchical Scheduling
+
+Table 1: Representative ViT-L strategies at 0.1 Gbps under an accuracy-loss budget of 4 pp.                             
+
+> Strategy Payload(MiB) ↓Latency(ms) ↓Battery draw(J) ↓Accuracy loss(pp) ↓
+> Local –641.2 6.76 0.00 Peer 32.96 3023.8 32.17 0.00 Dense 12.31 1326.3 17.22 0.00 ToMe 0.81 505.4 3.91 0.46 04812 16
+> Tokens reduced per block (r)
+> Park Bare Land Bridge Mountain Desert
+> AID scene class  0.94 0.93 0.92 0.72 0.15 0.95 0.93 0.91 0.81 0.59 0.96 0.96 0.96 0.82 0.40 1.00 0.99 0.99 0.95 0.49 0.99 0.99 0.99 0.99 0.96
+> 0.0 0.5 1.0
+> Accuracy
+
+(a) Accuracy loss across scene classes. Full offload Median fixed Best fixed Exhaustive ref.   
+
+> 0.5 1510 50
+> Mean latency (s)  41.63 0.90 0.72 0.60
+> Mean latency Battery draw
+> 036912 15
+> Battery draw (J/task)
+> 12.67 10.57 7.20 5.56
+
+(b) Exhaustive reference vs. fixed plans. 
+
+Figure 1: Content sensitivity and limits of fixed plans. 
+
+analysis, we release tasks at a fixed rate of 5 tasks/s under time-varying system state; all other settings follow § 7.1. These measurements focus on onboard execution and inter-satellite collaboration, while ground execution remains an optional tail when contact is available. 
+
+Intermediate activations limit ViT partitioning. For each partitioned strategy in Table 1, we scan all internal cut points and report the fastest plan satisfying the accuracy budget. At 0.1 Gbps, neither raw-input offloading nor dense partitioning outperforms local inference: the best dense split still transfers 12.31 MiB and takes 1326.3 ms, compared with 641.2 ms locally. Dense ViT activations therefore remain large enough for communication to offset the benefit of dis-tributed computation, consistent with prior observations on ViT intermediates [42]. Token compression changes this trade-off. The ToMe split reduces the transferred activation to 0.81 MiB and completes in 505.4 ms while drawing 3.91 J. Fewer tokens reduce both transfer volume and downstream Transformer computation. Token compression is key to ben-eficial ViT partitioning over constrained ISLs, but how ag-gressively tokens can be removed depends on the input. 
+
+Pruning sensitivity varies with image content. Fig-ure 1(a) reports the OA of representative AID scene classes under 𝑟 ∈ { 0, 4, 8, 12 , 16 }, applied uniformly across Trans-former blocks. The same setting can produce sharply differ-ent accuracy loss: at 𝑟 = 12, Park loses 21.79 pp, whereas Desert shows no accuracy loss. A fixed setting must there-fore either remain conservative for tolerant images or risk violating the quality target for sensitive ones. As further val-idated in Section 7.3, model depth adds another dependency because an early pruning action affects a longer suffix of the Transformer than the same action near the output. Since scene labels and counterfactual pruning outcomes are un-available before inference, online planning needs to estimate pruning sensitivity from raw image content while account-ing for model depth. Content awareness can determine how much pruning an input tolerates, but the preferred execution location still depends on the runtime system state. 
+
+Static pruning and layer offloading are suboptimal. 
+
+Figure 1(b) compares the lowest-latency and median fixed plans with an offline exhaustive reference over the measured configurations. On a disjoint validation trace, we retain plans with at least 99.9% accomplishment, select the lowest-latency plan ( 𝑟 = 8, cut 5) and a median-latency plan (dense, cut 4). Each fixed policy uses one configuration, whereas the reference selects the lowest-latency feasible plan for each task. The exhaustive reference and fixed policies accomplish approximately 99.99% of tasks, while full peer offloading accomplishes only 77.81%. At comparable accomplishment, the reference reduces mean latency and battery draw by 16.14% and 22.88%, respectively, relative to the best fixed plan. As queueing, contacts, and available compute change, the preferred pruning setting and partition point change with them. Pruning and layer offloading must therefore be adapted jointly to the runtime state. Together, these observations show that token compression enables ViT partitioning, while pruning and offloading must adapt to input content and runtime state. The exhaustive ref-erence reveals this opportunity; Iapetus realizes it through content-aware prediction and joint trajectory planning. 
+
+3 SYSTEM OVERVIEW AND EXECUTION ABSTRACTION 
+
+Iapetus organizes collaborative ViT scheduling by first se-lecting coarse candidates and then constructing complete trajectories that jointly specify token compression and layer offloading across model depth. 
+
+3.1 System Architecture and Workflow 
+
+Architecture. Figure 2 illustrates the high-level architec-ture of Iapetus. When a satellite observes a designated re-gion of interest (RoI), it becomes the sensing satellite for capturing EO task, which may then be processed collabora-tively by other satellites or a reachable ground station. These nodes communicate over time-varying ISL and GSL contacts. Satellites provide sensing, computation, and communication resources under battery and energy-harvesting constraints, while ground stations provide access to stronger ground-side compute when visible. To organize this distributed execution, Iapetus uses fixed, non-overlapping swarms as local coordi-nation units. Before runtime, the nominal +Grid topology is partitioned using radius-one periodic Lee coloring [14, 19], providing stable coordination domains with bounded mem-bership, non-overlapping state, and predictable control over-head. Each swarm contains one leader and nearby members; Chen et al. COMMIT 
+
+> fixed replay
+> REJECT
+> no plan
+
+Committed Trajectory    
+
+> 1) source
+> sensing + ingress
+> 2) leader A
+> early layers + pruning
+> �1, . . . , � �
+> 3) member
+> remaining layers onboard
+> ��+1 , . . . , � �
+> 4) ground (optional) ground tail + result
+> ��+1 , . . . , � �res
+> layer-wise execution path
+> Ground Stations
+
+...   
+
+> Satellite Networks
+> Swarm C Swarm A Swarm B
+> source leader member reachable swarms+coarse scoring
+> Top-K execution candidates
+> Candidate Generation
+> one detailed pruning/ofloading trajectory per candidate
+> Per-Candidate Plan
+> detailed scoring & commit best feasible plan
+> Final Plan Selection
+> state
+> Shared Snapshot
+> task topology resources
+> Offline Support
+> swarm map coarse profiles
+> content-aware predictor
+> pruning & offloading policy
+
+
+
+> ISL
+> GSL data flow (execution)
+> control flow (planning)
+> RoIs
+
+Figure 2: Overview of Iapetus. 
+
+the leader coordinates local planning, while current contacts determine the members available for execution. Ground sta-tions remain optional endpoints outside the swarms. 
+
+Workflow. Figure 2 summarizes the task-driven workflow of Iapetus. The swarm map, cost models, content-aware predic-tor, and planning policy are prepared offline and preloaded before runtime. For each task, ❶ the sensing satellite com-bines the task and current system state into a shared snap-shot. ❷ It screens reachable swarms from this snapshot and retains a bounded set of execution candidates (§ 4.2). ❸ The corresponding swarm leaders concurrently construct com-plete token compression and layer offloading trajectories and return the resulting plans (§ 5). ❹ The sensing satellite applies detailed Lyapunov accounting and selects the lowest-cost feasible plan, or rejects the task if none exists (§ 5.3). ❺
+
+The associated leader commits the required resources and coordinates fixed execution across participating satellites and an optional ground endpoint. The completed execution updates the shared state for the next task. 
+
+3.2 Decision and Execution Abstraction 
+
+Time is slotted with duration Δ. Let S be the fixed swarm set, N𝑠 the satellites in swarm 𝑠 , and 𝐿 the number of Trans-former layers. Each task 𝑘 released at slot 𝑡 is represented by 
+
+(𝑛 𝑘 , 𝐷 max 
+
+𝑘 , 𝜌 min 
+
+𝑘 , 𝝃 𝑘 ), denoting its sensing satellite, deadline, quality target, and content descriptor, respectively. Let S𝑘 (𝑡 )
+
+contain the swarms reachable from 𝑛 𝑘 . Let M = {sat , gnd }
+
+denote satellite-only and ground-assisted execution, respec-tively. Each candidate 𝑐 = (𝑠, 𝑚 ) ∈ C 𝑘 (𝑡 ) ⊆ S 𝑘 (𝑡 ) × M se-lects a swarm and execution mode. For candidate 𝑐 , the layer planner constructs the trajectory 𝜏 𝑘 (𝑐 ) = (𝜶 𝑘 (𝑐 ), 𝜷 𝑘 (𝑐 )) ,whose layer-ℓ entries specify the fraction of incoming to-kens removed and the execution node, respectively. A node change transfers the current activation; ground-assisted exe-cution may enter one reachable ground endpoint, after which ground is absorbing. Combining the candidate, trajectory, and detailed resource and performance accounting forms the complete plan 𝑞 𝑘 (𝑐 ). A feasible plan satisfies the mode, contact, reservation, battery, and deadline constraints at the time of commitment. For notational simplicity, we omit the candidate argument 𝑐 when it is clear from context. The complete plan determines its realized latency, bat-tery draw, and quality. The pruning decisions up to layer ℓ
+
+jointly determine the workload 𝑊 𝑘,ℓ (𝜶 𝑘, 1: ℓ ) of that layer and the size of the activation produced for a possible transfer. For a completed plan 𝑞 𝑘 , let 𝐷 𝑘 (𝑞 𝑘 ) denote its total latency, including ingress, activation transfer, waiting, and compu-tation, and let 𝐸 𝑘 (𝑞 𝑘 ) denote its total onboard battery draw from satellite computation and transmission. Transfer oc-curs only at an offloading transition. Let 𝜌 d
+
+𝑘 > 0 be the quality achieved by dense inference and 𝜌 𝑘 (𝑞 𝑘 ) the quality achieved by the completed plan. The realized quality loss is 
+
+𝐿 𝑘 (𝑞 𝑘 ) = [𝜌 d
+
+𝑘 − 𝜌 𝑘 (𝑞 𝑘 )] +/𝜌 d
+
+𝑘 . We use the following normal-ized cost to evaluate realized plan outcomes: 
+
+Φ𝑘 (𝑞 𝑘 ) = 𝜔 𝐷 
+
+𝐷 𝑘 (𝑞 𝑘 )
+
+𝐷 max 
+
+> 𝑘
+
++ 𝜔 𝐸 
+
+𝐸 𝑘 (𝑞 𝑘 )
+
+𝐸 ref 
+
++ 𝜔 𝐴 𝐿 𝑘 (𝑞 𝑘 ), (1) 
+
+where 𝐸 ref > 0 normalizes battery draw, 𝜔 𝐷 , 𝜔 𝐸 , 𝜔 𝐴 ≥ 0, and 
+
+𝜔 𝐷 + 𝜔 𝐸 + 𝜔 𝐴 = 1. The completed execution meets the task’s quality target when 𝜌 𝑘 (𝑞 𝑘 ) ≥ 𝜌 min 
+
+𝑘 .
+
+4 HIERARCHICAL COORDINATION 
+
+§ 3 represents each scheduling decision as a coarse candidate that is refined into a complete pruning and execution tra-jectory. Exhaustively refining every reachable swarm–mode pair, however, would incur substantial online planning over-head as the constellation grows. Iapetus avoids this cost through Lyapunov-guided swarm screening, retaining only a bounded set of promising candidates for detailed planning. As Figure 3 shows, candidate generation proceeds through reachability filtering ( ❶), swarm screening ( ❷), mode expan-sion ( ❸), and candidate ranking and retention ( ❹). 
+
+4.1 Lyapunov Score of a Complete Plan 
+
+We first define the common plan score used as the reference for both coarse candidate ranking and final plan selection. Selecting a swarm solely by its execution cost can repeatedly concentrate workload and battery draw on the same satel-lites. To capture these longer-term effects, Iapetus augments each plan’s execution cost with penalties that reflect the ac-cumulated workload and battery pressures. For a complete plan 𝑞 𝑘 , we summarize its workload and mean battery draw within swarm 𝑠 as follows: 
+
+𝑊 𝑘,𝑠 (𝑞 𝑘 ) =
+
+> 𝐿
+
+∑︁  
+
+> ℓ=1
+
+1[𝛽 𝑘,ℓ ∈ N 𝑠 ]𝑊 𝑘,ℓ (𝜶 𝑘, 1: ℓ ),𝐸 𝑘,𝑠 (𝑞 𝑘 ) =
+
+Í𝑛 ∈N 𝑠 𝐸 𝑘,𝑛 (𝑞 𝑘 )| N 𝑠 | .
+
+(2) 
+
+Ground execution contributes no satellite workload. We sum workload because it consumes the aggregate service capacity of the swarm, whereas battery draw is averaged to Iapetus: Content-Aware Hierarchical Scheduling Coarse ranking and retention    
+
+> load pressure
+> battery pressure
+> estimated task cost
+> Coarse score
+> lower is better •keep best sat-only
+> •keep best gnd-ass
+> •add candidates from best to worst
+> candidates sorted
+> Swarm A Swarm B Swarm C
+> 123
+> sat-only ground-ass sat-only 0.18 0.32 0.44 Swarm B Swarm C
+> 45
+> ground-ass sat-only 0.61 0.73
+
+
+
+> Swarm screen
+> rank by pressure, ingress, and capacity
+> 12345
+> Swarm A Swarm B Swarm C Swarm D Swarm E retained swarms
+
+Reachability  
+
+> reachable unreachable
+> all configured swarms reachable pool
+
+
+
+> Mode expansion
+> enumerate
+
+ 
+
+> Swarm A
+> sat-only gnd-ass
+> Swarm B Swarm C
+> √√√√√
+> ×
+> OUTPUT
+> Bounded Candidate Set
+> Candidates retained
+> No feasible candidate
+> Swarm A Swarm B Swarm C
+> 123
+> sat-only gnd-ass sat-only
+> INPUT Offline assets
+> swarm map coarse profiles
+> Admission snapshot
+> task
+> topology
+> resources
+> swarm state
+
+Figure 3: Bounded swarm–mode candidate generation. 
+
+align with the mean battery state used to construct the bat-tery pressure. To characterize the battery state, let 𝐵 𝑛 (𝑡 ) ∈ [𝐵 min , 𝐵 max ] denote the battery level of satellite 𝑛 , and let 
+
+𝐵 𝑠 (𝑡 ) = Í𝑛 ∈ N 𝑠 𝐵 𝑛 (𝑡 )/|N 𝑠 | denote the swarm mean. Every feasible plan preserves the reserve 𝐵 min at each satellite. To track accumulated workload pressure, let 𝜇 𝑛 (𝑡 ) denote satellite 𝑛 ’s compute capacity and 𝜇 𝑠 (𝑡 ) = Í𝑛 ∈ N 𝑠 𝜇 𝑛 (𝑡 ) the aggregate capacity of swarm 𝑠 . The swarm can therefore serve up to Δ𝜇 𝑠 (𝑡 ) workload in one slot. Let A𝑡 contain the tasks admitted in slot 𝑡 , and let 𝑠 𝑘 denote the swarm of task 
+
+𝑘 ’s committed plan. The workload queue evolves as 
+
+𝑄 𝑠 (𝑡 + 1) = [𝑄 𝑠 (𝑡 ) − Δ𝜇 𝑠 (𝑡 ) ] + +∑︁  
+
+> 𝑘 ∈A 𝑡
+
+1[𝑠 𝑘 = 𝑠 ]𝑊 𝑘,𝑠 (𝑞 𝑘 ). (3) 
+
+Here 𝑄 𝑠 (𝑡 ) is a virtual swarm workload queue that summa-rizes accumulated workload pressure for scheduling, rather than the exact sum of node execution queues. In parallel, Iapetus tracks persistent battery depletion through the di-mensionless virtual pressure 
+
+𝑍 𝑠 (𝑡 + 1) =
+
+
+
+𝑍 𝑠 (𝑡 ) + 𝐵 𝑠 (𝑡 ) − 𝐵 𝑠 (𝑡 + 1)
+
+𝐵 ref 
+
++
+
+, (4) 
+
+where 𝐵 ref > 0 normalizes battery variation. Net recharge lowers 𝑍 𝑠 (𝑡 ), whereas sustained depletion raises it. Thus the reserve at each satellite ensures instantaneous battery safety, while 𝑍 𝑠 (𝑡 ) discourages persistent depletion over time. With the workload and battery pressures defined, we fol-low Lyapunov drift-plus-penalty control [30] and collect the system state as Θ(𝑡 ) = {𝑄 𝑠 (𝑡 ), 𝑍 𝑠 (𝑡 )} 𝑠 ∈ S . Using a quadratic Lyapunov function centered at the workload target 𝜃 𝑠 , and retaining the terms that depend on the current plan in the standard drift bound, yields the following score for a plan 
+
+𝑞 𝑘 assigned to swarm 𝑠 :
+
+Ψ𝑘,𝑠 (𝑞 𝑘 ; 𝑡 ) = [𝑄 𝑠 (𝑡 ) − 𝜃 𝑠 ]𝑊 𝑘,𝑠 (𝑞 𝑘 )(𝑄 ref )2 + 𝑍 𝑠 (𝑡 ) 𝐸 𝑘,𝑠 (𝑞 𝑘 )
+
+𝐵 ref 
+
++ 𝑉 Φ𝑘 (𝑞 𝑘 ), (5) 
+
+where 𝑉 > 0 controls the emphasis on the task cost, 𝑄 ref > 0normalizes workload, and 𝜃 𝑠 sets the desired workload level, allowing the workload term to favor underloaded swarms. A lower score is preferred. The first two terms penalize ad-ditional computation and battery draw according to the ac-cumulated swarm pressures, while the third captures the execution cost of the current plan. This score provides a ranking criterion for the bounded search: candidate gen-eration uses coarse estimates, whereas final selection uses detailed accounting. Appendix A provides the derivation. 
+
+4.2 Coarse Candidate Generation 
+
+With the plan score defined, Iapetus progressively narrows the search using increasingly detailed information: light-weight swarm summaries first bound the coordination scope, after which mode-specific estimates rank the remaining can-didates under the same score. 
+
+Reachability and swarm screening. Iapetus first removes swarms whose leaders have no usable ingress path from task 
+
+𝑘 ’s sensing satellite under the current contact state ( ❶ in Fig-ure 3), yielding the reachable set S𝑘 (𝑡 ). Iapetus ranks each reachable swarm by the normalized sum of workload pres-sure, battery pressure, ingress latency, and estimated service time under its aggregate compute capacity. It retains up to 
+
+𝐾 swarm swarms in S′
+
+𝑘 (𝑡 ) (❷). This lightweight screening step limits the number of swarms considered before execution modes are expanded for subsequent candidate construction. 
+
+Mode expansion and coarse estimation. For each retained swarm 𝑠 ∈ S ′
+
+𝑘 (𝑡 ), Iapetus instantiates the satellite-only mode and, when a reachable ground tail exists, the ground-assisted mode ( ❸ in Figure 3). For each resulting candidate 
+
+𝑐 = (𝑠, 𝑚 ), coarse models and measured lookup tables pro-vide nominal estimates of per-layer workload, activation payload, and quality. The quality estimate uses the task de-scriptor, while detailed quality prediction is deferred to trajec-tory planning. These estimates are then combined with the current queue, compute, battery, and contact state for each execution mode. For satellite-only mode, b𝑊 𝑘 (𝑐 ) covers full satellite execution; for ground-assisted mode, it covers the satellite prefix. b𝐸 𝑘 (𝑐 ) averages the estimated satellite com-putation and transfer energy over the swarm, while bΦ𝑘 (𝑐 ; 𝑡 )
+
+combines the resulting latency and onboard energy with predicted quality loss. For screening, an optimistic latency bound sums the estimated ingress, aggregate swarm service, and optional ground-tail delay; detailed layer waiting and transitions are deferred to trajectory planning. 
+
+Candidate scoring and retention. Iapetus evaluates each candidate using the common Lyapunov score: 
+
+bΨ𝑘 (𝑐 ; 𝑡 ) = [𝑄 𝑠 (𝑡 ) − 𝜃 𝑠 ]c𝑊 𝑘 (𝑐 )(𝑄 ref )2 + 𝑍 𝑠 (𝑡 ) b𝐸 𝑘 (𝑐 )
+
+𝐵 ref 
+
++ 𝑉 bΦ𝑘 (𝑐 ; 𝑡 ). (6) 
+
+Candidates that fail cheap necessary checks on contact avail-ability, an optimistic latency bound, or battery reserve are discarded before ranking. Because coarse estimates may Chen et al. 
+
+mis-rank execution modes, Iapetus first retains the lowest-scoring surviving candidate from each available mode when the candidate budget permits. It fills the remaining positions in global score order, subject to |C 𝑘 (𝑡 )| ≤ 𝐾 cand (❹ in Fig-ure 3). If C𝑘 (𝑡 ) = ∅, the task is rejected; otherwise, every candidate proceeds to trajectory planning in § 5. 
+
+5 JOINT TRAJECTORY PLANNING 
+
+The bounded candidates from § 4 identify where detailed planning is worthwhile but leave layer-wise execution un-specified. As Figure 4 shows, the corresponding swarm lead-ers concurrently construct a trajectory for each candidate, jointly selecting pruning and layer offloading because each decision changes subsequent computation, activation trans-fer, and resource availability. The trajectory and its detailed accounting form a complete plan for final selection. 
+
+5.1 Content-Aware Pruning Prediction 
+
+The effect of token pruning depends on image content, model depth, and all earlier pruning decisions. The same pruning control can preserve quality after a mild prefix but remove critical information after an aggressive one. Executing the unfinished ViT for every prospective pruning decision is too expensive during planning, so Iapetus uses a content-aware pruning predictor to estimate cumulative quality ef-fects across the evolving pruning trajectory. 
+
+Prediction workflow. For task 𝑘 , a 16-dimensional descrip-tor 𝝃 𝑘 summarizes color, luminance, gradient, and texture statistics of its input. For each prospective pruning control, the predictor combines this descriptor with the normalized layer index and projected pruning control 𝛼 𝑘,ℓ to estimate the content- and depth-dependent final quality under dense con-tinuation. It then uses the accepted prefix 𝜶 𝑘, 1: ℓ −1 to account for interactions with earlier pruning. The prefix is encoded as an 𝐿 -entry layer-indexed vector, with future positions filled by the no-pruning control. Denoting the complete predictor by 𝑓 𝜔 , its interface is 
+
+b𝜌 𝑘,ℓ = 𝑓 𝜔 
+
+
+
+𝝃 𝑘 , ℓ − 1
+
+𝐿 − 1 , 𝜶 𝑘, 1: ℓ −1, 𝛼 𝑘,ℓ 
+
+
+
+. (7) 
+
+Here b𝜌 𝑘,ℓ estimates final task quality if the prospective con-trol is accepted and the remaining layers continue without further pruning. We use 𝑓 𝜔 to include a one-sided residual margin calibrated on held-out validation histories, and b𝜌 𝑘,ℓ 
+
+denotes the resulting conservative estimate used for plan-ning. At runtime, before a layer decision is finalized, the leader queries the predictor for the projected pruning con-trol and carries the result into the next planning state; a later query incorporates any newly accepted decision. Accord-ingly, the resulting token count determines computation and activation payload directly from the tensor shape. 
+
+Training details. We train 𝑓 𝜔 from paired dense and pruned inference records that cover both isolated pruning decisions Advance Planning State 
+
+> apply action
+> update tokens
+
+
+
+> Content-Aware Predictor
+> current layer
+> current content
+> pruning history
+> inputs
+> predicted accuracy
+> payload ratio
+> outputs
+
+
+
+> pruning ratio
+> est. acc. loss  quality-pruning profile
+> comparison plan archival
+> per-layer event loop
+> Planning State
+
+
+
+> Connectivity
+> Outer candidate
+> Swarm context
+
+0Task & content      
+
+> Completed Candidate Plan (Example)
+> Node changes indicat partition boundaries. Tokens after pruning
+> Layer 1 Layer 2 Layer 3 Layer 7 Layer 4 Layer 5 Layer 6 leader member A member B ground tail
+> Projection and Feasibility Checks
+
+
+
+> checks / masks
+> accuracy deadline
+> contact battery execution mode
+> compute
+> projected layer action
+> path battery draw
+
+ Hybrid Action  
+
+> observation state + predictor summary Continuous pruning actor 0�푚� 
+> pruning ratio
+> Discrete placement actor
+> ...
+> execution node
+
+Figure 4: Per-candidate sequential layer planning of joint pruning and offloading trajectories. 
+
+and accumulated pruning histories. Isolated records apply the queried control after a dense prefix. For each history record, all recorded controls are replayed and the remaining layers complete without further pruning, producing a final-quality label consistent with the runtime query. Sampled histories encountered during offline trajectory generation broaden the observed pruning patterns. A separate predic-tor is trained for each supported pruning implementation. The default configuration yields 1,134,000 isolated training records and 48,000 history-conditioned training records. The predictor uses squared-error loss, a maximum tree depth of 6, and 120 boosting iterations. 
+
+5.2 Hybrid-Action Trajectory Planning 
+
+With these pruning consequences available, Iapetus casts trajectory construction for each candidate as a finite-horizon Markov decision process (MDP) with one decision step per Transformer layer. Exhaustive search is combinatorial, while decoupling pruning and layer offloading ignores their cross-layer coupling. Iapetus therefore uses a hybrid-action policy to select the pruning ratio and execution node jointly under deterministic feasibility constraints at each layer. 
+
+State and transition. At layer ℓ, state 𝑥 𝑘,ℓ summarizes the current trajectory, including model progress, the activation holder and token state, remaining local resources and con-tacts, and the fixed swarm pressures 𝑄 𝑠 (𝑡 ) and 𝑍 𝑠 (𝑡 ). An accepted action updates this planning state and advances the trajectory to the next layer for subsequent decision making. 
+
+Hybrid action and feasibility. The action 𝑎 𝑘,ℓ = (𝛼 𝑘,ℓ , 𝛽 𝑘,ℓ )
+
+combines a continuous pruning ratio with a discrete exe-cution node assignment ( ❸ in Figure 4). The continuous proposal provides an ordered search space; Iapetus projects it onto a supported native control before masking execution nodes that violate the resulting contact, resource, battery, Iapetus: Content-Aware Hierarchical Scheduling 
+
+deadline, or mode constraints ( ❹). The policy evaluates the remaining pruning and execution choices jointly. 
+
+Layer reward. For a fixed candidate, the layer reward is the negative marginal increase in the Lyapunov score of Eq. (5) caused by appending the accepted action:                       
+
+> ΔΨ 𝑘,ℓ (𝑐 )=𝑄 𝑠 (𝑡 ) − 𝜃 𝑠
+> (𝑄 ref )2Δ𝑊 𝑘,ℓ (𝑐 ) + 𝑍 𝑠 (𝑡 )Δ𝐸 𝑘,ℓ (𝑐 )
+> 𝐵 ref
+> +𝑉 ΔΦ 𝑘,ℓ (𝑐 ).(8)
+
+The reward is 𝑟 𝑘,ℓ (𝑐 ) = −ΔΨ 𝑘,ℓ (𝑐 ). The first two terms penal-ize additional workload and battery draw according to the current swarm pressures, while the last captures the change in task execution cost. Because these quantities are defined as marginal increments, they telescope along the trajectory to the planning score of the completed plan. During training, a constraint violation terminates the current trajectory with the corresponding penalty; any trajectory that ends before model completion is excluded from plan selection. 
+
+Policy training. We train the trajectory policy offline on the ground using soft actor–critic (SAC) [15]. The actor has two heads: one proposes the continuous pruning ratio, and the other selects a discrete execution node. To preserve their cou-pling, each twin critic conditions on state 𝑥 and the projected pruning action 𝛼 , and outputs a value for every execution node permitted by candidate 𝑐 :             
+
+> Q𝑖 (𝑥, 𝛼 )=[𝑄 𝑖 (𝑥, 𝛼, 𝛽 ) ] 𝛽 ∈N ( 𝑐 ),𝑖 ∈ { 1,2}.(9)
+
+Here N ( 𝑐 ) is the node set permitted by the candidate’s exe-cution mode. The planner applies the feasibility mask used at runtime to this vector, allowing feasible node assignments to be evaluated under the same pruning proposal while preserv-ing their coupling with pruning-dependent payload. Replay stores the projected pruning action so critic updates match the executed transition. During training, terminal paired inference provides realized quality feedback; during deploy-ment, the content-aware prediction supplies the quality sig-nal used for trajectory construction. All critics and optimizer state remain on the ground; deployment uses only the frozen actor selected on validation data, and completed plans are ranked by Lyapunov accounting rather than critic values. 
+
+5.3 Plan Selection and Commitment 
+
+Coarse estimates are used only to bound the search space. Once trajectory planning completes, Iapetus replaces them with detailed accounting of the resulting computation, trans-fers, waiting, workload, and battery draw. Incomplete or infeasible trajectories are discarded, and the sensing satellite selects the complete plan with the lowest Lyapunov score:           
+
+> 𝑞 ★
+> 𝑘 =arg min
+> 𝑐 =(𝑠,𝑚 ) ∈C 𝑘 (𝑡 )
+> Ψ𝑘,𝑠 (𝑞 𝑘 (𝑐 );𝑡 ).(10)
+
+If no feasible plan remains, the task is rejected. Here Ψ𝑘,𝑠 is evaluated using complete plan accounting and Eq. (5). The sensing satellite then sends 𝑞 ★ 
+
+> 𝑘
+
+to the associated leader. The leader coordinates an atomic reservation request with par-ticipating nodes, and execution begins once the request is accepted. Iapetus executes the resulting layer-wise trajec-tory without reinvoking the actor or switching to another candidate. This deferred commitment ensures that all plans are evaluated before shared reservations are updated. 
+
+6 IMPLEMENTATION 
+
+Runtime and deployment. We implement the software prototype in Python using PyTorch and scikit-learn. It con-sists of two parts. (i) A trace-driven runtime replays ISL, GSL, and sunlight intervals exported by Systems Tool Kit (STK) and advances task, contact, compute, and battery events on a common timeline. A routing module adapted from Fal-con [29] constructs alternative ISL paths and ground egresses, while the resource manager maintains processor and link ready times, battery state, and committed reservations. (ii) 
+
+For distributed scheduling, the runtime instantiates sens-ing satellite and swarm leader roles. The sensing satellite generates candidates, and the corresponding swarm leaders construct trajectories independently from local state. Lead-ers return complete plans without changing shared state; after selection, the chosen leader commits the selected plan through the resource manager, which atomically updates the affected compute and link reservations. The coarse esti-mation models, content-aware predictor, frozen policy, and active model checkpoint are preloaded before runtime. The prototype comprises about 30K lines of code. 
+
+Hardware profiling and HIL execution. We profile ViT execution on Jetson AGX Orin in 30-W and MAXN modes using NVIDIA nvpmodel and jetson_clocks , recording per-layer latency, activation size, downstream FLOPs, and INA power. Our HIL testbed comprises two Jetson AGX Orins and a desktop host. One Orin represents the sensing satellite that originates each EO task, while the other represents a collaborating peer; the desktop serves as the ground-station endpoint. The two Orins communicate over dedicated Gi-gabit Ethernet. We replay committed trajectories from the trace-driven runtime while preserving their pruning controls, layer placements, and satellite/ground transitions. Each as-signed ViT segment and pruning action executes on the cor-responding physical device, and intermediate activations are serialized and transferred over the physical link with pacing at the rates recorded in the trace. For trajectories spanning multiple satellite hops, execution alternates between the two Orins, such that every logical inter-satellite transition incurs an actual device handoff and activation transfer. Ground-assisted trajectories forward the current activation to the desktop for the remaining ground-side execution. Chen et al. 
+
+7 EVALUATION 
+
+Our evaluation examines end-to-end performance under varying load, the contributions of content-aware trajectory planning and bounded coordination, robustness across sys-tem and workload settings, and physical execution fidelity, runtime overhead, and scalability. 
+
+7.1 Evaluation Methodology 
+
+Constellations, traces, and workload. We use subsets of the Starlink [35] and OneWeb [37] Walker constellations to cover distinct orbital geometries. By default, the controller operates on a 24-plane Starlink subset. Each default test trace spans 6000 s, approximately one orbit, including 60 minutes of sunlight and 35 minutes of eclipse; § 7.4 addi-tionally evaluates OneWeb and a Starlink trace from another season. Ground station locations follow StarPerf [20]. Tasks follow matched deterministic arrival traces. At rate 𝜆 , ten consecutive 600-s phases contain 6000 𝜆 releases, with one sensing satellite active per phase. Unless otherwise stated, the deadline is 30 s, the quality target is 0.87 (about 8 pp below dense accuracy), (𝐾 swarm , 𝐾 cand ) = (8, 4), and (𝜔 𝐷 , 𝜔 𝐸 , 𝜔 𝐴 ) =
+
+(0.3, 0.3, 0.4). Appendix Table 9 and Figure 9 report the re-maining parameters and weight-sensitivity results. We re-port means across seeds for all formal evaluation results. 
+
+Models and datasets. To evaluate Iapetus across differ-ent model scales and computational loads, we use ViT-L/16, ViT-H/14, and DINOv2-L/14 [11, 31]. We study scene clas-sification on two aerial image datasets. AID [38] contains 10,000 600 × 600 RGB images from 30 scene classes. RE-SISC45 [9] contains 31,500 256 × 256 RGB images from 45 classes, with 700 images per class. Each model uses a dataset-specific classification head and checkpoint, with inputs re-sized to 224 × 224. The image-disjoint training, validation, and test splits contain 7,000/1,502/1,498 AID images and 22,500/4,500/4,500 RESISC45 images, respectively. Each task draws its content from the test split and carries approxi-mately 0 .27 Gbit of input before model resizing. Unless oth-erwise stated, the main experiments use ViT-L on AID; the remaining model–dataset combinations evaluate applicabil-ity across backbones and scene distributions. 
+
+Baselines. We compare Iapetus with five representative alternatives. (i) GroundOnly fully offloads each raw input through a reachable GSL, representing ground-based execu-tion. (ii) LocalDense executes the complete dense model on the sensing satellite without pruning or offloading. (iii) 
+
+Phoenix [27] represents sunlight-aware intersatellite task offloading without model partitioning. (iv) MARATD3 [41] uses reinforcement learning for joint offloading and resource allocation, treating each inference request as an indivisible task. (v) SPS-AO [46], the closest baseline, partitions Trans-former inference along an ordered satellite chain and jointly 050 100               
+
+> TAR (%)
+> (a) TAR (%)
+> 0.0 0.2
+> Cost  Φ
+> (b) Cost Φ
+> 34579020
+> Latency (s)
+> (c) Latency (s)
+> 34579010 20
+> Battery draw (J)
+> (d) Battery draw (J)
+> GroundOnly LocalDense Phoenix MARATD3 SPS-AO Iapetus
+
+Figure 5: Performance under increasing load. Table 2: Latency and battery draw breakdown.                                             
+
+> Method Latency (s) Battery Draw (J) Acc. loss (%) ↓
+> Comm. Wait. Comp. Comm. Comp. GroundOnly 29.13 0.00 0.02 8.21 0.00 0.00 LocalDense 0.00 28.05 0.85 0.00 3.77 0.00 Phoenix 13.77 0.61 0.84 22.04 3.92 0.00 MARATD3 1.19 12.76 0.89 10.12 10.68 0.00 SPS-AO 0.75 3.88 0.77 6.50 11.47 2.99 Iapetus 6.79 0.04 0.15 5.38 0.69 1.74
+
+selects activation compression. All baselines use the same runtime, routing, and hardware profiles, with identical or-bital traces, arrivals, and image samples. 
+
+Metrics. Task accomplishment ratio (TAR) is the fraction of all released tasks that complete feasibly before their dead-line and meet the task-quality target. Rejected tasks, exe-cution failures, deadline misses, and quality violations are counted as unaccomplished. We also report end-to-end la-tency, onboard battery draw per task, realized quality loss, and cost Φ over accomplished tasks, using the definitions in § 3.2. Reported latency covers the committed execution path; scheduling overhead is evaluated separately in § 7.5. 3
+
+7.2 End-to-End Performance 
+
+We sweep task arrival rates {3, 4, 5, 7, 9} in Figure 5. At the representative rate of 5, Table 2 further decomposes latency and onboard battery draw and reports quality loss. 
+
+TAR. Figure 5(a) shows that Iapetus consistently leads at ev-ery evaluated load. At rates 3/5/9, it achieves 94.94/91.60/61.85% TAR, compared with 87.42/65.54/60.85% for the strongest baseline at each rate. The baseline trends explain this sep-aration: intermittent GSL access and onboard waiting re-duce GroundOnly/LocalDense to 5.56/24.66% at rate 5, while longer transfers to distant sunlit satellites cause Phoenix to fall from 87.42% at rate 3 to 28.00% at rate 9. MARATD3/SPS-AO remain more competitive, but indivisible-task placement and chain-constrained execution still limit contention relief. By rate 9, aggregate link capacity constrains both Iapetus and MARATD3, narrowing their gap to 1.00 pp. Iapetus 
+
+> 3Latency comprises communication, waiting at the execution node after transfer completion, and computation. Communication includes contact and path waiting as well as data transmission. Battery draw includes onboard transmission and computation energy. Iapetus: Content-Aware Hierarchical Scheduling
+
+therefore provides its clearest advantage before system sat-uration by jointly adapting pruning, layer offloading, and swarm selection to current content and system state. 
+
+Cost. Figure 5(b) shows that Iapetus consistently obtains the lowest cost at every evaluated load. At rate 5, its cost is 0.122, 39.1%/59.8% below SPS-AO/MARATD3, while accomplishing 91.60% of tasks compared with 63.60%/65.54%. Its lower cost does not arise from averaging over fewer completed tasks, since Iapetus completes the largest task set; instead, it better balances latency, battery draw, and accuracy over that set. 
+
+Latency. At rate 5, Figure 5(c) shows that Iapetus reduces mean latency by 54.1%/53.0% relative to Phoenix/MARATD3. Table 2 attributes their delays to 13.77 s of communication and 12.76 s of waiting, while Iapetus limits waiting to 0.04 s. This keeps both transfer and queueing from dominating execution. SPS-AO is faster at 5.40 s, but attains only 63.60% TAR, versus 6.98 s and 91.60% for Iapetus. 
+
+Battery draw. Figure 5(d) shows that Iapetus has the lowest battery draw among collaborative methods at every load; its 6.07 J at rate 5 is 66.2% below SPS-AO. Table 2 shows trans-mission/computation draws of 5.38/0.69 J for Iapetus and 6.50/11.47 J for SPS-AO. Token pruning therefore saves com-putation without shifting energy to communication, while battery pressure avoids energy-intensive plans. Overall, Iapetus delivers the highest task accomplishment and lowest cost across all evaluated rates while maintaining a favorable balance among latency, battery draw, and accuracy. 
+
+7.3 Component Evaluation 
+
+C1: Content-aware predictor and token compression compatibility. We evaluate two representative token com-pression mechanisms with distinct semantics. ToMe merges similar tokens [3], whereas TopK ranks patch tokens by their activation ℓ2 norm, retains the CLS token, and discards the lowest-ranked patches. They represent token merging and token pruning, respectively. Table 3(a) evaluates the three predictor signals through matched counterfactual pairs that vary only image content, layer placement, or the accepted pruning prefix. Full uses content, depth, and history, whereas NoContent, NoDepth, and NoHistory remove the correspond-ing signal. Each cell reports Full / Abla. : pair accuracy mea-sures ordering agreement with realized final quality, regret measures the quality forgone by the predicted choice, and the last two columns report unsafe selection and safe acceptance at the 0.87 target. Table 3(b) then compares formal rate-5 systems using both mechanisms. Table 3(a) shows that all three signals matter across both compression mechanisms. Removing any one collapses pair accuracy to the 50% tie baseline; Full improves it by 11.00– 33.33 pp and reduces quality regret by 29.3–66.7%. Content captures input-specific sensitivity, depth identifies where 
+
+Table 3: Predictor and token compression evaluation.                                                             
+
+> (a) Matched-counterfactual predictor analysis.
+> Strategy Signal Pairs Pair acc. (%) ↑Regret ↓Unsafe (%) ↓Safe accept. (%) ↑
+> Full / Abla. ToMe Content 100 61.00 / 50.00 0.0256 / 0.0363 6.00 / 9.50 100.00 / 100.00 Depth 90 65.56 / 50.00 0.0108 / 0.0156 0.00 / 0.00 100.00 / 100.00 History 96 83.33 / 50.00 0.0052 / 0.0156 0.00 / 0.00 100.00 / 100.00 TopK Content 100 64.00 / 50.00 0.0200 / 0.0398 2.00 / 8.00 99.39 / 100.00 Depth 55 65.45 / 50.00 0.0170 / 0.0261 7.27 / 9.09 100.00 / 90.77 History 76 76.32 / 50.00 0.0148 / 0.0238 7.89 / 10.53 97.59 / 96.39
+> (b) End-to-end compatibility at rate 5.
+> Strategy TAR (%) ↑Φ↓Latency (s) ↓Battery draw (J) ↓Acc. loss (%) ↓
+> ToMe 91.60 0.122 6.98 6.07 1.74 TopK 93.28 0.139 8.08 7.27 0.87
+
+Table 4: Joint pruning and layer offloading ablations.                                    
+
+> Variant ΔTAR ↑ΔΦ ↓ΔLat. ↓ΔBatt. ↓ΔAcc. loss ↓
+> FixedPrune −19 .20 +7.6−0.1−2.5+147 .4
+> SinglePrune +3.20 +13 .0+16 .4+20 .8−77 .0
+> NoPrune +2.88 +12 .1+16 .1+22 .4−100 .0
+> Decoupled −15 .15 +6.0+0.0−2.5+118 .1
+> NoEnergy +0.46 +4.4−15 .8+45 .7−77 .8
+
+pruning occurs, and history represents the accumulated effect of earlier decisions. The unsafe-selection and safe-acceptance results further show that these gains do not come from accepting greater quality risk. Table 3(b) validates compatibility with both merging-based and selection-based token compression. The complete sys-tem achieves 91.60% TAR with ToMe and 93.28% with TopK while keeping accuracy loss at 1.74% and 0.87%, respectively. Thus, the same planning interface can incorporate distinct compression semantics without changing the joint pruning and layer offloading workflow. 
+
+C2: Joint pruning and layer offloading. Table 4 isolates adaptive pruning, joint pruning and layer offloading, and energy-aware coordination under the rate-5 workload. Fixed-Prune uses one pruning ratio selected on validation data; SinglePrune permits one pruning event; NoPrune disables pruning. Decoupled optimizes pruning and layer offloading independently, while NoEnergy removes the energy term. Variants changing semantics use matched retraining. Results are averaged across seeds and reported relative to Iapetus-ToMe in Table 3(b). TAR differences are in pp; changes in Φ,latency, battery draw, and accuracy loss are percentages. FixedPrune yields only marginal latency and battery sav-ings, while losing 19.20 pp of TAR and increasing accuracy loss by 147.4%. SinglePrune and NoPrune instead raise TAR by 3.20 and 2.88 pp and reduce accuracy loss by 77.0% and 100.0%, but increase Φ by 13.0% and 12.1%, latency by 16.4% and 16.1%, and battery draw by 20.8% and 22.4%, respectively. Thus, neither a fixed pruning ratio nor restricted or absent multi-layer adaptation achieves Full’s balance between ac-complishment, quality, and resource use. Decoupled lowers battery draw by 2.5%, but loses 15.15 pp of TAR, raises accu-racy loss by 118.1%, and increases Φ by 6.0%. These losses in accomplishment and quality confirm the need to optimize pruning and layer offloading jointly. NoEnergy exposes the Chen et al. 
+
+Table 5: Candidate reduction and Lyapunov alignment. 
+
+(a) End-to-end changes relative to Iapetus-ToMe.                                   
+
+> Policy / (𝐾 𝑠 , 𝐾 𝑐 )ΔTAR (pp) ↑ΔΦ (%) ↓ΔLat. (%) ↓ΔBatt. (%) ↓ΔAcc. loss (%) ↓
+> Full / (4,1) +0.61 +7.5+16 .1−5.2+5.3Full / (16,8) −3.38 +3.5+1.7+7.4−6.5CoarseTop1 / (8,1) +0.70 +8.3+18 .1−6.2+6.1NoPressure / (8,4) −0.68 −3.1−11 .0+11 .3−24 .7
+
+(b) Retention quality against exhaustive detailed scoring ( 𝑁 = 357 ). 
+
+Metric / (𝐾 𝑠 , 𝐾 𝑐 ) (4,1) (8,1) (8,4) (16,8) Recall (%) ↑ 86.6 89.1 97.5 100.0 P95 gap (%) ↓ 24.76 24.76 1.66 0.00 
+
+role of the energy-aware objective most clearly: it lowers la-tency by 15.8%, raises TAR by 0.46 pp, and reduces accuracy loss by 77.8%, but increases Φ by 4.4% and battery draw by 45.7%. Energy awareness prevents these aggressive execu-tion choices while Full maintains the best overall balance across accomplishment, quality, latency, and battery draw. 
+
+C3: Candidate reduction and Lyapunov alignment. 
+
+Table 5 evaluates candidate budgets, deferred detailed se-lection, and Lyapunov pressure terms. Table 5(a) compares the default (8, 4) design with smaller and larger budgets; CoarseTop1 passes only the top coarse candidate to com-plete planning, while NoPressure removes 𝑄 𝑠 and 𝑍 𝑠 with matched retraining. Table 5(b) compares exhaustive detailed scoring on 357 feasible instances from 360 phase-stratified samples. 4 Recall measures whether the exhaustive minimum-score candidate is retained, while the P95 gap measures the resulting normalized score loss. Table 5(a) reports changes relative to Iapetus-ToMe result in Table 3(b). Table 5(a) shows that the default (8, 4) budget provides a balanced choice. CoarseTop1 raises TAR, Φ, and latency, lowers battery draw, and raises accuracy loss. NoPressure lowers TAR, Φ, and latency but raises battery draw. The design balances these tradeoffs, supporting deferred detailed selection and pressure-aware coordination. Table 5(b) quantifies the quality of candidate retention. With (8, 1), the plan with the minimum score is retained for 89.1% of tasks and the P95 normalized gap is 24.76%; 
+
+(8, 4) raises recall to 97.5% and reduces the gap to 1.66%. Increasing the budget to (16 , 8) reaches 100% recall and zero gap, showing that a small set of complete plans captures most of the benefit of exhaustive search. Higher recall does not imply monotonic end-to-end gains, because committed plans alter workload and battery states. § 7.5 complements this analysis of selection quality by measuring how candidate budgets affect planning latency and summary traffic. 
+
+7.4 Robustness and Applicability 
+
+Impact of deadline. Figure 6 varies the service deadline from 10 to 60 s at 5 tasks/s and reports completed-task la-tency and battery-draw CDFs at 20 s. Iapetus maintains a 
+
+> 4
+
+We sample 120 tasks per seed. One task at the horizon boundary in each seed admits no feasible plan, so its exhaustive optimum and score gap are undefined; we exclude it from the task set. 10 15 20 30 45 60              
+
+> Deadline (s)
+> 020 40 60 80 100
+> TAR (%)
+> 0510 15 20
+> Task latency (s)
+> 01
+> CDF
+> 010 010 110 2
+> Battery draw (J, log)
+> 01
+> CDF
+> (a) Deadline stress (b) Distributions at deadline = 20 s GroundOnly LocalDense Phoenix MARATD3 SPS-AO Iapetus
+
+Figure 6: Deadline sensitivity. G L P M S I010 20 30                
+
+> Task latency (s)
+> (a) Compute fl uctuation
+> GLPMSI
+> (b) Link fl uctuation
+> 5.6% 21.6% 54.6% 38.0% 63.3% 91.6%
+> 020 40 60 80 100
+> TAR (%)
+> 4.1% 24.7% 29.4% 56.4% 56.8% 67.4%
+> GroundOnly LocalDense Phoenix MARATD3 SPS-AO Iapetus Mean P95 TAR
+
+Figure 7: Robustness to resource fluctuations. 
+
+TAR of 90.88–91.67% throughout the sweep and leads every alternative through the 45-s deadline. Under the tight and moderate deadlines of 10–30 s, it leads the next-best method, MARATD3, by 9.23–26.05 pp; at 45 s the margin remains 1.14 pp. MARATD3 benefits more from additional slack and overtakes Iapetus by 3.54 pp only at 60 s, showing that Ia-petus’s advantage is strongest when timeliness is binding. At 20 s, Iapetus has mean/P95 latency of 5.87/19.30 s and mean/P95 battery draw of 6.00/18.46 J. Phoenix/GroundOnly report P95 latency of 19.82/19.92 s and P95 battery draw of 77.12/28.00 J. LocalDense draws only 3.77/9.97 J at mean/P95, but its 19.46/19.99 s latency is concentrated near the deadline and its TAR remains only 23.95–25.75% across the sweep. Thus, Iapetus’s high TAR under tight deadlines does not come at the cost of heavier latency or battery tails. 
+
+Impact of fluctuations. We evaluate robustness in the Star-link constellation at 5 tasks/s under fluctuations in compute capacity and link bandwidth. Compute capacity is scaled by 1 + min (0, 𝑋 ), where 𝑋 ∼ N ( 0, 0.32), allowing only degrada-tion. Link fluctuations follow a Gilbert–Elliott model with good-to-bad and bad-to-good transition probabilities of 0 .15 and 0 .25, respectively, where the bad state reduces effective bandwidth by 80%. Figure 7 reports TAR together with the per-task latency distribution over accomplished tasks. Under compute fluctuations, Figure 7(a) shows that Ia-petus reaches 91.64% TAR, 28.29 pp above SPS-AO, while keeping P95 latency at 22.65 s. Under the more severe link fluctuations in Figure 7(b), Iapetus reaches 67.35% TAR, 10.54/10.97 pp above SPS-AO/MARATD3, despite comparable latency among accomplished tasks. LocalDense reaches only 21.58/24.66% TAR under compute/link fluctuations, with P95 latency remaining at 29.99 s in both settings. The admission Iapetus: Content-Aware Hierarchical Scheduling 
+
+Table 6: Generality across seasons and constellations.                                                                         
+
+> Method TAR (%) ↑Φ↓Mean/P95 Lat. (s) ↓Mean/P95 Batt. (J) ↓Acc. loss (%) ↓
+> (a) Starlink seasonal illumination: October →June
+> GroundOnly 5.19 0.381 29.19/29.92 11.82/28.00 0.00 LocalDense 24.02 0.319 28.97/29.99 3.92/9.97 0.00 Phoenix 54.61 0.356 14.90/29.89 27.64/86.07 0.00 MARATD3 63.30 0.307 15.00/25.93 20.93/35.75 0.00 SPS-AO 68.70 0.206 6.08/29.93 17.81/20.14 2.97 Iapetus 91.34 0.125 6.77/18.06 6.69/20.16 1.73
+> (b) OneWeb constellation
+> GroundOnly 7.23 0.293 29.18/29.92 0.149/0.74 0.00 LocalDense 31.68 0.308 28.90/29.99 2.53/2.53 0.00 Phoenix 49.68 0.251 16.38/29.92 11.60/30.35 0.00 MARATD3 69.21 0.363 20.60/29.87 20.97/34.34 0.00 SPS-AO 72.37 0.167 1.99/7.20 18.00/21.85 3.00 Iapetus 86.91 0.121 8.74/27.60 3.60/10.18 1.71
+
+statistics in Appendix Table 10 explain this advantage: Ia-petus/SPS-AO/MARATD3 admit 72.0/78.1/56.4% of released tasks and fulfill 93.5/72.7/100.0% of their admissions, respec-tively. Thus, Iapetus maintains a tighter latency tail under compute degradation and balances admission against avail-able resources when links fluctuate. 
+
+Impact of season. Across the 100-minute trace, the June setting in Table 6(a) changes the sunlight state at 16.34% of matched satellite-time points relative to October; the mean illumination shift across individual planes ranges from 
+
+−5.01 to +1.74 pp. With all policies frozen, Iapetus sustains a 91.34% TAR, only 0.26 pp below its October result and 22.64/36.73 pp above SPS-AO/Phoenix. Phoenix is the most relevant seasonal comparator because it explicitly conditions offloading on sunlight; relative to it, Iapetus reduces cost by 65.0%, latency by 54.6%, and battery draw by 75.8%. Its P95 latency and battery draw remain 18.06 s and 20.16 J, respec-tively, showing that the frozen controller remains effective under the alternate illumination pattern, with no seasonal retraining or parameter retuning. 
+
+Impact of constellation. At 5 tasks/s, Table 6(b) changes the topology from Starlink to the sparser polar OneWeb con-stellation. With frozen policies, Iapetus reaches 86.91% TAR, 14.54 pp above the strongest baseline, SPS-AO; LocalDense reaches only 31.68%, showing the continued need for collab-orative execution under the sparser topology. Iapetus also achieves the lowest cost, 0.121. Among accomplished tasks, its 8.74 s mean latency is 46.6% lower than Phoenix’s. SPS-AO reports a lower mean/P95 latency of 1.99/7.20 s, but over a smaller accomplished-task set. Iapetus records 3.60/10.18 J mean/P95 battery draw, lower than all collaborative base-lines, while limiting accuracy loss to 1.71%, compared with 3.00% for SPS-AO. These results show that its swarm screen-ing and trajectory planning adapt to changed contact geom-etry without any constellation-specific retraining. 
+
+Impact of models. At 5 tasks/s, the first row of Figure 8 varies the backbone while retaining AID. Different back-bones change both per-layer computation and intermediate-transfer profiles, altering execution time, activation traffic, and the savings available from pruning. For fairness, SPS-AO G L P M S I050 100                                 
+
+> AID TAR (%) ViT-L
+> GLPMSI
+> ViT-H
+> GLPMSI
+> DINOv2
+> GLPMSI050 100
+> RESISC45 TAR (%)
+> GLPMSIGLPMSI012
+> Cost  Φ
+> 012
+> Cost  Φ
+> GroundOnly LocalDense Phoenix MARATD3 SPS-AO Iapetus Φ
+
+Figure 8: Applicability across models and datasets. 
+
+is trained independently for every model–dataset combina-tion, and Iapetus uses the corresponding trained actor and predictor. Iapetus sustains 86.08–92.28% TAR, a spread of only 6.20 pp, while keeping cost between 0.122 and 0.208 and below GroundOnly/Phoenix across all three backbones. The heavier ViT-H workload most directly affects LocalDense, whose TAR falls from 64.14% on ViT-L to 9.06%, and SPS-AO falls to 63.60%. Although MARATD3 is highest on DINOv2, Iapetus leads every baseline on ViT-L and ViT-H and re-mains consistently strong across the three backbones. 
+
+Impact of datasets. At the same rate, the second row re-places AID with RESISC45. Dataset changes affect both exe-cution demand and content redundancy: under comparable ingress payloads, RESISC45 incurs greater aggregate infer-ence and codec work, while its content changes the quality effect of a given pruning control. Iapetus maintains 90.19– 92.51% TAR and keeps cost between 0.327 and 0.557. Lo-calDense falls to 1.63–4.47% TAR as dense local computation saturates, while MARATD3 drops to 41.79% on ViT-H and 47.22% on DINOv2. SPS-AO reaches only 20.69–40.44% be-cause its fixed three-cut pipeline incurs greater codec and execution overhead. Across the three backbones, Iapetus leads the strongest baseline by 25.20–50.23 pp, showing con-sistent adaptation across datasets under changing workloads. 
+
+7.5 Runtime Overhead and Scalability 
+
+We decompose decision-inclusive latency into scheduling and post-commit execution, 𝐷 all = 𝐷 sch + 𝐷 exe , and evaluate both separately. To quantify scheduling overhead, we time the frozen ViT-L planning pipeline on Jetson AGX Orin in MAXN mode. To validate the trace-driven execution model, we replay 600 s of the committed rate-5 task stream un-der matched HIL conditions. We report mean absolute per-centage error (MAPE) for execution latency and onboard battery draw. Separately, we scale the constellation from 24 to 48 orbital planes under the default candidate budget 
+
+(𝐾 swarm , 𝐾 cand ) = (8, 4) and vary this budget at 24 planes. 
+
+Scheduling and execution latency. Table 7(a) shows that candidate generation and parallel per-candidate planning dominate scheduling latency; selection and commit add only 0.045 ms on average. The total is 217.50 ms mean and 262.91 ms at P95. At rate 5, source candidate generation averages 49.58 ms, Chen et al. 
+
+Table 7: Scheduling latency and HIL fidelity. 
+
+> (a) Scheduling latency by stage.
+
+Cand. gen. Plan. (max) Sel. & commit Total Mean (ms) ↓ 49.58 167.87 0.045 217.50 P95 (ms) ↓ 51.77 211.10 0.050 262.91              
+
+> (b) HIL execution fidelity at 5 tasks/s. 510 Simulator HIL 0100 200 300 400 500 600
+> Simulation time (s)
+> 510
+> Task latency (s)
+> Metric Value HIL exec. latency 8.78 s Latency MAPE 1.06% HIL battery draw 10.10 J Battery-draw MAPE 7.64% HIL transfer share 97.23%
+
+Table 8: Scheduling scalability (latency: Mean/P95).                                              
+
+> (a) Scaling with constellation size.
+> Planes Summary (B) ↓Sats. Cand. gen. (ms) ↓Planning (ms) ↓
+> 24 596 40 49.58/51.77 217.49/262.87 36 597 40 87.40/89.70 263.53/323.02 48 601 40 132.22/134.36 306.90/365.61
+> (b) Candidate budgets at 24 planes.
+> 𝐾 𝑠 𝐾 𝑐 Summary (B) ↓Swarms Satellites Plans Planning (ms) ↓
+> 41297 420 1208.19/225.61 84596 840 4217.49/262.87 16 81193 16 80 8251.62/325.58
+
+below the 200 ms between arrivals, and overlaps with leader planning for earlier tasks. Because scheduling latency is only 0.73% of the default 30-s deadline, we omit it from the end-to-end latency reported by the large-scale experiments. 
+
+HIL execution fidelity. Table 7(b) shows that modeled la-tency closely tracks physical execution, with 1.06% MAPE. The HIL runs average 10.10 J battery draw with 7.64% MAPE. Activation transfer accounts for 97.23% of HIL execution time, closely matching its 97.3% share in the rate-5 main experiment (6.79 s of 6.98 s). This agreement confirms that the trace-driven model accurately captures the communica-tion component that dominates end-to-end latency, beyond matching aggregate latency and battery draw. 
+
+Constellation scaling. Scaling from 24 to 48 planes dou-bles the constellation from 528 to 1,056 satellites. Table 8(a) shows that source-side candidate generation grows with the topology, while the parallel leader path remains bounded by the fixed candidate budget. Mean planning latency increases from 217.49 to 306.90 ms, and detailed planning remains lim-ited to 40 satellites and 596–601 summary bytes per task. The byte count covers the compact serialized swarm summaries used for candidate screening. Thus, constellation growth primarily affects source-side screening. 
+
+Candidate budget. Table 8(b) shows that parallel leader planning uses the maximum rather than the sum of the re-tained candidates’ latencies. Increasing the budget from (4, 1)
+
+to (16 , 8) raises the mean from 208.19 to 251.62 ms. Together with § 7.3, this supports the default (8, 4) budget, which re-tains the exhaustive best candidate for 97.5% of tasks with a 1.66% P95 score gap while bounding planning latency. 
+
+8 RELATED WORK 
+
+Token-efficient ViT inference. Token-efficient ViTs shorten visual sequences through token pruning, merging, or adap-tive sampling. Existing methods use learned importance, token similarity, or input-dependent policies to discard or ag-gregate redundant tokens across Transformer blocks, thereby reducing subsequent attention computation [3, 12, 26, 33, 45]. Recent vision–language and video systems further reduce visual tokens after encoding or exploit redundancy across frames [5, 36, 44, 48]. These techniques optimize token effi-ciency within the model, but do not jointly determine how content-aware token compression should interact with dis-tributed layer execution. Iapetus instead exposes pruning as a runtime decision whose quality and payload consequences are considered jointly with layer offloading. 
+
+Collaborative Transformer inference in MEC. Edge sys-tems distribute Transformer inference through pipeline, ten-sor, sequence, and data parallelism, which expose different computation and communication trade-offs [10, 16, 17, 22, 39, 40]. ViT-specific systems further decompose models across devices or combine split inference with token compression to reduce computation and intermediate traffic [18, 25, 28, 42]. Most assume terrestrial device–edge settings with relatively stable participants and edge paths. SEC instead couples time-varying ISL/GSL contacts with sunlight-dependent energy and finite batteries. Collaborative inference must therefore be tailored to these contact and energy dynamics. 
+
+Collaborative inference and scheduling in SEC. SEC systems optimize task offloading or CNN partitioning across satellites and ground resources under dynamic connectiv-ity and energy constraints [6, 8, 32, 43]. These formulations do not capture a ViT-specific communication bottleneck: unlike CNN feature maps that shrink with depth, ViT activa-tions can remain comparable to or larger than the raw input, making transfer a first-order partitioning cost. Recent work establishes the viability of Transformer inference in SEC through compressed submodel chains or topology-aware patch and token scheduling [23, 46]. They do not, however, jointly adapt content-aware token compression and layer offloading across depth. Building on these efforts, Iapetus plans these decisions as a trajectory under finite contacts and coordinates complete plans across swarms. 
+
+9 CONCLUSION AND FUTURE WORK 
+
+We present Iapetus, a content-aware collaborative ViT infer-ence system for satellite edge computing. Iapetus formulates each decision as a complete token compression and layer offloading trajectory, capturing how pruning reshapes sub-sequent computation and transfer payloads under dynamic Iapetus: Content-Aware Hierarchical Scheduling 
+
+contacts, workload, and battery conditions. Its hierarchi-cal scheduler bounds constellation-wide planning and con-structs feasible trajectories online from detailed local state using content-aware prediction and hybrid planning. HIL validation confirms execution fidelity, while constellation re-play across ViT workloads and constellation settings shows strong task accomplishment with favorable end-to-end la-tency, onboard battery draw, and task quality. Future work will extend Iapetus in three directions. First, failure-aware execution can augment one-time commitment with backup trajectories, checkpoint recovery, and runtime migration when unexpected node or link failures invalidate the selected plan. Second, multi-source coordination can ad-dress concurrent and bursty EO arrivals that compete for shared swarms, ground links, and resource reservations. Fi-nally, emerging architectures, including sparse mixture-of-experts and state-space models, expose new input-dependent execution structures. Supporting them will require extend-ing the current content-aware abstraction to model-specific compression, placement, and routing decisions. 
+
+REFERENCES 
+
+[1] Peter Baldwin. 2022. Vision Transformers 1: Low Earth Orbit Satellites. Myrtle.ai Blog. https://myrtle.ai/resources/blogs/leo-1-low-earth-orbit-satellites/ Accessed 2026-08-12. [2] Panagiotis Barmpoutis, Periklis Papaioannou, Kosmas Dimitropoulos, and Nikos Grammalidis. 2020. A Review on Early Forest Fire Detection Systems Using Optical Remote Sensing. Sensors 20, 22 (2020), 6442. https://doi.org/10.3390/s20226442 [3] Daniel Bolya, Cheng-Yang Fu, Xiaoliang Dai, Peizhao Zhang, Christoph Feichtenhofer, and Judy Hoffman. 2023. Token Merging: Your ViT But Faster. In International Conference on Learning Represen-tations . arXiv:2210.09461 [cs.CV] [4] CAVU Aerospace UK. [n. d.]. Edge Computing Enables the Satellite to Think. [Online]. Available: https://cavuaerospace.uk/articles/edge-computing-enables-the-satellite-to-think. [5] Liang Chen, Haozhe Zhao, Tianyu Liu, Shuai Bai, Junyang Lin, Chang Zhou, and Baobao Chang. 2024. An Image is Worth 1/2 Tokens Af-ter Layer 2: Plug-and-Play Inference Acceleration for Large Vision-Language Models. In European Conference on Computer Vision . 19–35. [6] Yan Chen, Xiaolin Jia, and Haiquan Wang. 2026. Hierarchical Offload-ing Optimization for Collaborative DNN Inference in Satellite Edge Computing Networks. IEEE Transactions on Mobile Computing 25, 8 (Aug. 2026), 12128–12143. https://doi.org/10.1109/TMC.2026.3667703 [7] Yan Chen, Haiquan Wang, Jun Liu, Xiaolin Jia, Jiejie Zhao, and Han Qiu. 2025. Partitioning or Not? Hierarchical Task Offloading Optimization in Collaborative Satellite Edge Computing Networks. In 2025 IEEE 45th International Conference on Distributed Computing Systems (ICDCS) .725–735. https://doi.org/10.1109/ICDCS63083.2025.00076 [8] Yijie Chen, Qiyang Zhang, Ruolin Xing, Yuanzhe Li, Xiao Ma, Yi-ran Zhang, Ao Zhou, and Shangguang Wang. 2025. SLICE: Energy-Efficient Satellite-Ground Co-Inference via Layer-Wise Scheduling Optimization. IEEE Transactions on Services Computing 18, 4 (2025), 2388–2402. https://doi.org/10.1109/TSC.2025.3577451 [9] Gong Cheng, Junwei Han, and Xiaoqiang Lu. 2017. Remote Sensing Image Scene Classification: Benchmark and State of the Art. Proc. IEEE 
+
+105, 10 (2017), 1865–1883. https://doi.org/10.1109/JPROC.2017.2675998 [10] Yehan Deng, Jingjing Li, and Na Tang. 2024. DACA: A Distributed Algorithm for Task Partitioning and Offloading in Mobile Edge Com-puting Networks Supporting Transformer. In 2024 IEEE Smart World Congress . 608–615. https://doi.org/10.1109/SWC62898.2024.00113 [11] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weis-senborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, and Neil Houlsby. 2021. An Image is Worth 16x16 Words: Trans-formers for Image Recognition at Scale. In International Conference on Learning Representations .[12] Mohsen Fayyaz, Soroush Abbasi Koohpayegani, Farnoush Rezaei Ja-fari, Sunando Sengupta, Hamid Reza Vaezi Joze, Eric Sommerlade, Hamed Pirsiavash, and Juergen Gall. 2022. Adaptive Token Sampling for Efficient Vision Transformers. In European Conference on Computer Vision . 396–414. [13] J. P. Fellner, G. J. Loeber, S. P. Vukson, and C. A. Riepenhoff. 2003. Lithium-Ion Testing for Spacecraft Applications. Journal of Power Sources 119–121 (2003), 911–913. https://doi.org/10.1016/S0378-7753(03)00222-2 [14] Solomon W. Golomb and Lloyd R. Welch. 1970. Perfect codes in the Lee metric and the packing of polyominoes. SIAM J. Appl. Math. 18, 2 (1970), 302–317. https://doi.org/10.1137/0118025 [15] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. 2018. Soft actor-critic: Off-policy maximum entropy deep reinforce-ment learning with a stochastic actor. In Proc. ICML . 1861–1870. [16] Chenghao Hu and Baochun Li. 2024. When the Edge Meets Trans-formers: Distributed Inference with Transformer Models. In 2024 IEEE 44th International Conference on Distributed Computing Systems . 82–92. https://doi.org/10.1109/ICDCS60910.2024.00017 [17] Yang Hu, Connor Imes, Xuanang Zhao, Souvik Kundu, Peter A. Beerel, Stephen P. Crago, and John Paul Walters. 2022. PipeEdge: Pipeline Parallelism for Large-Scale Model Inference on Heterogeneous Edge Devices. In 2022 25th Euromicro Conference on Digital System Design .298–307. https://doi.org/10.1109/DSD57027.2022.00048 [18] Linyi Jiang, Silvery D. Fu, Yifei Zhu, and Bo Li. 2025. Janus: Collabo-rative Vision Transformer Under Dynamic Network Environment. In 
+
+IEEE INFOCOM 2025 – IEEE Conference on Computer Communications .1–10. https://doi.org/10.1109/INFOCOM55648.2025.11044626 [19] Tobias Klenze, Giacomo Giuliari, Christos Pappas, Adrian Perrig, and David Basin. 2018. Networking in heaven as on earth. In Proc. ACM HotNets . 22–28. [20] Zeqi Lai, Hewu Li, and Jihao Li. 2020. StarPerf: A Network Performance Simulator for Emerging Mega-Constellations. [Online]. Available: https://github.com/SpaceNetLab/StarPerf_Simulator. [21] Thanh-Dung Le, Vu Nguyen Ha, Ti Ti Nguyen, Geoffrey Eappen, Prabhu Thiruvasagam, Luis M. Garces-Socarras, Hong fu Chou, Jorge L. Gonzalez-Rios, Juan Carlos Merlano-Duncan, and Symeon Chatzino-tas. 2024. Onboard Satellite Image Classification for Earth Ob-servation: A Comparative Study of ViT Models. arXiv preprint arXiv:2409.03901 (2024). https://doi.org/10.48550/arXiv.2409.03901 arXiv:2409.03901 [cs.CV] [22] Juhyeon Lee, Insung Bahk, Hoseung Kim, Sinjin Jeong, Suyeon Lee, and Donghyun Min. 2024. An Autonomous Parallelization of Trans-former Model Inference on Heterogeneous Edge Devices. In Proceed-ings of the 38th ACM International Conference on Supercomputing . 50– 61. https://doi.org/10.1145/3650200.3656628 [23] Haochun Lei, Yuben Qu, Zhen Qin, Lei Zhang, Kefeng Guo, Chao Dong, Qihui Wu, and Kapal Dev. 2026. ADPS-Sat: Adaptive Distributed Patch-Sequence Scheduling for Satellite-Edge Vision Transformers. In 
+
+2026 IEEE International Conference on Communications . 1–6. https: //doi.org/10.1109/ICC59461.2026.11587886 Chen et al. 
+
+[24] Yuanjie Li, Lixin Liu, Hewu Li, Wei Liu, Yimei Chen, Jianping Wu, Qian Wu, Jun Liu, and Zeqi Lai. 2024. Stable Hierarchical Routing for Oper-ational LEO Networks. In Proceedings of the 30th Annual International Conference on Mobile Computing and Networking . Association for Com-puting Machinery, 296–311. https://doi.org/10.1145/3636534.3649362 [25] Yumeng Liang, Jianhui Chang, Sijia Li, Mingyuan Zang, and Jie Wu. 2026. Mercury: Towards Optimal Accuracy-Latency Trade-off for Collaborative Transformer Inference. In IEEE INFOCOM 2026 – IEEE Conference on Computer Communications . 1–10. https://doi.org/10. 1109/INFOCOM59046.2026.11571669 [26] Youwei Liang, Chongjian Ge, Zhan Tong, Yibing Song, Jue Wang, and Pengtao Xie. 2022. Not All Patches Are What You Need: Expedit-ing Vision Transformers via Token Reorganizations. In International Conference on Learning Representations .[27] Weisen Liu, Zeqi Lai, Qian Wu, Hewu Li, Qi Zhang, Zonglun Li, Yuanjie Li, and Jun Liu. 2024. In-Orbit Processing or Not? Sunlight-Aware Task Scheduling for Energy-Efficient Space Edge Computing Networks. In 
+
+IEEE INFOCOM 2024 – IEEE Conference on Computer Communications .881–890. https://doi.org/10.1109/INFOCOM52122.2024.10621268 [28] Yanting Liu, Rui Lu, and Dan Wang. 2025. LVMScissor: Split and Schedule Large Vision Model Inference on Mobile Edges via Salp Swarm Algorithm. IEEE Transactions on Mobile Computing 24, 8 (2025), 7538–7553. https://doi.org/10.1109/TMC.2025.3550519 [29] Mingyang Lyu, Qian Wu, Zeqi Lai, Hewu Li, Yuanjie Li, and Jun Liu. 2023. FALCON: Towards Fast and Scalable Data Delivery for Emerging Earth Observation Constellations. In IEEE INFOCOM 2023 – IEEE Conference on Computer Communications . 1–10. https://doi.org/ 10.1109/INFOCOM53939.2023.10228910 [30] Michael Neely. 2010. Stochastic network optimization with application to communication and queueing systems . Morgan & Claypool Publishers. [31] Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al. 2024. DINOv2: Learning Robust Visual Features without Supervision. Transactions on Machine Learning Research (2024). [32] Shifeng Peng, Zhishu Shen, Qiushi Zheng, Xuefeng Hou, Dawen Jiang, Jingling Yuan, and Jiong Jin. 2026. APT-SAT: An Adaptive DNN Partitioning and Task Offloading Framework Within Collaborative Satellite Computing Environments. IEEE Transactions on Network Science and Engineering 13 (2026), 597–610. https://doi.org/10.1109/ TNSE.2025.3585287 [33] Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, and Cho-Jui Hsieh. 2021. DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification. In Advances in Neural Information Processing Systems , Vol. 34. 13937–13949. [34] Yuanming Shi, Jingyang Zhu, Chunxiao Jiang, Linling Kuang, and Khaled B. Letaief. 2025. Satellite Edge Artificial Intelligence with Large Models: Architectures and Technologies. Science China Information Sciences 68, 7 (2025), 170302. https://doi.org/10.1007/s11432-024-4425-y[35] SpaceX. 2020. Application for Fixed Satellite Service by Space Explo-ration Holdings. [Online]. Available: https://fcc.report/IBFS/SAT-MOD-20200417-00037. [36] Keda Tao, Can Qin, Haoxuan You, Yang Sui, and Huan Wang. 2025. DyCoke: Dynamic Compression of Tokens for Fast Video Large Lan-guage Models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 18992–19001. [37] Brian D. Weimer. 2020. Application for Fixed Satellite Service by WorldVu Satellites Limited, Debtor-in-Possession. [Online]. Available: https://fcc.report/IBFS/SAT-MPL-20200526-00062. [38] Gui-Song Xia, Jingwen Hu, Fan Hu, Baoguang Shi, Xiang Bai, Yanfei Zhong, Liangpei Zhang, and Xiaoqiang Lu. 2017. AID: A Benchmark Data Set for Performance Evaluation of Aerial Scene Classification. 
+
+IEEE Transactions on Geoscience and Remote Sensing 55, 7 (2017), 3965– 3981. https://doi.org/10.1109/TGRS.2017.2685945 [39] Yi Xiong, Weihong Liu, Boyu Li, Qianyue Cao, Zongwei Zhu, Jiawei Geng, Rui Zhang, Yulong Zu, and Xuehai Zhou. 2026. MP3: Mixed-Precision Pipeline Parallelism Framework for Heterogeneous Edge Devices. IEEE Transactions on Computer-Aided Design of Integrated Cir-cuits and Systems (2026). https://doi.org/10.1109/TCAD.2026.3663279 [40] Yi Xiong, Weihong Liu, Rui Zhang, Yulong Zu, Zongwei Zhu, and Xuehai Zhou. 2024. EPipe: Pipeline Inference Framework with High-quality Offline Parallelism Planning for Heterogeneous Edge De-vices. In Proceedings of the 43rd IEEE/ACM International Conference on Computer-Aided Design . 1–10. https://doi.org/10.1145/3676536. 3676779 [41] Qingxiao Xiu, Jun Liu, Xiangjun Liu, and Jintao Wang. 2025. Computa-tion Offloading and Resource Allocation in Satellite Edge Computing Networks: A Multi-Agent Reinforcement Learning Approach. Com-puter Networks 272 (2025), 111680. https://doi.org/10.1016/j.comnet. 2025.111680 [42] Guanyu Xu, Zhiwei Hao, Yong Luo, Han Hu, Jianping An, and Shiwen Mao. 2024. DeViT: Decomposing Vision Transformers for Collabora-tive Inference in Edge Devices. IEEE Transactions on Mobile Computing 
+
+23, 5 (2024), 5917–5932. https://doi.org/10.1109/TMC.2023.3315138 [43] Zhengqian Xu, Peiying Zhang, Chengcheng Li, Hailong Zhu, Guanjun Xu, and Chenhua Sun. 2023. A Collaborative Inference Algorithm in Low-Earth-Orbit Satellite Network for Unmanned Aerial Vehicle. 
+
+Drones 7, 9 (2023), 575. https://doi.org/10.3390/drones7090575 [44] Senqiao Yang, Yukang Chen, Zhuotao Tian, Chengyao Wang, Jingyao Li, Bei Yu, and Jiaya Jia. 2025. VisionZip: Longer is Better but Not Necessary in Vision Language Models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 19792–19802. [45] Hongxu Yin, Arash Vahdat, Jose M. Alvarez, Arun Mallya, Jan Kautz, and Pavlo Molchanov. 2022. A-ViT: Adaptive Tokens for Efficient Vision Transformer. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 10809–10818. [46] Songge Zhang, Wen Wu, Liang Li, Ye Wang, and Xuemin Shen. 2026. Communication-Efficient Collaborative LLM Inference over LEO Satellite Networks. arXiv preprint arXiv:2604.04654 (2026). https: //doi.org/10.48550/arXiv.2604.04654 arXiv:2604.04654 [cs.DC] [47] Xinyuan Zhang, Jiang Liu, Ran Zhang, Yudong Huang, Jincheng Tong, Ning Xin, Liang Liu, and Zehui Xiong. 2024. Energy-Efficient Compu-tation Peer Offloading in Satellite Edge Computing Networks. IEEE Transactions on Mobile Computing 23, 4 (2024), 3077–3091. https: //doi.org/10.1109/TMC.2023.3269801 [48] Yuan Zhang, Chun-Kai Fan, Junpeng Ma, Wenzhao Zheng, Tao Huang, Kuan Cheng, Denis A. Gudovskiy, Tomoyuki Okuno, Yohei Nakata, Kurt Keutzer, and Shanghang Zhang. 2025. SparseVLM: Visual To-ken Sparsification for Efficient Vision-Language Model Inference. In 
+
+Proceedings of the 42nd International Conference on Machine Learning .Iapetus: Content-Aware Hierarchical Scheduling 
+
+A LYAPUNOV DERIVATION AND APPROXIMATION RESIDUAL 
+
+This appendix derives the plan terms used in Eq. (5). For 
+
+Θ(𝑡 ) = {𝑄 𝑠 (𝑡 ), 𝑍 𝑠 (𝑡 ) : 𝑠 ∈ S} , define 
+
+𝐿 (Θ(𝑡 )) = 12∑︁ 𝑠 ∈ S 
+
+𝑄 𝑠 (𝑡 ) − 𝜃 𝑠 
+
+𝑄 ref 
+
+2
+
++ 12∑︁ 𝑠 ∈ S 
+
+𝑍 2 
+
+> 𝑠
+
+(𝑡 ).
+
+Write the workload admitted to swarm 𝑠 in slot 𝑡 as 
+
+𝑊 𝑠 (𝑡 ) =∑︁  
+
+> 𝑘 ∈ A 𝑡
+
+1[𝑠 𝑘 = 𝑠 ]𝑊 𝑘,𝑠 (𝑞 𝑘 ).
+
+For the queue update in Eq. (3), the standard quadratic in-equality gives 
+
+(𝑄 𝑠 (𝑡 + 1) − 𝜃 𝑠 )2 − ( 𝑄 𝑠 (𝑡 ) − 𝜃 𝑠 )2
+
+2(𝑄 ref )2
+
+≤ Δ2𝜇 2 
+
+> 𝑠
+
+(𝑡 ) + 𝑊 2 
+
+> 𝑠
+
+(𝑡 )
+
+2(𝑄 ref )2 + 𝑄 𝑠 (𝑡 ) − 𝜃 𝑠 
+
+(𝑄 ref )2
+
+ 𝑊 𝑠 (𝑡 ) − Δ𝜇 𝑠 (𝑡 ).
+
+Let 𝑑 𝑠 (𝑡 ) = [𝐵 𝑠 (𝑡 ) − 𝐵 𝑠 (𝑡 + 1)]/ 𝐵 ref . Platform draw and solar input are independent of the current assignment. The component attributable to assignments is bounded by the admitted mean satellite battery draw: 
+
+𝑑 𝑠 (𝑡 ) ≤ 𝑑 0 
+
+> 𝑠
+
+(𝑡 ) + ∑︁  
+
+> 𝑘 ∈ A 𝑡
+
+1[𝑠 𝑘 = 𝑠 ] 𝐸 𝑘,𝑠 (𝑞 𝑘 )
+
+𝐵 ref 
+
+.
+
+Applying ([ 𝑧 + 𝑑 ]+)2 ≤ 𝑧 2 + 𝑑 2 + 2𝑧𝑑 to Eq. (4) yields 
+
+𝑍 2 
+
+> 𝑠
+
+(𝑡 + 1) − 𝑍 2 
+
+> 𝑠
+
+(𝑡 )
+
+2 ≤ 𝑑 2 
+
+> 𝑠
+
+(𝑡 )
+
+2 + 𝑍 𝑠 (𝑡 )𝑑 𝑠 (𝑡 ).
+
+Define the conditional drift over one slot 
+
+Δ(𝑡 ) = E[𝐿 (Θ(𝑡 + 1)) − 𝐿 (Θ(𝑡 )) | Θ(𝑡 )] .
+
+Assuming bounded arrivals, service, and battery variation in each slot, the quadratic terms above are bounded by a finite constant 𝐶 . Summing over swarms and adding the weighted task execution cost gives                    
+
+> Δ(𝑡 ) + 𝑉 E[Φ(𝑡 ) | Θ(𝑡 ) ] ≤ 𝐶 +Γ(𝑡 ) + E
+> ∑︁ 𝑘 ∈A 𝑡
+> Ψ𝑘,𝑠 𝑘 (𝑞 𝑘 ;𝑡 ) | Θ(𝑡 )
+> 
+> ,
+
+where Γ(𝑡 ) contains service and background energy terms independent of the current assignments. Minimizing the part affected by the current decision produces Eq. (5): its first two terms impose workload and battery penalties under the accumulated pressures, while the last carries the task execution cost. Let 𝜀 𝑡 ≥ 0 collect the residual from swarm screening, candidate truncation, coarse estimation, learned trajectory search, and sequential commitment. Assuming 𝜀 𝑡 ≤ 𝜀 max <
+
+∞, the drift bound gains an additive bounded term. The deployed search is therefore interpreted as an approximation to the common Lyapunov objective, not as an exact optimizer for every slot. 
+
+Table 9: Default system and training parameters.                                            
+
+> (a) Physical and runtime parameters.
+> Parameter Value Starlink size (planes ×sats) 24 ×22 OneWeb size (planes ×sats) 14 ×36 TLE epoch (October / June) 2025-10-16 / 2025-06-21 10:00 Trace horizon / slot duration 6000 / 0.1 s Task input composition 32 AID / 176 RESISC45 images (≈0.277 Gbit, 8-bit RGB) GSL / ISL bandwidth 0.1 / U [ 0.1,1]Gbps GSL / ISL transmit power 10 / 8.5 W Baseline / solar input power 6.62 / 19.2 W Orin mode (sunlight / eclipse) MAXN / 30 W Incremental compute power 16.42 / 5.59 W Lyapunov weight 𝑉 50 Swarm composition One leader and four members Queue and service model Non-preemptive processor and link ready times
+> (b) Offline predictor and policy training.
+> Parameter Value Predictor / input descriptor Histogram GBT / 16 statistics Isolated predictor records 1,134 ,000 History-conditioned records 48 ,000 GBT loss / depth / iterations Squared error / 6 / 120 GBT learning rate 0.08 GBT 𝐿 2regularization 1.0 Actor and critic networks Two 256-unit hidden layers SAC learning rate / batch size 3×10 −4/ 256 Replay capacity / initial transitions 200 ,000 / 20 ,000 Discount 𝛾 / target update 𝜏 1.0 / 0.005 Target entropy (pruning / node) −1 / 0 .5 ln 6 Offline updates 3,000 Training episodes / episode length 720 / 64 steps
+
+For the C3 diagnostic in § 7.3, let Ψ★ 
+
+> 𝑘
+
+be the minimum detailed score over a tractable exhaustive task set and Ψsel 
+
+> 𝑘
+
+the score selected by the deployed bounded search. We report the normalized gap 
+
+𝑔 𝑘 = Ψsel  
+
+> 𝑘
+
+− Ψ★
+
+> 𝑘
+
+max (| Ψ★ 
+
+> 𝑘
+
+|, 10 −12 ) ,
+
+together with the fraction of tasks for which the candidate attaining Ψ★ 
+
+> 𝑘
+
+survives Top-𝐾 retention. These diagnostics measure search approximation. 
+
+B ADDITIONAL EVALUATION RESULTS 
+
+Admission under link fluctuations. Table 10 decomposes TAR into the fraction of released tasks admitted for execution and the fraction of admitted tasks accomplished within both the deadline and accuracy requirements. 
+
+Sensitivity to objective weights. We compare four profiles over (𝜔 𝐷 , 𝜔 𝐸 , 𝜔 𝐴 ): Balanced (0.3, 0.3, 0.4), Latency-oriented Chen et al. 
+
+Table 10: Admission decomposition under link fluctu-ations at 5 tasks/s.                          
+
+> Method Admitted / released (%) Accomplished / admitted (%) TAR (%) ↑
+> GroundOnly 4.2 97.6 4.1 LocalDense 24.7 99.8 24.7 Phoenix 29.4 100.0 29.4 MARATD3 56.4 100.0 56.4 SPS-AO 78.1 72.7 56.8 Iapetus 72.0 93.3 67.2 0.0 2.5 5.0 7.5
+> Mean latency (s)
+> 6.98 5.49 8.54 7.06
+> (a) Mean latency
+> 0246
+> Battery draw (J)  5.87 6.01 5.76 5.93
+> (b) Battery draw
+> 010 20
+> Acc. loss ( ×10 −3 )
+> 17.45 16.22 21.37 14.67
+> (c) Accuracy loss
+> Balanced Latency-oriented Energy-oriented Accuracy-oriented
+
+Figure 9: Objective-weight sensitivity. 
+
+(0.6, 0.2, 0.2), Energy-oriented (0.2, 0.6, 0.2), and Accuracy-oriented (0.2, 0.2, 0.6). All profiles use the same AID+ViT-L ToMe configuration at 5 tasks/s and the same evaluation seeds. All profiles use the same frozen actor, with the objec-tive weights supplied as inputs. Figure 9 shows that each oriented profile improves its tar-get metric relative to Balanced: latency weighting reduces mean latency by 21.3%, energy weighting reduces mean bat-tery draw by 1.1%, and accuracy weighting lowers mean accuracy loss by 16.0%. These directions hold for every seed. These gains introduce corresponding tradeoffs. The Energy-oriented profile loses 2.32 pp of TAR and raises mean latency and accuracy loss by 22.3% and 22.5%, while the Latency-oriented profile draws 1.6% more battery. Balanced retains competitive TAR without such one-sided degradation and is therefore used as the default joint objective.
