@@ -1,0 +1,57 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-05T19:31:48.056545+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2609.01957v1",
+      "source": "arxiv",
+      "title": "Network-Aware Forecasting on Wireless Access Points",
+      "abstract": "Enterprise wireless access points (APs) are promising platforms for predictive machine learning (ML), but their primary responsibility remains providing wireless connectivity and network services. Predictive inference must therefore share an AP's CPU and memory with packet processing, Wi-Fi and IoT radio operations, and client management. This resource contention creates two risks: a model that performs well on proxy hardware may be too slow on the target AP, while a model that fits in isolation may still degrade network services under load. We define \\textit{network-aware deployability} using two gates: qualification of the model and its execution path on the target AP, followed by validation of its execution profile under packet-service and forecasting constraints. Our benchmarks show that edge testbeds do not reliably capture target behavior. Across matched artifacts and serving settings, five model implementations run 6.1--19.1$\\times$ slower on an AP than on a Raspberry Pi~5, while peak memory usage differs by up to 22\\%. Moreover, two forecasting foundation models of similar size differ in AP latency by 19$\\times$. When serving a smaller model across 13 parallel streams at a 30~s cadence under network saturation, default execution increases p99 round-trip time (RTT) by 76\\% and reduces throughput by 7.06\\%. Understanding these trade-offs is essential for live deployment if we aim to use APs for both networking and ML workloads.",
+      "authors": [
+        "Niloo Bahadori",
+        "Swadhin Pradhan",
+        "Peiman Amini"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.LG"
+      ],
+      "published": "2026-09-02T00:19:58+00:00",
+      "link": "https://arxiv.org/pdf/2609.01957v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Defines network-aware deployability for predictive ML on wireless APs under CPU and memory contention with packet services, addressing edge-node resource allocation.",
+      "llm_evidence_cn": "评估无线接入点上运行预测模型是否会影响报文服务，是边缘节点受限资源分配问题。",
+      "llm_evidence": "评估无线接入点上运行预测模型是否会影响报文服务，是边缘节点受限资源分配问题。",
+      "canonical_evidence": "评估无线接入点上运行预测模型是否会影响报文服务，是边缘节点受限资源分配问题。",
+      "llm_tldr_en": "Defines network-aware deployability for predictive ML on wireless APs: first qualify the model and its execution path on the target AP, then validate its execution profile under packet-service and forecasting constraints to avoid QoS degradation from resource contention.",
+      "llm_tldr_cn": "针对企业无线接入点在承担报文转发与无线连接的同时还要运行预测推理所导致的资源争抢问题，论文提出网络感知的可部署性定义，通过两道门控来评估模型：先在目标接入点上验证模型及其执行路径，再在报文服务与预测任务约束下检验运行画像。该方法旨在避免模型在隔离环境表现好却在真实负载下拖垮网络服务的问题，为边缘设备上安全部署附加预测功能提供可操作框架。",
+      "llm_tldr": "针对企业无线接入点在承担报文转发与无线连接的同时还要运行预测推理所导致的资源争抢问题，论文提出网络感知的可部署性定义，通过两道门控来评估模型：先在目标接入点上验证模型及其执行路径，再在报文服务与预测任务约束下检验运行画像。该方法旨在避免模型在隔离环境表现好却在真实负载下拖垮网络服务的问题，为边缘设备上安全部署附加预测功能提供可操作框架。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

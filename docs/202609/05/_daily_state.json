@@ -1,0 +1,25 @@
+{
+  "date": "20260905",
+  "date_label": "",
+  "generated_at": "2026-09-05 19:34:05 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2609.01957v1",
+      "route": "202609/05/2609.01957v1-network-aware-forecasting-on-wireless-access-points",
+      "title": "Network-Aware Forecasting on Wireless Access Points",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "评估无线接入点上运行预测模型是否会影响报文服务，是边缘节点受限资源分配问题。",
+      "first_seen_at": "2026-09-05 19:34:05 UTC",
+      "updated_at": "2026-09-05 19:34:05 UTC"
+    }
+  ]
+}

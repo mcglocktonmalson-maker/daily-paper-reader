@@ -1,0 +1,24 @@
+{
+  "label": "2026-09-05",
+  "date": "2026-09-05",
+  "generated_at": "2026-09-05T19:34:12",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202609/05/2609.01957v1-network-aware-forecasting-on-wireless-access-points",
+      "section": "quick",
+      "title_en": "Network-Aware Forecasting on Wireless Access Points",
+      "authors": "Niloo Bahadori, Swadhin Pradhan, Peiman Amini",
+      "date": "2026-09-02",
+      "pdf": "https://arxiv.org/pdf/2609.01957v1",
+      "score": "6.0",
+      "evidence": "评估无线接入点上运行预测模型是否会影响报文服务，是边缘节点受限资源分配问题。",
+      "tldr": "企业无线接入点(AP)需兼顾网络服务与预测推理，资源竞争使模型在真实AP上的表现与隔离环境差异显著。本文提出网络感知可部署性评估：先对模型及执行路径在目标AP上资格测试，再在网络负载与预测约束下验证运行画像。实测发现同一模型在AP上比树莓派5慢6.1～19.1倍，内存差22%，相似规模基础模型延迟差19倍；网络饱和下小模型服务使p99 RTT上升76%、吞吐下降7%。该框架为AP联合承载网络与ML负载提供量化决策依据。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Enterprise wireless access points (APs) are promising platforms for predictive machine learning (ML), but their primary responsibility remains providing wireless connectivity and network services. Predictive inference must therefore share an AP's CPU and memory with packet processing, Wi-Fi and IoT radio operations, and client management. This resource contention creates two risks: a model that performs well on proxy hardware may be too slow on the target AP, while a model that fits in isolation may still degrade network services under load. We define \\textit{network-aware deployability} using two gates: qualification of the model and its execution path on the target AP, followed by validation of its execution profile under packet-service and forecasting constraints. Our benchmarks show that edge testbeds do not reliably capture target behavior. Across matched artifacts and serving settings, five model implementations run 6.1--19.1$\\times$ slower on an AP than on a Raspberry Pi~5, while peak memory usage differs by up to 22\\%. Moreover, two forecasting foundation models of similar size differ in AP latency by 19$\\times$. When serving a smaller model across 13 parallel streams at a 30~s cadence under network saturation, default execution increases p99 round-trip time (RTT) by 76\\% and reduces throughput by 7.06\\%. Understanding these trade-offs is essential for live deployment if we aim to use APs for both networking and ML workloads.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

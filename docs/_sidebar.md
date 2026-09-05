@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-09-05 <!--dpr-date:20260905-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202609/05/2609.01957v1-network-aware-forecasting-on-wireless-access-points" data-sidebar-item="{&quot;title&quot;: &quot;Network-Aware Forecasting on Wireless Access Points&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2609.01957v1-network-aware-forecasting-on-wireless-access-points&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;edge-sfc&quot;}], &quot;evidence&quot;: &quot;评估无线接入点上运行预测模型是否会影响报文服务，是边缘节点受限资源分配问题。&quot;}">Network-Aware Forecasting on Wireless Access Points</a>
   * 2026-09-04 <!--dpr-date:20260904-->
     * 速读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202609/04/2608.28878v1-hybrid-offline-online-multi-agent-decision-transformers-for-wireless-resource-management" data-sidebar-item="{&quot;title&quot;: &quot;Hybrid Offline-Online Multi-Agent Decision Transformers for Wireless Resource Management&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2608.28878v1-hybrid-offline-online-multi-agent-decision-transformers-for-wireless-resource-management&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;edge-sfc&quot;}], &quot;evidence&quot;: &quot;面向无线资源管理的全分布式混合离线-在线多智能体决策Transformer&quot;}">Hybrid Offline-Online Multi-Agent Decision Transformers for Wireless Resource Management</a>
