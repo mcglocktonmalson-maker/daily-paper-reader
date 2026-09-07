@@ -1,0 +1,246 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-07T19:04:51.479613+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 5,
+    "quick_skim_target": 12,
+    "quick_selected": 5
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.30615v1",
+      "source": "arxiv",
+      "title": "Towards Operator-Empowered Vulnerability Hotfixing for 5G Radio Access Networks",
+      "abstract": "Cellular protocol vulnerabilities can remain exploitable for months or years while standards bodies, vendors, and mobile network operators (MNOs) coordinate permanent fixes. We present Buckler, a framework that enables an MNO to deploy temporary, local, and reversible hotfixes in its radio access network (RAN) during this exposure window. Buckler places reusable hooks at standardized L2/L3 channel boundaries and exposes a closed, stateful match-action interface with three preventive actions: DROP, MODIFY, and RELEASE. We evaluate whether this bounded design provides useful coverage without requiring extensive changes to existing RANs. From 23 papers, we identify 64 attacks rooted in standard L2/L3 protocol behavior, of which 43 provide a preventive intervention point at the RAN, and we construct Buckler hotfixes for 20 of them. All 20 hotfixes use the same rule vocabulary and only five standardized channel hooks, while the unsupported attacks expose endpoint dependencies that a RAN cannot satisfy alone. We implement the five hooks on srsRAN and OpenAirInterface with small, structurally similar changes, and demonstrate all three actions against representative availability and privacy attacks. These results establish operator-empowered hotfixing as a practical and portable interim defense and delineate the architectural limits of RAN-only prevention.",
+      "authors": [
+        "Dong Hyeok Kim",
+        "Xin Zhe Khooi",
+        "Hocheol Nam",
+        "Seungjin Baek",
+        "Mun Choon Chan",
+        "CheolJun Park",
+        "Min Suk Kang"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR"
+      ],
+      "published": "2026-08-31T11:26:12+00:00",
+      "link": "https://arxiv.org/pdf/2608.30615v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Operator-empowered reversible hotfixes in 5G RAN protect against protocol vulnerabilities, helping the network remain operational during vulnerability exposure",
+      "llm_evidence_cn": "面向运营商的可逆热修复机制在5G无线接入网中缓解协议漏洞，使网络在漏洞暴露期保持可用",
+      "llm_evidence": "面向运营商的可逆热修复机制在5G无线接入网中缓解协议漏洞，使网络在漏洞暴露期保持可用",
+      "canonical_evidence": "面向运营商的可逆热修复机制在5G无线接入网中缓解协议漏洞，使网络在漏洞暴露期保持可用",
+      "llm_tldr_en": "Buckler lets mobile network operators deploy temporary local reversible hotfixes at 5G RAN protocol boundaries with DROP, MODIFY and RELEASE actions, covering many standard L2/L3 attacks.",
+      "llm_tldr_cn": "蜂窝协议漏洞可能长期存在且难以快速修复，运营商需要在正式修复前临时缓解攻击。本文提出Buckler框架，在5G无线接入网的标准L2/L3通道边界放置可复用钩子，并通过DROP、MODIFY、RELEASE等受控动作实施可逆热修复。从23篇文献梳理出的64种攻击中，该框架可缓解43种，说明这种有界设计能在不大量改动现有RAN的前提下有效提升网络对安全扰动的韧性。",
+      "llm_tldr": "蜂窝协议漏洞可能长期存在且难以快速修复，运营商需要在正式修复前临时缓解攻击。本文提出Buckler框架，在5G无线接入网的标准L2/L3通道边界放置可复用钩子，并通过DROP、MODIFY、RELEASE等受控动作实施可逆热修复。从23篇文献梳理出的64种攻击中，该框架可缓解43种，说明这种有界设计能在不大量改动现有RAN的前提下有效提升网络对安全扰动的韧性。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.04406v1",
+      "source": "arxiv",
+      "title": "Network Availability Enhancement in Low-Altitude HetNets: A Cross-Layer Design Perspective",
+      "abstract": "This paper proposes a computing-communication resource interchange method to enhance network availability (NA) in low-altitude heterogeneous networks (LA-HetNets). In these networks, communication resource conflicts and imbalances, caused by extreme heterogeneity (diverse mobility, mixed delays, and hybrid transmission), and cross-regional traffic, reduce reliability and lead to unavailability. Restoring NA requires additional communication resources, yet dynamic cross-regional scheduling is limited, making locally redundant computing resources an alternative to reduce communication resource overhead. While computing resources address medium access control (MAC)-layer unreliability, physical (PHY)-layer functionalities still rely on communication resources. Thus, it remains unclear whether increasing computing resources alone can achieve target NA, especially under greater heterogeneity. We elaborate on the impact of heterogeneity on NA and show that expanding computing resources alone cannot meet target NA under high heterogeneity, as NA degrades sharply due to increased communication capability demands. To overcome this, we propose a cross-layer optimization method enabling computing-communication resource interchange to address both MAC- and PHY-layer unreliability. By reducing processing delays with computing resources while ensuring MAC-layer reliability, our method extends PHY-layer transmission delay and expands communication resources. Simulations demonstrate our approach's superiority in achieving target NA under greater heterogeneity, revealing that computing-communication resource interchange fulfills expanding communication capability demands more effectively than conventional resource overhead reduction.",
+      "authors": [
+        "Teng Wu",
+        "Jiandong Li",
+        "Junyu Liu",
+        "Min Sheng",
+        "Mohammadali Mohammadi",
+        "Hien Quoc Ngo",
+        "Michail Matthaiou"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "eess.SP"
+      ],
+      "published": "2026-09-03T19:15:26+00:00",
+      "link": "https://arxiv.org/pdf/2609.04406v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Computing-communication resource interchange to restore network availability in low-altitude HetNets",
+      "llm_evidence_cn": "通过网络中计算与通信资源互换增强网络可用性和抗不可用性",
+      "llm_evidence": "通过网络中计算与通信资源互换增强网络可用性和抗不可用性",
+      "canonical_evidence": "通过网络中计算与通信资源互换增强网络可用性和抗不可用性",
+      "llm_tldr_en": "To counter unavailability caused by communication resource conflicts in low-altitude HetNets, the paper proposes a computing-communication resource interchange method that uses locally redundant computing resources to cut communication overhead and restore network availability from a cross-layer design perspective.",
+      "llm_tldr_cn": "低空异构网络中的极端异构性与跨区流量会造成通信资源冲突和不平衡，从而降低可靠性并导致网络不可用。本文提出计算-通信资源互换方法，利用本地冗余计算资源替代部分通信资源开销，从跨层设计角度缓解MAC层不可靠性并支持物理层功能，以恢复网络可用性。研究表明这类互换机制可在跨区域动态调度受限时减少通信资源消耗，为低空边缘场景下以计算增强网络韧性的设计提供了参考。",
+      "llm_tldr": "低空异构网络中的极端异构性与跨区流量会造成通信资源冲突和不平衡，从而降低可靠性并导致网络不可用。本文提出计算-通信资源互换方法，利用本地冗余计算资源替代部分通信资源开销，从跨层设计角度缓解MAC层不可靠性并支持物理层功能，以恢复网络可用性。研究表明这类互换机制可在跨区域动态调度受限时减少通信资源消耗，为低空边缘场景下以计算增强网络韧性的设计提供了参考。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.03145v1",
+      "source": "arxiv",
+      "title": "Skywing: A Platform for Decentralized Mathematical Computing in Unreliable Environments",
+      "abstract": "Emerging edge, autonomous, and cyber-physical systems increasingly require mathematical computation across heterogeneous devices connected by unreliable communication networks. Traditional high-performance computing and distributed data-processing frameworks provide powerful abstractions for managed environments but are less suited to decentralized settings where centralized coordination, reliable communication, and global synchronization cannot be assumed. This paper presents Skywing, an open-source platform for decentralized mathematical computing in unreliable environments. Its programming model consists of three abstractions: agents represent participants in a decentralized computation, processors encapsulate algorithm-specific update rules, and iterations manage distributed execution. Skywing supports asynchronous operation, publish-subscribe communication, managed message handling, and the composition of independent algorithms into complex decentralized workflows. We demonstrate Skywing using representative algorithms from consensus, optimization, and numerical linear algebra. Experiments on the native Skywing runtime include Push Sum and Max Consensus, a composed monitoring and control workflow, resilient Push Sum under delayed communication, and resilient asynchronous Jacobi under malevolent data corruption. These demonstrations show that Skywing supports diverse decentralized algorithms while separating mathematical logic from communication and execution infrastructure. Skywing serves as both a deployment framework for decentralized applications and a research platform for developing resilient mathematical algorithms.",
+      "authors": [
+        "Alyson Fox",
+        "Colin Ponce",
+        "Annika Mauro",
+        "Wayne Mitchell",
+        "Sarah Osborn",
+        "Tom Benson",
+        "Shayna Kapadia"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-09-02T20:28:08+00:00",
+      "link": "https://arxiv.org/pdf/2609.03145v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "decentralized platform for mathematical computation in emerging edge systems over unreliable networks, avoiding central coordination",
+      "llm_evidence_cn": "面向不可靠网络下的边缘与自治系统提供去中心化计算平台，避免集中协调与全局同步，实现数据源附近的分布式计算",
+      "llm_evidence": "面向不可靠网络下的边缘与自治系统提供去中心化计算平台，避免集中协调与全局同步，实现数据源附近的分布式计算",
+      "canonical_evidence": "面向不可靠网络下的边缘与自治系统提供去中心化计算平台，避免集中协调与全局同步，实现数据源附近的分布式计算",
+      "llm_tldr_en": "Skywing is an open-source platform for math computing across edge, autonomous, and cyber-physical devices connected by unreliable networks. Its agent and processor abstractions avoid centralized coordination and global synchronization, supporting computation in decentralized settings where reliability cannot be assumed.",
+      "llm_tldr_cn": "传统高性能计算和分布式数据处理框架依赖受管环境与可靠通信，难以支持边缘、自治和信息物理系统中异构设备在不可靠网络下的数学计算。该文提出开源平台Skywing，用智能体表示参与者、处理器封装算法逻辑，以去中心化协作避免中心化协调与全局同步。平台面向新兴边缘场景设计，证明在缺少可靠通信和全局同步时仍可运行，填补了传统分布式框架在不可靠环境中的空白。",
+      "llm_tldr": "传统高性能计算和分布式数据处理框架依赖受管环境与可靠通信，难以支持边缘、自治和信息物理系统中异构设备在不可靠网络下的数学计算。该文提出开源平台Skywing，用智能体表示参与者、处理器封装算法逻辑，以去中心化协作避免中心化协调与全局同步。平台面向新兴边缘场景设计，证明在缺少可靠通信和全局同步时仍可运行，填补了传统分布式框架在不可靠环境中的空白。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "distributed computing paradigm that brings computation near data sources at the network edge",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2609.04513v1",
+      "source": "arxiv",
+      "title": "Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters",
+      "abstract": "Compound AI workflows are increasingly used to serve complex AI tasks by coordinating multiple AI models and software components. This approach enables deployment flexibility, as each workflow stage can expose different model variants and resource requirements, but it also expands the deployment choices. A deployment must choose an execution plan that selects AI models for each compound AI workflow stage and places them on a heterogeneous cluster in order to satisfy SLOs. Deployment optimizers therefore need estimates to compare many candidate plans and identify feasible ones. System metrics can often be profiled per stage and composed according to workflow topology, but accuracy cannot, as errors and information loss at upstream stages affect the accuracy of downstream stages. Existing approaches either profile complete configurations end to end, which scales poorly, or use product-based accuracy surrogates that treat stages as independent and can misrank candidate plans. We introduce Atlas, a framework for optimizing compound AI deployments under SLO constraints. Atlas uses MAP, a Markovian Accuracy Predictor, to estimate configuration accuracy from local conditional accuracy transitions between adjacent workflow stages. MAP discretizes intermediate outputs into accuracy buckets and composes transition profiles according to workflow topology, giving the optimizer an accuracy estimate without exhaustive end-to-end profiling. Atlas formulates execution-plan selection as a mixed-integer linear program that maximizes predicted accuracy subject to SLOs. Across four compound AI workflows, MAP achieves Spearman correlation up to 0.947 while reducing profiling cost by up to 2.6x relative to exhaustive end-to-end profiling. Guided by MAP, the Atlas optimizer selects execution plans within 0.03 of oracle accuracy while reducing deployment cost by up to 42% through heterogeneous placement.",
+      "authors": [
+        "Milos Gravara",
+        "Andrija Stanisic",
+        "Stefan Nastic"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.AI"
+      ],
+      "published": "2026-09-03T22:01:39+00:00",
+      "link": "https://arxiv.org/pdf/2609.04513v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Deployment optimizer for multi-stage compound AI workflows on heterogeneous clusters, analogous to service function chain placement and resource orchestration",
+      "llm_evidence_cn": "面向多阶段复合AI工作流的部署优化，通过模型选择与节点放置满足SLO，可类比服务功能链部署与资源编排",
+      "llm_evidence": "面向多阶段复合AI工作流的部署优化，通过模型选择与节点放置满足SLO，可类比服务功能链部署与资源编排",
+      "canonical_evidence": "面向多阶段复合AI工作流的部署优化，通过模型选择与节点放置满足SLO，可类比服务功能链部署与资源编排",
+      "llm_tldr_en": "Atlas optimizes deployment of compound AI workflows: it picks model variants and placements for workflow stages on heterogeneous clusters to satisfy SLOs, using profiled metrics plus modeled accuracy losses to prune and choose feasible execution plans.",
+      "llm_tldr_cn": "复合AI工作流由多个AI模型和软件组件协同完成，部署时需为每个阶段选择模型变体并放置到异构集群上，以满足服务等级目标。由于系统指标可按阶段刻画并按工作流拓扑组合，而精度损失会跨阶段传播、难以直接合成，Atlas提出部署优化方法，用分阶段画像与精度建模来高效比较候选执行计划，识别可行部署。这种面向多阶段、多版本服务的资源感知部署优化，对服务功能链的资源编排问题具有方法上的迁移价值。",
+      "llm_tldr": "复合AI工作流由多个AI模型和软件组件协同完成，部署时需为每个阶段选择模型变体并放置到异构集群上，以满足服务等级目标。由于系统指标可按阶段刻画并按工作流拓扑组合，而精度损失会跨阶段传播、难以直接合成，Atlas提出部署优化方法，用分阶段画像与精度建模来高效比较候选执行计划，识别可行部署。这种面向多阶段、多版本服务的资源感知部署优化，对服务功能链的资源编排问题具有方法上的迁移价值。",
+      "llm_tags": [
+        "query:sfc-edge:composite"
+      ],
+      "matched_query_tag": "query:sfc-edge:composite",
+      "matched_query_text": "Papers central to 面向服务功能链部署、网络韧性、资源编排与边缘计算领域的检索主题, especially work that connects or combines: deploying service function chains in edge networks; network resilience and failure recovery in service function chain deployment; resource orchestration for service function chains in edge computing; placement of virtual network functions with resilience constraints; resilience-aware orchestration of network services in edge environments; dynamic service function chain deployment under resource constraints; find studies on resilient service function chain deployment in edge computing; resource orchestration strategies for improving network resilience in edge environments; failure recovery mechanisms for service function chain orchestration in edge computing.",
+      "matched_requirement_id": "req-composite-sfc-edge",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2609.05184v1",
+      "source": "arxiv",
+      "title": "Towards Federated, Green, and Resilient 6G Non-Terrestrial Networks",
+      "abstract": "This study focuses on future Non-Terrestrial Networks (NTN) integrated with Terrestrial Networks (TN) for future 5G/6G systems. NTN envisions a 3D architecture, where Low Earth Orbit (LEO) satellite networks will play a key role in bridging the digital divide, complementing the gradual terrestrial 5G/6G rollout concentrated in high-density and high-traffic areas, by ensuring service continuity across broad geographic regions and providing coverage in case of emergencies or in remote areas. In this context, we address networking issues for the integration and federation of Terrestrial and Non-Terrestrial Network (T-NTN) in line with the IMT-2030 vision, focusing on interoperability, spectrum coexistence, unified control and management, and service continuity. Federation is a complementary approach to integration that enables distinct satellite systems to cooperate through agreements, potentially unified satellite terminals, and common resource management. We show that system federation significantly enhances both latency performance and connectivity robustness compared with non-federated LEO architectures. This paper also investigates the challenges and possible solutions for adopting the Open-RAN architecture for T-NTN, including routing options for mega-LEO systems, edge intelligence, and energy efficiency as critical elements for sustainability. Finally, we address the security, privacy, and resilience aspects of federated T-NTN architectures with emphasis on zero-trust, secure routing, trustworthy edge intelligence, Post-Quantum Cryptography (PQC), and Quantum Key Distribution (QKD).",
+      "authors": [
+        "Sarath Babu",
+        "Victor Baños-Gonzalez",
+        "Mario Cordina",
+        "Debabrata Dalai",
+        "Tomaso de Cola",
+        "Franco Davoli",
+        "Etienne Victor Depasquale",
+        "Ashutosh Dutta",
+        "Hesham ElBakoury",
+        "Michael A. Enright",
+        "Giovanni Giambene",
+        "Sumit Goswami",
+        "Ramesh Gupta",
+        "Wael Jaafar",
+        "Eman Hammad",
+        "B. S. Manoj",
+        "Tony Li",
+        "Manuel M. H. Roth",
+        "Paresh Saxena",
+        "Pat Scanlan",
+        "Zhili Sun",
+        "Daniele Tarchi",
+        "Saviour Zammit"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-09-04T14:21:24+00:00",
+      "link": "https://arxiv.org/pdf/2609.05184v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "network resilience, service continuity, coverage in emergencies in 6G non-terrestrial networks",
+      "llm_evidence_cn": "6G非地面网络中的韧性与应急场景服务连续性",
+      "llm_evidence": "6G非地面网络中的韧性与应急场景服务连续性",
+      "canonical_evidence": "6G非地面网络中的韧性与应急场景服务连续性",
+      "llm_tldr_en": "This study discusses networking challenges for federated and integrated terrestrial and non-terrestrial 6G networks, emphasizing service continuity and emergency coverage, i.e., network resilience.",
+      "llm_tldr_cn": "未来6G需要依赖地面与非地面网络融合来提供全域连接。该研究面向IMT-2030愿景中的地面与非地面网络集成与联邦化，梳理互通性、频谱共存、统一管控和服务连续性等关键网络议题，特别关注紧急或偏远场景下的覆盖与服务连续，即网络韧性问题。文章提出了融合方向的研究框架，指出韧性、绿色与联邦化需协同设计。",
+      "llm_tldr": "未来6G需要依赖地面与非地面网络融合来提供全域连接。该研究面向IMT-2030愿景中的地面与非地面网络集成与联邦化，梳理互通性、频谱共存、统一管控和服务连续性等关键网络议题，特别关注紧急或偏远场景下的覆盖与服务连续，即网络韧性问题。文章提出了融合方向的研究框架，指出韧性、绿色与联邦化需协同设计。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "capability of a network to remain operational and recover from failures or disruptions",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

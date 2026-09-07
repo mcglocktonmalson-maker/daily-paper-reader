@@ -1,0 +1,89 @@
+{
+  "date": "20260907",
+  "date_label": "",
+  "generated_at": "2026-09-07 19:08:13 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.30615v1",
+      "route": "202609/07/2608.30615v1-towards-operator-empowered-vulnerability-hotfixing-for-5g-radio-access-networks",
+      "title": "Towards Operator-Empowered Vulnerability Hotfixing for 5G Radio Access Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向运营商的可逆热修复机制在5G无线接入网中缓解协议漏洞，使网络在漏洞暴露期保持可用",
+      "first_seen_at": "2026-09-07 19:08:13 UTC",
+      "updated_at": "2026-09-07 19:08:13 UTC"
+    },
+    {
+      "paper_id": "2609.03145v1",
+      "route": "202609/07/2609.03145v1-skywing-a-platform-for-decentralized-mathematical-computing-in-unreliable-environments",
+      "title": "Skywing: A Platform for Decentralized Mathematical Computing in Unreliable Environments",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向不可靠网络下的边缘与自治系统提供去中心化计算平台，避免集中协调与全局同步，实现数据源附近的分布式计算",
+      "first_seen_at": "2026-09-07 19:08:13 UTC",
+      "updated_at": "2026-09-07 19:08:13 UTC"
+    },
+    {
+      "paper_id": "2609.04406v1",
+      "route": "202609/07/2609.04406v1-network-availability-enhancement-in-low-altitude-hetnets-a-cross-layer-design-perspective",
+      "title": "Network Availability Enhancement in Low-Altitude HetNets: A Cross-Layer Design Perspective",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "通过网络中计算与通信资源互换增强网络可用性和抗不可用性",
+      "first_seen_at": "2026-09-07 19:08:13 UTC",
+      "updated_at": "2026-09-07 19:08:13 UTC"
+    },
+    {
+      "paper_id": "2609.04513v1",
+      "route": "202609/07/2609.04513v1-atlas-optimizing-deployment-of-compound-ai-workflows-on-heterogeneous-clusters",
+      "title": "Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "sfc-edge"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向多阶段复合AI工作流的部署优化，通过模型选择与节点放置满足SLO，可类比服务功能链部署与资源编排",
+      "first_seen_at": "2026-09-07 19:08:13 UTC",
+      "updated_at": "2026-09-07 19:08:13 UTC"
+    },
+    {
+      "paper_id": "2609.05184v1",
+      "route": "202609/07/2609.05184v1-towards-federated-green-and-resilient-6g-non-terrestrial-networks",
+      "title": "Towards Federated, Green, and Resilient 6G Non-Terrestrial Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "6G非地面网络中的韧性与应急场景服务连续性",
+      "first_seen_at": "2026-09-07 19:08:13 UTC",
+      "updated_at": "2026-09-07 19:08:13 UTC"
+    }
+  ]
+}

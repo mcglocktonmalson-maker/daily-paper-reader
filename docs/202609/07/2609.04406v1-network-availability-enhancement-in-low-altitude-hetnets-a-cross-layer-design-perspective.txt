@@ -1,0 +1,1200 @@
+Title: Network Availability Enhancement in Low-Altitude HetNets: A Cross-Layer Design Perspective
+
+URL Source: https://arxiv.org/pdf/2609.04406v1
+
+Published Time: Mon, 07 Sep 2026 00:09:37 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Network Availability Enhancement in Low-Altitude HetNets: A Cross-Layer Design Perspective 
+
+Teng Wu †‡ , Jiandong Li †, Junyu Liu †, Min Sheng †, Mohammadali Mohammadi ‡, Hien Quoc Ngo ‡, and Michail Matthaiou ‡†State Key Laboratory of ISN, Institute of Information Science, Xidian University, Xi’an, Shaanxi, 710071, China 
+
+> ‡
+
+Centre for Wireless Innovation (CWI), Queen’s University Belfast, Belfast, BT3 9DT, U.K. Email: t.wu@stu.xidian.edu.cn 
+
+Abstract —This paper proposes a computing–communication resource interchange method to enhance network availabil-ity (NA) in low-altitude heterogeneous networks (LA-HetNets). In these networks, communication resource conflicts and im-balances, caused by extreme heterogeneity (diverse mobility, mixed delays, and hybrid transmission), and cross-regional traffic, reduce reliability and lead to unavailability. Restoring NA requires additional communication resources, yet dynamic cross-regional scheduling is limited, making locally redundant computing resources an alternative to reduce communication resource overhead. While computing resources address medium access control (MAC)-layer unreliability, physical (PHY)-layer functionalities still rely on communication resources. Thus, it remains unclear whether increasing computing resources alone can achieve target NA, especially under greater heterogeneity. We elaborate on the impact of heterogeneity on NA and show that expanding computing resources alone cannot meet target NA under high heterogeneity, as NA degrades sharply due to increased communication capability demands. To overcome this, we propose a cross-layer optimization method enabling comput-ing–communication resource interchange to address both MAC-and PHY-layer unreliability. By reducing processing delays with computing resources while ensuring MAC-layer reliability, our method extends PHY-layer transmission delay and expands com-munication resources. Simulations demonstrate our approach’s superiority in achieving target NA under greater heterogeneity, revealing that computing-communication resource interchange fulfills expanding communication capability demands more ef-fectively than conventional resource overhead reduction. 
+
+Index Terms —Computing-communication resource inter-change, cross-layer optimization, low-altitude heterogeneous net-works (LA-HetNets). 
+
+I. I NTRODUCTION 
+
+Low-altitude networks, employing unmanned aerial vehicle (UAV)-mounted flying access points (FAPs), have emerged as a pivotal paradigm for supporting communications in complex environments [1]. These networks are essential for a wide 
+
+This work is supported in part by the National Natural Science Foundation of China (Grant No. 62121001, 62495020, and 62461160329), in part by Key Research and Development Program of Shaanxi (Grant No. 2024CY2-GJHX-82), in part by Fundamental Research Funds for the Central Universities (No. QTZX26093), and in part by 2025 Open Fund Project of the State Key Lab-oratory of Power Grid Safety (Project Title: Research on Multi-dimensional Resilience Assessment and Enhancement Technologies for Power Systems Considering Primary-Secondary System Integration under Rain, Snow, and Freezing Disasters, No. XTB51202501740). The work of H. Q. Ngo was supported by the UK ISPF programme through the UKRI EPSRC (grant ID: UKRI554, led by University of East Anglia) under pilot project “BEAM-RAN” (UEA ref: R213867). The work of M. Matthaiou was supported by the European Research Council (ERC) under the European Unions Horizon 2020 research and innovation programme (grant agreement No. 101001331). 
+
+range of applications—from smart agriculture and routine industrial inspections to high-stakes situations—where ground infrastructure is unavailable or compromised, e.g., during disaster emergency operations [2]. However, maintaining a sustained NA remains difficult, as multiple fundamental con-straints introduce significant unreliability in communication, where the NA is the probability that the quality-of-service (QoS) requirements, in terms of delay and reliability, for each service are satisfied [3], [4]. On one hand, the inherent mobility of both FAPs and user equipment (UEs), combined with wireless fading, creates highly dynamic channels, which deteriorates PHY-layer link reliability (e.g., decoding errors and transmission outage) [1], [4]. On the other hand, the network must accommodate heterogeneity induced by diverse UE mobility profiles, mixed delay constraints, and hybrid transmission modes, such as unicast for ultra-reliable and low-latency communication and multicast for other delay-sensitive traffic [2], [5]. This heterogeneity results in communication resource allocation conflicts [6]. Moreover, traffic in low-altitude networks exhibits cross-regional characteristics, trig-gering severe communication resource allocation imbalances [7]. Collectively, these resource allocation conflicts and imbal-ances lead to communication reliability degradation [6], [7]. To address unreliability and resource allocation conflicts, a unified broadcast scheme can streamline scheduling, while coordinated multi-point (CoMP) and multi-connectivity (MC) techniques leverage spatial and frequency diversity to enhance the stability of wireless links [1], [8]. To circumvent the prohibitive costs of cross-regional communication resource scheduling, exploiting locally abundant computing resources, i.e., central processing unit (CPU) cycles, emerges as a vi-able alternative to address communication resource allocation imbalances [7]. Conventionally, mobile edge computing lever-ages such local computing resources for data compression or task offloading to alleviate communication resource pressure [7]. However, when communication resources are scarce, such strategies fail to address PHY-layer unreliability, which inherently requires sufficient communication resources. Therefore, whether adding computing resources can achieve the target NA in LA-HetNets remains a critical open problem, particularly under greater heterogeneity, directly motivating our work. The main contributions of this paper are as follows:  
+
+> •
+
+To address this open problem, we first provide analytical expressions that capture the impact of heterogeneity on arXiv:2609.04406v1 [cs.NI] 3 Sep 2026 NA for FAP CoMP-enabled LA-HetNets under a unified MC broadcast scheme. Our analysis reveals that adding computing resources can resolve MAC-layer unreliability to enhance NA. However, simply scaling up computing resources cannot achieve the target NA under increasing heterogeneity. This is because, under the unified scheme, greater heterogeneity inflates the per-link service load, thereby increasing communication capability demands.  
+
+> •
+
+To break the above bottleneck, we propose a cross-layer optimization to enable computing-communication re-source interchange. Specifically, reducing processing de-lay by allocating additional computing resources—while maintaining MAC-layer reliability— extends the PHY-layer transmission delay, effectively increasing commu-nication resources. Simulations demonstrate that our ap-proach successfully achieves the target NA, supporting greater heterogeneity than conventional computing-only expansion strategies. This demonstrates that trading com-puting resources for communication resources is more effective than merely alleviating communication resource constraints through conventional strategies in meeting communication capability demands. 
+
+Notation: Bold lowercase letters denote vectors; (·)T and (·)H
+
+represent the transpose and Hermitian transpose, respectively; 
+
+fQ−1 (·) is the inverse Q-function, while the Q-function is 
+
+fQ(x) = 1√2π
+
+R ∞ 
+
+> x
+
+exp( − y2 
+
+> 2
+
+)dy ; 1[Y ] denotes the indicator function of event Y , where 1[Y ] = 1 if event Y is true, and 
+
+1[Y ] = 0 otherwise; CN (0 , σ 2) denotes a circularly symmetric complex Gaussian random variable (RV) with variance σ2.Finally, EX {·} and PX {·} denote the statistical expectation and probability with respect to the RV X, respectively. II. S YSTEM MODEL 
+
+A. Network Model 
+
+We consider a downlink FAP CoMP-enabled LA-HetNet, which consists of L fixed-wing UAV-mounted single-antenna FAPs and M single-antenna UEs with diverse mobility pro-files. All FAPs are connected to a data center-level computing unit (DCCU) via wireless fronthaul links for centralized signal processing, while the DCCU can be deployed on the ground or in the sky [4]. The service area A is modeled as acircular region centered at (0 , 0, 0) with a radius WD. The UEs include ground UEs and aerial UEs, where the former are randomly distributed within A, while the latter are randomly distributed over the altitude range H = [ hmin , h max ] above A.Moreover, hmin and hmax are the minimum and maximum altitudes, wherein aerial UEs are located, respectively. All FAPs follow periodic circular flight trajectories [4]. The flight altitude, radius, and speed of each FAP are hF, WF, and vF,respectively. The UE mobility in LA-HetNets is characterized by the maximum relative speed ( vr) between the UE and FAPs, which varies across different UEs. The flight period of each FAP is T = 2 πW F/vF. To facilitate a tractable performance analysis, we equally divide T into NT time slots with a duration TS, yielding NT = T /TS. This discrete-time division ensures that the transmission distance d = pd2H + d2V ≤ ˜dUnicast Packet 1 Multicast Packet 2 Multicast Packet 3 Packets 1~3 DCCU FAPs Fronthaul 1st Subchannel 
+
+> UEs
+> ...  ... 2nd Subchannel 3rd Subchannel
+> Unified Broadcast
+> ... PS
+> Precoding MC Transmission Downlink Service Arrival
+> Fig. 1: The unified MC broadcast scheme and PS server model.
+
+from UEs to FAPs can be considered constant within each time slot and varies only between different slots [4], [7], where dH and dV denote the horizontal and vertical distances, respectively. Moreover, ˜d=
+
+q˜d2H + ˜d2V is the farthest transmis-sion distance from UEs to FAPs, where ˜dH = 2 WD + 2 WF
+
+and ˜dV = max {hF, |hF −hmin | , |hF −hmax |} are the farthest horizontal and vertical distances, respectively. 
+
+B. Transmission Scheme and Traffic Scheduling 
+
+Low-altitude network traffic experiences hybrid transmis-sion modes and mixed delay constraints [2], [5], compris-ing unicast services under more stringent delay constraints (MSDC) and multicast services under less stringent delay constraints (LSDC). Inspired by [8], we adopt a unified MC broadcast scheme to facilitate the satisfaction of mixed delay constraints. As shown in Fig. 1, the DCCU concatenates all packets and forwards them to all FAPs, and each FAP then broadcasts these aggregated packets to all UEs over the same time-frequency resources. For downlink broadcasting, the DCCU performs closed-loop precoding utilizing channel state information (CSI) acquired from uplink training [9]. The MC transmission scheme with packet duplication is used to improve reliability, where packet replicas are transmitted to UEs over independent subchannels. Note that each subchannel bandwidth ( B) is partitioned as B = BLS + BMS , where Bς ,
+
+ς ∈ { LS , MS } denotes the bandwidth allocated to the services under LSDC and MSDC, respectively. To handle the significantly expanded transmission volume from the unified MC broadcast scheme and guarantee mixed delay constraints, we adopt a processor sharing (PS) server model in the DCCU. By time-sharing computing resources, the PS server immediately processes massive arriving packets, avoiding prolonged head-of-line blocking [10]. Due to the complex, unknown aggregate downlink arrivals of varying traffic, we employ a generalized G/G/1-PS server model [10], where the first and second “G” denote arbitrary distributions for the service arrival process and required CPU cycles per packet, respectively, while “1-PS” indicates a single PS server in the buffer. For each UE under the unified scheme, the service load and burstiness are characterized by the aver-age arrival rate θς (in packets/frame) and variance σ2 
+
+> ς
+
+(in packets 2/frame 2) [4]. Note that θς and σ2 
+
+> ς
+
+are the respective sums of the average arrival rates and variances for services under mixed delay constraints and hybrid transmission modes. For the PS server, the required CPU cycles per bit, Ωp,is a RV following an arbitrary distribution with mean ¯Ωp
+
+and variance σ2p. Finally, ΩR (in CPU cycles/frame) is the DCCU processing rate that denotes the computing resources, while ΩO (in CPU cycles/packet) is the additional processing overhead in practical PS server models [8], [10]. 1
+
+C. Channel and Signal Models 
+
+In the proposed design, we divide time-frequency resources into coherence intervals based on the bandwidth B and time slot TS to approximate the channel as quasi-static and frequency-flat [9]. Specifically, B is restricted by the coher-ence bandwidth BC, while TS equals the transmission time interval (TTI), which is the minimal network time granularity. 2
+
+Under the realistic constraints of imperfect CSI, we consider the widely-adopted co-pilot strategy to estimate the composite channel, which is a linear combination of the individual channels of the broadcast UEs [9]. Based on minimum-mean-square error (MMSE) channel estimation and maximum ratio transmission (MRT) precoding, and under the practical assumption that the receiver relies solely on the statistical channel mean for signal decoding, the received signal at the 
+
+mth UE over any coherence interval can be written as [9] 
+
+ym = √pt[Eψ {gHmv} + gHmv − Eψ {gHmv}]sς + zς , (1) where pt is the transmit power of each FAP; sς is the data symbol broadcasted to each UE with Es{| sς |2} = 1 ; gm =[g1,m , . . . , g L,m ]T ∈ CL×1 is the CSI vector from L FAPs to the mth UE; gl,m = pβ(dl,m )ψl,m is the channel from the 
+
+lth FAP to the mth UE; β(dl,m ), ψl,m , dl,m represent the path loss, the effect of small-scale fading and shadowing, and trans-mission distance between the lth FAP and the mth UE, respec-tively; β(dl,m ) = Ad−2
+
+> l,m
+
+, where A(dB) = −20log 10 (4 π/λ )
+
+denotes the path loss at 1 m with wavelength λ = vL/fc, with 
+
+fc being the carrier frequency, and vL being the speed of light; 
+
+ψl,m is modeled via the κ-μ shadowed fading model with parameters κ, μ, and ¯m [3]; zς ∼ CN (0 , B ς N0) is the additive white Gaussian noise with N0 being the noise power spectral density; v = ˆg√Eψ {∥ ˆg∥2} ∈ CL×1 is the MRT precoding vector; ˆg = [ˆ g1, . . . , ˆgL]T ∈ CL×1 is the estimated composite channel vector from L FAPs to M UEs; gl= PMm=1 gl,m and 
+
+ˆgl=   
+
+> PMm=1 β(dl,m )
+> PMm=1 β(dl,m )+1 /(ρuξ)
+
+(gl + wl) are the composite channel and estimated composite channel between the lth FAP and 
+
+M UEs, respectively; wl ∼ CN (0 , 1 
+
+> ρuξ
+
+) denotes the additive receiver noise after being projected onto the pilot sequence [9], while the channel estimation error is ˆwl = gl − ˆgl. Finally, 
+
+ρu = pu/(Bς N0) is the transmit signal-to-noise ratio (SNR) in uplink channel training, where pu is the transmit power of the pilots and ξ is the pilot length. Then, under realistic wireless fronthaul, the effective SNR at the mth UE over any coherence interval is [9] 
+
+γςm, E(M, B ς ) = ϕwf pt Eψ {gHmv} 2
+
+ptEψ {| gHmv|2}− pt Eψ {gHmv} 2 +Bς N0
+
+, (2) where ϕwf ∈ (0 , 1) is the SNR loss due to wireless fronthaul.                 
+
+> 1Analytical formulations use packets/frame and CPU cycles/frame, whereas simulations report their per-second equivalents for practical feasibility.
+> 2In low-altitude scenarios with acarrier frequency of 2GHz and amaximum relative velocity of 50 m/s, the coherence time ( TC≈3ms) is much greater than TTI ( TS= 0 .1ms) [11].
+
+III. P RELIMINARY ANALYSIS 
+
+A. QoS Requirements 
+
+In downlink, QoS requirements of each service in terms of delay and reliability are represented by the total downlink delay bound Dς 
+
+> max
+
+and the target downlink overall packet loss (dOPL) probability ες
+
+> max
+
+, respectively [8]. According to 3GPP, downlink delay includes transmission, queuing, processing, propagation, and routing delays [8]. Since routing and prop-agation delays are deterministic, and head-of-line queuing is avoided by the PS server model [10], Dς is dominated by the transmission delay ( Dς
+
+> d
+
+) and processing delay ( Dς
+
+> p
+
+). Then, the delay constraint is satisfied by: 
+
+Dς = Dς 
+
+> d
+
++ Dς 
+
+> p
+
+≤ Dς
+
+> max
+
+. (3) A short frame structure is employed for satisfying delay constraints [8], [12], where the frame duration Tf = T (d) f +T (c) f
+
+equals the TTI. Here, T (d) f and T (c) f are the data transmission and control signaling (orthogonal pilots for CSI estimation) durations, respectively. Then, the pilot length can be expressed as ξ = BT (c) f . Within the delay constraints, we define the total number of frames as N ς 
+
+> f
+
+(Dς
+
+> max
+
+) = Dς 
+
+> max
+> Tf
+
+. Similarly, the numbers of frames occupied by the transmission delay and processing delay are denoted by N df (Dς
+
+> d
+
+) = Dς 
+
+> d
+> Tf
+
+≥ 1 and 
+
+N pf (Dς
+
+> p
+
+) = Dς 
+
+> p
+> Tf
+
+≥ 1, respectively. Following [4], packets with decoding errors are discarded. Given Dς 
+
+> d
+
++ Dς 
+
+> p
+
+= Dς
+
+> max
+
+, delayed packets are also discarded due to transmission outages (failing to transmit within Dς
+
+> d
+
+[11]) or processing delay violations (failing to process within 
+
+Dς 
+
+> p
+
+[10]). Thus, to effectively reflect reliability, the dOPL probability ες accounts for the transmission failure probability 
+
+ες 
+
+> d
+
+(due to decoding errors and outages) and the processing de-lay violation probability ες
+
+> p
+
+. Then, the reliability requirement is ensured by: 
+
+ες = 1 − (1 − ες
+
+> p
+
+)(1 − ες
+
+> d
+
+) ≤ ες 
+
+> p
+
++ ες 
+
+> d
+
+≤ ες
+
+> max
+
+. (4) 
+
+B. Wireless Link Quality 
+
+For delay-sensitive services, the blocklength of channel coding is finite in practice [12]. Then, with the effective SNR 
+
+γ, the achievable service rate (packet/slot) under LSDC is [12] 
+
+RLS (BLS , γ ) = BLS T (d) f
+
+ϖLS ln 2 C
+
+ γϕfb 
+
+
+
+, (5) where ϖLS is the packet size (in bit) of the services under LSDC; C (γ) = ln (1 + γ) is Shannon’s capacity in the infinite blocklength regime, while ϕfb > 1 is the SNR gap due to finite blocklength (FBL). When the delay constraints are more stringent, the block-length of channel coding is significantly shorter [12]. As a result, decoding errors cannot be ignored under MSDC. According to FBL information theory, the achievable service rate RMS (packet/slot), with the effective SNR γ and a given decoding error probability εMS  
+
+> c
+
+, is expressed as [8], [12] 
+
+RMS (BMS , γ ) = BMS T (d) f
+
+ϖMS ln 2 
+
+
+
+C(γ) −
+
+s V (γ)
+
+BMS T (d) f
+
+fQ−1 (εMS  
+
+> c
+
+)
+
+
+
+, (6) where ϖMS is the packet size (in bit) of the services under MSDC and V (γ) = 1 − 1(1+ γ)2 is the channel dispersion. Based on (5) and (6), εLS  
+
+> d
+
+comes from transmission outage, and εMS  
+
+> d
+
+comes from decoding error and transmission outage. Thus, the decoding error probability under LSDC is εLS  
+
+> c
+
+= 0 
+
+and the decoding error probability under MSDC is εMS  
+
+> c
+
+> 0.
+
+C. NA Definition 
+
+The NA is defined as the probability that the QoS re-quirements, in terms of delay and reliability, for each UE’s service are satisfied [3], [4]. In the service coexistence sce-nario under LSDC and MSDC, we partition the total UE set M = {1, . . . , M } into two subsets: MLS subject to the LSDC and MMS subject to the MSDC, i.e., MLS ⊆ M and 
+
+MMS ⊆ M . Specifically, MLS consists of MLS UEs and MMS 
+
+consists of MMS UEs, satisfying MLS + MMS = M . Thus, the NA can be expressed as 
+
+η ∆
+
+= 1
+
+M
+
+ X
+
+> m∈M MS
+
+1   DMS ≤ DMS 
+
+> max
+
+, ε MS ≤ εMS 
+
+> max
+
+
+
+> m
+
+
+
++ X
+
+> m′∈M LS
+
+1   DLS ≤ DLS 
+
+> max
+
+, ε LS ≤ εLS 
+
+> max
+
+
+
+> m′
+
+
+
+,
+
+(7) where (DMS ≤ DMS 
+
+> max
+
+, ε MS ≤ εMS 
+
+> max
+
+)m is an event that the delay and reliability requirements for the communication service under MSDC of mth UE are satisfied ( ∀m ∈ M MS ), while 
+
+(DLS ≤ DLS 
+
+> max
+
+, ε LS ≤ εLS 
+
+> max
+
+)m′ is an event that the delay and reliability requirements for the communication service under LSDC of m′th UE are satisfied ( ∀m′ ∈ M LS ). Given a target NA ηmax , achieving (η ≥ ηmax , η max → 1) 
+
+indicates that each service of UEs is ensured. IV. NA A NALYSIS AND ENHANCEMENT 
+
+A. NA Analysis 
+
+Although NA evaluation in LA-HetNets inherently requires accounting for spatio-temporal dimensions due to FAP and UE mobility [4], we focus on the NA boundary for analytical tractability and robust network design. Similar to [4], we consider a worst-case scenario where all UEs are activated at the maximum transmission distance ( d = ˜d). The complex spatio-temporal dynamics are abstracted away under the worst-case scenario. Consequently, the heterogeneity affects the NA boundary solely through the mixed delay constraints. Building on this, we subsequently define the degree of heterogeneity and derive an explicit expression for the equivalent NA to capture its influence and NA boundary. For the convenience of analysis, the mth UE can be treated as a typical UE. The effective SNR of the typical UE is denoted as ˜γς
+
+> T,E
+
+(M, B ς ),which is obtained by substituting d = ˜d into (2). 
+
+Definition 1. Assume that U is the degree of heterogeneity. There are U distinct delay constraints across the two UE sets, comprising ULS constraints for set MLS and UMS constraints for set MMS with U = ULS +UMS . We aggregate these U unique delay constraints to formulate a system heterogeneity matrix, 
+
+Θ ∈ R2×U :
+
+Θ ≜
+
+(DLS  
+
+> d
+
+)1, · · · , (DLS  
+
+> d
+
+)ULS , (DMS  
+
+> d
+
+)1, · · · , (DMS  
+
+> d
+
+)UMS 
+
+(DLS  
+
+> p
+
+)1, · · · , (DLS  
+
+> p
+
+)ULS , (DMS  
+
+> p
+
+)1, · · · , (DMS  
+
+> p
+
+)UMS 
+
+
+
+, (8) 
+
+where 
+
+(Dς
+
+> max
+
+)uς = ( Dς
+
+> d
+
+)uς+( Dς
+
+> p
+
+)uς , ∀uς ∈ [1 , U ς ], ς ∈ { LS , MS }. (9) 
+
+Proposition 1. Under the unified MC broadcasting scheme with Nr subchannels for transmitting packet replicas, the equivalent NA in FAP CoMP-enabled LA-HetNets is ex-pressed in (10) at the top of the next page. Note that 
+
+Rς
+
+> th
+
+(Dς
+
+> p
+
+, D ς
+
+> d
+
+, N r, ΩR) denotes the threshold of service rate to satisfy the QoS requirements ( Dς
+
+> max
+
+, ε ς
+
+> max
+
+) that is given by 
+
+Rς
+
+> th
+
+(Dς
+
+> p
+
+, D ς
+
+> d
+
+, N r, ΩR) = N ς 
+
+> f
+
+(Dς
+
+> max
+
+)
+
+N df (Dς
+
+> d
+
+) (11) 
+
+×
+
+"
+
+θς + σ2
+
+> ς
+
+N ς 
+
+> f
+
+(Dς
+
+> max
+
+)   ες 
+
+> max
+
+− ˆες
+
+> p
+
+(Dς
+
+> p
+
+, N r, ΩR) 1 
+
+> Nr
+
+− ες
+
+> c
+
+!12#
+
+.
+
+Finally, ˆες
+
+> p
+
+(Dς
+
+> p
+
+, N r, ΩR) is the upper bound (UB) on the processing delay violation probability, expressed as 
+
+ˆες
+
+> p
+
+(Dς
+
+> p
+
+, N r, ΩR) = 1
+
+  ΩR 
+
+> Nr
+
+− (θLS + θMS )( ¯Ωpϖς + Ω O)2 (12) 
+
+×
+
+
+
+σ2p
+
+ θ2 
+
+> LS
+
++ θ2
+
+> MS
+
++ (σ2 
+
+> LS
+
++ σ2
+
+> MS
+
+) σ2pϖς + ( ¯Ωpϖς + Ω O)2
+
+N pf (Dς
+
+> p
+
+)
+
+
+
+.
+
+Proof: See Appendix A. 
+
+Remark 1. The target NA achievement, i.e., 
+
+(η ≥ ηmax , η max → 1) , is strictly guaranteed if the equivalent NA in (10) attains its theoretical limit value of 1, i.e., ηHE = 1 .
+
+From Proposition 1 , we can obtain the following properties: 
+
+Property 1. As the heterogeneity degree U increases, the equivalent NA decreases. This is because, under the unified MC broadcast scheme mentioned in Section II-B, greater heterogeneity inherently amplifies θς and σ2 
+
+> ς
+
+. As indicated by 
+
+(11) , any surges in θς and σ2 
+
+> ς
+
+demand stronger communication capability, i.e., a higher service rate, which degrades NA under given resources. By extension, any factors that demand stronger communication capability, such as more stringent QoS requirements, will inevitably lead to NA degradation. 
+
+Property 2. Increasing computing resources ( ΩR) helps re-solve MAC-layer packet accumulation, thereby reducing the processing delay violation probability. This contributes to decreasing the communication resources required to satisfy conditions (11) , ultimately enhancing NA. However, if com-munication resources, such as subchannels are scarce, adding only computing resources cannot resolve the PHY-layer trans-mission failures caused by dynamic channels. Consequently, the target NA cannot be achieved. 
+
+To address the issues in Properties 1–2 , we propose a cross-layer optimization that enables computing-communication re-source interchange, which is detailed in the following. 
+
+B. NA Enhancement 
+
+The fundamental mechanism lies in dynamically restructur-ing the delay composition. Under the delay constraints, adding computing resources allows for a reduced processing delay without increasing MAC-layer unreliability. Fundamentally, this reduction inversely extends the allowable transmission delay, equating to an expansion of time-frequency resources and thereby effectively converting computing resources into ηHE (U, Θ, N r, ΩR) = Y
+
+> ς∈{ LS ,MS }
+
+min 
+
+
+
+1, Rς (Bς , ˜γς
+
+> T,E
+
+(M, B ς )) max Rς
+
+> th
+
+ (Dς
+
+> p
+
+)uς , (Dς
+
+> d
+
+)uς , N r, ΩR
+
+, ∀uς ∈ [1 , U ς ]
+
+
+
+. (10) communication resources. However, this delay adjustment inherently alters the balance between processing delay vio-lations and transmission failures. With augmented computing resources, optimally adjusting the processing and transmission delays under a given delay constraint maximizes reliability, thereby enhancing the probability of satisfying the QoS re-quirements for traffic under this constraint. Consequently, in-dividually optimizing the delay compositions for mixed delay constraints effectively enhances NA. Therefore, we formulate the following optimization problem: 
+
+max  
+
+> Θ
+
+ηHE (U, Θ, N r, ΩR) (13) 
+
+s.t. (9) .
+
+The optimal values of Θ, denoted by Θ⋆ for the problem (13), can be obtained using the exhaustive search method. Since optimizing Θ is element-wise decoupled, the indepen-dent search complexity per delay constraint—at a one-frame granularity—is given by O N pf
+
+ (Dς
+
+> max
+
+)uς ). Given realistic frame durations, computational delay is negligible. 3
+
+V. S IMULATION AND NUMERICAL RESULTS 
+
+In this section, we validate our analysis and proposed optimization through numerical simulations based on 10 10 
+
+Monte-Carlo trials. We consider a service area with a radius 
+
+WD = 2, 000 m containing 40 UEs, including MMS = 5 UEs with unicast services under MSDC and MLS = 35 UEs with multicast services under LSDC. The number of FAPs is L =20. The aerial UE flight altitude range is H = [100 , 400] m. The κ-μ shadowed fading parameters are set as κ → 0, μ = 3 ,and ¯m → ∞ to represent Nakagami-m fading, which is widely used in aerial networks [4]. The SNR loss due to wireless fronthaul and SNR gap due to FBL are set as ϕwf = 0 .8 and 
+
+ϕfb = 1 .5, respectively. The service arrival process follows a Poisson distribution, where the average arrival rates for services under MSDC and LSDC are 20 packets/s and 100 
+
+packets/s, respectively [12]. The dOPL requirement is ες
+
+> max
+
+= 10 −5. The decoding error probability is εMS  
+
+> c
+
+= 14 εMS 
+
+> max
+
+.The total delay bound under MSDC is DMS  
+
+> max
+
+= 0.5 ms with relative velocity vr = 30 m/s [4]. For services under LSDC, the total delay bounds DLS  
+
+> max
+
+are [50 : 5 : 100] ms with relative velocity vr = 50 m/s [4]. The degree of heterogeneity U =
+
+Z, Z ≥ 2 indicates that the scenario contains services under MSDC and LSDC with DLS 
+
+> max
+
+(1) ∼ DLS 
+
+> max
+
+(Z − 1) ; U = 1 refers to the scenario that contains services under MSDC. Different services may have different delay constraints. Under the unified MC broadcasting scheme, the arrival rates for downlink broadcasting are θMS = 20 × MMS packets/s and θLS 
+
+= 100 × (U − 1) packets/s with θς = σ2 
+
+> ς
+
+, ς ∈ { LS , MS }. The 
+
+> 3
+
+Using MATLAB (Intel i5-1235U, 16GB RAM) with Tf = 0.1 ms, the computational delay merely ∼ 0.0001 ms for services under MSDC (DMS  
+
+> max
+
+= 0 .5 ms) and ∼ 0.01 ms for services under LSDC ( DLS  
+
+> max
+
+= 50 
+
+ms), trivially satisfying ≪ Dς
+
+> max
+
+, ς ∈ { LS , MS }.TABLE I SIMULATION PARAMETERS [4], [12]                                            
+
+> Parameter Value
+> Duration of each frame Tf(equals to TTI) 0.1 ms Duration of control signaling T(c) f0.01 ms Duration of data transmission T(d) f0.09 ms Subcarrier spacing B015 kHz Carrier frequency fc2 GHz Bandwidth of each subchannel B⌊BC
+> B0⌋B0
+> Bandwidth of each subchannel for LSDC/MSDC BLS /BMS =12B
+> Channel coherence bandwidth BC0.5 MHz Total bandwidth Btot 60 MHz Number of independent subchannels Nr⌊Btot
+> BC⌋
+> Noise power spectral density N0-174 dBm/Hz Transmit power pt/pu10/5 dBm Packet size ϖLS /ϖMS 1000/64 bits FAP flight radius/altitude 150/200 m 1246810 12 00.2 0.4 0.6 0.8 1
+
+Fig. 2: Equivalent NA vs. U under Dς
+
+> p
+
+/D ς 
+
+> max
+
+= 25 with different ΩR.10 20 30 40 50 00.2 0.4 0.6 0.8 1
+
+Fig. 3: Equivalent NA vs. ΩR with different U .
+
+target NA is ηmax → 1, and whether it can be achieved is determined by evaluating whether the equivalent NA ηHE = 1 .The remaining parameters are listed in Table I. Figure 2 shows the equivalent NA ηHE versus the degree of heterogeneity U under different computing resources ΩR. As observed, ηHE decreases as U increases. Furthermore, while increasing ΩR improves ηHE for a given U , this performance enhancement is bounded. This limitation is evident from the overlapping curves for different ΩR values. These results effectively verify Properties 1–2 .Figure 3 plots the equivalent NA ηHE against the com-puting resources (the number of CPU cycles/s, ΩR) under different heterogeneity degrees U . The legends “Benchmark” and “Opt.” represent the benchmark scheme with fixed Dς
+
+> p
+> Dς
+> max
+
+= 25 and the proposed cross-layer optimization, respectively. Compared with the benchmark, the proposed optimization enables the target NA to be achieved as the available com-puting resources increase for the same degree of service heterogeneity. More importantly, it can sustain the target NA even under a higher degree of heterogeneity, demonstrating that the proposed computing-communication resource inter-change not only improves NA but also enlarges the range of heterogeneous services that can be reliably supported. VI. C ONCLUSION 
+
+In this paper, we addressed the network unavailability in LA-HetNets due to heterogeneity and cross-regional traffic. Our analysis revealed that supplementing computing resources improves NA by resolving MAC-layer unreliability. However, under greater heterogeneity, merely increasing computing re-sources is insufficient to achieve the target NA since NA degrades sharply with extended heterogeneity due to ampli-fied communication capability demands. To overcome this, we proposed a cross-layer optimization method to realize computing-communication resource interchange. Simulation results validated that adopting this resource interchange ap-proach can effectively enhance NA to achieve its target value and support significantly greater heterogeneity than conven-tional computing-only expansion strategies. APPENDIX APROOF OF PROPOSITION 1For given Dς
+
+> d
+
+, Dς
+
+> p
+
+, and Dς 
+
+> d
+
++Dς 
+
+> p
+
+= Dς
+
+> max
+
+, under the unified MC broadcasting scheme with Nr subchannels for transmitting packet replicas, the transmission failure probability of the mth UE based on the effective achievable rate can be given by [8] 
+
+ες
+
+> d
+
+(Dς
+
+> d
+
+) ≜
+
+h
+
+PNς
+
+N df (Dς
+
+> d
+
+)Rς < N ς + ες
+
+> c
+
+iNr
+
+, (14) where PNς
+
+N df (Dς
+
+> d
+
+)Rς < N ς denotes the transmission out-age probability [6], while Nς and N df (Dς
+
+> d
+
+)Rς represent the number of random arrival packets within Dς 
+
+> max
+
+and the number of successfully transmitted packets within Dς
+
+> d
+
+, respec-tively. For given Dς
+
+> p
+
+, the processing delay violation probability can be expressed as [10] 
+
+ες
+
+> p
+
+(Dς
+
+> p
+
+) ≜ PΦς
+
+
+
+Dς 
+
+> p
+
+< NrΦς (Ω pϖς + Ω O)ΩR
+
+Tf
+
+
+
+, (15) where Φς = N ς, p 
+
+> LS
+
++N ς, p 
+
+> MS
+
+is the total number of arriving packets, while N ς, p 
+
+> LS
+
+and N ς, p 
+
+> MS
+
+are the numbers of arriving packets within Dς 
+
+> p
+
+for services under LSDC and MSDC, respectively. According to Chebyshev’s inequality, for a RV X with mean 
+
+¯X and variance σ2 
+
+> X
+
+, the probability that X is greater than a threshold A can be bounded by [3] 
+
+PX {A ≤ X} ≤ σ2 
+
+> X
+
+/(A − ¯X)2, A > ¯X. (16) Then, we can obtain the UB on ες
+
+> p
+
+(Dς
+
+> p
+
+) as ˆες
+
+> p
+
+(Dς
+
+> p
+
+), which is expressed in (12). Similarly, ες
+
+> d
+
+(Dς
+
+> d
+
+) can be bounded by 
+
+ˆες
+
+> d
+
+(Dς
+
+> d
+
+) = 
+
+"
+
+N ς 
+
+> f
+
+(Dς
+
+> max
+
+)σ2
+
+> ς
+
+ N df (Dς
+
+> d
+
+)Rς − N ς 
+
+> f
+
+(Dς
+
+> max
+
+)θς
+
+2 + ες
+
+> c
+
+#Nr
+
+. (17) If ˆες
+
+> p
+
+(Dς
+
+> p
+
+) < ε ς
+
+> max
+
+, the QoS requirements ( Dς
+
+> max
+
+, ε ς
+
+> max
+
+) can be satisfied under ες
+
+> d
+
+(Dς
+
+> d
+
+) ≤ ες 
+
+> max
+
+− ˆες
+
+> p
+
+(Dς
+
+> p
+
+). Then, the QoS requirements ( Dς
+
+> max
+
+, ε ς
+
+> max
+
+) can be satisfied under ˆες
+
+> d
+
+(Dς
+
+> d
+
+) ≤
+
+ες 
+
+> max
+
+− ˆες
+
+> p
+
+(Dς
+
+> p
+
+). From (17), the condition for satisfying the QoS requirements ( Dς
+
+> max
+
+, ε ς
+
+> max
+
+) can be expressed as 
+
+Rς ≥ N ς 
+
+> f
+
+(Dς
+
+> max
+
+)
+
+N df (Dς
+
+> d
+
+) (18) 
+
+×
+
+"
+
+θς + σ2
+
+> ς
+
+N ς 
+
+> f
+
+(Dς
+
+> max
+
+)   ες 
+
+> max
+
+− ˆες
+
+> p
+
+(Dς
+
+> p
+
+) 1 
+
+> Nr
+
+− ες
+
+> c
+
+! 12 #
+
+,
+
+where the right-hand side of (18) is defined as the threshold of service rate to satisfy the QoS requirements ( Dς
+
+> max
+
+, ε ς
+
+> max
+
+), denoted by Rς
+
+> th
+
+(Dς
+
+> p
+
+, D ς
+
+> d
+
+). Note that Rς remains con-stant regardless of the mixed delay constraints. However, 
+
+Rς
+
+> th
+
+ (Dς
+
+> p
+
+)uς , (Dς
+
+> d
+
+)uς
+
+ generally varies across different delay constraints. To ensure the QoS requirements for all UEs (i.e., 
+
+η ≥ ηmax , η max → 1), Rς must satisfy the maximum rate threshold for both LSDC and MSDC, where the maximum rate threshold is given by 
+
+Rς 
+
+> th ,max
+
+= max Rς
+
+> th
+
+ (Dς
+
+> p
+
+)uς , (Dς
+
+> d
+
+)uς
+
+, ∀uς ∈ [1 , U ς ] . (19) Therefore, ( η ≥ ηmax , η max → 1) can be guaranteed when the following condition is satisfied: 
+
+Y
+
+> ς∈{ LS ,MS }
+
+min 
+
+
+
+1, Rς
+
+Rς
+
+> th ,max
+
+
+
+= 1 . (20) Motivated by this rigorous physical equivalence, the product metric on the left-hand side of (20) can be regarded as the equivalent NA to evaluate whether the target NA is achieved. Consequently, we obtain (10), and prove Proposition 1 .REFERENCES [1] X. Pan, Z. Zheng, S. Wang, Q. Wu, and Z. Fei, “Joint signal detection for low-altitude aerial cell-free networks with wireless fronthaul: Frame-work, analysis, and optimization,” IEEE Trans. Wireless Commun. ,vol. 25, pp. 6409–6424, 2026. [2] R. Ding, F. Zhou, M. Giordani, Q. Wu, and M. Zorzi, “Toward 6G: Spectrum management in low-altitude aerial information networks,” 
+
+IEEE Netw. , pp. 1–9, 2026. [3] J. Liu et al. , “Towards reliable communications with delay requirement in aerial disaster emergency networks via coordinated multi-point,” IEEE Trans. Commun. , vol. 73, no. 10, pp. 8781–8796, Oct. 2025. [4] T. Wu et al. , “Availability-aware resource management in low-altitude heterogeneous networks,” IEEE Trans. Commun. , vol. 74, pp. 10 366– 10 382, 2026. [5] Z. Yao, W. Cheng, W. Zhang, T. Zhang, and H. Zhang, “The rise of UAV fleet technologies for emergency wireless communications in harsh environments,” IEEE Netw. , vol. 36, no. 4, pp. 28–37, Jul. 2022. [6] M. Alsenwi, N. H. Tran, M. Bennis, A. Kumar Bairagi, and C. S. Hong, “eMBB-URLLC resource slicing: A risk-sensitive approach,” 
+
+IEEE Commun. Lett. , vol. 23, no. 4, pp. 740–743, Apr. 2019. [7] H. Peng and X. Shen, “Multi-agent reinforcement learning based re-source management in MEC- and UAV-assisted vehicular networks,” 
+
+IEEE J. Sel. Areas Commun. , vol. 39, no. 1, pp. 131–141, Jan. 2021. [8] K. Li et al. , “Cross-layer resource allocation for URLLC industrial automation over multi-connectivity,” IEEE Trans. Wireless Commun. ,vol. 23, no. 7, pp. 7334–7348, Jul. 2024. [9] M. Sadeghi, E. Bj¨ ornson, E. G. Larsson, C. Yuen, and T. L. Marzetta, “Max–min fair transmit precoding for multi-group multicasting in massive MIMO,” IEEE Trans. Wireless Commun. , vol. 17, no. 2, pp. 1358–1373, Feb. 2018. [10] C. She, Y. Duan, G. Zhao, T. Q. S. Quek, Y. Li, and B. Vucetic, “Cross-layer design for mission-critical IoT in mobile edge computing systems,” 
+
+IEEE Internet Things J. , vol. 6, no. 6, pp. 9360–9374, Dec. 2019. [11] D. Tse and P. Viswanath, Fundamentals of Wireless Communication ,New York, NY, USA: Cambridge Univ. Press, 2005. [12] R. Dong et al. , “Deep learning for radio resource allocation with diverse quality-of-service requirements in 5G,” IEEE Trans. Wireless Commun. ,vol. 20, no. 4, pp. 2309–2324, Apr. 2021.
