@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-07</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-08</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 5 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 3 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>5</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>1</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-07 19:08:13 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-08 19:39:05 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日速读5篇论文，暂无精读，重点关注5G安全与分布式计算方向。</p>
-<p>最值得看的是《Towards Operator-Empowered Vulnerability Hotfixing for 5G RAN》和《Skywing》，前者聚焦5G无线接入网漏洞热修复，后者探索不可靠环境下的去中心化数学计算，均获7.0分。</p>
-<p>建议优先浏览这两篇高分开篇的摘要与结论，后续可结合兴趣深入精读或扩展相关文献。</p>
+<p>今日精读1篇、速读2篇，聚焦边缘AI推理的功耗建模与部署优化。最值得关注的是《GreenPipe》，针对Kubernetes边缘节点上的容器化DNN推理提出功耗模型（8.0/10），是边缘节能的关键参考。下步建议优先结合该模型的实验数据，评估自身边缘场景的功耗优化潜力。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -73,12 +71,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">0 篇</strong>
+    <strong class="dpr-home-dashboard-count">1 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="GreenPipe: Power Modeling for Containerized DNN Inference on Kubernetes Edge Nodes">GreenPipe: Power Modeling for Containerized DNN Inference on Kubernetes Edge Nodes</span></li></ul>
   </div>
-
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -86,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">5 篇</strong>
+    <strong class="dpr-home-dashboard-count">2 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Towards Operator-Empowered Vulnerability Hotfixing for 5G Radio Access Networks">Towards Operator-Empowered Vulnerability Hotfixing for 5G Radio Access Networks</span></li><li><span class="dpr-home-dashboard-paper-title" title="Skywing: A Platform for Decentralized Mathematical Computing in Unreliable Environments">Skywing: A Platform for Decentralized Mathematical Computing in Unreliable Environments</span></li><li><span class="dpr-home-dashboard-paper-title" title="Network Availability Enhancement in Low-Altitude HetNets: A Cross-Layer Design Perspective">Network Availability Enhancement in Low-Altitude HetNets: A Cross-Layer Design Perspective</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CRSF: Collusion-Resilient Privacy-Preserving Sensor Fusion with Byzantine-Robust Participation">CRSF: Collusion-Resilient Privacy-Preserving Sensor Fusion with Byzantine-Robust Participation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters">Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>4</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>1</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>1</strong></span></div>
 </section>
 </div>
 

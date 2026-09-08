@@ -1,0 +1,54 @@
+{
+  "label": "2026-09-08",
+  "date": "2026-09-08",
+  "generated_at": "2026-09-08T19:39:07",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202609/08/2609.04952v1-greenpipe-power-modeling-for-containerized-dnn-inference-on-kubernetes-edge-nodes",
+      "section": "deep",
+      "title_en": "GreenPipe: Power Modeling for Containerized DNN Inference on Kubernetes Edge Nodes",
+      "authors": "Mengxue Wang, Peini Liu, Amir Taherkordi, Jordi Guitart",
+      "date": "2026-09-04",
+      "pdf": "https://arxiv.org/pdf/2609.04952v1",
+      "score": "8.0",
+      "evidence": "在Kubernetes边缘节点上对容器化DNN推理进行功耗与资源建模",
+      "tldr": "边缘节点上容器化DNN推理的在线功耗估计面临挑战，尤其ARM节点无RAPL等硬件计数器且CPU-only模型不准。GreenPipe提出自动化profiling-training-validation流水线，基于外部功率计构建多资源回归模型并将功率按比例归属到容器。在树莓派4与K3s测试床评估，覆盖三种视觉模型与多精度/线程配置，系统级MAPE为6.3-9.4%，较CPU压力和利用率基线平均改善26.9% MAPE。该方法无需专用硬件，并联合输出延迟与每推理能耗，揭示性能-能耗权衡趋势。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Distributed DNN inference is increasingly deployed in containerized edge-cloud environments, where workloads run on-device or are exposed to remote clients over the network. Accurate online power estimation on resource-constrained ARM nodes without hardware power counters such as RAPL remains a challenge, and CPU-only models fail to capture multi-resource behavior. We present GreenPipe, an automated profiling-training-validation pipeline that builds multi-resource regression models from external power meter measurements and attributes power to containers proportionally. GreenPipe is evaluated on a Raspberry Pi 4 edge node in a K3s edge-cloud testbed, covering DNN inference with three vision models, multiple precisions, thread counts, and both local and serving scenarios. System-level MAPE is 6.3-9.4%, improving over CPU-stress and utilization-only baselines by 26.9% MAPE on average. We jointly report inference latency and energy per inference, exposing performance-energy trade-offs across workload configurations.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/08/2609.01096v1-crsf-collusion-resilient-privacy-preserving-sensor-fusion-with-byzantine-robust-participation",
+      "section": "quick",
+      "title_en": "CRSF: Collusion-Resilient Privacy-Preserving Sensor Fusion with Byzantine-Robust Participation",
+      "authors": "Chao Yin, Haihong Tian, Zheng Yang, Haibin Zhang, Fabio Massacci, Chenglu Jin",
+      "date": "2026-09-01",
+      "pdf": "https://arxiv.org/pdf/2609.01096v1",
+      "score": "7.0",
+      "evidence": "拜占庭鲁棒参与机制使融合结果不受恶意或失效传感器影响，契合组件故障下系统继续正确运行的韧性要求。",
+      "tldr": "隐私保护传感器融合面临传感器-服务器共谋与拜占庭参与操纵，现有乱码电路协议难以保障诚实传感器隐私和正确性。CRSF引入PBFT共识阶段和服务器特定、状态相关的阈值标签释放，防止拜占庭服务器单方操纵参与，并限制任何合法联盟获得足够密钥。在最多261个传感器的容错电路上评估，CRSF实现强健安全与在线开销的高度实用权衡。该工作为恶意环境下的多源融合提供了共谋弹性的实现路径。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Privacy-preserving sensor fusion enables an untrusted server to compute an aggregate result over distributed sensor measurements without learning either individual inputs or the final output. Recent garbled-circuit-based protocols provide an efficient realization of this functionality in a sensor--server--client architecture, but remain vulnerable to sensor--server collusion and Byzantine manipulation of sensor participation. These weaknesses can compromise honest-sensor privacy, incorrectly exclude honest sensors, and corrupt the computed fusion result, thereby undermining the security guarantees expected from the protocol.   We present CRSF, a collusion-resilient sensor-fusion protocol that addresses these weaknesses while providing privacy, correctness with explicit abort, and liveness. CRSF introduces a Practical Byzantine Fault Tolerance (PBFT)-based agreement phase for sensor submissions and uses server-specific, status-dependent label release with threshold protection of circuit-input labels. This design prevents any Byzantine server from unilaterally manipulating sensor participation and prevents any admissible sensor-server coalition from obtaining enough secret material to compromise honest-sensor privacy.   We implement CRSF and compare its online execution time with the most relevant state-of-the-art baseline. Our Google Cloud evaluation measures the total computation and communication cost of the online protocol under fault-free and representative faulty executions. Across a range of fault-tolerant fusion circuits and up to 261 sensors, CRSF demonstrates a highly practical trade-off between robust security and protocol performance.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/08/2609.04513v1-atlas-optimizing-deployment-of-compound-ai-workflows-on-heterogeneous-clusters",
+      "section": "quick",
+      "title_en": "Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters",
+      "authors": "Milos Gravara, Andrija Stanisic, Stefan Nastic",
+      "date": "2026-09-03",
+      "pdf": "https://arxiv.org/pdf/2609.04513v1",
+      "score": "6.0",
+      "evidence": "在资源和SLO约束下优化有序多阶段AI工作流在异构集群上的部署，与服务链部署问题结构相似",
+      "tldr": "复合AI工作流需要为每一阶段选择模型并映射到异构集群以满足SLO，但端到端测量准确率开销大，独立假设又会导致排序错误。为此，Atlas提出马尔可夫准确率预测器MAP，先对中间输出离散为准确率桶，再按工作流拓扑组合相邻阶段的局部条件转移，获得配置级准确率估计。在此基础上，Atlas将执行计划生成建模为混合整数规划，在SLO约束下最大化预测准确率并支持异构资源分配。在四个复合工作流上，MAP的秩相关最高达0.947，同时剖析代价减少至多2.6倍；优化器选出的计划与oracle准确率相差不到0.03，总部署成本节省42%。这表明可组合的准确率预测能显著提升大规模部署优化的可行性与效率。",
+      "tags": "query:sfc-edge",
+      "abstract_en": "Compound AI workflows are increasingly used to serve complex AI tasks by coordinating multiple AI models and software components. This approach enables deployment flexibility, as each workflow stage can expose different model variants and resource requirements, but it also expands the deployment choices. A deployment must choose an execution plan that selects AI models for each compound AI workflow stage and places them on a heterogeneous cluster in order to satisfy SLOs. Deployment optimizers therefore need estimates to compare many candidate plans and identify feasible ones. System metrics can often be profiled per stage and composed according to workflow topology, but accuracy cannot, as errors and information loss at upstream stages affect the accuracy of downstream stages. Existing approaches either profile complete configurations end to end, which scales poorly, or use product-based accuracy surrogates that treat stages as independent and can misrank candidate plans. We introduce Atlas, a framework for optimizing compound AI deployments under SLO constraints. Atlas uses MAP, a Markovian Accuracy Predictor, to estimate configuration accuracy from local conditional accuracy transitions between adjacent workflow stages. MAP discretizes intermediate outputs into accuracy buckets and composes transition profiles according to workflow topology, giving the optimizer an accuracy estimate without exhaustive end-to-end profiling. Atlas formulates execution-plan selection as a mixed-integer linear program that maximizes predicted accuracy subject to SLOs. Across four compound AI workflows, MAP achieves Spearman correlation up to 0.947 while reducing profiling cost by up to 2.6x relative to exhaustive end-to-end profiling. Guided by MAP, the Atlas optimizer selects execution plans within 0.03 of oracle accuracy while reducing deployment cost by up to 42% through heterogeneous placement.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
