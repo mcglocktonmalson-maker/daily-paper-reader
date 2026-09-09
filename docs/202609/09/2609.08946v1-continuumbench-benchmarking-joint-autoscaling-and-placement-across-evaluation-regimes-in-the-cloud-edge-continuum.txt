@@ -1,0 +1,268 @@
+Title: ContinuumBench: Benchmarking Joint Autoscaling and Placement Across Evaluation Regimes in the Cloud-Edge Continuum
+
+URL Source: https://arxiv.org/pdf/2609.08946v1
+
+Published Time: Wed, 09 Sep 2026 03:53:08 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# ContinuumBench: Benchmarking Joint Autoscaling and Placement Across Evaluation Regimes in the Cloud-Edge Continuum 
+
+Lanpei Li 1,2 , Antonino Vaccarella 1,2 , Vincenzo Lomonaco 3 , and Massimo Coppola 1 
+
+> 1
+
+Institute of Information Science and Technologies “Alessandro Faedo” (ISTI), National Research Council of Italy (CNR), 56124 Pisa, Italy  
+
+> 2
+
+Department of Computer Science, University of Pisa, 56127 Pisa, Italy  
+
+> 3
+
+Department of AI, Data and Decision Sciences, LUISS University, 00197 Rome, Italy 
+
+{lanpei.li, massimo.coppola}@isti.cnr.it antoninovaccarella@cnr.it, vlomonaco@luiss.it 
+
+Abstract. Cloud–edge controllers coordinate service placement, replica scaling, and resource pre-warming to keep end-to-end latency within ap-plication deadlines. But evaluations often obscure the source of a re-ported gain: placement and scaling are studied separately; workload, connectivity, and calibration assumptions remain implicit; and metrics over completed tasks hide unfinished work. We present ContinuumBench ,a benchmark that controls these factors. Its completion-aware account-ing treats late, unfinished, and discarded tasks as deadline misses. A common protocol compares placement-only and scale-capable controllers under declared regimes and stressors. Built on the ECLYPSE simula-tor, ContinuumBench adds arrivals, worker elasticity, intermittent trans-port, buffering, and failures to close the control loop. We evaluate nine controllers across four scenarios and two regimes. The studied regimes are capacity-bound: elastic capacity, not placement sophistication, drives completion, and once capacity suffices, the choice of autoscaling policy decides how much of that work arrives on time. Placement re-planning has no measurable effect without relocation, while cost-free migration defines the observed exception. Consequently, scale-capable controllers approach an over-provisioned reference while placement-only controllers degrade with load; and placement quality separates controllers only once capacity is exhausted. Finally, the accounting choice itself changes the reported result: completion-only and completion-aware scoring can rank controllers differently. 
+
+Keywords: Cloud-edge continuum · Autoscaling · Service placement · SLO accounting · Intermittent links · Benchmarking This version of the contribution has been accepted for publication, after peer review but is not the Version of Record and does not reflect post-acceptance improvements, arXiv:2609.08946v1 [cs.DC] 8 Sep 2026 2 L. Li et al. 
+
+## 1 Introduction 
+
+Cloud-edge resource management coordinates placement, scaling, offloading, and buffering across heterogeneous Internet of Things (IoT), edge, and cloud re-sources [15]. Latency-sensitive applications, including vehicular offloading, split AI inference, industrial monitoring, and intermittently connected remote sens-ing, can be represented as directed acyclic graphs (DAGs) of stages with latency budgets, resource demands, and placement constraints. A controller selects each stage’s location and number of active workers , i.e., parallel replicas. An eval-uation fixes a service graph, workload, network, and scoring method. Because these choices can determine the apparent winner, a measured advantage may reflect the evaluation rather than the controller. We call this evaluation depen-dence [6,3]. Two continuum properties require controlled evaluation. First, placement and scaling interact: a good placement cannot offset insufficient burst capacity, whereas scaling without placement awareness can waste scarce edge resources. Prior work therefore couples these decisions [8,2]; we test whether coupling is necessary for on-time delivery. Second, intermittent connectivity can make a structurally feasible path unavailable at runtime [7]. Evaluations must therefore track buffered and unfinished tasks as contacts open and close. We study when control sophistication improves cloud-edge resource manage-ment and how delivered work must be measured . We present ContinuumBench ,1
+
+a benchmark that compares autoscaling and placement controllers across con-trolled regimes. It builds on the ECLYPSE cloud-edge continuum simulator [10] and separates runtime dynamics from substrate feasibility. We make four con-tributions: 
+
+– A control layer over ECLYPSE. ContinuumBench adds an epoch-based loop to ECLYPSE’s fixed substrate. ECLYPSE audits each action before ex-ecution, preventing infeasible states. Nine controllers—placement heuristics, an exact optimizer, and the Kubernetes Horizontal Pod Autoscaler (HPA) and Event-Driven Autoscaling (KEDA)—use a common action representa-tion and observation set. 
+
+– An evaluation method. Completion-aware accounting treats late, unfin-ished, and discarded tasks as deadline misses, so work that never finishes stays in the score, and it makes explicit how much the accounting choice alone changes the reported ranking.     
+
+> or any corrections. The work was presented at the 6th workshop on Flexible Re-source and Application Management on the Edge (FRAME) 2026, co-located with the 32nd International European Conference on Parallel and Distributed Computing – Euro-Par 2026. The Version of Record will appear in the workshop proceedings volume(s) of Euro-Par 2026. Use of this Accepted Version is subject to the pub-lisher’s Accepted Manuscript terms of use https://www.springernature.com/gp/ open-research/policies/accepted-manuscript-terms .
+> 1Code and scenarios are publicly available (MIT license): https://github.com/ lilanpei/ContinuumBench .ContinuumBench 3
+
+– An evaluation protocol. Controlled ablations fix all variables except the factor under study; declared regimes and stressors make every reported dif-ference auditable. Runtime models cover arrivals, elastic workers, intermit-tent transport, buffering, and failures, with per-epoch traces. 
+
+– A design question put to controlled test. We ask which control lever governs on-time delivery. Three ablations isolate one lever each—the re-planning schedule, elastic capacity under rising load, and placement quality under a placement bottleneck—while holding the evaluation fixed. Section 7 reports what each yields. 
+
+## 2 Related Work 
+
+Continuum resource management. Surveys like [15] explore the issues of placement, offloading, scheduling and orchestration across the continuum. Mov-ing closer to our study, joint autoscaling-and-placement methods optimize both decisions on the premise that placement is ineffective without sufficient worker capacity [8], whereas ProScale forecasts per-microservice workload and jointly sets instance counts, placement, and offloading [2]. Both report improvements under study-specific graphs, traces, network conditions, and metrics, so neither separates gains due to the control lever from gains due to the evaluation setup. ContinuumBench holds the workload, regime, stressors, and completion-aware metric fixed while comparing placement only, scaling with fixed placement, and joint placement and scaling. 
+
+Continuum simulators. Continuum simulators model the substrate on which a controller operates. iFogSim models topology, resources, and energy [4]; faas-sim drives serverless-edge experiments with measured traces [11]; and ECLYPSE models placement feasibility, residual resources, and routing [10]. These simula-tors leave the control loop and evaluation protocol to the user: which controller acts, under which conditions, and how delivered work is scored. ContinuumBench adds this layer to ECLYPSE. 
+
+Systems benchmarking. Systems benchmarks standardize methodology. Tail-Bench defines tail-latency measurements [6], and DeathStarBench provides re-alistic microservice graphs [3]. Neither targets placement or autoscaling control, and both report latency over completed requests. That assumption fails when controller decisions affect whether requests complete. ContinuumBench instead varies the controller under declared regimes and stressors, and counts unfinished and discarded tasks as deadline misses. 
+
+## 3 ContinuumBench Architecture 
+
+A ContinuumBench run is defined by six configurable components: an application graph, an infrastructure graph, a workload process, a controller, an execution regime, and an analysis configuration. 4 L. Li et al. Scenarios Workloads Realism tiers Controller set Scenario builder Runtime dynamics Metric evaluator Trajectory recorder Controller loop Epoch logs Policy trajectories Summaries Graphs models Audit Placement Path routes Update policies    
+
+> Protocol Con fi guration Placement adapter Evaluation Artifacts ContinuumBench Evaluation Engine ECLYPSE Substrate
+> trajectory state outcome reward place action validity
+
+Fig. 1. ContinuumBench extends the ECLYPSE substrate with workload arrivals, time-varying contacts, and worker scaling. ECLYPSE provides placement-feasibility checks, residual-resource state, and routing. 
+
+The infrastructure graph is GI = ( N, L ). Each finite-capacity node n ∈
+
+N belongs to a tier τ (n) ∈ T = {IoT , edge , cloud , space } and has CPU/RAM capacity cn. Each link e ∈ L has a latency, a bandwidth, and optional time-varying availability. Space–edge links are intermittent and follow satellite contact windows. The application graph GA = ( S, E A) is a DAG of stages s ∈ S. We classify each stage by its dataflow role as a source , transform (intermediate processing, splits and joins), or sink .Each stage specifies a tier-anchoring set Ts ⊆ T on which it may be placed 2,a resource demand rs, a per-task service time μs, an optional Service Level Objective (SLO) deadline δs, and bounds [wmin  
+
+> s
+
+, w max  
+
+> s
+
+] on its number of active workers. All scenarios use one end-to-end deadline at the sink, measured from task creation at the source to task completion at the sink. 
+
+Problem setting. We study the service-placement problem of [12] coupled with elastic scaling. At each fixed-length control epoch, the controller selects a joint action a(t) = ( x, w ): the binary variable xs,n records whether stage s is placed on node n, while ws ∈ [wmin  
+
+> s
+
+, w max  
+
+> s
+
+] sets its active worker count. Routing is fixed across controllers. Each source assigns a priority class to every task; a fixed triage rule sends high-priority tasks over the latency-sensitive path and all other tasks to the elastic pool; and each stage dispatches ready tasks round-robin among reachable workers. Every action must satisfy node capacity (placed demand ≤ cn), tier anchoring ( xs,n = 1 only if τ (n) ∈ T s; only source stages are anchored here), and the ECLYPSE feasibility audit. Contacts and failures change transport availability but not these structural constraints. Subject to them, the controller maximizes completion-aware on-time delivery (Section 5). 
+
+Control mechanism. At each epoch, all controllers observe per-stage queue depth—tasks awaiting a worker, plus tasks buffered awaiting transport at elas-tic pools—oldest-task age, time-to-live (TTL) pressure, and worker-pool state  
+
+> 2
+
+Anchored stages are pinned to their origin tier; placeable ones are freely deployable. ContinuumBench 5
+
+(active, starting, and ready counts). TTL pressure is the maximum age-to-TTL ratio among tasks held in store-and-forward buffers, and approaches 1 as the most at-risk task nears expiry. Scaling changes only worker activation. Each elastic stage has wmax  
+
+> s
+
+pre-provisioned workers; the controller activates a count within [wmin  
+
+> s
+
+, w max  
+
+> s
+
+], and each newly activated worker incurs a configurable startup delay. Active through-put is ws/μ s tasks per second; the bounded worker pool defines the capacity the controller can activate at runtime. A placement action proposes a complete mapping and takes effect only after the ECLYPSE audit. The heuristics mirror incremental production autoscalers: they place newly activated workers but do not relocate existing ones, so only the exact optimizer of Section 6 performs migration . Stage-keyed queues and buffers preserve queued work when placement changes redirect subsequent processing. Migration downtime is zero throughout, testing relocation at its best: if on-time delivery still fails to improve, overhead cannot be the reason. ContinuumBench implements this loop on the ECLYPSE substrate (Fig-ure 1), which supplies the graphs, placement and resource checks, path lookup, and transfer-cost estimation [10]; an action failing the audit is rejected whole, re-taining the previous placement and worker counts. Each control epoch executes three steps: I. Contact schedules and failure policies update the time-varying link and node state. II. The controller updates the placement mapping, the worker counts, or both. III. ContinuumBench flushes buffered work when contacts per-mit, admits new arrivals, routes and processes ready tasks, records completed or failed work, and aggregates the resulting state into per-epoch summaries. The loop separates structural feasibility , whether ECLYPSE can legally map stages to nodes, from transport availability , whether the required links are reach-able at a given time. An unavailable link or transient failure therefore delays, buffers, or drops a task without invalidating the active mapping, which stays fixed while buffered work awaits store-and-forward delivery. 
+
+## 4 Scenarios and Workloads 
+
+ContinuumBench defines four scenario families (Figure 2), each combining an application DAG, infrastructure graph, and workload process. All use a source– transform–sink structure but isolate different cloud-edge resource-management mechanisms. 
+
+EO dual stream Earth-observation (EO) sensing over intermittent links, with anchored space/IoT sources, a fast path, and an elastic bulk path; stresses contact windows and store-and-forward buffering [7]. 
+
+Driving V2X Low-latency vehicle-to-everything (V2X) offloading with an an-chored vehicle source, a critical planner path, and an elastic offload pool; stresses source-to-processing reachability [9]. 
+
+Split inference Split AI serving with an anchored camera source, an edge-hosted early-exit path, and an optional elastic pool of heavier refinement workers; stresses the placement–worker-activation tradeoff [13]. 6 L. Li et al. (a) EO dual stream        
+
+> Space Source IoT Source
+> Fusion Triage split FastPath BulkPath pool [scalable] Sink
+> intermittent contact
+> (b) Driving V2X
+> Vehicle Source Perception Tracker split Planner Sink Of fl oad pool [scalable]
+> (c) Split inference
+> Camera Source Preprocess Inference split
+> Re fi ne pool [scalable] Sink
+> (d) Industrial IoT
+> Sensor Source Filter Aggregate
+> Anomaly Detect split
+> Control Dispatch Bulk Archive pool [scalable] Archive Sink
+> intermittent contact
+
+Fig. 2. Scenario workflows evaluated in ContinuumBench. Solid arrows denote latency-sensitive, high-priority paths; orange dashed arrows denote elastic paths controlled by placement and scaling; purple dotted arrows denote intermittent-contact boundaries. Anchor symbols identify stages with fixed placement. 
+
+Industrial IoT Plant monitoring with an anchored sensor source, a deadline-sensitive path for rare anomalies, and an elastic archival path for bulk teleme-try; stresses mixed-criticality SLO separation [17]. Each scenario draws arrivals from a seeded Poisson process with piecewise-constant rates, giving repeatable low-load, burst, and recovery phases; contact-trace variants apply recorded traces only at intermittent boundaries. The default infrastructure is a hand-built tiered graph (IoT →edge →cloud, space →edge). The edge–cloud and space–edge tier pairs are fully connected, each IoT node attaches round-robin to a single edge node, and the only intra-tier links mesh the edge tier over a LAN (1 ms, 10 Gbps). Node capacities cn
+
+(CPU cores, RAM in GB) are (128 , 256) for cloud, (24 , 64) for edge, (8 , 16) for space, and (4 , 8) for IoT. Inter-tier links default to 20 ms/1 Gbps for edge–cloud and 6 ms/120 Mbps for IoT–edge; the space–edge link has 220 ms latency and provides 45 Mbps during contact. These configurable values define R1. Stage demands rs range from 0.5 cores at source stages to 8 at the heaviest inference stage, and placeable stages may share a node when capacity permits. Each run contains 120 workload epochs followed by 60 arrival-free drain epochs of 1 s, the drain letting in-flight work finish before metrics are computed (Table 1). 
+
+## 5 Evaluation Regimes, Stressors and Metrics 
+
+ContinuumBench declares the regime and stressors for every run. Controlled ab-lations fix the application DAG, action space, feasibility constraints, and analy-sis pipeline and vary one stated factor. Cross-regime comparisons are descriptive when multiple declared inputs differ. Seeded draws make arrival counts, priority classes, and failure events exactly repeatable. 
+
+R1 is the seeded synthetic baseline defined in Section 4. R2 changes up to four calibrated inputs, as listed in Table 1: per-stage service times μs, contact windows (periodic → trace-driven), arrival-rate schedules, and one inter-tier link per scenario; all other links retain R1 values. The calibrated inter-tier link follows ContinuumBench 7                                         
+
+> Table 1. Scenario scale and per-regime workload. Stages counts DAG stages with elastic pools at maximum size; Nodes reports the space/IoT/edge/cloud split; Wrk. is the worker-pool cap; and Tasks is the expected number of arrivals over 120 workload epochs (R1/R2 where they differ). R2 adds trace-driven contact windows for EO and Driving V2X. The DAG, topology, capacities, and stage demands are identical across regimes.
+> Scenario Stages Nodes Wrk. ≈Tasks δ(s) R2 μs
+> EO dual stream 10 6 (1/2/2/1) 4490/464 100 unchanged Driving V2X 86 (0/3/2/1) 3380/348 90 unchanged Split inference 64 (0/1/2/1) 2320/380 70 0.16–1.02 s Industrial IoT 10 5 (0/2/2/1) 3200 10 0.12–1.00 s
+
+data availability, not expected placement. Following [11,5], we use representative space–edge and edge–cloud profiles rather than reproduce measurements; IoT– edge remains synthetic. For example, Split inference changes edge–cloud from 
+
+20 ms/1 Gbps to 34 ms/160 Mbps. We vary one stressor at a time on top of either regime: arrival load, contact severity, or node unavailability. The last independently fails each node with probability p ∈ { 0.03 , 0.08 } per epoch; failures last one epoch and are redrawn. 
+
+Metrics and analysis pipeline. ContinuumBench reports delivered, pending, and failed work, latency, and SLO violations at epoch and run granularity. Let 
+
+G be generated tasks, C completed tasks, Db drops from full store-and-forward buffers, Xb buffer expirations after the 90–300 s per-stage time-to-live, and Fn
+
+node-failure losses. Failed work is F = Db + Xb + Fn, and pending work is 
+
+P = max(0 , G − C − F ). Completion, pending, and failure rates are C/G , P/G ,and F/G .For each completed task i, latency is ℓi = tcomplete  
+
+> i
+
+− tcreated  
+
+> i
+
+; we report p95. This excludes unfinished work and can favor a controller that leaves late tasks incomplete, so we pair it with completion-aware accounting .A task’s deadline instant is its creation time plus the end-to-end deadline 
+
+δ (Table 1). At run end, we consider only tasks whose deadline has elapsed. Among them, A completed on time, B completed late, and U did not complete— they remain in flight or were discarded, expired, or lost to a node failure. Thus, 
+
+Eslo = A+B+U , Vslo = B+U , and the SLO-violation rate is (B+U )/(A+B+U );where a single deadline-sensitive figure is needed, we report on-time delivery 
+
+A/G . Late, unfinished, and discarded eligible tasks all count as misses, so a controller cannot score better simply because eligible work never finished. Tasks with future deadlines remain outside the score; the 60-epoch drain reduces this boundary set. Treating unfinished work as missed follows firm real-time deadline metrics [1] and completed-only scoring concerns in LLM serving [16]. For each scenario–regime pair, we select the best placement-only controller, which changes only the mapping, and the best scale-capable controller, which also changes worker counts. The completion-aware score is C/G − 0.5 P/G −8 L. Li et al. 
+
+Vslo /E slo − 0.01 ℓp95 − 0.001 m, where ℓp95 is p95 latency in seconds and 
+
+m is migrations. Latency and migration are secondary penalties. Perturbing all four weights over an 81-point grid changes the selected representative in one of the eight scenario–regime contexts, where both candidates are scale-capable; the family-level comparison never changes. 
+
+## 6 Experimental Setting 
+
+We evaluate four placement-only and five scale-capable controllers (Table 2), including the deployed Kubernetes policies HPA and KEDA and a mixed-integer linear programming (MILP) controller bounding the headroom from placement alone. Scale-capable controllers place newly activated workers with the min-latency strategy, an earliest-finish-time-style greedy rule [14]; Meta-rule picks its own, and the load sweep reuses min-latency as a fixed-capacity placement-only reference. Placement is recomputed every second epoch, and after each scale event for the joint heuristic; startup and migration delays are zero throughout. 
+
+Protocol settings. The main experiment evaluates all nine controllers on four scenarios under R1 and R2, using ten seeds per configuration. Sensitivity ex-periments vary one stressor at a time and evaluate six controllers over the same horizon with three seeds each. Findings 1–3 expand on the evaluation by incorpo-rating a replan-schedule ablation, a load sweep, and a placement-stress variant, alongside their corresponding results. 
+
+Reporting. We report means and standard deviations across all seeds, com-paring the two family representatives seed by seed, and interpret ranks together with completion, SLO violation, and p95 latency. 
+
+## 7 Results 
+
+Table 3 compares the selected placement-only and scale-capable controllers for each scenario–regime pair. In all eight pairs, scale-capable control achieves equal or higher completion, lower SLO violation, and lower p95 latency; the SLO or-dering holds in all eighty seed-level comparisons and the completion ordering in all but one seed of the saturated Industrial IoT R1 pair, where mean completion ties at 1.00 . The largest completion gain is in EO under R2, where HPA raises completion from 0.22 to 0.53 . In Industrial IoT, scaling mainly improves SLO attainment and latency. 
+
+Finding 1: Placement re-planning has no measurable effect without relocation. We fix the scaling policy and recompute placement after every scale event, periodically, or only for newly activated workers. Varying one factor at a time from a common baseline—node count (6, 24 and 48 on a synthesized infrastructure), placement strategy, controller, and regime—over four scenarios (24 configurations × three schedules × five seeds, 360 runs), completion differs ContinuumBench 9
+
+Table 2. Controllers evaluated in ContinuumBench. All controllers receive the same observations (Section 3); worker is what HPA and KEDA call a replica. Parameter ranges cover the eight scenario–regime configurations, with one fixed value used in each run. 
+
+Controller Decision rule per epoch Key parameters Placement-only : choose the node for each stage Round-robin next feasible node, cyclically —Best-fit feasible node left with the least spare capacity —Cost-greedy lowest tier-priced compute plus transfer cost prices 1/1.6/4/6 (cloud/edge/IoT/space) MILP exact min-latency mapping; the only one to relocate a placed stage SciPy/HiGHS solver 
+
+Scale-capable : also set each stage’s worker count HPA scale by queue-per-worker over target; unchanged while that ratio stays within tolerance of 1 target 0.7 tasks/worker; tolerance 0.1; min 1 worker KEDA enough workers that none holds more than the target queue; scale to zero when the queue empties target 10 tasks/worker; min 0 workers Joint heuristic ±1 worker when queue, age or TTL pressure crosses a threshold; re-plan queue up 5–18, down 2–4; cooldown 1–2 Feature-rule ±1 worker on a weighted sum of queue, age and TTL pressure up 1.0, down 0.15; equal weights Meta-rule thresholds on the Feature-rule sum with different weights; also decides whether to re-plan and selects the placement strategy weights 1/0.1/2 (queue/age/TTL) 
+
+by less than 10 −3; none of these heuristic schedules relocates an existing stage. Re-planning therefore did not improve incremental placement in any of these configurations. A global MILP marks the boundary: with zero migration delay, it performs approximately 55 worker-relocation events over the course of each run, increasing completion by 0.045 . This relocation setting is idealized; worker capacity binds in every non-migrating schedule. 
+
+Finding 2: Scale-capable controllers track the over-provisioned refer-ence as load rises. In a separate 480-run R1 capacity sweep, we vary arrival rates from 0.6× to 2.0× and compare completion against an over-provisioned ref-erence that activates all workers at t = 0 . It provides maximum worker capacity but is not a proven completion optimum, because it ignores cost and may con-strain placement. HPA, the joint heuristic, and KEDA reach 99 –100% , 97 –100% ,and 89 –100% of this reference; placement-only controllers reach 44 –100% and de-grade with load in every scenario except EO. In all 14 non-saturated scenario– load combinations, every scale-capable controller outperforms placement-only 10 L. Li et al.                                      
+
+> Table 3. Main comparison. Each cell reports completion rate / SLO-violation rate / p95-latency (s) for the best controller in each family under the selection rule in Section 5; HPA is reported throughout as the scale-capable representative, being top-ranked in three pairs and within 0.01 of the top rule-based controller elsewhere. Completion is over all generated tasks, violation over those whose deadline has elapsed. Across ten seeds, std. devs. are ≤0.07 for completion and ≤0.22 for SLO violation.
+> Scenario Reg. Selected scale-capable Selected placement-only
+> EO dual stream R1 HPA: 0.51/0.34/113.7 MILP: 0.23/0.75/145.9 EO dual stream R2 HPA: 0.53/0.29/113.4 Best-fit: 0.22/0.75/133.7 Driving V2X R1 HPA: 0.57/0.35/104.2 Cost-greedy: 0.49/0.50/114.1 Driving V2X R2 HPA: 0.62/0.26/103.3 Cost-greedy: 0.53/0.40/110.0 Split inference R1 HPA: 0.86/0.15/72.8 Best-fit: 0.58/0.54/114.4 Split inference R2 HPA: 1.00/0.00/23.2 Best-fit: 0.76/0.33/91.1 Industrial IoT R1 HPA: 1.00/0.18/12.2 Best-fit: 1.00/0.63/24.5 Industrial IoT R2 HPA: 1.00/0.01/8.8 Best-fit: 0.97/0.78/54.6
+
+control for every seed. The gap is due to scaling: at fixed capacity, the exact MILP returns the same mapping as the min-latency heuristic, and enlarging the synthesized infrastructure to 24 and 48 nodes leaves completion unchanged. 
+
+Finding 3: Under a placement bottleneck, placement quality affects on-time delivery, but completion-only evaluation hides the effect. We construct an EO variant with tighter capacity, a thin edge–cloud link, larger per-task payloads, a 12 s deadline, and fixed worker capacity. Cost-greedy completes 
+
+102% as many tasks as the best on-time strategy, but delivers only 6% on time versus 47% . Completion alone reports a near-tie while hiding an ∼8× on-time-delivery gap. On-time delivery spreads the six strategies by 0.42 here, 0.12 with the settings relaxed, and 0.00 in unmodified EO—placement binds only when it is the bottleneck. 
+
+Finding 4: The accounting choice changes which controller looks bet-ter. Under node unavailability, scoring violations over completed tasks alone makes them decrease as failures rise in 21 of 24 configurations; counting the unfinished tasks U removes the inversion in all but one. Completion alone also reports no difference between deployed autoscalers: under R2 in Industrial IoT, HPA and KEDA both complete all tasks, yet their completion-aware violation rates are 0.01 and 0.57 . KEDA scales to zero when its queue empties, so each burst waits until the next control action reactivates workers; under a 10 s dead-line those waits produce late completions. Targeted stressors also change controller order: contact stress changes 3 of 6 ranks in EO and 4 of 6 in Driving V2X, and load stress 3 of 6 in Industrial IoT, while Split inference remains stable. Orchestration overhead is negligible at these scales: on the 4–6-node infras-tructures of Table 3, p95 controller decision time stays below 3 ms per epoch— under 0.3% of the 1 s control period—except for the MILP reference ( 8–25 ms). ContinuumBench 11 
+
+It does grow steeply with infrastructure size: on the 48-node re-planning variant, per-epoch routing raises even HPA’s p95 to 181 ms. For the capacity-bound regimes studied, these results suggest a design guide-line: provision elastic capacity first; re-planning and placement optimization paid off only once worker capacity had ceased to be the bottleneck. 
+
+Limitations and threats to validity. ContinuumBench is simulation-only. Its contact, buffering, and startup models lack hardware validation, so results are relative comparisons; a Kubernetes-backed harness is the next step. Results are also conditional on ECLYPSE, which models feasibility, residual resources, and routing but omits transport contention, container scheduling, and handover dynamics. The infrastructures are hand-built graphs with 4–6 nodes (up to 48 in the replan ablation), and the scenarios and R2 calibration profiles are repre-sentative rather than externally validated. Quantizing sub-second per-hop delays to the 1 s control epoch establishes a baseline latency floor equal to the longest path length ( ∼6 s in Industrial IoT, against a 10 s deadline). Because this floor applies identically across controllers and compresses observed separations rather than creating them, absolute latency inflation does not compromise relative comparisons. Finally, the evaluated regimes are capacity-bound (Findings 1–2), and be-cause the heuristics never relocate, only the migrating MILP optimizer tests re-planning. 
+
+## 8 Conclusions and Future Work 
+
+By isolating individual control levers and exposing evaluation assumptions, Con-tinuumBench shows that elastic capacity drives completion in the regimes evalu-ated here, and that once capacity suffices, the choice of autoscaling policy decides how much of that work arrives on time. It also shows that the accounting choice changes the reported result: completion-only and completion-aware scoring can rank the same controllers differently. Four natural extensions follow. First, introducing an explicit cost model will test whether anticipatory control becomes advantageous when over-provisioning is penalized. Second, the controller set covers production policies and an ex-act optimizer but no learning-based methods; adding them is the obvious next step, and ContinuumBench already logs the per-epoch observations, actions, and seeds they need. Third, scaling to thousand-node networks requires addressing per-epoch routing overhead via path caching, candidate pruning, and replacing the exact MILP reference. Finally, evaluating synthetic topologies (e.g., Erdős– Rényi, Barabási–Albert) will test whether our capacity-bound findings hold un-der sparser connectivity.  
+
+> Acknowledgments. This research was partially supported by the FIS2 Grant from the Italian Ministry of University and Research (Grant ID: FIS2023-03382).
+
+12 L. Li et al. 
+
+## References 
+
+1. Buttazzo, G.C.: Hard Real-Time Computing Systems: Predictable Scheduling Al-gorithms and Applications. Springer, 3rd edn. (2011). https://doi.org/10.1007/ 978-1-4614-0676-1 
+
+2. Cheng, K., Zhang, S., Tu, C., Shi, X., Yin, Z., Lu, S., Liang, Y., Gu, Q.: ProScale: Proactive autoscaling for microservice with time-varying workload at the edge. IEEE Transactions on Parallel and Distributed Systems 34 (4), 1294–1312 (2023). 
+
+https://doi.org/10.1109/TPDS.2023.3238429 
+
+3. Gan, Y., Zhang, Y., Cheng, D., et al.: An open-source benchmark suite for mi-croservices and their hardware-software implications for cloud & edge systems. In: Proceedings of the Twenty-Fourth International Conference on Architectural Support for Programming Languages and Operating Systems. pp. 3–18 (2019). 
+
+https://doi.org/10.1145/3297858.3304013 
+
+4. Gupta, H., Dastjerdi, A.V., Ghosh, S.K., Buyya, R.: iFogSim: A toolkit for mod-eling and simulation of resource management techniques in the Internet of Things, edge and fog computing environments. Software: Practice and Experience 47 (9), 1275–1296 (2017). https://doi.org/10.1002/spe.2509 
+
+5. Horvath, K.K., Kimovski, D., Spiess, B., Hohlfeld, O., Prodan, R.: SEAL-CC: Scal-able latency evaluation methodology for internet-of-things services. In: Proceedings of the 14th International Conference on the Internet of Things. pp. 117–126 (2024). 
+
+https://doi.org/10.1145/3703790.3703804 
+
+6. Kasture, H., Sanchez, D.: TailBench: a benchmark suite and evaluation method-ology for latency-critical applications. In: 2016 IEEE International Symposium on Workload Characterization (IISWC). pp. 1–10 (2016). https://doi.org/10.1109/ IISWC.2016.7581261 
+
+7. Kodheli, O., Lagunas, E., Maturo, N., et al.: Satellite communications in the new space era: A survey and future challenges. IEEE Communications Surveys & Tu-torials 23 (1), 70–109 (2021). https://doi.org/10.1109/COMST.2020.3028247 
+
+8. Li, Y., Zhang, H., Tian, W., Ma, H.: Joint optimization of auto-scaling and adaptive service placement in edge computing. In: 2021 IEEE 27th International Conference on Parallel and Distributed Systems (ICPADS). pp. 923–930 (2021). https://doi. org/10.1109/ICPADS53394.2021.00121 
+
+9. Liu, L., Chen, C., Pei, Q., Maharjan, S., Zhang, Y.: Vehicular edge computing and networking: A survey. Mobile Networks and Applications 26 (3), 1145–1168 (2021). 
+
+https://doi.org/10.1007/s11036-020-01624-1 
+
+10. Massa, J., De Caro, V., Forti, S., Dazzi, P., Bacciu, D., Brogi, A.: ECLYPSE: A Python framework for simulation and emulation of the Cloud-Edge continuum. Journal of Software: Evolution and Process 38 (1), e70081 (2026). https://doi. org/10.1002/smr.70081 
+
+11. Raith, P., Rausch, T., Furutanpey, A., Dustdar, S.: faas-sim: A trace-driven simu-lation framework for serverless edge computing platforms. Software: Practice and Experience 53 (12), 2327–2361 (2023). https://doi.org/10.1002/SPE.3277 
+
+12. Taleb, I., Guillaume, J.L., Duthil, B.: A survey on services placement algorithms in integrated cloud-fog/edge computing. ACM Computing Surveys 57 (11), 1–36 (2025). https://doi.org/10.1145/3729214 
+
+13. Teerapittayanon, S., McDanel, B., Kung, H.T.: Distributed deep neural networks over the Cloud, the Edge and end devices. In: 2017 IEEE 37th International Conference on Distributed Computing Systems (ICDCS). pp. 328–339 (2017). 
+
+https://doi.org/10.1109/ICDCS.2017.226 ContinuumBench 13 14. Topcuoglu, H., Hariri, S., Wu, M.Y.: Performance-effective and low-complexity task scheduling for heterogeneous computing. IEEE Transactions on Parallel and Dis-tributed Systems 13 (3), 260–274 (2002). https://doi.org/10.1109/71.993206 
+
+15. Ullah, A., Kiss, T., Kovács, J., Tusa, F., Deslauriers, J., Dagdeviren, H., Arjun, R., Hamzeh, H.: Orchestration in the Cloud-to-Things compute continuum: taxonomy, survey and future directions. Journal of Cloud Computing 12 (1), 135 (2023). 
+
+https://doi.org/10.1186/S13677-023-00516-5 
+
+16. Wang, Z., Li, S., Zhou, Y., Li, X., Zhang, Z., Cam-Tu, N., Gu, R., Tian, C., Chen, G., Zhong, S.: Revisiting service level objectives and system level metrics in large language model serving. arXiv:2410.14257 (2024) 17. Xu, H., Yu, W., Griffith, D., Golmie, N.: A survey on Industrial Internet of Things: A cyber-physical systems perspective. IEEE Access 6, 78238–78259 (2018). https: //doi.org/10.1109/ACCESS.2018.2884906

@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-08</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-09</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 3 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 9 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>1</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>2</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>9</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-08 19:39:05 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-09 19:48:38 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,7 +62,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读1篇、速读2篇，聚焦边缘AI推理的功耗建模与部署优化。最值得关注的是《GreenPipe》，针对Kubernetes边缘节点上的容器化DNN推理提出功耗模型（8.0/10），是边缘节能的关键参考。下步建议优先结合该模型的实验数据，评估自身边缘场景的功耗优化潜力。</p>
+<p>今日速读9篇论文，精读0篇，重点覆盖移动边缘计算、非地面网络应急通信与计算连续体管理。</p>
+<p>最值得关注：边缘计算卸载的时延与吞吐量分析，以及GNN增强强化学习在ORAN非地面应急通信中的表现。</p>
+<p>建议后续优先精读这两篇高分论文（均7.0/10），并关注LLM驱动微服务放置策略的扩展应用。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -71,12 +73,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">1 篇</strong>
+    <strong class="dpr-home-dashboard-count">0 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="GreenPipe: Power Modeling for Containerized DNN Inference on Kubernetes Edge Nodes">GreenPipe: Power Modeling for Containerized DNN Inference on Kubernetes Edge Nodes</span></li></ul>
+<p class="dpr-home-dashboard-empty">今日暂无推荐。</p>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
+
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -84,12 +86,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">2 篇</strong>
+    <strong class="dpr-home-dashboard-count">9 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CRSF: Collusion-Resilient Privacy-Preserving Sensor Fusion with Byzantine-Robust Participation">CRSF: Collusion-Resilient Privacy-Preserving Sensor Fusion with Byzantine-Robust Participation</span></li><li><span class="dpr-home-dashboard-paper-title" title="Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters">Atlas: Optimizing Deployment of Compound AI Workflows on Heterogeneous Clusters</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Delay and Throughput Analysis of Computation Offloading in Mobile Edge Computing: A Queueing Network Approach">Delay and Throughput Analysis of Computation Offloading in Mobile Edge Computing: A Queueing Network Approach</span></li><li><span class="dpr-home-dashboard-paper-title" title="A GNN-Enhanced Reinforcement Learning Framework for Emergency Communications in ORAN-based Non-Terrestrial Networks">A GNN-Enhanced Reinforcement Learning Framework for Emergency Communications in ORAN-based Non-Terrestrial Networks</span></li><li><span class="dpr-home-dashboard-paper-title" title="MicroIntent: Intent-Based Placement Strategy for Microservice Application in the Compute Continuum Using LLMs">MicroIntent: Intent-Based Placement Strategy for Microservice Application in the Compute Continuum Using LLMs</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>1</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>8</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>1</strong></span></div>
 </section>
 </div>
 

@@ -1,0 +1,313 @@
+Title: A GNN-Enhanced Reinforcement Learning Framework for Emergency Communications in ORAN-based Non-Terrestrial Networks
+
+URL Source: https://arxiv.org/pdf/2609.06697v1
+
+Published Time: Wed, 09 Sep 2026 01:26:29 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# A GNN-Enhanced Reinforcement Learning Framework for Emergency Communications in ORAN-based Non-Terrestrial Networks 
+
+Md. Thouhidur Rahman ∗‡ , Mustapha Benjillali ∗† , Halim Yanikomeroglu ‡, and Samir Saoudi ∗∗ IMT-Atlantique, Lab-STICC, UMR CNRS 6285, Brest, France. 
+
+† Communications Systems Department, INPT, Rabat 10100, Morocco. 
+
+‡ Carleton-NTN Lab, Department of Systems and Computer Engineering, Carleton University, Canada. Emails: {md-thouhidur.rahman,samir.saoudi }@imt-atlantique.fr, benjillali@ieee.org, halim@sce.carleton.ca 
+
+Abstract —During disaster scenarios and periods of extreme data demand in next-generation wireless communications, con-ventional terrestrial networks (TNs) often become unreliable or fail entirely, leading to critical service disruptions. In such contexts, non-terrestrial networks (NTNs) emerge as a promising solution to ubiquitous and resilient connectivity. Furthermore, the open radio access network (ORAN) paradigm facilitates network disaggregation and flexible functional splitting among its key components, namely the central unit (CU), distributed unit (DU), and radio unit (RU), which can be deployed across heterogeneous NTN platforms according to service requirements. However, this flexibility introduces significant challenges in terms of network complexity and real-time control. To address these challenges, this paper proposes an intelligent ORAN-enabled NTN framework for emergency communication scenarios. The proposed system leverages graph neural networks (GNNs) to model the dynamic network topology and employs a reinforcement learning (RL)-based Q-learning algorithm, formulated as a Markov decision process (MDP), to enable adaptive and real-time network control. In this framework, network nodes are treated as states, and optimal decisions are learned based on system dynamics. The spatial distribution of user equipment (UE) is modeled using an inhomogeneous Poisson point process (IPPP) with a rejection sampling technique, capturing realistic user density variations. Simulation results demonstrate that the proposed GNN-enhanced RL approach significantly improves network performance in terms of latency and service reliability, thereby enabling efficient and robust operation under emergency conditions. 
+
+Index Terms —Emergency Communication, GNN, Latency, NTN, ORAN, RL. 
+
+I. I NTRODUCTION 
+
+Recent studies indicate that conventional terrestrial base stations (TBSs) often fail or struggle to provide reliable services during natural disasters, in sparsely populated rural areas, and under high data rate demands such as virtual real-ity, ultra-high-definition video streaming, autonomous driving, remote surgery, cloud gaming, smart city applications, and military operations [1], [2] and [3]. In this context, non-terrestrial networks (NTNs), including unmanned aerial ve-hicles (UAVs), high-altitude platform stations (HAPS), and 
+
+This work is funded in part by the European Union’s Horizon Europe Research and Innovation Program under Grant Agreement No. 101126644. 
+
+satellites, have emerged as a promising solution to provide flexible and resilient connectivity [4], and [5]. Meanwhile, the open radio access network (ORAN) paradigm enables network disaggregation and functional splitting through its key components—the central unit (CU), distributed unit (DU), and radio unit (RU)—which can be dynamically deployed across heterogeneous NTN platforms [6]–[8]. Nevertheless, such distributed architectures introduce significant complexity in network management and resource optimization [9]. To address these challenges, this paper proposes an intelligent ORAN framework for NTNs, leveraging graph neural net-works (GNNs) to model the network topology and reinforce-ment learning (RL) to enable adaptive, real-time control based on user equipment (UE) distribution and service requirements. The proposed approach aims to optimize network performance in terms of latency, particularly under dynamic and emergency conditions. NTNs can dynamically update their positions, while ORAN can adapt its component resources according to varying service requirements. The schematic NTN architecture for emergency communi-cations is illustrated in Fig. 1. The ORAN components are distributed across different platforms according to the service requirements. The CU is deployed at the NTN gateway (GW) and connected to both the core network and the data network. Recently, space-based data centers have gained significant attention [10]; therefore, the CU-GW can be implemented either in space or on the ground [11]. However, from a network perspective, space-based deployment is more suitable for supporting emergency scenarios. Low Earth orbit (LEO) satellites are connected via backhaul links using free-space optical (FSO) communication, enabling them to operate as transparent platforms. These LEO satellites are interconnected through inter-satellite links (ISLs), allowing seamless commu-nication across the network. Furthermore, LEO satellites can connect to HAPS via FSO links. In particular, LEO satellites can sense the locations of UEs associated with TBSs through connectivity with the TBSs [12]. When a failure or service degradation is detected, NTN resources are dynamically de-ployed. Initially, HAPS platforms carrying open DU (O-DU) arXiv:2609.06697v1 [eess.SP] 6 Sep 2026 Fig. 1. Schematic NTNs architecture for emergency communication. 
+
+and open RU (O-RU) functionalities are activated. Due to their quasi-stationary nature, HAPS can efficiently maintain FSO links with LEO satellites. Subsequently, additional O-RU or O-DU units can be deployed based on user density and demand. Finally, all physical network components are monitored through a GNN digital twin framework, which enables intelligent network control using GNN-enhanced RL algorithms. Due to the flexibility and advantages of ORAN–enhanced NTNs controlled autonomously, a significant number of studies have been conducted. A GNN-enhanced multi-agent deep reinforcement learning (MADRL) approach for dynamic packet routing [13] and a latency-tolerant algorithm for hetero-geneous NTNs were analyzed in [14]. In those works, dynamic routing in NTNs was formulated as a partially observable Markov decision process (MDP), and residual shortest path hops were used for routing selection. The integration of terrestrial networks (TNs) and NTNs was investigated in [15], where the open CU (O-CU) was deployed in the TN, while the O-DU was distributed across NTN platforms. A GNN-based graph convolutional network (GCN) was utilized for fault detection and efficient routing path selection to mitigate failures. ORAN NTN functional splitting optimization using a deep Q-learning network (DQN)-based RL, adapted to varying traffic conditions, was studied in [16]. An actor–critic (A2C) algorithm combined with a sequence-to-sequence DRL model for optimizing energy consumption in ORAN func-tional splitting was proposed in [17], and [18]. Dynamic functional splitting using RL to optimize energy consumption with renewable energy sources was presented in [18]. The distribution of ORAN components across multiple UAVs for 5G network task offloading using a DQN-based RL algorithm was investigated in [19]. Recently, the architectural design and resource allocation for ORAN in space were developed in [11]. ORAN mobility management based on a GNN and a link prediction method was investigated in [20]. In view of the limitations and challenges identified in the existing literature on NTN-ORAN systems, the main contri-butions of this work are summarized as follows:  
+
+> •
+
+To address the major challenges of ORAN-based NTNs, including dynamic topology management and intelligent network control, a GNN-enhanced RL framework is proposed for ORAN functional splitting in emergency communication scenarios.  
+
+> •
+
+Based on the damaged base station (DBS) locations, the UE distribution is modeled using an IPPP with a rejection sampling technique, and an efficient, scalable end-to-end NTN architecture is developed to support emergency communications.  
+
+> •
+
+A GNN-based network model represents NTN ORAN nodes and communication links as a graph to learn real-time network topology and link characteristics. Based on the learned graph representation, a Q-learning-based RL mechanism within an MDP framework optimizes func-tional split selection and resource management through an appropriate reward function while satisfying the target latency.  
+
+> •
+
+Simulation results demonstrate that the proposed frame-work effectively learns optimal control policies, achieving the target latency with up to 90% successful action rates and ensuring reliable and efficient network performance. The remainder of this article is organized as follows. Sec-TABLE I GNN NODE FEATURE CHARACTERISTICS        
+
+> Feature Name Attribute Characteristics
+> Network Type O-CU/O-DU/O-RU/O-Relay NTN Platforms HAPS/UAV/LEO Position Reference to DBS Edge Type FSO/RF Neighbor Node HAPS/UAV/LEO/UE Neighbor Node Type UE/CU/DU/RU/Relay
+
+tion II discusses the GNN framework for the NTN architecture. Section III presents the RL model for network adaptation. Section IV provides the performance analysis of the GNN-enhanced RL training. Finally, Section V concludes the paper and outlines future research directions. II. GNN F RAMEWORK FOR NTN A RCHITECTURE 
+
+Based on the physical network illustrated in Fig. 1, a digital framework is designed using a GNN. In this framework, all NTN platforms (O-DU, O-RU), UEs, the CU GW, the core network, and the data network are modeled as nodes. The efficient and flexible Python library NetworkX is used to create and manipulate the graph structure. Communication links, such as FSO and radio frequency (RF), are represented as edges of the graph. Initially, an empty graph is constructed, and nodes are added sequentially. Each node is associated with several attributes, including the type of NTN platform, type of ORAN component, node position, neighboring nodes, neighbor types, and edge types (i.e., link types). All node features are summarized in Table I. Subsequently, the positions of the NTN platforms are de-termined based on the location of the damaged base station (DBS). The HAPS (DU+RU) is positioned directly above the DBS, while the LEO satellite (relay) is placed above the HAPS. Other NTN platforms are distributed according to the spatial density of UEs. The UE distribution is modeled using a two-dimensional Gaussian IPPP. UEs are generated via a rejection sampling method based on a Gaussian probability density function (PDF), resulting in a higher concentration near the center of the DBS area, with density gradually de-creasing toward the edges. The resulting hierarchical network topology, modeled using the GNN framework, is illustrated in Fig. 2 and Fig. 3. ORAN-based NTNs involve challenges such as routing, handover, interface synchronization, link failure mitigation, and scheduling. NetworkX models the network topology by representing node and edge features, enabling the GNN to learn network characteristics such as link budgets, 3D node positions, link distances, latency, and shortest paths. The learned graph representations are then utilized by the RL agent to optimize network control policies, improving the adaptability and efficiency of ORAN-based NTNs. To represent the user density distribution, let the density of users be du according to the position of (xi, y i). The maximum user density is dum if xo = 0 , and yo = 0 . Therefore, for a                                     
+
+> TABLE II RL-BASED MODEL PARAMETERS SYMBOLIZATION
+> Symbol Representation
+> NHAPS ,NLEO Number of HAPS, LEO
+> NUAV ,NUE Number of UAVs, UEs
+> NRU ,NDU Number of O-RU, O-DU
+> NNRU ,NNDU Number of added O-RU, O-DU
+> NRRU ,NRDU Number of removed O-RU, O-DU
+> NLN ,NRL Number of links, relays
+> StSet of states from graph G nodes by sand s′
+> AcSet of actions symbolizes by aR(s, a, s ′)Reward for each state s, action a, and next state s′
+> PT(s, a, s ′)Transition probability for each state
+> τPolicy gradiant from one state to another
+> τ∗(s)Optimal policy state
+> γ,αDiscount factor, Learning rate
+> Q(s, a )Qvalue of state sand action a
+
+Gaussian (non-uniform) distribution, the PDF can be found by: 
+
+f (xi, y i) = exp 
+
+
+
+−
+
+ (xi − xB )2
+
+2σ2
+
+> xi
+
++ (yi − yB )2
+
+2σ2
+
+> yi
+
+ 
+
+, (1) with (xB, y B) the DBS position, σxi , and σyi are special spread constant of x coordinate and y coordinate respectively. Let the DBS coverage area be denoted by AB. Thus, the expected value of the user’s positions can be illustrated as: 
+
+E[du(xi, y i)] = 
+
+Z Z 
+
+> AB
+
+du(xi, y i) f (xi, y i) dx i dy i. (2) In the rejection sampling method, the boundary coverage is: 
+
+(xi, y i) ∈ [xmin , x max ] × [ymin , y max ]. (3) If we denote the uniform distribution PDF by 
+
+funiform (xi, y i), then the accepted PDF value can be represented by: 
+
+funiform (xi, y i) < f accepted (xi, y i), (4) where faccepted (xi, y i) expresses the accepted PDF of the rejection sampling method. III. RL M ODEL FOR NETWORK ADAPTATION 
+
+To implement the RL method, the elements of an MDP must be defined. All symbols and notations are summarized in Table II. The Q-learning-based dynamic learning process is presented in Algorithm 1. At each state, the agent observes the entire graph, including the number of nodes and edges, such as 
+
+NLEO , NHAPS , NUE , NRU , NDU , NLN , and NRL . The action set At includes operations such as adding or removing nodes (e.g., UEs, DU-UAVs, and RU-UAVs) and links, as well as updating node positions based on UE requirements and target latency constraints. The reward function is defined based on the effectiveness of the selected action. A negative reward is assigned when the average latency is high, while a positive reward is given when a target latency is achieved, or a certain number of UEs are successfully served. The state transition probability represents the likelihood of moving from one state to another after taking an action. In the proposed framework, the environment (i.e., the network) evolves dynamically based TABLE III SIMULATION PARAMETERS FOR RL M ODEL TRAINING                       
+
+> Parameters Values
+> NHAPS ,NLEO ,NUAV ,NUE 1, 1, 31, 286
+> NRU ,NDU ,NRL 27, 6, 1
+> α,γ,ϵ,Pf0.9, 0.9, 0.9, 1000
+> C1,C2,C3,C40.1, 0.5, 5, 5
+> σxi,σyi,AB800, 800, 5000 m2
+
+on user density and the agent’s actions. The quality of an action is evaluated through the reward function. The overall reward is determined based on three criteria: latency-based, UE-based, and action-based rewards. Let the average latency be denoted by tA, the target latency by tt, and the penalty factor by Pf . Then, the latency-based reward Rt can be expressed as follows: 
+
+Rt =
+
+(
+
+−Pf (tA − tt), if tA > t t
+
+Pf (tt − tA), if tA ≤ tt
+
+. (5) Therefore, a significant penalty is imposed when the latency exceeds the target, while a reward is provided when the latency remains below the target. The next component is the user-serving reward. Let NUES denote the number of served UEs and NUEB denote the baseline number of UEs. Then, the UE-based reward function can be found as follows: 
+
+RUE =
+
+
+
+C1(NUES − NUEB ), if NUES > N UEB 
+
+−C2(NUEB − NUES ), if NUES < N UEB 
+
+0, if NUES = NUEB 
+
+. (6) Therefore, a positive reward is assigned when a larger num-ber of UEs are served, while a negative reward is given when the serving capability decreases. The final component is the action-based reward, which considers the addition and removal of DU or RU UAVs. A positive reward is assigned when removing UAVs leads to improved service efficiency, whereas unnecessary additions or removals may incur a penalty. Thus, the overall reward function can be expressed as follows: 
+
+Ra =
+
+(
+
+−C3, if a DU and RU UAV is added 
+
+C4, if a DU and RU UAV is removed . (7) To sum up, the total rewards RTL can be obtained as: 
+
+RTL = Rt + RUE + Ra. (8) IV. GNN-ENHANCED RL T RAINING PERFORMANCE 
+
+ANALYSIS 
+
+The simulation and training framework is developed using the Python ecosystem through Anaconda Navigator. All ex-periments are conducted within Jupyter Notebook to facilitate interactive development and iterative evaluation. The proposed graph-based network model is implemented using NetworkX, while numerical computations and learning processes are supported by NumPy. Visualization of performance metrics, including latency and reward convergence, is performed using Matplotlib. This integrated environment ensures scalability, re-producibility, and efficient prototyping of the GNN-enhanced RL model. All the RL model simulation parameters are presented in Table III. 
+
+Algorithm 1 Q-Learning-based Dynamic NTN  
+
+> 1:
+
+Initialize Q-table Q(s, a ) arbitrarily  
+
+> 2:
+
+Set learning rate α, discount factor γ, exploration rate ϵ 
+
+> 3:
+
+Initialize NTN graph G with initial Data Network, CU GW, NLEO , NHAPS , NUE , NRU , NDU , NLN , and NRL  
+
+> 4:
+
+for each episode do  
+
+> 5:
+
+Reset environment: G ← Ginitial  
+
+> 6:
+
+Update node positions and compute initial latencies  
+
+> 7:
+
+for each step do  
+
+> 8:
+
+Observe current state s = ( NDU , N RU , N UE ) 
+
+> 9:
+
+Select action a using ϵ-greedy policy:  
+
+> 10:
+
+if rand() < ϵ then  
+
+> 11:
+
+Choose random action  
+
+> 12:
+
+else  
+
+> 13:
+
+a = arg max a Q(s, a ) 
+
+> 14:
+
+end if  
+
+> 15:
+
+Execute action a: 
+
+> 16:
+
+if a = add DU UAV and NDU < N max  
+
+> DU
+
+then  
+
+> 17:
+
+Add a DU UAV to graph G 
+
+> 18:
+
+else if a = add RU UAV then  
+
+> 19:
+
+Select a DU UAV and add RU UAV and NRU <N max  
+
+> RU
+> 20:
+
+end if  
+
+> 21:
+
+Update node positions and recalculate latencies  
+
+> 22:
+
+Observe new state s′ 
+
+> 23:
+
+Compute reward R based on latency and user cover-age  
+
+> 24:
+
+Update Q-value:  
+
+> 25:
+
+Q(s, a ) ← Q(s, a ) + αR + γ max a′ Q(s′, a ′) −
+
+Q(s, a ) 
+
+> 26:
+
+s ← s′ 
+
+> 27:
+
+end for  
+
+> 28:
+
+Store metrics (tA, R TL , N DU , N RU , N UE ) 
+
+> 29:
+
+Update exploration rate:  
+
+> 30:
+
+ϵ ← max( ϵmin , ϵ × decay ) 
+
+> 31:
+
+end for  
+
+> 32:
+
+Return optimal policy π∗(s) and learned Q-table Fig. 2 depicts a smaller unit of the network, where all fundamental NTN platforms are shown. Fig. 3 presents the complete end-to-end network topology based on the GNN model. The network consists of 286 UEs, 31 UAVs, 27 O-RUs, 6 O-DUs, and one relay unit, in addition to data networks and a CU-GW distributed across different NTN platforms. The RL training model is then executed based on this topology. Fig. 4 illustrates the total reward characteristics of the RL-based method as a function of the number of training episodes for different numbers of UEs within the DBS coverage area. From the figure, it can be observed that, as the number of users increases, the total training reward decreases. Moreover, Fig. 2. GNN hierarchical network topology, smaller unit of the graph.  
+
+> Fig. 3. GNN hierarchical end-to-end network topology.
+
+reward fluctuations become more pronounced with a higher number of UEs. As the number of UEs increases, the accuracy of the actions taken to satisfy the target latency declines, leading to reduced rewards. In the scenario with 186 UEs, the reward converges more rapidly and stabilizes within fewer than 100 episodes. Moreover, when the number of users is smaller, fewer DU or RU UAVs are required; consequently, redundant UAVs can be removed, resulting in higher action-based rewards. Fig. 5 illustrates the total reward characteristics as a function of the target latency. From the figure, it is evident that, in the early episodes, there are significant reward fluctuations due to increased exploration and exploitation. Moreover, the addition or removal of DU or RU UAVs can cause sudden drops in the total reward during the initial stages. After approximately 400 episodes, the agent becomes well-trained within the environment and exhibits more stable rewards. On the other hand, as the target latency decreases, the total reward increases. This is because a lower target latency creates a    
+
+> Fig. 4. Total reward for different numbers of UEs.
+> Fig. 5. Total reward for different latency targets.
+> Fig. 6. Latency with different learning rates.
+
+greater contrast with the average latency, resulting in higher rewards. Fig. 6 represents the latency distribution as a function of the number of episodes for different learning rates. If the baseline is considered as the target latency, it can be observed that, as the learning rate increases, the latency exceeding the target latency decreases. A higher learning rate enables the Fig. 7. Successful action rate for different types of learning criteria. 
+
+agent to learn the environment more quickly; therefore, the deviation from the target latency is reduced. Moreover, as the number of episodes increases, the average latency exceeding the target latency decreases. Based on the results in Fig. 6, Fig. 7 presents a bar chart of the successful action rates. An action is considered unsuccessful if the average latency exceeds the target latency. From the figure, it is evident that the successful action rate increases with the learning rate. This is because a higher learning rate allows the agent to adapt more rapidly to environmental changes and make more accurate decisions, resulting in improved performance. V. C ONCLUSION AND FUTURE WORK 
+
+In this paper, an intelligent ORAN-based NTN emergency network control system has been developed to address the limitations of TNs in next-generation wireless communication scenarios. By integrating a GNN-enhanced RL model, the proposed framework enables efficient and adaptive decision-making for real-time network control, particularly in emer-gency situations where reliable connectivity is critical. The performance of the proposed RL-based approach has been thoroughly evaluated using key metrics such as total reward, average latency, and successful action rate under different learning rate settings. The results demonstrate that the pro-posed model achieves a successful action rate exceeding 80% while maintaining stable latency performance across varying learning configurations and observation conditions. Future work will focus on hyperparameter optimization, improving model generalization, and incorporating additional state rep-resentations. Comparative evaluations with baseline methods will be conducted to justify the selected parameters through practical experiments, while real-time UAV-assisted NTN data will be integrated to develop more efficient and scalable algorithms for practical deployment. REFERENCES [1] M. T. Rahman, A. S. Shah, M. A. Karabulut, and H. Ilhan, “FANET-enabled cluster-based emergency communication with 3D mobility in 5G and beyond,” Vehicular Communications , vol. 56, p. 100971, Dec. 2025. [2] B. Karaman, I. Basturk, F. Kara, E. Zeydan, E. A. Beyazit, S. Taskin, E. Bjornson, and H. Yanikomeroglu, “On-demand HAPS-assisted com-munication system for public safety in emergency and disaster response,” 
+
+IEEE Communications Magazine , vol. 63, no. 12, pp. 54–61, Sept. 2025. [3] B. Karaman, I. Basturk, E. Zeydan, F. Kara, E. A. Beyazit, S. Taskin, and H. Yanikomeroglu, “HAPS-RIS-assisted IoT networks for disaster recovery and emergency response: Architecture, application scenarios, and open challenges,” IEEE Internet of Things Magazine , vol. 9, no. 4, Apr. 2026. [4] C. T. Nguyen, Y. M. Saputra, N. Van Huynh, T. N. Nguyen, D. T. Hoang, D. N. Nguyen, V.-Q. Pham, M. Voznak, S. Chatzinotas, and D.-H. Tran, “Emerging technologies for 6G non-terrestrial-networks: From academia to industrial applications,” IEEE Open Journal of the Communications Society , vol. 5, pp. 3852–3885, 2024. [5] A. M. Ince, A. E. Canbilen, and H. Yanikomeroglu, “AoI-aware HAPS-aided multi-agent framework for resource management in V2X net-works,” IEEE Open Journal of the Communications Society , vol. 7, pp. 598–613, Jan. 2026. [6] S. Mahboob, J. Dai, A. Soysal, and L. Liu, “Transforming future 6G networks via O-RAN-empowered NTNs,” IEEE Communications Magazine , vol. 63, no. 3, pp. 76–82, Jan. 2025. [7] M. Rihan, T. D¨ ue, M. Vakilifard, D. W¨ ubben, and A. Dekorsy, “RAN functional split options for integrated terrestrial and non-terrestrial 6G networks,” in Proc. 11th International Japan-Africa Conference on Elec-tronics, Communications, and Computations (JAC-ECC) , Alexandria, Egypt, 18-20 Dec. 2023, pp. 1–7. [8] M. T. Rahman, M. Benjillali, H. Yanikomeroglu, and S. Saoudi, “Per-formance analysis of ORAN-based non-terrestrial networks: Functional splitting, power consumption, and latency,” in 2026 IEEE 13th Interna-tional Symposium on Signal, Image, Video and Communications (ISIVC) ,Beni Mellal, Morocco, 20-22 May 2026, pp. 1–6. [9] J. Deng, S. F. Hasan, H. Zhou, S. Al-Ahmadi, M.-S. Alouini, and D. B. Da Costa, “AI-native open RAN for non-terrestrial networks: An overview,” IEEE Open Journal of the Communications Society , vol. 7, pp. 1033–1057, 2026. [10] A. Periola, A. Alonge, and K. Ogudo, “Space habitat data centers for future computing,” Symmetry , vol. 12, no. 9, pp. 1487–1509, Sept. 2020. [11] T. Lan, J. Zhao, and K.-Y. Lam, “Architecture design and resource allocation for Open RAN in space,” IEEE Transactions on Mobile Computing (Early Access) , 2026. [12] P. Kanani, M. J. Omidi, M. Modarres-Hashemi, and H. Yanikomeroglu, “Optimizing network performance and resource allocation in HAPS-UAV integrated sensing and communication systems for 6G,” IEEE Transactions on Wireless Communications , vol. 25, no. 6, pp. 4098– 4112, Sept. 2025. [13] Y. Ran, Y. Ding, S. Chen, J. Lei, and J. Luo, “Fully-distributed dynamic packet routing for LEO satellite networks: A GNN-enhanced multi-agent reinforcement learning approach,” IEEE Transactions on Vehicular Technology , vol. 74, no. 3, pp. 5229–5234, 2024. [14] J. Deng, H. Zhou, and M.-S. Alouini, “Distributed coordination for het-erogeneous non-terrestrial networks,” IEEE Communications Magazine ,vol. 64, no. 6, pp. 74–80, Jan. 2026. [15] H. B. Tsegaye and C. Sacchi, “Graph neural network-based C-RAN monitoring for beyond 5G non-terrestrial networks,” in In Proc. 11th International Workshop on Metrology for AeroSpace (MetroAeroSpace) ,Lublin, Poland, 03-05 Jun. 2024, pp. 338–343. [16] S. M. Shahabi, X. Deng, A. Qidan, T. Elgorashi, and J. Elmirghani, “Energy-efficient functional split in non-terrestrial open radio access networks,” in Proc. IEEE Global Communications Conference (GLOBE-COM) , Cape Town, South Africa, 8-12 Dec. 2024, pp. 1–6. [17] E. Amiri, N. Wang, M. Shojafar, and R. Tafazolli, “Energy-aware dynamic VNF splitting in O-RAN using deep reinforcement learning,” 
+
+IEEE Wireless Communications Letters , vol. 12, no. 11, pp. 1891–1895, Jul. 2023. [18] T. Pamuklu, M. Erol-Kantarci, and C. Ersoy, “Reinforcement learning based dynamic function splitting in disaggregated green open RANs,” in Proc. IEEE International Conference on Communications (ICC) ,Montreal, QC, Canada, 14-23 Jun. 2021, pp. 1–6. [19] C. Pham, F. Fami, K. K. Nguyen, and M. Cheriet, “When RAN intelli-gent controller in O-RAN meets multi-UAV enable wireless network,” 
+
+IEEE Transactions on Cloud Computing , vol. 11, no. 3, pp. 2245–2259, Jul. 2022. [20] A. G. Berm´ udez, M. Farreras, M. Groshev, J. A. Trujillo, I. de la Bandera, and R. Barco, “Graph neural networks for open radio access network mobility management: A link prediction approach,” IEEE Vehicular Technology Magazine , vol. 20, no. 4, pp. 66–74, 2025.

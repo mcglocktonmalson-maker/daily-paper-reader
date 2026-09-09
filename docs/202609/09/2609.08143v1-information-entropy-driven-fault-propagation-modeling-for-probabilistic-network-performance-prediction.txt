@@ -1,0 +1,769 @@
+Title: Information-Entropy-Driven Fault Propagation Modeling for Probabilistic Network Performance Prediction
+
+URL Source: https://arxiv.org/pdf/2609.08143v1
+
+Published Time: Wed, 09 Sep 2026 03:42:25 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Information-Entropy-Driven Fault Propagation Modeling for Probabilistic Network Performance Prediction 
+
+1st Lusha Mo, 2 nd Fengxiao Tang *, 3 rd Xiaonan Wang, 4 th Ming Zhao 
+
+School of Computer Science and Engineering, Central South University, Changsha, China 
+
+{molusha, tangfengxiao, wangxiaonan, meanzhao }@csu.edu.cn 
+
+* Corresponding Author 
+
+Abstract —Network faults can trigger cascading effects that cause abrupt and nonstationary performance degradation. Ex-isting learning-based performance predictors mainly focus on normal operation or treat fault-induced topology and routing changes as static inputs, and typically produce deterministic point estimates. They overlook fault-propagation dynamics and uncertainty in performance evolution. The predefined-rule and purely data-driven propagation models lack a unified represen-tation of fault definition, propagation mechanism, and impact quantification. Additionally, generic denoisers in conditional diffusion models fail to incorporate fault propagation into un-certainty modeling. To address these limitations, we propose an information-entropy-driven fault propagation paradigm (IEFP) that characterizes fault propagation via relative entropy, mutual information and transfer entropy. We then design a fault-aware graph message-passing mechanism that propagation contexts modulate network representation learning. We further develop FEMNet, which employs this mechanism as a tailored denoiser within a conditional diffusion model to enable probabilistic network performance prediction under complex fault scenarios. Compared with the strongest baselines, IEFP improves fault-prediction performance, while FEMNet reduces errors in both point and probabilistic KPI prediction. 
+
+Index Terms —Network fault propagation, probabilistic net-work performance prediction, information-entropy modeling, conditional diffusion model, graph message passing. 
+
+I. I NTRODUCTION 
+
+Network performance prediction estimates how key per-formance indicators (KPIs) evolve under different network conditions. Faults can trigger link disruptions, route recon-figuration, and queue buildup, causing cascading effects and quality-of-service degradation [1], [2]. The deterioration is abrupt, nonstationary, and driven by structural changes in the network. Accurate and rapid assessment of fault impacts on network KPIs is therefore essential for proactive degradation detection, automated control, and intelligent maintenance, as well as for robustness evaluation and reliability enhancement during network design and deployment. Learning-based predictors [3] are prominent, which capture complex relationships among topology, routing, and traffic to predict node-, link-, and end-to-end performance. However, most assume normal operation under fixed configurations. Even when link failures are considered [4], the resulting Fault  Cascading  Effect                    
+
+> Node A
+> Node B
+> Node C
+> Node D Node E
+> Congestion
+> KPI
+> Time
+> Fault Occurs KPI value s
+> Fluctuations
+> Node F
+> Existing Paradigm: Snapshot -Based Prediction
+> Deterministic
+> Point Prediction
+> Reality: Dynamic Fault Evolution with Uncertainty
+> Low High Risk
+> Fault Propagation Hetero scedastic Evolution
+> No nstationary Performance Degradation
+> Normal link
+> Fault link
+> Source path
+> Rerouting path
+> Normal link
+> Fault link
+> Source path
+> Rerouting path
+> Context 2
+> (Severe fault )
+> PDF
+> KPI
+> Context 2
+> (Severe fault )
+> PDF
+> KPI
+> !
+> Link failure
+> !
+> Link failure
+> Current Snapshot
+> Topology Routing Traffic
+> KPI
+> Time
+> KPI
+> Time
+> Context 1
+> (Mild fault )
+> Context 1
+> (Mild fault )
+> Congestion
+
+Fig. 1. Fault cascading and its impact on network performance. A local link failure can trigger rerouting and cascading congestion (top left), leading to nonstationary KPI degradation (top right). Conventional snapshot-based deterministic prediction (bottom left) cannot represent the fault propagation and context-dependent, heteroscedastic KPI distributions(bottom right). 
+
+topology, route, and other reachability variations are merely encoded as updated static inputs. Such updates omit temporal dependencies and the accumulated effects of preceding faults. Performance prediction thus remains a snapshot-based map-ping from network state to deterministic KPIs, as shown in Fig. 1, without explicitly modeling how faults propagate and how the process shapes KPI evolution. This limitation becomes critical under complex faults scenarios. A central challenge is to accurately model fault propagation. Existing approaches either rely on predefined rules [5], [6] which generalize poorly to heterogeneous dependencies and stochastic triggers, or fit propagation patterns from data [7] without characterizing the persistent effect of historical faults on future fault occurrence. They lack a unified account of three fundamental questions: what constitutes a fault, how it propagates, and how its impact should be quantified. In fact, a fault implies that a component deviates from normal operation, and the abnormality may propagate along dependencies and alter the uncertainty and evolution of other components’ future states. Information theory provides a natural language for characterizing uncertainty, coupling strength, and directional arXiv:2609.08143v1 [cs.NI] 8 Sep 2026 influence [8], motivating an information-entropy [9], [10] view for modeling fault propagation. Furthermore, performance prediction must also capture how fault propagation affects KPI evolution. Under fault conditions, node and link interactions depend not only on topology, routing, and traffic but also on the accumulated effects of historical faults, which can persistently raise abnormality risks in dependent components. Since fault propagation changes the importance, reliability, and effective range of information exchanged over the graph, its context should dynamically regulate message passing instead of serving as static feature. Another difficulty arises from the pronounced uncertainty and heteroscedasticity of network performance evolution un-der fault conditions. Fault propagation may induce complex stochastic variations through multiple joint factors, such that similar network states and fault contexts may yield markedly different degradation patterns and fluctuation magnitudes. Performance prediction should therefore move beyond de-terministic point estimates to characterize conditional KPI distributions. Conditional diffusion models [11] offer a natural mechanism for this purpose. However, the generic denoisers do not model fault propagate and its effects on future states [12]. Probabilistic prediction under fault conditions requires a fault-aware denoising architecture. We address these challenges by jointly modeling fault propagation and uncertainty in KPI evolution. We first es-tablish IEFP, an information-entropy-driven fault propaga-tion paradigm to estimates fault risks for nodes and links. Specifically, IEFP uses relative entropy, mutual information, and transfer entropy to characterize abnormality levels, inter-node coupling strength, and cross-component influence from historical to future states, respectively. We then design a fault-aware graph message passing mechanism to incorporate propagation information into graph representation learning, where predictive risks gate messages, adjust attention weights, and mask weakly coupled edges. Using the mechanism as de-noising network, we develop FEMNet, a probabilistic network performance prediction model under complex fault scenarios, which introduces conditional diffusion to generalize determin-istic point prediction to its probabilistic counterpart. Our main contributions are as follows. 1) We propose IEFP, an information-entropy-driven fault propagation paradigm that interprets fault propagation as ab-normal information transmission, accumulation and redistribu-tion over networks, providing a new theoretical perspective for fault propagation analysis in complex network scenarios. 2) To effectively incorporate propagation information into performance prediction, we design a fault-aware graph mes-sage passing mechanism, in which predictive fault risks mod-ulates node message and update dynamics. 3) We develop FEMNet for probabilistic network perfor-mance prediction under complex fault scenarios. By introduc-ing conditional diffusion model, FEMNet transforms perfor-mance prediction from deterministic point regression task into conditional distribution generation task. 4) We evaluate IEFP and FEMNet under complex fault sce-narios in terms of point-prediction accuracy, fault-anticipation capability, and probabilistic-prediction quality. Results demon-strate consistent improvements over the evaluated baselines. II. R ELATED WORK 
+
+A. Network Performance Prediction 
+
+Among accurate, lightweight learning-based network mod-els, RouteNet [13] based on graph neural network (GNN), models links and traffic paths to predict source-destination KPIs. xNet [14] and RouteNet-Erlang [15] incorporate queue characteristics and specialized graph message passing. HTNet [16], DGAT [17], and EAGLE [18] capture temporal behav-ior, attention weights, and bandwidth-aware representations. RouteNet-Fermi [4] accepts topology and routing changes after link failures as inputs but omits fault interaction and diffusion. A recent analysis [19] interprets RouteNet as high-order topological modeling that captures path and scheduling order, while RouteNet-Gauss [20] adds hardware-testbed data and configurable temporal granularity. These methods rely on configurations or state snapshots and do not model fault prop-agation and its persistent effects on performance evolution. 
+
+B. Fault Propagation Modeling 
+
+Fault propagation has been studied using Bayesian networks [21], fault trees, cascading models (e.g., threshold models, load-capacity models [22], and interdependent network [23]) and diffusion models. State explosion and predefined rules limit their ability to capture probabilistic dynamics, heteroge-neous dependencies, and temporal interactions. For example, HIC model [24] combines stochastic Markovian diffusion with physics-based concepts. Probabilistic graphical models offer interpretability and causal expressiveness(e.g., Causal model [25]), but their structure learning and inference remain challenging at scale. Data-driven methods, including machine learning [7], Graph Hawkes processes [26], [27], and GNN-based models (e.g., GPIAN [28]), fit numerical variations without explicitly representing fault triggering and propaga-tion. Existing methods lack a unified representation of how fault impacts traverse complex networks and persist over time. Information theory concerned with information, uncertainty and communication, provides a natural foundation for such theoretical framework. 
+
+C. Conditional Diffusion Model 
+
+Diffusion models [29], [30] have expanded from im-age generation to probabilistic time-series and graph pre-diction. TimeDiff [31] applies conditional diffusion to non-autoregressive time-series prediction, and DiffSTG [32] com-bines diffusion models with spatiotemporal graph modeling for probabilistic forecasting. LGD [33] formulates graph regres-sion and classification tasks into a generic conditional gener-ation framework. ReDiSC [34] reparameterized masked diffu-sion for structured node classification. SimDiff [35] improves point estimation using normalization-independent diffusion and a median-of-means estimator. These studies demonstrate the strong potential of diffusion models for uncertainty mod-eling in network performance prediction. However, generic denoisers lack fault-propagation mechanisms and thus cannot fully capture fault-aware network dynamics. III. P ROBLEM FORMULATION 
+
+This section reviews the required information-theoretic quantities and conditional diffusion foundations, and formu-lates probabilistic network performance prediction under com-plex fault conditions. 
+
+A. Preliminaries 
+
+Definition 1 (Information-theoretic quantities). Let P and 
+
+Q be probability distributions on Ω ⊆ Rd with density func-tions p(x) and q(x), respectively, where q(x) > 0 whenever 
+
+p(x) > 0. Their relative entropy is 
+
+DKL (P ∥Q) ≡
+
+Z
+
+> Ω
+
+p(x) log p(x)
+
+q(x) dx, (1) which is +∞ if the support condition fails. For random elements B, C, and D on standard Borel spaces with joint law PBCD , mutual information and conditional mutual infor-mation are 
+
+I(B; C) ≡ DKL (PBC ∥PB ⊗ PC ) ,I(B; C | D) ≡ EPD
+
+DKL 
+
+ PBC |D PB|D ⊗ PC|D
+
+ . (2) The regular conditional laws in (2) are understood PD -almost surely. Let B(kB ) 
+
+> t
+
+and C(kC ) 
+
+> t
+
+denote the source and target history vectors, respectively. The context-conditioned transfer entropy from B to C is 
+
+TE B→C|D(t) ≡ I
+
+
+
+Ct+1 ; B(kB ) 
+
+> t
+
+| C(kC ) 
+
+> t
+
+, D t
+
+
+
+, (3) which measures directed predictive dependence under the specified history and context. 
+
+Definition 2 (Conditional diffusion model). A conditional diffusion model is a probabilistic generative model that learns 
+
+p(y0 | c), where c denotes conditional information such as labels, descriptions, attributes, or states. The forward diffusion process gradually injects Gaussian noise into data samples: 
+
+q(y1: T | y0) = 
+
+> T
+
+Y 
+
+> τ=1
+
+N
+
+
+
+yτ ; p1 − βτ yτ −1, β τ I
+
+
+
+, (4) where τ is diffusion step and βτ is a predefined noise-schedule coefficient. Let ατ = 1 − βτ and ¯ατ = Qτs=1 αs. Then 
+
+yτ = √¯ατ y0 + √1 − ¯ατ ϵ, ϵ ∼ N (0, I). (5) Starting from pure noise, the reverse denoising process gradually recovers target samples satisfying condition c:
+
+pθ (y0: T | c) = p(yT )
+
+> T
+
+Y 
+
+> τ=1
+
+pθ (yτ −1 | yτ , c), (6) where the transition pθ (yτ −1 | yτ , c) is parameterized by a neural network and explicitly depends on c.The model learns to restore the original data by predicting the injected noise. Training objective is to minimize the loss between the actual and predicted noise: 
+
+min  
+
+> θ
+
+L(θ) = Ey0,ϵ,τ, c
+
+h
+
+∥ϵ − ϵθ (yτ , τ, c)∥22
+
+i
+
+. (7) 
+
+B. Problem Definition 
+
+Considering a communication network, fault events may dynamically alter network topology, resource availability, routing behavior, and traffic evolution. Their effects may propagate across dependent entities and introduce substantial performance uncertainty. We aim to predict the probability distributions of network KPIs at the next timestamp under complex fault scenarios. A fault scenario is complex when performance is affected by coupled faults rather than one isolated perturbation, including at least one of: 1) concurrent faults; 2) temporally correlated faults within the observation window whose effects propagate through network dependencies; or 3) faults differing in type, duration, or severity that jointly affect multiple entities. We represent the network as a heterogeneous graph G =(V, E, A ), where node sets V represent queues, links, and flows; edge sets E encode their dependencies; and A is the adjacency matrix. For node v, let zv ∈ Rdz be its static configuration and Xv (t) ∈ Rdx its time-varying feature vector, with observation xv (t). Examples include a queue’s buffer limit in zv and current occupancy in xv (t), or a link’s maximum load in zv and current bandwidth in xv (t). With 
+
+x0: tv = ( xv (0) , . . . , xv (t)) , the network attributes are 
+
+Z =   zv , x0: tv
+
+ : v ∈ V . (8) The traffic states are S = {sf (t) ∈ Rdf }f ∈F , where sf (t)
+
+is flow f ’s current feature vector. Faults within observation window [0 , t ] form the event sequence 
+
+E0: t = εk =  type k, loc k, t start  
+
+> k
+
+, t end 
+
+> k
+
+ Kk=1 , (9) whose entries denote the fault type, affected entity, start time and end time of the k-th fault event, respectively. Given condition C = (G, Z, S, E0: t), we estimate each node’s next-step KPI distribution: 
+
+Y = {yv (t + 1) ∼ pv (· | G, Z, S, E0: t)}v∈V , (10) where yv (t + 1) and pv (·) denote node v’s target KPIs and their conditional distribution. KPIs include delay, throughput, queue length, packet loss, and related metrics. Therefore, We learn a mapping 
+
+fΘ : ( G, Z, S, E0: t) → Y , (11) that enables the predicted distributions accurately characterize stochastic performance evolution under the joint effects of traffic dynamics, resource contention, and fault propagation. For training, applying (5) to the normalized KPI target y0
+
+gives yτ . We optimize 
+
+min  
+
+> θ
+
+Ldiff (θ) = Ey0,ϵ,τ, C
+
+h
+
+∥ϵ − ϵθ (yτ , τ, C)∥22
+
+i
+
+. (12) where ϵθ is the denoising network. By minimizing Ldiff ,the model approximates the KPI distribution conditioned on network state and fault information. IV. I NFORMATION -E NTROPY -D RIVEN FAULT 
+
+PROPAGATION PARADIGM 
+
+A fault indicates a component’s departure from normal operation and injects abnormal information into the system. This information propagates through topological dependen-cies, resource interactions, and protocol coupling, altering other components’ uncertainty and dynamics. IEFP model fault propagation via three information-theoretic quantities. Relative entropy measures deviation of observation distribu-tion from normal operation and defines fault severity. Mutual information decomposes fault information into configuration vulnerability, local historical degradation, and propagated in-fluence. Transfer entropy quantifies the directional incremental information that one component’s history provides about an-other’s fault state. We define 
+
+Hv (t) =  Xv (t − L + 1) , . . . , X v (t − 1) , X v (t) (13) as node v’s length-L history up to time t, and let p(N ) 
+
+> v
+
+(X) be the reference distribution estimated from normal samples. 
+
+Theorem 1 (Asymptotic Equipartition Property, AEP). 
+
+If the random process {Xv (t)} is stationary and ergodic, then as n → ∞ ,
+
+− 1
+
+n log P (Xv (1) , . . . , X v (n)) → ¯H(Xv ). (14) Thus, average information of a long normal sequence concen-trates around entropy rate ¯H(Xv ), and normal observations lie in the typical set with high probability. A state unlikely under the normal distribution carries information unexplained by the nominal operating regime. Let ˆptv (X) be the observation distribution constructed from node v’s current feature. We define its anomaly information quantity as the relative entropy between the current observa-tion and normal reference distributions: 
+
+Sv (t) = DKL 
+
+
+
+ˆptv (X) ∥ p(N ) 
+
+> v
+
+(X)
+
+
+
+. (15) Larger Sv (t) indicates greater distributional departure from normal generation mechanism and a more severe anomaly. A fault occurs when this information exceeds the system tolerance, yielding the binary state 
+
+Fv (t) = 
+
+(
+
+1, Sv (t) ≥ λv ,
+
+0, Sv (t) < λ v , (16) where λv > 0 is node v’s learned tolerance threshold. The entropy-marked fault-event history is 
+
+Av (t) = {(tk, S v (tk)) : tk ≤ t, F v (tk) = 1 }, (17) which records each fault’s timestamp and anomaly magnitude. 
+
+Theorem 2 (Conditional reduction of entropy) . For ran-dom variables B, C, and D, we have: 
+
+H(C | B, D ) ≤ H(C | B), (18) with equality iff C ⊥⊥ D | B, i.e., D provides no additional information about C beyond what B already contains. Faults propagate because nodes are coupled by shared infor-mation, physical or logical constraints, routing, and resource competition. A fault at node u changes its output distribution: 
+
+P (Xu(t) | Fu(t) = 1) ̸ = P (Xu(t) | Fu(t) = 0) . (19) This output enters adjacent nodes’ state dynamics and may change their posterior fault risk: 
+
+P (Fv (t + 1) = 1 | H v (t), Hu(t), zv )̸
+
+= P (Fv (t + 1) = 1 | H v (t), zv ) . (20) Information-theoretically, faults in complex systems are conditionally stochastic. Anomalous information from neigh-bors’ history propagates along dependency edges, adding condition-dependent information about the target’s fault state. By Theorem 2: 
+
+H(Fv (t + 1) | H v (t), zv )
+
+> H (Fv (t + 1) | H v (t), Hu(t), zv ) . (21) We quantify this directed historical incremental information by transfer entropy: 
+
+TE u→v = I(Fv (t + 1); Hu(t) | H v (t), zv )= H(Fv (t + 1) | H v (t), zv )
+
+− H(Fv (t + 1) | H v (t), Hu(t), zv ) .
+
+(22) A larger TE u→v indicates a stronger statistical association between neighbor u’s history and node v’s fault state, and hence stronger propagation. 
+
+Theorem 3 (Chain rule of mutual information). For random variables B, C, and D,
+
+I(D; B, C ) = I(D; B) + I(D; C | B). (23) Repeatedly applying Theorem 3 decomposes the total statisti-cal association between node v’s fault state and the available configuration, local history, and neighborhood history: 
+
+I Fv (t + 1); Hv (t), HN (v)(t), zv
+
+
+
+= I(Fv (t + 1); zv )
+
+| {z }
+
+> I(conf)
+> v
+
++ I(Fv (t + 1); Hv (t) | zv )
+
+| {z } 
+
+> I(local)
+> v:local term
+
++ I Fv (t + 1); HN (v)(t) Hv (t), zv
+
+| {z } 
+
+> I(prop)
+> v:propagation term
+
+.
+
+(24) Here, HN (v)(t) collects the historical feature sequences of node v’s neighbors. The terms I(conf)  
+
+> v
+
+, I(local)  
+
+> v
+
+, and I(prop) 
+
+> v
+
+quantify fault-risk information from static configuration, local degradation history, and neighboring histories, respectively. We convert this statistically averaged mutual information into sample-specific fault information gain using pointwise mutual information: 
+
+∆sFv (t) = ∆ sconf  
+
+> v
+
++ ∆ slocal  
+
+> v
+
+(t) + ∆ sprop  
+
+> v
+
+(t). (25) Because the complete histories Hv (t) and HN (v)(t) are high-dimensional and costly to model, we compress them into the abnormal information carried by fault events: 
+
+∆sFv (t; H) = ∆ sFv (t; A) + ζv (t), (26) where the compression residual is 
+
+ζv (t) = log P  Fv (t + 1) = 1 | H v (t), HN (v)(t), zv
+
+
+
+P  Fv (t + 1) = 1 | A v (t), AN (v)(t), zv
+
+ . (27) Here, ζv (t) directly measures the information lost by replacing full feature histories with event histories. When ζv (t) ≈ 0, the fault-event sets preserve the relevant historical information: 
+
+P  Fv (t + 1) = 1 | H v (t), HN (v)(t), zv
+
+
+
+= P  Fv (t + 1) = 1 | A v (t), AN (v)(t), zv
+
+ . (28) To obtain a graph propagation form, we decompose the joint event-history contribution into source-node contributions: 
+
+∆slocal  
+
+> v
+
+(t)+∆ sprop  
+
+> v
+
+(t) = X 
+
+> u∈N (v)∪{ v}
+
+∆su→v (t)+ ηv (t), (29) where ηv (t) captures higher-order synergy and redundancy among sources. When them are negligible, i.e., ηv (t) ≈ 0,the gain becomes the sum of source-wise contributions: 
+
+∆slocal  
+
+> v
+
+(t) + ∆ sprop  
+
+> v
+
+(t) = X 
+
+> u∈N (v)∪{ v}
+
+∆su→v (t). (30) 
+
+Theorem 4 (Atomic integral property of a marked counting measure). Let δxk be the Dirac measure at event 
+
+xk and ψ(x) an event-response kernel. Then 
+
+Z
+
+ψ(x) X
+
+> k
+
+δxk (dx ) = X
+
+> k
+
+ψ(xk). (31) Represent source node u’s fault history by the marked counting measure 
+
+Nu(dξ, da ) = X  
+
+> tuk≤tFu(tuk)=1
+
+δ(tuk ,S u(tuk )) (dξ, da ), (32) which retains event time and anomaly severity as marks. The cumulative gain transmitted from source u to target v is 
+
+∆su→v (t) = 
+
+Z
+
+> [0 ,t )×R+
+
+ψu→v (a, t − ξ)Nu(dξ, da ). (33) By Theorem 4, its event-wise form is 
+
+∆su→v (t) = X  
+
+> tuk≤tFu(tuk)=1
+
+ψu→v (Su(tuk ), t − tuk ) . (34) Consequently, the total fault information gain is 
+
+∆sFv (t) =∆ sconf  
+
+> v
+
++
+
+X 
+
+> u∈N (v)∪{ v}
+
+X  
+
+> tuk≤tFu(tuk)=1
+
+ψu→v (Su(tuk ), t − tuk ) . (35) For an interpretable, estimable model, we decompose each event’s risk information as 
+
+ψu→v (Su(tuk ), t − tuk ) = Wu→v φ(Su(tuk )) gu→v (t − tuk ) ,
+
+(36) where Wu→v is the learned propagation weight, φ(Su(tuk )) = 1 − e−Su(tuk ) is a bounded severity function, and gu→v (·) is a temporal-decay kernel. This factorization encodes principles: stronger propagation paths and more severe faults contribute more risk information, whereas older events exert less. Let Φu→v (t) denote the effective fault-information stock transmitted from u to v, with dynamics 
+
+dΦu→v (t)
+
+dt = −γu→v Φu→v (t)+ 
+
+X  
+
+> tuk≤tFu(tuk)=1
+
+Wu→v φ(Su(tuk )) δ(t − tuk ), (37) where γu→v > 0 is the learned memory-decay rate. The solution is 
+
+Φu→v (t) = X  
+
+> tuk≤tFu(tuk)=1
+
+Wu→v φ(Su(tuk )) e−γu→v (t−tuk ), (38) corresponding to the exponential-decay kernel 
+
+gu→v (t − tuk ) = e−γu→v (t−tuk ). (39) Substitution yields the history-based fault information gain 
+
+∆sFv (t) = ∆ sconf  
+
+> v
+
++
+
+X 
+
+> u∈N (v)∪{ v}
+
+Wu→v
+
+X  
+
+> tuk≤tFu(tuk)=1
+
+
+
+1 − e−Su(tuk )
+
+e−γu→v (t−tuk ).
+
+(40) Because fault probability increases with information gain, we map the gain to a valid probability using the sigmoid function: 
+
+P  Fv (t + 1) = 1 Hv (t), HN (v)(t), zv
+
+
+
+= σ ∆sFv (t)
+
+= σ μv (zv ) + X 
+
+> u∈N (v)∪{ v}
+
+Wu→v
+
+× X  
+
+> tuk≤tFu(tuk)=1
+
+
+
+1 − e−Su(tuk )
+
+e−γu→v (t−tuk )
+
+!
+
+.
+
+(41) where μv (zv ) maps static configuration zv to background abnormal information. V. FEMN ET 
+
+Building on IEFP, FEMNet couples conditional diffusion with a fault-aware denoising network to predict KPI distribu-tions under complex fault scenarios. This section presents its overall architecture and details denoising mechanism. Conditional Inputs  
+
+> Topology Structure
+> A: adjacency matrix
+> Network A ttributes
+> e.g., link capacity ,queue length, etc.
+> Traffic Information
+> e.g., flow rates, OD demand, etc.
+> Historical Fault Events
+
+Forward Noising Process (training only) Forward Noising Process (training only) Forward Noising Process (training only) 
+
+Reverse Diffusion Process (Training & Inference)    
+
+> ... ... ... ... ... ... ... ...
+> ... ... ... ...  ... ...  ... ...
+> Fault Propagation Guide Denoising
+
+Training (learn θ) 
+
+> 1. Sample
+> Ground-Truth KPI
+> 2. Forward Noising 3. Denoising Prediction
+
+Fault-aware Denoising Network       
+
+> Fault-Aware Graph Massage Passing
+> Message Passing Risk Gate Risk Attention Propagation Mask
+> 1
+> 10
+> 10
+> 0
+> 10
+> 0
+> 11 0 1 0 0
+> 1 0 0
+> 11 0 1 0 0
+> 1 0 0
+> 11 0 1 0 0
+> 1 0 0
+> Aggregation /Update
+
+Generative Backbone: Conditional Diffusion     
+
+> Fault Probability Calculation
+> Faults occur and risk spread over time Focus on high-risk areas
+> 4. Loss
+> Backpropagate to update θ
+
+Inference (prediction distribution)         
+
+> 1. Start from noise 2. Revise Diffusion 3. KPI Samples 4. Distributional KPIs
+> ... ...
+> Iterate Repate S times Mean Variance /Quantiles PDF Exceedance
+
+Inference (prediction distribution)        
+
+> 1. Start from noise 2. Revise Diffusion 3. KPI Samples 4. Distributional KPIs
+> ...
+> Iterate Repate S times Mean Variance /Quantiles PDF Exceedance
+
+Inference (prediction distribution)                 
+
+> 1. Start from noise 2. Revise Diffusion 3. KPI Samples 4. Distributional KPIs
+> ...
+> Iterate Repate S times Mean Variance /Quantiles PDF Exceedance
+> Historical Fault Events
+> ... ...
+> t1t2t3ttm
+> ...
+> t1t2t3ttm
+> ...
+> t1t2t3ttm
+> Fault propagate over nodes/edges
+
+Informantion-Entropy-Driven Fault Propagation Paragram         
+
+> Relative entropy Mutual Information Transfer Entropy
+> Abnormality Information Intrinsic Fault Tendency Directional Temporal Influence
+> Fault Impact Decomposition
+> e.g., fault type, fault location, etc.
+> G = ( V, E, A )
+> Iv(conf) +I v(local) +I v(prop)
+
+yτy0 y1 yT
+
+> Gradually inject Gaussian noise
+> Gradually recover target samples
+> Noised Samples
+
+πu→vρuv  χuv        
+
+> Low High Fault Risk
+> P ( F v(t +1) = 1| ℌv(t), ℌN(v) (t), z v)
+
+ŷ0 ŷ1 ŷτ ŷT
+
+ϵө( y τ, G, Z, S, ℇ0:t , τ )
+
+> Minimize
+
+ϵ − ϵө     
+
+> I (F v(t+1) = 1; ℌv(t)|z v)TE u→v
+> ( T →0 )
+> {
+
+ŷ0}(S) ~ p ( y 0 | G, Z, S, ℇ0:t )Fig. 2. FEMNet architecture and end-to-end workflow. Upper blocks trace conditional information through the diffusion backbone and fault-aware denoising network, whereas lower blocks distinguish model training (left) from repeated-sampling inference for predictive KPI distributions (right). 
+
+A. Model Overview 
+
+Fig. 2 shows FEMNet’s three components: conditional inputs, a generative backbone, and a fault-aware denoising network. The inputs comprise topology structure, network attributes, traffic information, and historical fault event se-quences. Conditional diffusion generates probabilistic KPI distributions rather than deterministic point estimates. Fault-aware graph message passing mechanism injects propagation context into denoising. The conditional diffusion backbone models the target KPI as a random variable and learns its probabilistic distribution. During training, the forward noising process gradually per-turbs ground-truth KPI samples. FEMNet learns the reverse process conditioned on network and fault information. During inference, FEMNet starts from Gaussian noise and iteratively denoises it into conditional KPI samples. Repeated sampling approximates the future KPI distribution, capturing its fluctu-ation range, uncertainty level, and shape under fault scenarios. A key design of FEMNet lies in its fault-aware denoising network. IEFP first maps historical fault event sequences to fault risks over nodes and links. As dynamic propagation context, these risks guide graph message passing through risk gates, attention weights, and propagation masks. Consequently, the reverse process captures both the current network snapshot and the historical propagation and cumulative effects of faults. 
+
+B. Fault-Aware Denoising Network 
+
+The fault-aware denoising network serves as the reverse-process predictor, which effectively model the fault impact. At step τ , it predicts the noise added to KPI sample yτ :
+
+ˆϵτ = ϵθ (yτ , τ, C). (42) The corresponding clean-KPI estimate is 
+
+ˆy0 = yτ − √1 − ¯ατ ˆϵτ
+
+√¯ατ
+
+. (43) The predictor is evaluated at each reverse step, and the final sample is transformed back to the original KPI scale. Using (41), FEMNet calculates next-timestep node failure probabilities as fault risk intensity embedding rv . we initialize 
+
+h0
+
+v = [ xv (t), r v , ε k], (44) where [·] denotes concatenation. When v is fault-free, εk =
+
+0. hiv is the learned fault-aware state after i message-passing layers. We use hif , hiq , and hil for flow, queue, and link nodes, respectively. We first introduce risk gate ρuv to control the effective amount of propagated message: 
+
+ρuv = MLP([ ru, r v ]) . (45) Here, ρuv combines the endpoint risk embeddings. To capture heterogeneous influence across neighbors, we introduce risk attention. Attention bias πu→v from u to v is 
+
+πu→v = exp ( κu→v )
+
+P
+
+u′∈N (v) exp ( κu′→v ) , (46) where 
+
+κu→v = wa(hu, h v ) + wb(ru). (47) Here, wa and wb are learnable scoring functions. The atten-tion mechanism emphasizes high-risk entities or edges when propagation is likely to affect the target. We further apply a dynamic propagation mask to suppress irrelevant messages under weak fault coupling. When cumu-lative risk or propagation relevance falls below a learnable threshold ϑ, the corresponding edge is disabled. Let χuv ∈{0, 1} denote this mask: 
+
+χuv =
+
+(
+
+1, ρuv ≥ ϑ
+
+0, ρuv < ϑ . (48) Thus, ρuv controls message magnitude, while χuv removes weakly coupled propagation paths. Propagation differs by edge type. Uv (·) is implemented as GRU. For flow-node updates, queue and link messages, modulated by risk gate and propagation mask, are sequentially aggregated along the routing path. Namely, 
+
+miq→f = χf q ρf q hiq , (49) 
+
+mil→f = χf l ρf l hil , (50) 
+
+hi+1  
+
+> f
+
+← Uf (hif , [miq→f , m il→f ]) . (51) Queue’s state depends on its traversing flows and associated link. Risk attention is incorporated into multiflow aggregation to capture flow-specific contributions. Uq integrates queue fea-tures with risk-modulated flow and link aggregates to update the queue state: 
+
+miq = X  
+
+> f∈N (q)
+
+πf →q ρqf hif + χql ρql hil , (52) 
+
+hi+1  
+
+> q
+
+← Uq (hiq , m iq ). (53) Link’s state similarly depends on its traversing flows and connected queues, giving the message and update: 
+
+mil = X  
+
+> f∈N (l)
+
+πf →lρlf hif + χlq ρlq hiq , (54) 
+
+hi+1  
+
+> l
+
+← Ul(hil , m il ). (55) Collectively, these edge-type-specific updates yield fault-conditioned representations for ϵθ , thereby linking the IEFP-derived risk context to conditional KPI distribution generation. VI. E XPERIMENTS 
+
+This section first describes the dataset generation and experimental settings, then evaluates IEFP and FEMNet in fault prediction, deterministic and probabilistic KPI prediction, component ablations, and efficiency. 
+
+A. DataSet Generation 
+
+Our ns-3 simulations use the Abilene, GEANT and Ger-many50 topologies and corresponding traffic matrices from SNDlib [36], a widely used data library for telecommunication network design and performance evaluation. We inject diverse faults and record propagation trajectories and KPI samples. After network failures, ns-3 simulates the redistribution of network resources and the resulting utilization changes. This process may establish a new equilibrium or trigger subsequent degradation and failure. Thus, the dataset captures both direct multi-fault impacts and cascading propagation effects. The injected faults cover five categories: node/device faults (node or interface outages and degradation), link faults (dis-connection, bandwidth reduction, delay, packet loss, and bit errors), control-plane faults (adjacency loss, slow conver-gence, route-cost changes, and flapping-induced loops or black holes), data-plane faults (congestion, queue overflow, and RED/WRED drops), and application-level faults (flash crowds and DDoS traffic). Combining these faults with differ-ent topologies, traffic conditions, and network configurations yields scenarios with diverse propagation patterns and perfor-mance impacts for evaluating IEFP and FEMNet. 
+
+B. Experimental Settings 
+
+We split the dataset into training, validation, and test sets at 60%:20%:20%. All methods are trained with Adam for 500 epochs, a learning rate of 0.001 and a batch size of 16, and the checkpoint with the best validation performance is selected. All diffusion models employ 100 denoising steps, and we generate 50 KPI samples per test instance. For a fair comparison, all methods use identical input features, including fault information. Experiments are implemented in PyTorch on Intel Xeon Silver 4410Y CPU and NVIDIA RTX A6000 GPU. We compare FEMNet with representative learning-based methods to access deterministic performance prediction and evaluate IEFP against GPIAN, HIC model, Causal model, and related fault-prediction methods. For probabilistic pre-diction, we compare FEMNet with the denoising-backbone baselines, GNN-Denoise and Rt-Denoise (RouteNet-Erlang), and diffusion models, including ReDiSC, SimDiff, and LGD. We further ablate the main components of FEMNet and IEFP, and profile memory and runtime costs. Deterministic metrics are mean squared error (MSE), mean absolute error (MAE), mean absolute percentage error (MAPE), mean percentage error (MPE) and Coefficient of Determination ( R2). Fault prediction is assessed via accuracy, precision, recall, F1 score, and true negative rate (TNR). Probabilistic metrics are continuous ranked probability score (CRPS), normalized energy score (ES-norm), prediction in-terval coverage probability (PICP), mean prediction interval width (MPIW), and interval score (IS) for 90% and 95% prediction intervals (PIs). We also report inference and training time, GPU memory, and parameter count. TABLE I DETERMINISTIC KPI-PREDICTION PERFORMANCE OF FEMN ET AND THE BASELINES .Delay Loss-Ratio Throughput MSE ↓ MAE ↓ MAPE ↓ R2 ↑ MSE ↓ MAE ↓ MAPE ↓ R2 ↑ MSE ↓ MAE ↓ MAPE ↓ R2 ↑
+
+STGNN 0.4928 0.3278 66.53% 0.7137 0.6964 0.3848 113.01% 0.7232 0.6519 0.3844 99.47% 0.8110 DGAT 0.4139 0.3154 63.91% 0.7595 0.6163 0.3869 123.04% 0.7551 0.5714 0.3663 91.55% 0.8344 xNet 0.4281 0.3263 71.83% 0.7512 0.5870 0.3833 124.48% 0.7667 0.5715 0.3319 91.04% 0.8343 EAGLE 0.3962 0.3069 63.85% 0.7698 0.4854 0.3448 113.42% 0.8071 0.5686 0.3999 80.93% 0.8307 DCRNN 0.4028 0.3003 58.48% 0.7659 0.5263 0.3524 113.37% 0.7908 0.5637 0.2989 83.27% 0.8366 Routenet-Fermi 0.3768 0.2809 61.30% 0.7811 0.4817 0.3368 101.81% 0.8086 0.5613 0.3002 83.74% 0.8372 FEMNet 0.2282 0.1678 38.29% 0.8674 0.2814 0.2147 55.17% 0.8881 0.3627 0.1868 54.02% 0.8949 
+
+Fig. 3. Cumulative distribution functions (CDFs) of signed MPE for test-set predictions by FEMNet, RouteNet-Fermi, and DCRNN. TABLE II PROBABILISTIC DELAY -PREDICTION PERFORMANCE OF FEMN ET AND THE BASELINES .CRPS ↓ ES-norm ↓ 90% Prediction Interval 95% Prediction Interval PICP → 90% MPIW ↓ IS ↓ PICP → 95% MPIW ↓ IS ↓
+
+GNN-Denoise 0.4077 0.6607 0.8408 2.2957 3.8813 0.9035 2.9657 4.7136 Rt-Denoise 0.2717 0.5283 0.8949 1.7081 2.6046 0.9324 2.1112 3.1674 ReDiSC 0.2302 0.4496 0.8864 1.0802 2.1667 0.9245 1.3455 2.8388 SimDiff 0.2088 0.4044 0.8989 1.0887 1.8511 0.9354 1.3297 2.3755 LGD 0.1577 0.3336 0.9031 0.8576 1.4708 0.9367 1.0683 1.8917 FEMNet 0.1305 0.2919 0.9068 0.6451 1.2640 0.9432 0.7903 1.7043 
+
+TABLE III FAULT PREDICTION PERFORMANCE OF IEFP AND THE BASELINES .Accuracy TNR Precision Recall F1 score LSTM 0.7149 0.7961 0.5653 0.6176 0.5542 GNN 0.7915 0.8311 0.6822 0.6621 0.6628 Causal model 0.8030 0.8369 0.6980 0.6949 0.6506 HIC model 0.8324 0.8544 0.7099 0.8557 0.7319 GPIAN 0.8813 0.9466 0.8673 0.7550 0.8085 IEFP 0.9225 0.9704 0.9162 0.8159 0.8494 
+
+Fig. 4. Precision–recall (PR) curves and Receiver operating characteristic (ROC) curves for fault prediction by IEFP and baselines. Legend entries report the corresponding areas under the curves (PR-AUCs and ROC-AUCs). 
+
+C. Evaluation Results 
+
+Deterministic performance Prediction. Table I compares FEMNet with deterministic prediction baselines on three KPIs. FEMNet consistently achieves the best performance for every KPI–metric pair. Compared with the best-performing baseline for each pair, FEMNet achieves average reductions of 38.6%, 37.9%, and 38.9% in MSE, MAE, and MAPE, respectively, and an average improvement of 9.2% in R2 across the three KPIs. Fig. 3 further shows that FEMNet generally produces more concentrated signed-MPE errors than RouteNet-Fermi and DCRNN. FEMNet’s closer concentration around zero indicates less systematic over- or underprediction. These re-sults show that FEMNet substantially improves deterministic KPI prediction with propagation modeling, fault-aware graph reasoning, and conditional diffusion. 
+
+Fault Prediction. Table III shows that IEFP achieves the highest accuracy (0.9225), TNR (0.9704), precision (0.9162), and F1 score (0.8494), with the second-highest recall (0.8159). Relative to the strongest overall baseline GPIAN, IEFP in-creases all indicators. The HIC model has the highest recall (0.8557), but its lower precision and F1 score indicate more false alarms. The causal model exhibits a less favorable Fig. 5. Predictive delay distributions produced by FEMNet for three representative instances with increasing target values from left to right. TABLE IV EFFICIENCY COMPARISON OF FEMN ET AND THE REPRESENTATIVE BASELINES FOR DELAY PREDICTION .IEFP FEMNet LGD (T=100,S=8) Routenet-Fermi T=1,S=1 T=100,S=1 T=100,S=8 GPU Memory Usage (MB) 17.42 30.36 30.36 30.36 38.72 29.22 Inference Time (ms/batch) 0.848 10.13 848 5947 2956 9.76 Training Time (ms/epoch) 3172 6657 6871 7003 4691 5564 Parameter Count 13764 199370 199370 199370 295175 105985 TABLE V FEMN ET ABLATIONS . T HE W /O FAULT , M OD AND DIFF VARIANTS REMOVE FAULT INFORMATION , FAULT -AWARE MESSAGE MECHANISM ,
+
+> AND CONDITIONAL DIFFUSION
+
+, RESPECTIVELY 
+
+Delay Loss-Ratio Throughput MSE MAE MSE MAE MSE MAE w/o Fault 0.5352 0.3813 0.7128 0.4264 0.6738 0.3568 w/o Mod 0.3481 0.2381 0.4460 0.2763 0.5376 0.3250 w/o Diff 0.2551 0.1855 0.3125 0.2258 0.3941 0.1978 FEMNet 0.2282 0.1678 0.2814 0.2147 0.3627 0.1868 TABLE VI IEFP ABLATIONS . T HE W /O Wprop , S EVERITY AND CONFIG VARIANTS REMOVE EDGE -SPECIFIC PROPAGATION WEIGHT , ENTROPY -DERIVED SEVERITY , AND CONFIGURATION TERM , RESPECTIVELY . S HARED DECAY REPLACES EDGE -SPECIFIC DECAY RATES WITH SINGLE LEARNABLE RATE .Accuracy TNR Precision Recall F1 score w/o Wprop 0.8766 0.9276 0.8212 0.7871 0.7973 w/o Severity 0.8896 0.9419 0.8729 0.7618 0.8069 w/o Config 0.9013 0.9422 0.8865 0.7844 0.8155 Shared Decay 0.9027 0.9468 0.8947 0.7915 0.8246 IEFP 0.9225 0.9704 0.9162 0.8159 0.8494 
+
+precision-recall balance. Figs. 4 provide threshold-independent support: IEFP obtains the highest PR-AUC (0.9318) and ROC-AUC (0.9576). These results show that IEFP more reliably anticipates future faults while maintaining a favorable balance between detection and false alarms. 
+
+Probabilistic Performance Prediction. Table II reports that FEMNet achieves the lowest CRPS (0.1305) and ES-norm (0.2919), reducing by 17.3% and 12.5% against LGD, respectively. For the 90% PI, SimDiff has the PICP closest to nominal; FEMNet remains near nominal at 0.9068 and has lowest MPIW (0.6451) and IS (1.2640). For the 95% PI, FEM-Net has the closest PICP (0.9432) and lowest MPIW (0.7903) and IS (1.7043). Although FEMNet is not closest to nominal at 90%, its narrower interval and lower score demonstrate better sharpness. Overall, FEMNet improves distributional accuracy without relying on excessively wide, conservative intervals for coverage. Fig. 5 visualizes three representative delay cases. Each target lies within both the 90% and 95% PIs, while the predictive mean and median remain consistent with the target scale. The low-delay case is relatively concentrated, whereas the higher-delay cases are broader and more dispersed, which illustrate instance-dependent, heteroscedastic uncertainty. 
+
+Ablation Studies. As shown in Table V, removing fault information causes the largest errors, which demonstrates fault context is essential for understanding KPI degradation. Without fault-aware message passing, MSE and MAE increase by 52.7% and 47.4%, respectively, which verifies that fault features alone cannot replace risk-modulated graph reasoning. Conditional diffusion provides smaller but consistent gains for modeling uncertainty and complex latent distributions. Table VI shows that edge-specific propagation weights are IEFP’s most influential component: removing them lowers accuracy, TNR, precision, and F1 score by 4.59, 4.28, 9.50, and 5.21 percentage points, respectively, indicating overly broad propagation. Entropy-derived severity removal most harms recall because minor and severe fault events become less distinguishable. Configuration term removal degrades all metrics, which supports background-vulnerability modeling. Shared decay has the smallest impact, suggesting temporal heterogeneity provides a modest marginal contribution. 
+
+Model Efficiency. Let N and M denote the numbers of nodes and edges, respectively. Let d, L, K, T , S, and P
+
+denote the hidden feature dimension, message-passing depth, historical fault count, reverse diffusion step count, inference sample count, and target-KPI dimension, respectively. The time complexity is O KM + ST [L(N d 2 + M d ) + P ] and space complexity is O(K + N d + M + P ). Table IV shows that IEFP is lightweight, using 17.42 MB and 0.848 ms/batch. At T = S = 1 , FEMNet uses 30.36 MB and 10.13 ms/batch, close to RouteNet-Fermi, indicating limited cost from fault propagation encoding and graph reasoning. Increasing T or S
+
+raises inference latency nearly linearly, consistent with multi-step diffusion and repeated sampling. Memory and parameter count remain fixed because the denoiser is reused. Training time increases slightly because each instance samples one diffusion step and evaluates the denoiser once. At (T, S ) = (100 , 8) , FEMNet trains and infers more slowly than LGD but uses less memory and fewer parameters. Thus, FEMNet trades between overhead and performance. VII. C ONCLUSION 
+
+This paper studied probabilistic network performance pre-diction under complex faults. IEFP models fault propagation as abnormal information transmission over networks, and fault-aware graph message passing injects predictive fault risk into representation learning. FEMNet converts deterministic KPI prediction into conditional distribution generation. Experi-ments showed improved fault prediction, deterministic and probabilistic KPI prediction; ablations confirmed each major component, while efficiency tests demonstrated lightweight IEFP and controllable FEMNet overhead. This study assumes closed-set fault types and relies on supervised historical fault events and KPI observations, whereas practical labels may be sparse, noisy, or delayed. Future work will explore open-set faults, cross-domain transfer, label-efficient learning, and online adaptation. ACKNOWLEDGMENTS 
+
+This work is supported by Hunan Provincial Natural Science Foundation (Grant no.2025JJ90177) and Jiangxi Provincial Natural Science Foundation (Grant no.20253BAC280098). REFERENCES [1] J. Song, E. Cotilla-Sanchez, G. Ghanavati, and P. D. Hines, “Dynamic modeling of cascading failure in power systems,” IEEE Transactions on Power Systems , vol. 31, no. 3, pp. 2085–2095, 2015. [2] A. Varbella, K. Amara, B. Gjorgiev, M. El-Assady, and G. Sansavini, “Powergraph: A power grid benchmark dataset for graph neural net-works,” Advances in Neural Information Processing Systems , vol. 37, pp. 110 784–110 804, 2024. [3] Q. Yang, X. Peng, L. Chen, L. Liu, J. Zhang, H. Xu, B. Li, and G. Zhang, “Deepqueuenet: Towards scalable and generalized network performance estimation with packet-level visibility,” in Proceedings of the ACM SIGCOMM 2022 Conference , 2022, pp. 441–457. [4] M. Ferriol-Galm´ es, J. Paillisse, J. Su´ arez-Varela, K. Rusek, S. Xiao, X. Shi, X. Cheng, P. Barlet-Ros, and A. Cabellos-Aparicio, “Routenet-fermi: Network modeling with graph neural networks,” IEEE/ACM transactions on networking , vol. 31, no. 6, pp. 3080–3095, 2023. [5] I.-C. Lin, O. Ya˘ gan, and C. Joe-Wong, “Dynamic coupling strategy for interdependent network systems against cascading failures,” IEEE Transactions on Network Science and Engineering , vol. 10, no. 4, pp. 2265–2282, 2023. [6] S. Zhou, Z. Li, and J. Xiang, “Reliability analysis of dynamic fault trees with priority-and gates using conditional binary decision diagrams,” 
+
+Reliability Engineering & System Safety , vol. 253, p. 110495, 2025. [7] F. Tang, L. Luo, Z. Guo, Y. Li, M. Zhao, and N. Kato, “Semi-distributed network fault diagnosis based on digital twin network in highly dynamic heterogeneous networks,” IEEE transactions on mobile computing , vol. 24, no. 5, pp. 3979–3992, 2024. [8] S. Wang, Y. Li, K. Noman, D. Wang, K. Feng, Z. Liu, and Z. Deng, “Cumulative spectrum distribution entropy for rotating machinery fault diagnosis,” Mechanical Systems and Signal Processing , vol. 206, p. 110905, 2024. [9] X. Zhang, W. Hu, F. Yang, W. Cao, and M. Wu, “A new transfer entropy approach based on information granulation and clustering for root cause analysis,” Control Engineering Practice , vol. 140, p. 105669, 2023. [10] M. Bauer, J. W. Cox, M. H. Caveness, J. J. Downs, and N. F. Thorn-hill, “Finding the direction of disturbance propagation in a chemical process using transfer entropy,” IEEE transactions on control systems technology , vol. 15, no. 1, pp. 12–21, 2006. [11] L. Zhang, A. Rao, and M. Agrawala, “Adding conditional control to text-to-image diffusion models,” in Proceedings of the IEEE/CVF international conference on computer vision , 2023, pp. 3836–3847. [12] Z. Li, L. Xia, H. Hua, S. Zhang, S. Wang, and C. Huang, “Diffgraph: Heterogeneous graph diffusion model,” in Proceedings of the Eighteenth ACM International conference on web search and data mining , 2025, pp. 40–49. [13] K. Rusek, J. Su´ arez-Varela, P. Almasan, P. Barlet-Ros, and A. Cabellos-Aparicio, “Routenet: Leveraging graph neural networks for network modeling and optimization in sdn,” IEEE Journal on Selected Areas in Communications , vol. 38, no. 10, pp. 2260–2270, 2020. [14] S. Huang, Y. Wei, L. Peng, M. Wang, L. Hui, P. Liu, Z. Du, Z. Liu, and Y. Cui, “xnet: Modeling network performance with graph neural networks,” IEEE/ACM Transactions on Networking , vol. 32, no. 2, pp. 1753–1767, 2023. [15] M. Ferriol-Galm´ es, K. Rusek, J. Su´ arez-Varela, S. Xiao, X. Shi, X. Cheng, B. Wu, P. Barlet-Ros, and A. Cabellos-Aparicio, “Routenet-erlang: A graph neural network for network performance evaluation,” in 
+
+IEEE INFOCOM 2022-IEEE Conference on Computer Communications .IEEE, 2022, pp. 2018–2027. [16] H. Zhou, R. Kannan, A. Swami, and V. Prasanna, “Htnet: Dynamic wlan performance prediction using heterogenous temporal gnn,” in 
+
+IEEE INFOCOM 2023-IEEE Conference on Computer Communications .IEEE, 2023, pp. 1–10. [17] P. Yu, J. Zhang, H. Fang, W. Li, L. Feng, F. Zhou, P. Xiao, and S. Guo, “Digital twin driven service self-healing with graph neural networks in 6g edge networks,” IEEE Journal on Selected Areas in Communications ,vol. 41, no. 11, pp. 3607–3623, 2023. [18] J. Liu, F. Tang, L. Chen, X. Li, J. Yu, Y. Zhu, Y. Yu, and Y. Yang, “Eagle: Heterogeneous gnn-based network performance analysis,” in 
+
+2023 IEEE/ACM 31st International Symposium on Quality of Service (IWQoS) . IEEE, 2023, pp. 1–10. [19] G. Bern´ ardez, M. Ferriol-Galm´ es, C. G¨ uemes-Palau, M. Papillon, P. Barlet-Ros, A. Cabellos-Aparicio, and N. Miolane, “Ordered topo-logical deep learning: a network modeling case study,” arXiv preprint arXiv:2503.16746 , 2025. [20] C. G¨ uemes-Palau, M. Ferriol-Galm´ es, J. Paillisse-Vilanova, A. L´ opez-Bresc´ o, P. Barlet-Ros, and A. Cabellos-Aparicio, “Routenet-gauss: Hardware-enhanced network modeling with machine learning,” IEEE Transactions on Networking , 2026. [21] X. Zheng, W. Yao, Y. Xu, and N. Wang, “Algorithms for bayesian net-work modeling and reliability inference of complex multistate systems with common cause failure,” Reliability Engineering & System Safety ,vol. 241, p. 109663, 2024. [22] T. Zhu, X. Yang, Z. Ma, H. Sun, J. Wu, Z. Gao, and J. Gao, “A small set of critical hyper-motifs governs heterogeneous flow-weighted network resilience,” Nature Communications , vol. 16, no. 1, p. 7809, 2025. [23] D. S. Roth, B. Tong, A. Bashan, and S. V. Buldyrev, “Cascading failures in networks of networks linked by directional and bidirectional hyperlinks,” Physical Review E , vol. 111, no. 1, p. 014315, 2025. [24] B. Xiang, B. Cautis, X. Xiao, O. Mula, D. Niyato, and L. V. Laksh-manan, “Predicting cascading failures with a hyperparametric diffusion model,” in Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , 2024, pp. 3495–3506. [25] S. S. Ghosh, A. Dwivedi, A. Tajer, K. Yeo, and W. M. Gifford, “Cascading failure prediction via causal inference,” IEEE Transactions on Power Systems , vol. 40, no. 4, pp. 3361–3373, 2024. [26] R. Cai, S. Wu, J. Qiao, Z. Hao, K. Zhang, and X. Zhang, “Thps: Topolog-ical hawkes processes for learning causal structure on event sequences,” 
+
+IEEE Transactions on Neural Networks and Learning Systems , vol. 35, no. 1, pp. 479–493, 2022. [27] S. Linderman and R. Adams, “Discovering latent network structure in point process data,” in International conference on machine learning .PMLR, 2014, pp. 1413–1421. [28] K. Yang, F. Xue, T. Huang, S. Lu, L. Jiang, and X. Xu, “Lightweight model for power grid cascading failures risk evaluation based on graph physics-informed attention network,” Expert Systems with Applications ,vol. 291, p. 128468, 2025. [29] T. Hu, J. Zhang, R. Yi, Y. Du, X. Chen, L. Liu, Y. Wang, and C. Wang, “Anomalydiffusion: Few-shot anomaly image generation with diffusion model,” in Proceedings of the AAAI conference on artificial intelligence ,vol. 38, no. 8, 2024, pp. 8526–8534. [30] H. Sun, Y. Cao, H. Dong, and O. Fink, “Anomaly anything: Promptable unseen visual anomaly generation,” in 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)[Forthcoming publi-cation] , 2025. [31] L. Shen and J. Kwok, “Non-autoregressive conditional diffusion models for time series prediction,” in International Conference on Machine Learning . PMLR, 2023, pp. 31 016–31 029. [32] H. Wen, Y. Lin, Y. Xia, H. Wan, Q. Wen, R. Zimmermann, and Y. Liang, “Diffstg: Probabilistic spatio-temporal graph forecasting with denoising diffusion models,” in Proceedings of the 31st ACM international confer-ence on advances in geographic information systems , 2023, pp. 1–12. [33] C. Zhou, X. Wang, and M. Zhang, “Unifying generation and prediction on graphs with latent graph diffusion,” Advances in Neural Information Processing Systems , vol. 37, pp. 61 963–61 999, 2024. [34] Y. Li, Y. Lu, Z. Wang, Z. Wei, Y. Li, and B. Ding, “Redisc: A reparameterized masked diffusion model for scalable node classification with structured predictions,” arXiv preprint arXiv:2507.14484 , 2025. [35] H. Ding, X. Wang, T. Zhou, and T. Yao, “Simdiff: Simpler yet better diffusion model for time series point forecasting,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 40, no. 25, 2026, pp. 20 781–20 789. [36] S. Orlowski, R. Wess¨ aly, M. Pi´ oro, and A. Tomaszewski, “Sndlib 1.0—survivable network design library,” Networks: An International Journal , vol. 55, no. 3, pp. 276–286, 2010.
