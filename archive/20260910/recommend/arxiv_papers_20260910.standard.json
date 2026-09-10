@@ -1,0 +1,59 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-10T19:13:25.954032+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2609.09348v1",
+      "source": "arxiv",
+      "title": "Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management",
+      "abstract": "Managing resources across IoT, edge, and cloud layers calls for continuous, context-aware decisions under constraints that rarely stay fixed. Deep reinforcement learning (DRL) handles this class of problems well, and large language models (LLMs) are increasingly used to augment DRL pipelines, yet the architectural relationship between the two is seldom made explicit. We build on Wang et al.'s taxonomy of Continuum Orchestration Systems employing DRL techniques and extend it with two further dimensions. The AI Augmentation Paradigm measures how LLMs are exploited, while the Feedback channel captures whether and through which system path the execution feedback returns to the LLM in order to close the MAPE control loop at the LLM Orchestration layer. We apply this taxonomy to six recent system architectures and find a common gap, as none combines full LLM orchestration with full agent-layer feedback in a Cloud Continuum setting. We relate this gap to a missing cross-tier feedback abstraction, bridging the incommensurable per-tier signals and the LLM Orchestrator.",
+      "authors": [
+        "Antonino Vaccarella",
+        "Lanpei Li",
+        "Vincenzo Lomonaco",
+        "Massimo Coppola"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.AI",
+        "cs.MA"
+      ],
+      "published": "2026-09-08T18:37:13+00:00",
+      "link": "https://arxiv.org/pdf/2609.09348v1",
+      "tags": [
+        "keyword:edge-sfc",
+        "keyword:sfc-edge",
+        "query:edge-sfc",
+        "query:sfc-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "resource management across IoT-edge-cloud layers with orchestration",
+      "llm_evidence_cn": "跨物联网-边缘-云分层的资源管理与编排",
+      "llm_evidence": "跨物联网-边缘-云分层的资源管理与编排",
+      "canonical_evidence": "跨物联网-边缘-云分层的资源管理与编排",
+      "llm_tldr_en": "Extending a DRL-based continuum orchestration taxonomy with AI augmentation paradigm and feedback channel dimensions, this work clarifies how LLMs augment DRL for IoT-edge-cloud resource management.",
+      "llm_tldr_cn": "面对物联网、边缘与云多层资源管理中约束不断变化、需持续上下文感知决策的难题，本文在既有DRL连续体编排分类体系上扩展了AI增强范式与反馈通道两个维度。研究系统梳理了大语言模型如何被用于增强深度强化学习编排流程，并刻画执行反馈经何种路径回流以闭合LLM编排器的MAPE控制环。该工作为跨层资源编排提供了清晰的架构性分类框架。",
+      "llm_tldr": "面对物联网、边缘与云多层资源管理中约束不断变化、需持续上下文感知决策的难题，本文在既有DRL连续体编排分类体系上扩展了AI增强范式与反馈通道两个维度。研究系统梳理了大语言模型如何被用于增强深度强化学习编排流程，并刻画执行反馈经何种路径回流以闭合LLM编排器的MAPE控制环。该工作为跨层资源编排提供了清晰的架构性分类框架。",
+      "llm_tags": [
+        "query:edge-sfc"
+      ],
+      "matched_query_tag": "query:edge-sfc",
+      "matched_query_text": "assignment of limited computational and network resources at edge nodes to services and functions",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

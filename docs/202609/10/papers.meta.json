@@ -1,0 +1,24 @@
+{
+  "label": "2026-09-10",
+  "date": "2026-09-10",
+  "generated_at": "2026-09-10T19:14:05",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202609/10/2609.09348v1-smart-adaptive-computing-across-the-continuum-llms-in-iot-edge-cloud-resource-management",
+      "section": "quick",
+      "title_en": "Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management",
+      "authors": "Antonino Vaccarella, Lanpei Li, Vincenzo Lomonaco, Massimo Coppola",
+      "date": "2026-09-08",
+      "pdf": "https://arxiv.org/pdf/2609.09348v1",
+      "score": "6.0",
+      "evidence": "跨物联网-边缘-云分层的资源管理与编排",
+      "tldr": "跨IoT、边缘与云连续体的资源管理需在动态约束下持续决策，DRL虽适用，但LLM增强DRL的架构关系仍不清晰。本文扩展Wang等人的连续体编排分类法，新增AI增强范式与反馈通道两个维度，分别刻画LLM如何被利用，以及执行反馈是否、经何路径回到LLM编排层。将分类法应用于六个近期系统后，发现共同缺口：无一在云连续体中同时实现完整LLM编排与完整代理层反馈。作者将其归因于缺失跨层反馈抽象，为桥接各层异构信号与LLM编排器提供了新视角。",
+      "tags": "query:edge-sfc",
+      "abstract_en": "Managing resources across IoT, edge, and cloud layers calls for continuous, context-aware decisions under constraints that rarely stay fixed. Deep reinforcement learning (DRL) handles this class of problems well, and large language models (LLMs) are increasingly used to augment DRL pipelines, yet the architectural relationship between the two is seldom made explicit. We build on Wang et al.'s taxonomy of Continuum Orchestration Systems employing DRL techniques and extend it with two further dimensions. The AI Augmentation Paradigm measures how LLMs are exploited, while the Feedback channel captures whether and through which system path the execution feedback returns to the LLM in order to close the MAPE control loop at the LLM Orchestration layer. We apply this taxonomy to six recent system architectures and find a common gap, as none combines full LLM orchestration with full agent-layer feedback in a Cloud Continuum setting. We relate this gap to a missing cross-tier feedback abstraction, bridging the incommensurable per-tier signals and the LLM Orchestrator.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

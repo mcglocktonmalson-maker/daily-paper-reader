@@ -1,0 +1,25 @@
+{
+  "date": "20260910",
+  "date_label": "",
+  "generated_at": "2026-09-10 19:14:03 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2609.09348v1",
+      "route": "202609/10/2609.09348v1-smart-adaptive-computing-across-the-continuum-llms-in-iot-edge-cloud-resource-management",
+      "title": "Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "edge-sfc"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "跨物联网-边缘-云分层的资源管理与编排",
+      "first_seen_at": "2026-09-10 19:14:03 UTC",
+      "updated_at": "2026-09-10 19:14:03 UTC"
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 * <a class="dpr-sidebar-root-link" href="#/">首页</a>
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 * Daily Papers
+  * 2026-09-10 <!--dpr-date:20260910-->
+    * 速读区
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202609/10/2609.09348v1-smart-adaptive-computing-across-the-continuum-llms-in-iot-edge-cloud-resource-management" data-sidebar-item="{&quot;title&quot;: &quot;Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2609.09348v1-smart-adaptive-computing-across-the-continuum-llms-in-iot-edge-cloud-resource-management&quot;, &quot;score&quot;: &quot;6.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;edge-sfc&quot;}], &quot;evidence&quot;: &quot;跨物联网-边缘-云分层的资源管理与编排&quot;}">Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management</a>
   * 2026-09-09 <!--dpr-date:20260909-->
     * 速读区
       * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/202609/09/2609.06021v1-delay-and-throughput-analysis-of-computation-offloading-in-mobile-edge-computing-a-queueing-network-approach" data-sidebar-item="{&quot;title&quot;: &quot;Delay and Throughput Analysis of Computation Offloading in Mobile Edge Computing: A Queueing Network Approach&quot;, &quot;link&quot;: &quot;https://arxiv.org/abs/2609.06021v1-delay-and-throughput-analysis-of-computation-offloading-in-mobile-edge-computing-a-queueing-network-approach&quot;, &quot;score&quot;: &quot;7.0&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;edge-sfc&quot;}], &quot;evidence&quot;: &quot;多层级移动边缘计算卸载排队建模，直接面向边缘计算范式&quot;}">Delay and Throughput Analysis of Computation Offloading in Mobile Edge Computing: A Queueing Network Approach</a>

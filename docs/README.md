@@ -41,17 +41,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-09-09</span>
+      <span class="dpr-home-dashboard-kicker">2026-09-10</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 9 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 1 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>0</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>9</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>1</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-09-09 19:48:38 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-09-10 19:14:03 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -62,9 +62,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日速读9篇论文，精读0篇，重点覆盖移动边缘计算、非地面网络应急通信与计算连续体管理。</p>
-<p>最值得关注：边缘计算卸载的时延与吞吐量分析，以及GNN增强强化学习在ORAN非地面应急通信中的表现。</p>
-<p>建议后续优先精读这两篇高分论文（均7.0/10），并关注LLM驱动微服务放置策略的扩展应用。</p>
+<p>今日仅速读1篇，聚焦LLM驱动的IoT-边缘-云跨层自适应资源管理。该方向值得关注的是用大模型统一调度连续计算资源、缓解端边云协同中的动态分配难题。普通读者可先留意这类&quot;LLM+边缘计算&quot;综述，判断其能否落地到自己的物联网场景。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -86,12 +84,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">9 篇</strong>
+    <strong class="dpr-home-dashboard-count">1 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Delay and Throughput Analysis of Computation Offloading in Mobile Edge Computing: A Queueing Network Approach">Delay and Throughput Analysis of Computation Offloading in Mobile Edge Computing: A Queueing Network Approach</span></li><li><span class="dpr-home-dashboard-paper-title" title="A GNN-Enhanced Reinforcement Learning Framework for Emergency Communications in ORAN-based Non-Terrestrial Networks">A GNN-Enhanced Reinforcement Learning Framework for Emergency Communications in ORAN-based Non-Terrestrial Networks</span></li><li><span class="dpr-home-dashboard-paper-title" title="MicroIntent: Intent-Based Placement Strategy for Microservice Application in the Compute Continuum Using LLMs">MicroIntent: Intent-Based Placement Strategy for Microservice Application in the Compute Continuum Using LLMs</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management">Smart Adaptive Computing Across the Continuum: LLMs in IoT-Edge-Cloud Resource Management</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>8</strong></span><span class="dpr-home-dashboard-tag">sfc-edge <strong>1</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">edge-sfc <strong>1</strong></span></div>
 </section>
 </div>
 
